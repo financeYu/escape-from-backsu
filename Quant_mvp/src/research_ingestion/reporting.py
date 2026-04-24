@@ -24,6 +24,8 @@ def generate_reports(
     evidence_cards: list[dict[str, Any]] | None = None,
     scholar_seeds: list[dict[str, Any]] | None = None,
     source_health: dict[str, Any] | None = None,
+    collection_summary: dict[str, Any] | None = None,
+    enrichment_summary: dict[str, Any] | None = None,
 ) -> dict[str, Path]:
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -31,9 +33,14 @@ def generate_reports(
     evidence_cards = evidence_cards or []
     scholar_seeds = scholar_seeds or []
     source_health = source_health or {}
+    collection_summary = collection_summary or {}
+    enrichment_summary = enrichment_summary or collection_summary.get("enrichment", {})
 
     paths = {key: out / filename for key, filename in REPORT_FILES.items()}
-    paths["ingestion"].write_text(render_ingestion_report(run_id, papers, evidence_cards, scholar_seeds), encoding="utf-8")
+    paths["ingestion"].write_text(
+        render_ingestion_report(run_id, papers, evidence_cards, scholar_seeds, collection_summary, enrichment_summary),
+        encoding="utf-8",
+    )
     write_classification_summary(paths["classification_summary"], evidence_cards)
     paths["source_health"].write_text(render_source_health(run_id, source_health), encoding="utf-8")
     paths["scholar_discovery"].write_text(render_scholar_discovery_report(run_id, scholar_seeds), encoding="utf-8")
@@ -47,11 +54,24 @@ def render_ingestion_report(
     papers: list[dict[str, Any]],
     evidence_cards: list[dict[str, Any]],
     scholar_seeds: list[dict[str, Any]],
+    collection_summary: dict[str, Any] | None = None,
+    enrichment_summary: dict[str, Any] | None = None,
 ) -> str:
+    collection_summary = collection_summary or {}
+    enrichment_summary = enrichment_summary or collection_summary.get("enrichment", {})
     branch_counts = _branch_counts(evidence_cards)
     route_counts = _route_counts(evidence_cards)
     manual_count = sum(1 for card in evidence_cards if card["classification"].get("manual_review_required"))
     retracted_count = sum(1 for paper in papers if paper.get("is_retracted") is True)
+    raw_counts = collection_summary.get("raw_records_collected_by_source", {})
+    relevance_rejected = collection_summary.get("records_rejected_by_relevance", 0)
+    relevance_manual_review = collection_summary.get("records_manual_review_by_relevance", 0)
+    enrichment_counts = enrichment_summary.get("enriched_records_by_source", {})
+    enrichment_target_count = enrichment_summary.get("target_count", 0)
+    selected_sources = collection_summary.get("selected_sources", [])
+    selected_query_set = collection_summary.get("selected_query_set")
+    run_timestamp = collection_summary.get("timestamp_utc")
+    rejected_count = sum(1 for card in evidence_cards if card["classification"].get("downstream_route") == "reject_log")
     unresolved_seeds = [
         seed
         for seed in scholar_seeds
@@ -62,8 +82,18 @@ def render_ingestion_report(
             f"# Research Ingestion Report",
             "",
             f"- run_id: `{run_id}`",
+            f"- run timestamp: `{run_timestamp or 'unknown'}`",
+            f"- selected sources: {', '.join(selected_sources) if selected_sources else 'unknown'}",
+            f"- selected query-set: `{selected_query_set or 'unknown'}`",
+            f"- raw records by source: {_inline_mapping(raw_counts)}",
+            f"- collection relevance rejected: {relevance_rejected}",
+            f"- collection relevance manual review: {relevance_manual_review}",
+            f"- enrichment target count: {enrichment_target_count}",
+            f"- enrichment records by source: {_inline_mapping(enrichment_counts)}",
             f"- normalized paper count: {len(papers)}",
+            f"- deduped paper count: {len(papers)}",
             f"- EvidenceCard count: {len(evidence_cards)}",
+            f"- rejected item count: {rejected_count}",
             f"- manual review required: {manual_count}",
             f"- retracted / blocked paper count: {retracted_count}",
             f"- unresolved Scholar seed count: {len(unresolved_seeds)}",
@@ -75,12 +105,16 @@ def render_ingestion_report(
             "- 논문 claim은 검증된 alpha가 아닙니다.",
             "- valuation 후보는 별도 valuation agent로 handoff해야 합니다.",
             "- Google Scholar snippet, ranking, citation count는 evidence로 사용하지 않았습니다.",
+            "- EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
             "",
             "## branch별 분류 건수",
             _counter_lines(branch_counts),
             "",
             "## downstream_route별 건수",
             _counter_lines(route_counts),
+            "",
+            "## source 오류 / rate-limit 요약",
+            _source_health_lines(collection_summary, enrichment_summary),
             "",
             "## unresolved Scholar seeds",
             _seed_lines(unresolved_seeds),
@@ -101,8 +135,8 @@ def write_classification_summary(path: Path, evidence_cards: list[dict[str, Any]
             fieldnames=[
                 "research_branch",
                 "downstream_route",
-                "main_score_branch_candidate",
                 "count",
+                "manual_review_count",
             ],
         )
         writer.writeheader()
@@ -110,17 +144,24 @@ def write_classification_summary(path: Path, evidence_cards: list[dict[str, Any]
             (
                 card["classification"]["research_branch"],
                 card["classification"]["downstream_route"],
-                card["classification"]["main_score_branch_candidate"],
             )
             for card in evidence_cards
         )
-        for (branch, route, main_branch), count in sorted(counts.items()):
+        manual_counts = Counter(
+            (
+                card["classification"]["research_branch"],
+                card["classification"]["downstream_route"],
+            )
+            for card in evidence_cards
+            if card["classification"].get("manual_review_required")
+        )
+        for (branch, route), count in sorted(counts.items()):
             writer.writerow(
                 {
                     "research_branch": branch,
                     "downstream_route": route,
-                    "main_score_branch_candidate": main_branch,
                     "count": count,
+                    "manual_review_count": manual_counts[(branch, route)],
                 }
             )
 
@@ -130,8 +171,8 @@ def render_source_health(run_id: str, source_health: dict[str, Any]) -> str:
         "# Source Health",
         "",
         f"- run_id: `{run_id}`",
-        "- API key values are redacted and must not appear in this report.",
-        "- rate-limit / 403 / 429 events require conservative retry or manual review.",
+        "- API key 값은 redaction 대상이며 이 보고서에 노출되면 안 됩니다.",
+        "- rate-limit / 403 / 429 이벤트는 보수적 retry 또는 수동 검토가 필요합니다.",
         "",
     ]
     if not source_health:
@@ -186,9 +227,10 @@ def render_handoff_summary(run_id: str, evidence_cards: list[dict[str, Any]]) ->
         "# Handoff Summary",
         "",
         f"- run_id: `{run_id}`",
-        "- EvidenceCards are not adopted scores.",
-        "- paper claims are not verified alpha.",
-        "- valuation candidates must remain separated from the main technical Score Architect.",
+        "- EvidenceCard는 adopted score가 아닙니다.",
+        "- 논문 claim은 검증된 alpha가 아닙니다.",
+        "- valuation 후보는 main technical Score Architect와 분리해야 합니다.",
+        "- downstream agent가 구현 전 EvidenceCard와 제한 사항을 다시 검토해야 합니다.",
         "",
         "## route counts",
         _counter_lines(by_route),
@@ -223,6 +265,26 @@ def _counter_lines(counter: Counter) -> str:
     if not counter:
         return "- 없음"
     return "\n".join(f"- {key}: {counter[key]}" for key in sorted(counter))
+
+
+def _inline_mapping(mapping: dict[str, Any]) -> str:
+    if not mapping:
+        return "없음"
+    return ", ".join(f"{key}={value}" for key, value in sorted(mapping.items()))
+
+
+def _source_health_lines(collection_summary: dict[str, Any], enrichment_summary: dict[str, Any]) -> str:
+    lines: list[str] = []
+    for label, summary in [("collect", collection_summary), ("enrich", enrichment_summary)]:
+        if not summary:
+            continue
+        target_count = summary.get("target_count")
+        if target_count is not None:
+            lines.append(f"- {label}: target_count={target_count}, enriched_records={summary.get('enriched_records_written', 0)}")
+        plan = summary.get("plan", {})
+        if plan.get("offline"):
+            lines.append(f"- {label}: offline mode로 network call을 수행하지 않았습니다.")
+    return "\n".join(lines) if lines else "- 기록된 오류/rate-limit 요약이 없습니다. 자세한 내용은 source_health.md를 확인하세요."
 
 
 def _seed_lines(seeds: list[dict[str, Any]]) -> str:

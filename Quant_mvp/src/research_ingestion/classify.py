@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from .normalize import normalize_title
@@ -22,6 +23,7 @@ def classify_paper(
     policy_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     text = _paper_text(paper)
+    management_lane = _management_lane(paper)
     branch_hits = {
         branch: _keyword_hits(text, classification_config.get("branches", {}).get(branch, {}).get("keywords", []))
         for branch in ["technical", "valuation", "diagnostic", "out_of_scope"]
@@ -29,6 +31,8 @@ def classify_paper(
 
     if branch_hits["out_of_scope"]:
         branch = "out_of_scope"
+    elif management_lane == "backtest_methodology":
+        branch = "diagnostic"
     elif branch_hits["diagnostic"] and not branch_hits["technical"] and not branch_hits["valuation"]:
         branch = "diagnostic"
     elif branch_hits["technical"] and branch_hits["valuation"]:
@@ -60,12 +64,14 @@ def classify_paper(
         "main_score_branch_candidate": main_branch,
         "classification_confidence": confidence,
         "manual_review_required": manual_review,
-        "classification_reason_ko": _reason_ko(branch, branch_hits, paper),
+        "classification_reason_ko": _reason_ko(branch, branch_hits, paper, management_lane),
+        "management_lane": management_lane,
+        "source_query_sets": list(paper.get("research_query_sets", [])),
         "candidate_idea": {
             "candidate_name": paper.get("title"),
             "idea_summary_ko": _idea_summary_ko(paper, branch),
             "idea_summary_en": paper.get("abstract"),
-            "signal_family_candidate": _signal_family(text, classification_config),
+            "signal_family_candidate": None if management_lane == "backtest_methodology" else _signal_family(text, classification_config),
             "required_inputs": _required_inputs(branch, branch_hits),
             "unavailable_inputs": _unavailable_inputs(branch),
             "point_in_time_fundamentals_required": branch in {"valuation", "hybrid"},
@@ -99,7 +105,15 @@ def _paper_text(paper: dict[str, Any]) -> str:
 
 
 def _keyword_hits(text: str, keywords: list[str]) -> list[str]:
-    return [keyword for keyword in keywords if normalize_title(keyword) in text]
+    hits = []
+    for keyword in keywords:
+        normalized = normalize_title(keyword)
+        if not normalized:
+            continue
+        pattern = rf"(?<![a-z0-9가-힣]){re.escape(normalized)}(?![a-z0-9가-힣])"
+        if re.search(pattern, text):
+            hits.append(keyword)
+    return hits
 
 
 def _manual_review_required(branch: str, paper: dict[str, Any], policy_config: dict[str, Any] | None) -> bool:
@@ -111,6 +125,22 @@ def _manual_review_required(branch: str, paper: dict[str, Any], policy_config: d
     if paper.get("is_retracted") is True:
         return True
     return False
+
+
+def _management_lane(paper: dict[str, Any]) -> str | None:
+    lanes: list[str] = []
+    lane = paper.get("research_management_lane")
+    if lane:
+        lanes.append(str(lane))
+    for value in paper.get("research_management_lanes") or []:
+        text = str(value)
+        if text not in lanes:
+            lanes.append(text)
+    if "backtest_methodology" in lanes:
+        return "backtest_methodology"
+    if lanes:
+        return str(lanes[0])
+    return None
 
 
 def _formula_clarity(paper: dict[str, Any]) -> str:
@@ -144,9 +174,11 @@ def _confidence(branch: str, paper: dict[str, Any], formula_clarity: str, hits: 
     return "low"
 
 
-def _reason_ko(branch: str, hits: dict[str, list[str]], paper: dict[str, Any]) -> str:
+def _reason_ko(branch: str, hits: dict[str, list[str]], paper: dict[str, Any], management_lane: str | None = None) -> str:
     if paper.get("is_retracted") is True:
         return "retracted flag가 있어 보수적으로 reject_log 및 수동 검토 대상으로 표시했습니다."
+    if management_lane == "backtest_methodology" and branch == "diagnostic":
+        return "backtest_methodology lane으로 수집되어 score 후보가 아닌 백테스트 설계/검증 diagnostic backlog로 분리했습니다."
     if branch == "hybrid":
         return "technical keyword와 valuation/fundamental keyword가 함께 감지되어 hybrid_split_required로 분리했습니다."
     if branch == "valuation":

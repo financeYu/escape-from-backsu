@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from research_ingestion.sources.openalex_adapter import OpenAlexAdapter, reconstruct_abstract
+from research_ingestion.sources.http import SourceResponse
 
 
 OPENALEX_PAYLOAD = {
@@ -44,3 +45,20 @@ def test_openalex_redacts_api_key_in_request_metadata(monkeypatch):
     adapter = OpenAlexAdapter({"base_url": "https://api.openalex.org/works", "api_key_env_var": "OPENALEX_API_KEY"})
     metadata = adapter.request_metadata("https://api.openalex.org/works?api_key=secret-openalex-key")
     assert "secret-openalex-key" not in str(metadata)
+
+
+def test_openalex_fetch_uses_configured_rate_limiter(monkeypatch):
+    adapter = OpenAlexAdapter({"min_interval_seconds": 1.0, "max_concurrency": 1})
+    calls: list[str] = []
+
+    def fake_fetch_text_with_retries(**kwargs):
+        calls.append("fetch")
+        return SourceResponse(url=kwargs["url"], body='{"results":[]}', status=200, headers={}, retry_count=0)
+
+    monkeypatch.setattr(adapter._rate_limiter, "wait_before_request", lambda: calls.append("wait"))
+    monkeypatch.setattr(adapter._rate_limiter, "mark_request_complete", lambda: calls.append("mark"))
+    monkeypatch.setattr("research_ingestion.sources.openalex_adapter.fetch_text_with_retries", fake_fetch_text_with_retries)
+
+    adapter.fetch_search_response("momentum", per_page=1)
+
+    assert calls == ["wait", "fetch", "mark"]

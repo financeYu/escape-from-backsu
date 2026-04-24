@@ -1,16 +1,12 @@
 # Scholar Discovery Report
 
-## Summary
+## Scope
 
-Google Scholar was not queried directly.
+이번 보완 작업에서는 Google Scholar discovery import를 실행하지 않았다.
 
-This Step 5 research-support pass did not import Scholar Alerts, BibTeX, EndNote, RefMan, RefWorks, title lists, or citation seed files.
+Google Scholar는 discovery-only이며, scholar.google.com live request는 금지된다. 이번 작업에서도 direct request, scraping, browser automation, PDF download를 수행하지 않았다.
 
-## Policy status
+## Status Counts
 
-- `scholar.google.com` live request: not performed
-- headless browser Scholar extraction: not performed
-- proxy rotation or CAPTCHA bypass: not performed
-- Scholar-derived unresolved seeds: none
-
-If Scholar-derived inputs are added later, they must remain DiscoverySeeds until resolved through approved metadata sources.
+- 새 Scholar seed: 없음
+- unresolved seeds: 없음

@@ -1,36 +1,25 @@
 # Handoff Summary
 
-## Step 5 research-support handoff
+## Scope
 
-Primary report:
+이번 보완 작업에서는 live 수집을 실행하지 않았다.
 
-```text
-reports/research_ingestion/step5_candidate_evidence.md
-```
+## Guardrails
 
-## Downstream routes
+- EvidenceCard는 adopted score가 아닙니다.
+- 논문 claim은 검증된 alpha가 아닙니다.
+- valuation 후보는 main technical Score Architect와 분리해야 합니다.
+- downstream agent가 구현 전 EvidenceCard와 제한 사항을 다시 검토해야 합니다.
 
-- to technical_score_architect: EC-001, EC-002, EC-003, EC-004, EC-005, EC-006, EC-007, EC-008, EC-009
-- to diagnostic_backlog: EC-010, EC-011, CSD-009
-- to hybrid_split_required: none
-- to valuation_agent_handoff: none
-- to reject_log: RJ-001, RJ-002, RJ-003, RJ-004
+## Handoff Counts
 
-## Candidate draft handoff
+- 새 live collection 결과 없음
+- 새 technical_score_architect handoff 없음
+- 새 valuation_agent_handoff 없음
+- 새 hybrid_split_required 없음
+- 새 diagnostic_backlog 없음
+- 새 reject_log 없음
 
-Ready for Score Architect review:
+## Notes
 
-- `medium_term_relative_strength`
-- `short_term_overreaction`
-- `donchian_breakout_distance`
-- `moving_average_trend_structure`
-- `price_near_52w_high`
-- `time_series_trend_return`
-- `volume_participation_momentum_filter`
-- `trading_activity_variability_penalty`
-
-Diagnostic/regime context:
-
-- `realized_vol_percentile`
-
-No score implementation, backtest, adoption decision, or alpha claim was produced.
+- 이전 live/ad-hoc run 결과를 source-controlled report로 커밋하려면 run_id, source_health, raw snapshot 위치, live 실행 승인 여부를 별도 검토해야 한다.

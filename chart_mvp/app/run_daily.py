@@ -13,7 +13,7 @@ SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from stock_core.pipeline.daily_update import run_daily_top5_update
+from stock_core.pipeline.daily_update import run_daily_top5_update, run_daily_top5_update_if_due
 from stock_core.utils.logging_utils import configure_logging
 
 
@@ -52,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip chart image generation during the batch",
     )
+    parser.add_argument(
+        "--due-only",
+        action="store_true",
+        help="Run only when the latest business-day 21:00 update is due or missed",
+    )
     return parser
 
 
@@ -61,7 +66,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    top5_df, meta = run_daily_top5_update(
+    runner = run_daily_top5_update_if_due if args.due_only else run_daily_top5_update
+    top5_df, meta = runner(
         pages=args.pages,
         use_cache=not args.no_cache,
         refresh_universe=args.refresh_universe,
@@ -70,6 +76,14 @@ def main(argv: list[str] | None = None) -> int:
         top_n=args.top_n,
         use_market_cap_override=args.market_cap_override,
     )
+
+    if top5_df is None:
+        print()
+        print("Daily update skipped")
+        print(f"Reason: {meta['reason']}")
+        print(f"Due at: {meta.get('due_at')}")
+        print(f"Last successful update date: {meta.get('due_last_successful_update_date')}")
+        return 0
 
     print()
     print(f"Top {args.top_n} Summary")

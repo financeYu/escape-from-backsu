@@ -8,11 +8,14 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 
 | 항목 | 상태 |
 | --- | --- |
-| 현재 단계 | Step 5: `Score Architect: MVP 기술 점수 후보 정의` |
+| 현재 단계 | Step 7: `기술 지표 계산 레이어 구현` |
 | Step 1 | COMPLETE or mostly complete |
-| Step 2 | PARTIALLY COMPLETE |
+| Step 2 | COMPLETE |
 | Step 3 | COMPLETE |
 | Step 4 | COMPLETE |
+| Step 5 | COMPLETE |
+| Step 6 | COMPLETE |
+| Step 7 | NEXT, not implemented yet |
 | 밸류에이션 상태 | `valuation_status = deferred` |
 | 금융 데이터 사용 | `inventory_only_or_gui_display_only` |
 | 백테스트 | Step 17 전까지 금지 |
@@ -42,12 +45,15 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 | `docs/technical_valuation_boundary.md` | 기술 분석과 밸류에이션 경계 |
 | `docs/score_branch_policy.md` | Step 4 score branch 분류 정책 |
 | `docs/selection_criteria.md` | Step 4 technical / valuation / diagnostic routing 기준 |
+| `docs/review_flow.md` | subproject-first review -> master-up 운영 흐름 |
+| `docs/master_up_template.md` | 하위 프로젝트 master-up 제출 template |
+| `docs/review_mvp_policy.md` | `review_mvp` specialist review 호출 기준 |
 | `config/` | root-level config 초안 |
 | `src/` | Step 3에서 만든 target module boundary |
 | `chart_mvp/` | 현재 실행 가능한 스캐너/차트/캐시 하위 프로젝트 |
 | `Quant_mvp/` | 점수 설계, 기술 검토, 밸류에이션 경계 문서 |
 | `reserch_mvp/` | 리서치 수집/증거 준비 reference project |
-| `review_mvp/` | 코드 리뷰와 최종 검증 보조 도구 |
+| `review_mvp/` | 전문 코드 리뷰와 선택적 최종 검증 보조 도구 |
 
 ## 로드맵
 
@@ -57,10 +63,12 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 
 ```text
 Step 1: 에이전트 / 운영 규칙 수립 = COMPLETE or mostly complete
-Step 2: 네이버 파이낸셜 데이터 수집기 검증 = PARTIALLY COMPLETE
+Step 2: 네이버 파이낸셜 데이터 수집기 검증 = COMPLETE
 Step 3: 디렉터리 / config / 표준 스키마 정리 = COMPLETE
 Step 4: 기술 분석과 밸류에이션 경계 고정 = COMPLETE
-Step 5: Score Architect: MVP 기술 점수 후보 정의 = NEXT
+Step 5: Score Architect: MVP 기술 점수 후보 정의 = COMPLETE
+Step 6: 데이터 전처리 파이프라인 구현 = COMPLETE
+Step 7: 기술 지표 계산 레이어 구현 = NEXT, not implemented yet
 ```
 
 Step 4 정리 기준:
@@ -109,4 +117,4 @@ Windows PowerShell에서 한글 출력이 깨지면 프로젝트 루트에서 �
 
 현재 저장소에는 legacy/background artifact가 일부 남아 있습니다. 예를 들어 `outputs/latest_top*`와 `data/scan_results/*`는 과거 산출물이며, 현재 Step에서 새로 만든 랭킹이 아닙니다.
 
-Step 5부터는 Score Architect 단계입니다. 즉, 먼저 점수 후보의 목적, 입력, 공식 설계 경로, normalization 후보, 실패 모드, 중복 위험을 문서화해야 합니다. 구현은 그 다음입니다.
+현재 다음 구현 단계는 Step 7 기술 지표 계산 레이어입니다. 이 단계에서도 score implementation, ranking generation, composite scoring, valuation/fundamental scoring, backtest는 허용된 roadmap step 전까지 금지됩니다.

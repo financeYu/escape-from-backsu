@@ -1,20 +1,21 @@
-# In this file, `enabled = true` means visible in the Step 5 candidate
-# registry for Score Architect review only. It does not enable runtime score
-# calculation, Research Tester implementation, ranking, composite scoring, or
-# backtesting.
+# In this file, `enabled = true` means visible in the candidate registry.
+# Step 9 may use the formula-locked candidates for raw Research Tester output
+# only. It does not enable runtime production scoring, ranking, composite
+# scoring, valuation scoring, or backtesting.
 
 [registry_status]
-registry_stage = "step_5_score_architect_candidate_registry"
+registry_stage = "step_9_research_tester_raw_score_contract"
 registry_alignment = "official_step_5_score_definitions"
 official_candidate_count = 8
 runtime_score_implementation = false
 production_scoring_enabled = false
-research_tester_implementation_enabled = false
+research_tester_implementation_enabled = true
+raw_score_research_testing_enabled = true
 ranking_generation_enabled = false
 composite_scoring_enabled = false
 backtest_enabled = false
 valuation_branch_enabled = false
-candidate_enabled_key_meaning = "eligible_for_score_architect_review_only"
+candidate_enabled_key_meaning = "eligible_for_score_architect_review_and_step9_raw_testing_only"
 branch_policy_doc = "../docs/score_branch_policy.md"
 score_catalog_doc = "docs/score_catalog.md"
 score_definitions_doc = "docs/score_definitions.md"
@@ -41,7 +42,9 @@ minimum_history = 60
 score_direction = "higher_is_stronger_technical_oversold_reversal_setup"
 blocked_by_data = false
 definition_doc_anchor = "short_term_overreaction"
-notes = "Technical mean-reversion candidate only; not valuation cheapness."
+step9_formula_variant = "negative_configured_short_return"
+step9_formula_window_source = "Quant_mvp/config/windows.toml [returns].short"
+notes = "Technical mean-reversion candidate only; not valuation cheapness. Step 9 raw variant is -return_N."
 
 [[scores]]
 score_id = "atr_adjusted_oversold_distance"
@@ -55,12 +58,14 @@ runtime_enabled = false
 normalization = "rolling_percentile"
 secondary_normalization = "cross_sectional_percentile"
 required_data = ["ohlcv"]
-required_inputs = ["high", "low", "close", "atr", "moving_average_or_reference_price"]
+required_inputs = ["close", "atr", "bollinger_mid"]
 minimum_history = 60
 score_direction = "higher_is_deeper_atr_scaled_technical_oversold_distance"
 blocked_by_data = false
 definition_doc_anchor = "atr_adjusted_oversold_distance"
-notes = "Reference choice must be fixed before Step 9 implementation."
+step9_formula_variant = "bollinger_mid_minus_close_divided_by_atr"
+step9_formula_window_source = "Quant_mvp/config/windows.toml [indicators].bollinger and [volatility].atr"
+notes = "Reference is fixed to Bollinger middle band for Step 9 raw testing."
 
 [[scores]]
 score_id = "donchian_breakout_distance"
@@ -136,7 +141,9 @@ minimum_history = 90
 score_direction = "higher_is_stronger_bullish_divergence_proxy"
 blocked_by_data = false
 definition_doc_anchor = "rsi_price_divergence"
-notes = "Subjective swing or chart-pattern labeling is out of scope for MVP."
+step9_formula_variant = "negative_return_times_positive_rsi_delta_proxy"
+step9_formula_window_source = "Quant_mvp/config/windows.toml [returns].short and [indicators].rsi"
+notes = "Subjective swing or chart-pattern labeling is out of scope for MVP; Step 9 uses the deterministic proxy only."
 
 [[scores]]
 score_id = "realized_vol_percentile"

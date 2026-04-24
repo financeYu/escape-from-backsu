@@ -17,6 +17,7 @@ from stock_core.providers.naver_price_provider import get_price_df
 from stock_core.ranking.scorer import score_stock
 from stock_core.ranking.selector import select_top_stocks
 from stock_core.utils.constants import CLOSE_COLUMN, DATE_COLUMN, VOLUME_COLUMN
+from stock_core.utils.daily_update_schedule import DailyUpdateDueStatus, get_daily_update_due_status
 from stock_core.utils.logging_utils import get_logger
 from stock_core.utils.paths import DATA_DIR, OUTPUTS_CHARTS_DIR, OUTPUTS_DIR, RESULTS_DIR
 
@@ -419,8 +420,11 @@ def run_daily_top5_update(
             file_name_builder=lambda row: f"{row.code}.png",
         )
 
+    completed_at = datetime.now()
     meta = {
-        "as_of": datetime.now().strftime("%Y-%m-%d"),
+        "as_of": completed_at.strftime("%Y-%m-%d"),
+        "completed_at": completed_at.isoformat(timespec="seconds"),
+        "last_successful_update_date": completed_at.strftime("%Y-%m-%d"),
         "pages": pages,
         "top_n": top_n,
         "use_market_cap_override": use_market_cap_override,
@@ -446,4 +450,52 @@ def run_daily_top5_update(
     _export_outputs(top_df, meta)
     logger.info("Exported latest top-ranked outputs to %s", OUTPUTS_DIR)
 
+    return top_df, meta
+
+
+def get_daily_top5_due_status() -> DailyUpdateDueStatus:
+    """Return whether the Top-N output is due for the business-day schedule."""
+
+    return get_daily_update_due_status(OUTPUTS_DIR / "last_run_meta.json")
+
+
+def run_daily_top5_update_if_due(
+    pages: int = 20,
+    use_cache: bool = True,
+    refresh_universe: bool = False,
+    render_charts: bool = True,
+    max_workers: Optional[int] = None,
+    progress_callback: Optional[Callable[[int, int, int], None]] = None,
+    top_n: int = DEFAULT_TOP_N,
+    use_market_cap_override: bool = False,
+) -> tuple[Optional[pd.DataFrame], dict]:
+    """Run the Top-N update only when the business-day 21:00 deadline is due."""
+
+    due_status = get_daily_top5_due_status()
+    due_meta = {
+        "due_check": True,
+        "is_due": due_status.is_due,
+        "due_at": due_status.due_at.isoformat(timespec="seconds") if due_status.due_at else None,
+        "due_last_successful_update_date": (
+            due_status.last_successful_update_date.isoformat()
+            if due_status.last_successful_update_date
+            else None
+        ),
+        "reason": due_status.reason,
+    }
+
+    if not due_status.is_due:
+        return None, due_meta
+
+    top_df, meta = run_daily_top5_update(
+        pages=pages,
+        use_cache=use_cache,
+        refresh_universe=refresh_universe,
+        render_charts=render_charts,
+        max_workers=max_workers,
+        progress_callback=progress_callback,
+        top_n=top_n,
+        use_market_cap_override=use_market_cap_override,
+    )
+    meta.update(due_meta)
     return top_df, meta

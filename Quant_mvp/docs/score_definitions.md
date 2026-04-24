@@ -30,13 +30,13 @@ not activate runtime score calculation.
   candidates for technical mean reversion.
 - `market_regime_where_it_helps`: Range-bound or choppy markets, and post-shock
   conditions where broad selling pressure may have overshot.
-- `raw_input_features`: `close`, trailing daily returns, optional realized
-  volatility from `close`.
-- `raw_formula_design`: Compute trailing return over predefined short windows
-  from `Quant_mvp/config/windows.toml`, initially 5, 10, or 20 trading days.
-  Transform recent weakness into a higher candidate score, for example
-  `-return_N` or `-(return_N / realized_vol_20)`. The exact variant must be
-  selected before implementation.
+- `raw_input_features`: `close`, trailing daily returns.
+- `raw_formula_design`: MVP locked variant for Step 9:
+  `short_term_overreaction_raw = -return_N`, where `N` is
+  `Quant_mvp/config/windows.toml -> [returns].short`. Recent negative returns
+  become positive raw values; recent positive returns become negative raw
+  values. Volatility scaling is deferred so the first Research Tester pass can
+  compare this simple baseline against the ATR-adjusted variant.
 - `normalization_candidates`: Primary `cross_sectional_percentile` for same-date
   ranking; secondary `rolling_percentile` for per-stock chart context.
 - `minimum_history_needed`: 60 trading days.
@@ -57,14 +57,13 @@ not activate runtime score calculation.
   after scaling by realized range.
 - `market_regime_where_it_helps`: Mean-reverting regimes where large price moves
   relative to typical range tend to normalize.
-- `raw_input_features`: `high`, `low`, `close`, ATR, moving average or recent
-  reference price.
-- `raw_formula_design`: Compute ATR from the configured ATR window, then measure
-  distance from `close` to a trailing reference such as a 20-day moving average
-  or prior rolling low. Candidate raw form:
-  `(close_t - moving_average_20_t) / ATR_14_t`, inverted so deeper downside
-  distance maps to a higher oversold score. Reference choice must be fixed before
-  implementation.
+- `raw_input_features`: `close`, ATR, Bollinger middle band.
+- `raw_formula_design`: MVP locked variant for Step 9:
+  `atr_adjusted_oversold_distance_raw = (bollinger_mid_N_t - close_t) / ATR_M_t`,
+  where `N` is `Quant_mvp/config/windows.toml -> [indicators].bollinger` and
+  `M` is `Quant_mvp/config/windows.toml -> [volatility].atr`. A deeper move
+  below the configured moving-average anchor maps to a higher raw value. Prior
+  rolling-low anchoring is deferred to avoid adding another overlapping variant.
 - `normalization_candidates`: Primary `rolling_percentile` for each stock's own
   oversold context; secondary `cross_sectional_percentile` for ranking.
 - `minimum_history_needed`: 60 trading days.
@@ -164,12 +163,12 @@ not activate runtime score calculation.
 - `market_regime_where_it_helps`: Exhausted selloffs and choppy reversal
   regimes where price weakness is no longer confirmed by momentum.
 - `raw_input_features`: `close`, RSI, trailing price change, trailing RSI change.
-- `raw_formula_design`: Avoid discretionary swing labeling in the MVP. Candidate
-  raw proxy: price return over a predefined lookback is negative while RSI change
-  over the same or shorter lookback is positive, scaled by the magnitude of
-  disagreement. Example design path:
-  `max(0, -return_N) * max(0, RSI_t - RSI_{t-N})`. The lookback must be fixed
-  before testing.
+- `raw_formula_design`: Avoid discretionary swing labeling in the MVP. MVP
+  locked deterministic proxy for Step 9:
+  `rsi_price_divergence_raw = max(0, -return_N) * max(0, RSI_t - RSI_{t-N})`,
+  where `N` is `Quant_mvp/config/windows.toml -> [returns].short` and RSI uses
+  `Quant_mvp/config/windows.toml -> [indicators].rsi`. Non-divergence rows are
+  allowed to emit `0.0`; missing warmup/input rows stay missing.
 - `normalization_candidates`: Primary `rolling_percentile`; optional
   `cross_sectional_percentile` only after missingness and sparsity are reviewed.
 - `minimum_history_needed`: 90 trading days.

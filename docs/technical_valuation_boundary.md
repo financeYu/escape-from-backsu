@@ -87,6 +87,18 @@ Financial data는 아래 용도로 사용할 수 없다.
 - alpha claims
 - point-in-time safety 없는 valuation verdict
 
+## Step 18 Carry-Forward
+
+Step 2 financial collector validation은 완료되었지만 현재 Naver financial rows에는 disclosure, filing, availability date가 없다.
+
+Step 18 시작 시 아래 항목을 먼저 처리한다.
+
+- point-in-time financial metadata schema 확정
+- `filing_date`, `availability_date`, `disclosure_id` 또는 `source_report_id` 확보 가능성 검토
+- reporting lag policy 문서화
+- stale data policy 문서화
+- row-level point-in-time 검증 없이는 valuation/fundamental scoring 금지
+
 ## Handoff Rule
 
 사용자가 valuation-aware work를 요청하면 아래 문서로 라우팅한다.

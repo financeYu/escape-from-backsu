@@ -40,15 +40,23 @@ Thresholds should come from config. They are validation thresholds, not alpha th
 
 ## Financial Validation Status
 
-Financial validation is not complete.
+Financial collector validation is complete for Step 2.
 
-Step 3 inspection found no cached file matching:
+The `chart_mvp` Naver financial loader/cache path was used to generate local runtime caches matching:
 
 ```text
 chart_mvp/data/*_financial_statements.csv
 ```
 
-Therefore financial validation has not actually been run against a cached sample.
+Current validation context:
+
+- financial cache files: 200
+- financial rows: 26,208
+- unique KOSPI200 codes: 200
+- current report: `chart_mvp/reports/data_quality/financial_data_check.md`
+- source-controlled summary: `docs/step2_financial_validation_summary.md`
+
+These runtime caches and data-quality reports are not source-controlled project state.
 
 Financial data remains:
 
@@ -56,7 +64,12 @@ Financial data remains:
 valuation_deferred
 inventory_only
 GUI display only if already present
+point_in_time_status = unverified
 ```
+
+The Naver financial rows currently extracted by `chart_mvp` do not include disclosure, filing, or availability dates. Therefore financial data remains unsafe for valuation scoring until a later valuation branch obtains point-in-time-safe fields and lag policy.
+
+The follow-up is explicitly assigned to Step 18. Step 9/10 technical work must continue to reject financial/fundamental inputs.
 
 ## Report Outputs
 
@@ -71,7 +84,7 @@ Current Step 3 reports:
 - `reports/data_quality/legacy_output_inventory.md`
 - `reports/data_quality/subproject_inventory.md`
 
-Existing child-project reports under `chart_mvp/reports/data_quality/` are legacy/background artifacts unless explicitly regenerated in a validation-only step.
+Existing child-project reports under `chart_mvp/reports/data_quality/` are legacy/background artifacts unless explicitly regenerated in a validation-only step. `financial_data_check.md` has been regenerated for Step 2 completion; the directory remains runtime output.
 
 Step 6 preprocessing reports are configured in `config/data.toml`:
 

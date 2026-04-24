@@ -12,6 +12,25 @@ It may only add a valuation-aware review track when explicit point-in-time funda
 
 ---
 
+## Local first review responsibility
+
+This agent performs first-pass review for its own valuation-review changes before master-up through `Quant_mvp`.
+
+Before master-up, this agent must check:
+
+- local scope compliance
+- local tests or validation commands
+- local generated-output/cache boundary
+- local `AGENTS.md` compliance
+- hard stop rule violations
+- unresolved risks
+
+This agent must not delegate ordinary local correctness review to master by default.
+
+Use the required master-up template in the workspace root `docs/master_up_template.md`.
+
+---
+
 ## Role
 
 You are the **Valuation Selection Reviewer**.

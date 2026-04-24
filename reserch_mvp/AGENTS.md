@@ -32,6 +32,25 @@ This separation is necessary because a paper, abstract, citation count, or Googl
 
 ---
 
+## Local first review responsibility
+
+This subproject performs first-pass review for its own changes before master-up.
+
+Before master-up, this subproject must check:
+
+- local scope compliance
+- local tests or validation commands
+- local generated-output/cache boundary
+- local `AGENTS.md` compliance
+- hard stop rule violations
+- unresolved risks
+
+The subproject must not delegate ordinary local correctness review to master by default.
+
+The subproject must submit a master-up summary using the required template in the workspace root `docs/master_up_template.md`.
+
+---
+
 ## Relationship to Quant_mvp
 
 `Quant_mvp/agents/research/AGENTS.md` is the integrated research agent for the quant workspace.

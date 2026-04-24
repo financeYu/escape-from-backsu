@@ -35,6 +35,18 @@ def test_arxiv_paging_parameter_generation():
     assert "search_query=all%3Amomentum" in url
 
 
+def test_arxiv_plain_multi_term_query_uses_and_terms():
+    adapter = ArxivAdapter({"min_interval_seconds": 3.2, "max_concurrency": 1, "base_url": "https://export.arxiv.org/api/query"})
+    url = adapter.build_search_url("stock momentum returns", start=0, max_results=2)
+    assert "search_query=all%3Astock+AND+all%3Amomentum+AND+all%3Areturns" in url
+
+
+def test_arxiv_advanced_query_passthrough():
+    adapter = ArxivAdapter({"min_interval_seconds": 3.2, "max_concurrency": 1, "base_url": "https://export.arxiv.org/api/query"})
+    url = adapter.build_search_url("cat:q-fin.ST AND all:momentum", start=0, max_results=2)
+    assert "search_query=cat%3Aq-fin.ST+AND+all%3Amomentum" in url
+
+
 def test_arxiv_xml_parsing_from_fixture():
     adapter = ArxivAdapter({"min_interval_seconds": 3.2, "max_concurrency": 1})
     papers = adapter.parse_atom(ARXIV_XML, raw_snapshot_ref="raw.xml")

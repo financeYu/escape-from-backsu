@@ -57,7 +57,7 @@ Current extracted financial statement rows use:
 
 Point-in-time status policy:
 
-- If `disclosure_date`, `availability_date`, `available_at`, `collected_at`, or `filing_date` is present, `point_in_time_status` may be marked `verified`.
+- If `disclosure_date`, `availability_date`, `available_at`, or `filing_date` is present and populated with parseable dates for the relevant rows, `point_in_time_status` may be marked `verified`.
+- `collected_at` records only the local observation or collection time. It does not prove historical financial-statement availability and must not verify point-in-time safety by itself.
 - If none of those columns is present, `point_in_time_status = unverified`.
 - Financial statement data must not be merged into any technical score during Project Step 2.
-

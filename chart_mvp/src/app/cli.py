@@ -7,7 +7,7 @@ import sys
 
 from stock_core.charts.matplotlib_renderer import plot_stock_data
 from stock_core.cache.csv_cache import get_cache_path, refresh_stock_data
-from stock_core.pipeline.daily_update import run_daily_top5_update
+from stock_core.pipeline.daily_update import run_daily_top5_update, run_daily_top5_update_if_due
 from stock_core.providers.naver_finance import fetch_stock_name
 
 
@@ -45,10 +45,12 @@ def run_daily_scan(
     render_charts: bool = True,
     top_n: int = 5,
     use_market_cap_override: bool = False,
+    due_only: bool = False,
 ) -> int:
     """Run the current daily Top-N batch flow used by the GUI and scripts."""
 
-    top5_df, meta = run_daily_top5_update(
+    runner = run_daily_top5_update_if_due if due_only else run_daily_top5_update
+    top5_df, meta = runner(
         pages=pages,
         use_cache=use_cache,
         refresh_universe=refresh_universe,
@@ -57,6 +59,12 @@ def run_daily_scan(
         top_n=top_n,
         use_market_cap_override=use_market_cap_override,
     )
+    if top5_df is None:
+        print(f"[Info] Daily update skipped: {meta['reason']}")
+        print(f"[Info] Due at: {meta.get('due_at')}")
+        print(f"[Info] Last successful update date: {meta.get('due_last_successful_update_date')}")
+        return 0
+
     print(top5_df.to_string(index=False))
     print(f"[Info] Saved top-{top_n} table to: {meta['output_csv']}")
     print(f"[Info] Saved JSON to: {meta['output_json']}")
@@ -107,6 +115,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Prioritize the configured market-cap leader codes before filling the rest by score",
     )
+    scan_parser.add_argument(
+        "--due-only",
+        action="store_true",
+        help="Run only when the latest business-day 21:00 update is due or missed",
+    )
 
     single_parser = subparsers.add_parser("single", help="Render a single-stock chart")
     single_parser.add_argument("--code", default="005930", help="Stock code")
@@ -136,6 +149,7 @@ def main(argv: list[str] | None = None) -> int:
             render_charts=not getattr(args, "no_render_charts", False),
             top_n=getattr(args, "top_n", 5),
             use_market_cap_override=getattr(args, "market_cap_override", False),
+            due_only=getattr(args, "due_only", False),
         )
 
     if args.command == "single":

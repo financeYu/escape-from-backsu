@@ -2,7 +2,11 @@
 
 Swift 기준 리뷰 프롬프트를 Python 기준으로 옮기고, 그 기준 일부를 자동 점검하는 리뷰 프로그램입니다.
 
-`master_mvp` 안에서는 마스터 에이전트의 코드리뷰/최종 검증 보조 프로젝트로 사용합니다.
+`master_mvp` 안에서는 고위험 변경, cross-project 변경, roadmap gate 근처 변경, 또는 unresolved risk가 남은 변경을 점검하는 specialist review 보조 프로젝트로 사용합니다.
+
+기본 리뷰는 가장 좁은 책임 범위를 가진 하위 프로젝트에서 시작합니다. `review_mvp`는 모든 작은 local change의 필수 병목이 아닙니다.
+
+자세한 호출 기준은 `../docs/review_mvp_policy.md`와 `../docs/review_flow.md`를 따릅니다.
 
 ## Python 코드 리뷰 기준
 
@@ -91,6 +95,8 @@ py -3 -m unittest discover -s tests
 py -3 review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --exclude-dir samples --format markdown
 py -3 -m unittest discover -s review_mvp/tests -v
 ```
+
+좁은 local change는 responsible subproject의 local first review와 local tests/checks만으로 충분할 수 있습니다. 위 명령은 specialist review 호출 조건에 해당할 때 사용합니다.
 
 ## `/review` 프롬프트 예시
 

@@ -61,6 +61,25 @@ If routing is uncertain, set `manual_review_required: true` and use the more con
 
 ---
 
+## Local first review responsibility
+
+This agent performs first-pass review for its own research-ingestion changes before master-up through `Quant_mvp`.
+
+Before master-up, this agent must check:
+
+- local scope compliance
+- local tests or validation commands
+- local generated-output/cache boundary
+- local `AGENTS.md` compliance
+- hard stop rule violations
+- unresolved risks
+
+This agent must not delegate ordinary local correctness review to master by default.
+
+Use the required master-up template in the workspace root `docs/master_up_template.md`.
+
+---
+
 ## Corrections applied before implementation
 
 The following integration issues are resolved in this agent specification:
@@ -158,6 +177,7 @@ PDF fulltext may only be implemented when open-access status, license policy, so
 
 Do not implement trading scores.
 Do not implement backtests.
+Do not calculate forward returns for paper validation.
 Do not create final composite scores.
 Do not select adopted scores.
 Do not optimize strategy parameters.
@@ -267,6 +287,36 @@ Rules:
 Use `research_branch: diagnostic` when the paper is about methodology, testing, data leakage, overfitting, turnover, transaction costs, redundancy, factor decay, publication bias, multiple testing, survivorship bias, or robustness.
 
 Diagnostic items are useful for improving the research process, but they are not ranking alpha signals.
+
+### Backtest literature policy
+
+Backtest-related papers may be collected only as research-ingestion material.
+
+Use `research_branch: diagnostic` when the paper is mainly about:
+
+- backtest methodology
+- walk-forward validation
+- train/test split design
+- data leakage
+- lookahead bias
+- survivorship bias
+- transaction costs
+- slippage
+- turnover
+- overfitting
+- multiple testing
+- performance decay
+- robustness checks
+
+If a paper contains both a candidate trading signal and paper-reported backtest results, split the interpretation:
+
+- the candidate signal idea is classified by required inputs as `technical`, `valuation`, or `hybrid`
+- the reported backtest design, limitations, and performance claims are recorded as diagnostic evidence or risk notes
+- paper-reported performance remains `paper_claim_only`
+- no repository backtest is performed
+- no alpha validation is claimed
+
+The ingestion agent must not calculate forward returns, reproduce paper backtests, optimize parameters, rank stocks, or validate strategy performance before Step 17.
 
 ### Out of scope
 
@@ -414,6 +464,7 @@ Use the OpenAlex Works API for scholarly metadata.
 Rules:
 
 - API key must come from environment variable or config reference.
+- Live collection must require `OPENALEX_API_KEY`; no-key mode is limited to dry-run, offline, or explicitly documented demo behavior.
 - Do not hardcode API keys.
 - Do not store API keys in request logs or raw request metadata.
 - Store raw JSON response snapshots.
@@ -468,6 +519,24 @@ config/research_scholar_discovery.toml
 ```
 
 All source URLs, rate limits, timeouts, page sizes, query packs, classification keywords, branch toggles, and output paths should live in config rather than inline constants.
+
+`config/research_queries.toml` should include a diagnostic query set for backtest-methodology literature. Example:
+
+```toml
+[query_sets.diagnostic_backtest_methodology]
+research_branch = "diagnostic"
+downstream_route = "diagnostic_backlog"
+terms = [
+  "backtesting methodology",
+  "walk-forward validation",
+  "lookahead bias",
+  "survivorship bias",
+  "transaction costs",
+  "data snooping",
+  "multiple testing",
+  "overfitting trading strategies"
+]
+```
 
 ---
 
@@ -735,6 +804,17 @@ EvidenceCard:
     publication_bias_risk_flag: boolean
     redundancy_risk_flag: boolean
 
+  backtest_context:
+    paper_reported_backtest_present: boolean
+    reported_metrics: list[string]
+    reported_universe: string | null
+    reported_period: string | null
+    transaction_costs_discussed: boolean
+    survivorship_bias_discussed: boolean
+    lookahead_bias_discussed: boolean
+    reproducibility_level: clear | partial | vague | not_reported
+    limitations_ko: string | null
+
   guardrails:
     no_score_adopted: true
     no_backtest_performed: true
@@ -896,6 +976,9 @@ python -m research_ingestion run-all \
   --sources arxiv,openalex \
   --query-set technical_momentum \
   --run-id 20260424_000000
+
+python -m research_ingestion refresh \
+  --run-id 20260424_000000
 ```
 
 Rules:
@@ -906,6 +989,21 @@ Rules:
 - `--allow-pdf` must require explicit policy confirmation.
 - Scholar import commands must read local inputs only and must not call `scholar.google.com`.
 - Scholar resolution commands may call only approved metadata APIs.
+- `refresh` must preserve existing normalized papers, compare newly collected candidates against the current corpus, write a new-only artifact, regenerate EvidenceCards/reports, and avoid score adoption, backtest, valuation scoring, PDF fulltext, and Google Scholar live requests.
+
+## Periodic refresh policy
+
+The research-ingestion workflow should support recurring freshness checks for papers that are not yet in the local corpus.
+
+Rules:
+
+- Refresh cadence, default sources, default query sets, stale thresholds, and whether valuation query sets are included must live in `config/research_policy.toml`.
+- A refresh run must treat newly discovered records as metadata candidates until they pass normalization, dedupe, classification, and EvidenceCard generation.
+- Existing `papers.jsonl` records must be preserved unless a duplicate match safely merges metadata from approved sources.
+- The run must write a new-only artifact so reviewers can inspect which papers were added since the previous corpus state.
+- Unresolved Scholar seeds may be rechecked only through approved metadata APIs, never through direct Scholar scraping.
+- `fundamental_valuation` refresh should remain opt-in while valuation/fundamental scoring is deferred.
+- Refresh reports must state that no score adoption, backtest, alpha validation, or valuation review occurred.
 
 ---
 
@@ -948,6 +1046,8 @@ The MVP implementation must include tests for:
 - price-only valuation rejection
 - hybrid split-required routing
 - diagnostic item routing
+- backtest literature routing to `diagnostic_backlog`
+- paper-reported backtest context captured without forward-return calculation
 - out-of-scope rejection
 - PDF download disabled by default
 - Korean ingestion report generation

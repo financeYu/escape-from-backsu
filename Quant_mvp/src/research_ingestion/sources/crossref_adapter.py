@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 from urllib.parse import quote, urlencode
-from urllib.request import Request, urlopen
 
-from ..normalize import make_normalized_paper, normalize_doi
-from ..redaction import assert_no_scholar_request, redact_mapping
+from ..normalize import clean_text, make_normalized_paper, normalize_doi
+from ..redaction import redact_mapping
+from .http import SourceRateLimiter, SourceResponse, fetch_text_with_retries
 
 
 class CrossrefAdapter:
@@ -17,9 +17,14 @@ class CrossrefAdapter:
         self.default_rows = int(config.get("default_rows", 25))
         self.polite_email_env_var = config.get("polite_email_env_var")
         self.plus_api_token_env_var = config.get("plus_api_token_env_var")
+        self._rate_limiter = SourceRateLimiter(
+            min_interval_seconds=float(config.get("min_interval_seconds", 0.0)),
+            max_concurrency=int(config.get("max_concurrency", 1)),
+            source_name=self.source_name,
+        )
 
-    def build_search_url(self, query: str, rows: int | None = None) -> str:
-        params = {"query.bibliographic": query, "rows": rows or self.default_rows}
+    def build_search_url(self, query: str, rows: int | None = None, offset: int = 0) -> str:
+        params = {"query.bibliographic": query, "rows": rows or self.default_rows, "offset": offset}
         return f"{self.base_url}?{urlencode(params)}"
 
     def build_doi_url(self, doi: str) -> str:
@@ -44,16 +49,43 @@ class CrossrefAdapter:
             env_var_names=[name for name in [self.polite_email_env_var, self.plus_api_token_env_var] if name],
         )
 
-    def fetch_search(self, query: str, rows: int | None = None) -> str:
-        url = self.build_search_url(query, rows=rows)
-        assert_no_scholar_request(url)
-        request = Request(url, headers=self.request_headers())
-        with urlopen(request, timeout=float(self.config.get("timeout_seconds", 20))) as response:
-            return response.read().decode("utf-8")
+    def fetch_search_response(self, query: str, rows: int | None = None, offset: int = 0) -> SourceResponse:
+        url = self.build_search_url(query, rows=rows, offset=offset)
+        self._rate_limiter.wait_before_request()
+        try:
+            return fetch_text_with_retries(
+                url=url,
+                headers=self.request_headers(),
+                timeout_seconds=float(self.config.get("timeout_seconds", 20)),
+                max_retries=int(self.config.get("max_retries", 0)),
+                retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
+            )
+        finally:
+            self._rate_limiter.mark_request_complete()
+
+    def fetch_search(self, query: str, rows: int | None = None, offset: int = 0) -> str:
+        return self.fetch_search_response(query, rows=rows, offset=offset).body
+
+    def fetch_doi_response(self, doi: str) -> SourceResponse:
+        url = self.build_doi_url(doi)
+        self._rate_limiter.wait_before_request()
+        try:
+            return fetch_text_with_retries(
+                url=url,
+                headers=self.request_headers(),
+                timeout_seconds=float(self.config.get("timeout_seconds", 20)),
+                max_retries=int(self.config.get("max_retries", 0)),
+                retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
+            )
+        finally:
+            self._rate_limiter.mark_request_complete()
+
+    def fetch_doi(self, doi: str) -> str:
+        return self.fetch_doi_response(doi).body
 
     def parse_works_json(self, payload: dict[str, Any], raw_snapshot_ref: str | None = None) -> list[dict[str, Any]]:
         message = payload.get("message", {})
-        items = message.get("items", [message] if message.get("DOI") else [])
+        items = _message_items(message)
         return [parse_crossref_work(item, raw_snapshot_ref=raw_snapshot_ref) for item in items]
 
     def parse_rate_limit_headers(self, headers: dict[str, str]) -> dict[str, str | None]:
@@ -96,27 +128,58 @@ def parse_crossref_work(item: dict[str, Any], raw_snapshot_ref: str | None = Non
 
 
 def _first(value: Any) -> str | None:
-    if isinstance(value, list) and value:
-        return value[0]
+    if isinstance(value, list):
+        return next((clean_text(item) for item in value if clean_text(item)), None)
     if isinstance(value, str):
-        return value
+        return clean_text(value)
     return None
 
 
 def _date_from_parts(date_obj: dict[str, Any] | None) -> str | None:
-    if not date_obj:
+    if not isinstance(date_obj, dict):
         return None
-    parts = (date_obj.get("date-parts") or [[]])[0]
+    date_parts = date_obj.get("date-parts")
+    if not isinstance(date_parts, list):
+        return None
+    parts = next((part for part in date_parts if isinstance(part, list) and part), None)
     if not parts:
         return None
-    year = int(parts[0])
-    month = int(parts[1]) if len(parts) > 1 else 1
-    day = int(parts[2]) if len(parts) > 2 else 1
+    year = _safe_int(next(iter(parts), None))
+    month = _safe_int(parts[1]) if len(parts) > 1 else 1
+    day = _safe_int(parts[2]) if len(parts) > 2 else 1
+    if year is None or month is None or day is None:
+        return None
+    if not 1 <= month <= 12 or not 1 <= day <= 31:
+        return None
     return f"{year:04d}-{month:02d}-{day:02d}"
 
 
 def _license_from_item(item: dict[str, Any]) -> str | None:
     licenses = item.get("license") or []
-    if not licenses:
+    if not isinstance(licenses, list):
         return None
-    return licenses[0].get("URL") or licenses[0].get("content-version")
+    for license_item in licenses:
+        if not isinstance(license_item, dict):
+            continue
+        value = clean_text(license_item.get("URL")) or clean_text(license_item.get("content-version"))
+        if value:
+            return value
+    return None
+
+
+def _message_items(message: Any) -> list[dict[str, Any]]:
+    if not isinstance(message, dict):
+        return []
+    items = message.get("items")
+    if isinstance(items, list):
+        return [item for item in items if isinstance(item, dict)]
+    if message.get("DOI"):
+        return [message]
+    return []
+
+
+def _safe_int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None

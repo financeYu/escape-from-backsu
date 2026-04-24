@@ -1,20 +1,52 @@
 [status]
+active_indicator_windows = true
 active_score_windows = false
-purpose = "Step 3 placeholder only; no score implementation is enabled."
+purpose = "Step 7 technical indicator dependencies only; no score implementation is enabled."
 
 [warmup]
 minimum_price_history_days = 120
 minimum_indicator_warmup_days = 60
 notes = "Validation planning only. These values are not active score rules."
 
+[returns]
+short = 5
+medium = 20
+long = 60
+trend = 120
+
+[volatility]
+atr = 14
+realized_vol = 20
+vol_of_vol = 60
+
+[indicators]
+rsi = 14
+stochastic = 14
+cci = 20
+williams_r = 14
+macd_fast = 12
+macd_slow = 26
+macd_trigger = 9
+bollinger = 20
+donchian = 20
+cmf = 20
+obv_slope = 20
+adl_slope = 20
+
+[statistics]
+autocorrelation = 20
+abs_return_autocorrelation = 20
+volume_return_correlation = 60
+efficiency_ratio = 20
+noise_ratio = 20
+
 [technical_window_groups]
-short_term = []
-medium_term = []
-long_term = []
-volatility = []
-volume = []
+short_term = [5, 14, 20]
+medium_term = [60]
+long_term = [120]
+volatility = [14, 20, 60]
+volume = [20, 60]
 
 [rolling_placeholders]
-enabled = false
-notes = "Rolling windows must be documented in score definitions before implementation."
-
+enabled = true
+notes = "These rolling windows produce raw indicator dependencies only. Score, ranking, composite, adoption, and backtest outputs remain disabled."

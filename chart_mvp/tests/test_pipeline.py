@@ -15,7 +15,12 @@ TEST_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "test_pipeline"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from stock_core.pipeline.daily_update import DailyUpdateRow, _render_selected_charts, run_daily_top5_update
+from stock_core.pipeline.daily_update import (
+    DailyUpdateRow,
+    _render_selected_charts,
+    run_daily_top5_update,
+    run_daily_top5_update_if_due,
+)
 from stock_core.providers.kospi200_universe_provider import UniverseEntry
 
 
@@ -168,6 +173,52 @@ class PipelineTests(unittest.TestCase):
 
         self.assertEqual(top_df["종목코드"].tolist(), ["005930"])
         self.assertTrue(meta["market_cap_override"])
+
+    def test_run_daily_top5_update_if_due_skips_when_not_due(self) -> None:
+        with (
+            patch("stock_core.pipeline.daily_update.get_daily_top5_due_status") as mock_status,
+            patch("stock_core.pipeline.daily_update.run_daily_top5_update") as mock_run,
+        ):
+            mock_status.return_value.is_due = False
+            mock_status.return_value.due_at = None
+            mock_status.return_value.last_successful_update_date = None
+            mock_status.return_value.reason = "already done"
+
+            top_df, meta = run_daily_top5_update_if_due(pages=1)
+
+        self.assertIsNone(top_df)
+        self.assertFalse(meta["is_due"])
+        self.assertEqual(meta["reason"], "already done")
+        mock_run.assert_not_called()
+
+    def test_run_daily_top5_update_if_due_runs_when_due(self) -> None:
+        expected_df = pd.DataFrame({"종목코드": ["005930"]})
+        with (
+            patch("stock_core.pipeline.daily_update.get_daily_top5_due_status") as mock_status,
+            patch(
+                "stock_core.pipeline.daily_update.run_daily_top5_update",
+                return_value=(
+                    expected_df,
+                    {
+                        "as_of": "2026-04-20",
+                        "last_successful_update_date": "2026-04-20",
+                    },
+                ),
+            ) as mock_run,
+        ):
+            mock_status.return_value.is_due = True
+            mock_status.return_value.due_at = None
+            mock_status.return_value.last_successful_update_date = pd.Timestamp("2026-04-17").date()
+            mock_status.return_value.reason = "due"
+
+            top_df, meta = run_daily_top5_update_if_due(pages=1, render_charts=False)
+
+        self.assertIs(top_df, expected_df)
+        self.assertTrue(meta["is_due"])
+        self.assertEqual(meta["reason"], "due")
+        self.assertEqual(meta["last_successful_update_date"], "2026-04-20")
+        self.assertEqual(meta["due_last_successful_update_date"], "2026-04-17")
+        mock_run.assert_called_once()
 
 
 if __name__ == "__main__":

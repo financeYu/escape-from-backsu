@@ -18,7 +18,7 @@ The goal is not to create more bureaucracy. The goal is to keep research, quant 
 | P3 | Scanner Runtime | `chart_mvp` | KOSPI200 data fetching, caching, indicators, ranking output, charts, CLI/GUI | Keeps runnable code and generated runtime artifacts separate from research/design documents |
 | P4 | Valuation Review | `Quant_mvp/agents/valuation` | Point-in-time fundamental availability and valuation verdicts | Prevents price-only signals from being mislabeled as valuation evidence |
 | P5 | Ops and Reproducibility | root plus affected project | Ignore rules, dependency setup, CI, data/output path policy | Makes the repo cloneable, testable, and reviewable on machines other than the original local PC |
-| P6 | Code Review and Final Validation | `review_mvp`, root workspace | Code-level review, minimal safe repair guidance, final conflict/error checks | Gives the master agent one consistent checkpoint for correctness, security, reliability, and cross-project integration risk |
+| P6 | Specialist Review and Final Validation | `review_mvp`, root workspace | High-risk code review, minimal safe repair guidance, final conflict/error checks | Gives the master agent a specialist checkpoint for correctness, security, reliability, and cross-project integration risk without making every local change wait on `review_mvp` |
 
 ---
 
@@ -42,6 +42,12 @@ Scanner to master:
 - Owner: `chart_mvp`
 - Output: code diff, test result, and any generated artifacts kept out of Git unless promoted to fixtures
 
+Subproject to master:
+
+- Input: project-local change after local first review
+- Owner: responsible subproject
+- Output: master-up summary using `docs/master_up_template.md`, local evidence, unresolved risk summary, and `review_mvp` request status
+
 Valuation handoff:
 
 - Input: valuation or fundamental candidate
@@ -50,15 +56,16 @@ Valuation handoff:
 
 Code-review handoff:
 
-- Input: changed files, implementation notes, failing tests, or suspected bug
+- Input: changed files, implementation notes, failing tests, suspected bug, high-risk change, cross-project change, or unresolved local risk
 - Owner: `review_mvp`
 - Output: findings ordered by severity, minimal fix guidance, false-positive notes, and final validation status
+- Invocation: optional specialist path, not the default bottleneck for every local change
 
 Final master checkpoint:
 
-- Input: project-specific test results and review findings
+- Input: master-up summary, project-specific test results, and any required specialist review findings
 - Owner: root master agent
-- Output: concise summary of remaining errors, conflicts, blocked checks, and recommended next actions
+- Output: concise summary of cross-project consistency, roadmap/order status, Git hygiene, generated-output boundaries, unresolved risks, and recommended next actions
 
 ---
 
@@ -70,7 +77,7 @@ Final master checkpoint:
 4. Quant score review does not fetch live chart data.
 5. Chart runtime does not decide valuation status.
 6. The master agent coordinates ownership but does not overrule specialized agent boundaries.
-7. `review_mvp` handles code-level review, not quant score adoption or valuation verdicts.
+7. `review_mvp` handles specialist code-level review, not ordinary local first review, quant score adoption, or valuation verdicts.
 
 ---
 
@@ -83,7 +90,7 @@ Use small changes grouped by responsibility:
 - `quant`: score definitions, config, review docs
 - `chart`: runnable scanner code and tests
 - `valuation`: point-in-time fundamental review docs and rules
-- `review`: review tooling, final validation checks, minimal bug-fix guidance
+- `review`: specialist review tooling, optional final validation checks, minimal bug-fix guidance
 
 Each change should answer:
 
@@ -91,3 +98,6 @@ Each change should answer:
 - Which downstream project consumes it?
 - Are generated outputs excluded from Git?
 - What verification was run?
+- Was a complete master-up summary supplied?
+- Are unrelated dirty files separated from the owned change set?
+- Is `review_mvp` required, optional, or not needed?

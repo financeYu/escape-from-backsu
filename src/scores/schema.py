@@ -1,0 +1,119 @@
+"""Shared Step 9 score output schema guardrails.
+
+These helpers validate raw Research Tester score frames. They intentionally do
+not normalize scores, create rankings, build composites, or run backtests.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Iterable
+
+import pandas as pd
+
+
+IDENTITY_COLUMNS = ("ticker", "date")
+SCORE_METADATA_COLUMNS = (
+    "score_warmup_state",
+    "score_coverage_status",
+    "score_data_quality_flag",
+    "minimum_history_required",
+)
+
+FORBIDDEN_OUTPUT_COLUMNS = frozenset(
+    {
+        "rank",
+        "ranking",
+        "latest_rank",
+        "latest_ranking",
+        "normalized_score",
+        "normalized_score_time_series",
+        "normalized_score_cross_sectional",
+        "technical_composite_score",
+        "final_composite_score",
+        "forward_return",
+        "future_return",
+        "backtest_return",
+        "alpha",
+        "signal",
+        "buy",
+        "sell",
+        "valuation_score",
+    }
+)
+
+FORBIDDEN_VALUATION_INPUT_COLUMNS = frozenset(
+    {
+        "per",
+        "pbr",
+        "roe",
+        "eps",
+        "bps",
+        "book_value",
+        "earnings",
+        "net_income",
+        "revenue",
+        "sales",
+        "operating_income",
+        "market_cap",
+        "shares_outstanding",
+        "fundamental_score",
+        "valuation_score",
+    }
+)
+FORBIDDEN_VALUATION_INPUT_PREFIXES = (
+    "financial_",
+    "fundamental_",
+    "valuation_",
+)
+
+
+def find_missing_columns(columns: Iterable[str], required_columns: Iterable[str]) -> list[str]:
+    present = set(columns)
+    return [column for column in required_columns if column not in present]
+
+
+def require_columns(frame: pd.DataFrame, required_columns: Iterable[str], *, context: str) -> None:
+    missing = find_missing_columns(frame.columns, required_columns)
+    if missing:
+        raise ValueError(f"{context} missing required columns: {', '.join(missing)}")
+
+
+def find_forbidden_output_columns(columns: Iterable[str]) -> list[str]:
+    forbidden: list[str] = []
+    for column in columns:
+        normalized = column.lower()
+        if normalized in FORBIDDEN_OUTPUT_COLUMNS or normalized.endswith("_normalized"):
+            forbidden.append(column)
+    return forbidden
+
+
+def assert_no_forbidden_output_columns(frame: pd.DataFrame, *, context: str) -> None:
+    forbidden = find_forbidden_output_columns(frame.columns)
+    if forbidden:
+        raise ValueError(f"{context} contains forbidden output columns: {', '.join(forbidden)}")
+
+
+def find_valuation_fundamental_columns(columns: Iterable[str]) -> list[str]:
+    flagged: list[str] = []
+    for column in columns:
+        normalized = column.lower()
+        if normalized in FORBIDDEN_VALUATION_INPUT_COLUMNS or normalized.startswith(
+            FORBIDDEN_VALUATION_INPUT_PREFIXES
+        ):
+            flagged.append(column)
+    return flagged
+
+
+def assert_no_valuation_fundamental_columns(frame: pd.DataFrame, *, context: str) -> None:
+    flagged = find_valuation_fundamental_columns(frame.columns)
+    if flagged:
+        raise ValueError(
+            f"{context} contains valuation/fundamental columns not allowed in Step 9 "
+            f"technical scoring: {', '.join(flagged)}"
+        )
+
+
+def validate_raw_score_output_frame(frame: pd.DataFrame, *, context: str) -> None:
+    require_columns(frame, IDENTITY_COLUMNS, context=context)
+    assert_no_forbidden_output_columns(frame, context=context)
+    assert_no_valuation_fundamental_columns(frame, context=context)

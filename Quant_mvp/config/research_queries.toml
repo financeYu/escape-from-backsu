@@ -1,55 +1,369 @@
+[relevance_defaults]
+min_positive_keyword_hits = 1
+reject_on_exclude_keyword = true
+manual_review_when_abstract_missing = true
+
 [query_sets.technical_momentum]
 description_ko = "일간 가격 기반 momentum, trend, relative strength 후보 문헌"
+keywords = [
+  "momentum",
+  "momentum effect",
+  "relative strength",
+  "trend following",
+  "return continuation",
+  "buying winners",
+  "selling losers",
+  "stock returns",
+  "equity returns",
+  "daily returns",
+  "technical analysis",
+  "cross sectional momentum",
+  "time series momentum",
+]
+branch_hint = "technical"
+management_lane = "quant_algorithm"
+exclude_keywords = [
+  "intraday",
+  "options",
+  "crypto",
+  "order book",
+  "LLM",
+  "large language model",
+  "multi-agent",
+  "news",
+  "fundamental",
+  "fundamentals",
+  "macro",
+]
+max_results = 50
 queries = [
   "daily stock momentum technical indicators cross sectional ranking",
   "time series momentum equity daily returns technical analysis",
   "relative strength stock ranking daily OHLCV",
 ]
 
+[query_sets.technical_momentum.source_overrides.arxiv]
+queries = [
+  "cat:q-fin.ST AND all:momentum AND all:stock",
+  "cat:q-fin.PM AND all:momentum",
+]
+
+[query_sets.technical_momentum.source_overrides.openalex]
+queries = [
+  "returns buying winners selling losers stock market efficiency",
+  "cross sectional momentum stock returns technical analysis",
+]
+
+[query_sets.technical_momentum.source_overrides.crossref]
+queries = [
+  "equity momentum daily returns technical analysis",
+  "relative strength stock returns",
+]
+
+[query_sets.technical_momentum.source_overrides.semantic_scholar]
+queries = [
+  "equity momentum daily returns technical analysis",
+  "relative strength stock ranking daily returns",
+]
+
+[[query_sets.technical_momentum.required_keyword_groups]]
+name = "signal"
+keywords = [
+  "momentum",
+  "momentum effect",
+  "relative strength",
+  "trend following",
+  "return continuation",
+  "buying winners",
+  "selling losers",
+]
+
+[[query_sets.technical_momentum.required_keyword_groups]]
+name = "market_context"
+keywords = [
+  "stock",
+  "stocks",
+  "equity",
+  "equities",
+  "returns",
+  "daily returns",
+  "technical analysis",
+  "cross section",
+  "cross sectional",
+]
+
 [query_sets.technical_mean_reversion]
 description_ko = "일간 가격 기반 mean reversion, reversal 후보 문헌"
+keywords = ["mean reversion", "reversal", "RSI", "contrarian", "daily returns"]
+branch_hint = "technical"
+management_lane = "quant_algorithm"
+exclude_keywords = ["intraday", "options", "crypto", "order book"]
+max_results = 50
 queries = [
   "short term reversal equity returns daily mean reversion",
   "RSI mean reversion stock technical analysis daily",
   "contrarian signal daily stock returns reversal",
 ]
 
+[query_sets.technical_mean_reversion.source_overrides.openalex]
+queries = [
+  "short term reversal equity returns daily",
+  "contrarian stock returns mean reversion daily",
+]
+
+[query_sets.technical_mean_reversion.source_overrides.semantic_scholar]
+queries = [
+  "short term reversal equity returns daily",
+  "RSI mean reversion stock returns daily",
+]
+
+[query_sets.technical_mean_reversion.source_overrides.crossref]
+queries = [
+  "short term reversal equity returns daily",
+  "contrarian stock returns mean reversion daily",
+]
+
 [query_sets.technical_breakout]
 description_ko = "breakout, channel, trend-following 후보 문헌"
+keywords = ["breakout", "channel", "trend following", "moving average", "daily data"]
+branch_hint = "technical"
+management_lane = "quant_algorithm"
+exclude_keywords = ["intraday", "options", "crypto", "order book"]
+max_results = 50
 queries = [
   "price breakout technical analysis equities daily data",
   "channel breakout trend following stock returns daily",
   "moving average breakout equity technical trading rules",
 ]
 
+[query_sets.technical_breakout.source_overrides.openalex]
+queries = [
+  "moving average trading rules stock returns",
+  "channel breakout equity returns technical analysis",
+]
+
+[query_sets.technical_breakout.source_overrides.crossref]
+queries = [
+  "moving average trading rules stock returns",
+  "channel breakout equity technical analysis",
+]
+
+[query_sets.technical_breakout.source_overrides.semantic_scholar]
+queries = [
+  "moving average trading rules stock returns",
+  "channel breakout equity technical analysis",
+]
+
 [query_sets.technical_volatility_liquidity]
 description_ko = "일간 변동성, 유동성, 거래량 기반 후보 문헌"
+keywords = ["volatility", "liquidity", "volume", "price-volume", "daily"]
+branch_hint = "technical"
+management_lane = "quant_algorithm"
+exclude_keywords = ["intraday", "options", "crypto", "order book"]
+max_results = 50
 queries = [
   "stock volatility liquidity volume technical signal daily",
   "volatility breakout trading rule equity daily",
   "volume price relationship stock returns daily technical",
 ]
 
+[query_sets.technical_volatility_liquidity.source_overrides.openalex]
+queries = [
+  "stock volatility liquidity volume returns",
+  "volume price relationship stock returns daily",
+]
+
+[query_sets.technical_volatility_liquidity.source_overrides.crossref]
+queries = [
+  "stock volatility liquidity volume returns",
+  "price volume relationship stock returns",
+]
+
+[query_sets.technical_volatility_liquidity.source_overrides.semantic_scholar]
+queries = [
+  "stock volatility liquidity volume returns",
+  "volume price relationship stock returns daily",
+]
+
 [query_sets.methodology_diagnostics]
 description_ko = "데이터 누수, 과최적화, 거래비용, 생존편향 진단 문헌"
+keywords = ["backtest overfitting", "data snooping", "transaction costs", "survivorship bias", "lookahead"]
+branch_hint = "diagnostic"
+exclude_keywords = ["crypto", "options"]
+max_results = 50
 queries = [
   "backtest overfitting data snooping equity anomalies",
   "transaction costs turnover factor investing daily data",
   "survivorship bias lookahead bias quantitative finance",
 ]
 
+[query_sets.methodology_diagnostics.source_overrides.openalex]
+queries = [
+  "data snooping stock returns anomalies",
+  "backtest overfitting quantitative finance",
+  "transaction costs factor investing turnover",
+]
+
+[query_sets.methodology_diagnostics.source_overrides.crossref]
+queries = [
+  "data snooping stock returns anomalies",
+  "transaction costs factor investing turnover",
+]
+
+[query_sets.methodology_diagnostics.source_overrides.semantic_scholar]
+queries = [
+  "data snooping stock returns anomalies",
+  "backtest overfitting quantitative finance",
+]
+
+[query_sets.backtest_methodology]
+description_ko = "백테스트 설계, walk-forward 검증, out-of-sample 평가, data snooping 방지 문헌"
+keywords = [
+  "backtest",
+  "backtesting",
+  "walk forward",
+  "out of sample",
+  "out-of-sample",
+  "data snooping",
+  "overfitting",
+  "multiple testing",
+  "transaction costs",
+  "turnover",
+  "survivorship bias",
+  "lookahead bias",
+  "cross validation",
+  "strategy evaluation",
+]
+branch_hint = "diagnostic"
+management_lane = "backtest_methodology"
+exclude_keywords = [
+  "intraday",
+  "tick data",
+  "order book",
+  "options",
+  "futures",
+  "crypto",
+  "market making",
+  "execution algorithm",
+  "black box",
+  "LLM",
+  "large language model",
+]
+max_results = 50
+queries = [
+  "backtesting methodology equity trading strategies data snooping overfitting",
+  "walk forward analysis out of sample validation quantitative finance",
+  "transaction costs turnover survivorship bias backtest equity strategies",
+]
+
+[query_sets.backtest_methodology.source_overrides.arxiv]
+queries = [
+  "cat:q-fin.PM AND all:backtest AND all:overfitting",
+  "cat:q-fin.ST AND all:\"data snooping\"",
+]
+
+[query_sets.backtest_methodology.source_overrides.openalex]
+queries = [
+  "backtesting methodology trading strategies data snooping overfitting",
+  "walk forward analysis out of sample validation quantitative finance",
+  "transaction costs turnover survivorship bias backtest equity strategies",
+]
+
+[query_sets.backtest_methodology.source_overrides.crossref]
+queries = [
+  "backtesting trading strategies data snooping overfitting",
+  "out of sample validation quantitative finance backtest",
+  "transaction costs turnover survivorship bias equity backtest",
+]
+
+[query_sets.backtest_methodology.source_overrides.semantic_scholar]
+queries = [
+  "backtesting trading strategies data snooping overfitting",
+  "walk forward analysis out of sample validation quantitative finance",
+  "transaction costs turnover survivorship bias backtest equity strategies",
+]
+
+[[query_sets.backtest_methodology.required_keyword_groups]]
+name = "backtest_method"
+keywords = [
+  "backtest",
+  "backtesting",
+  "walk forward",
+  "out of sample",
+  "out-of-sample",
+  "strategy evaluation",
+]
+
+[[query_sets.backtest_methodology.required_keyword_groups]]
+name = "validation_risk"
+keywords = [
+  "data snooping",
+  "overfitting",
+  "multiple testing",
+  "transaction costs",
+  "turnover",
+  "survivorship bias",
+  "lookahead bias",
+  "cross validation",
+]
+
 [query_sets.fundamental_valuation]
 description_ko = "별도 valuation agent로 넘겨야 하는 fundamental / valuation 문헌"
+keywords = ["book to market", "earnings yield", "profitability", "accounting fundamentals", "valuation"]
+branch_hint = "valuation"
+exclude_keywords = ["intraday", "technical-only"]
+max_results = 50
 queries = [
   "value investing book to market earnings yield point in time fundamentals",
   "quality profitability accounting fundamentals equity returns",
   "fundamental valuation factors equity expected returns",
 ]
 
+[query_sets.fundamental_valuation.source_overrides.openalex]
+queries = [
+  "book to market equity returns earnings yield",
+  "profitability accounting fundamentals equity returns",
+]
+
+[query_sets.fundamental_valuation.source_overrides.crossref]
+queries = [
+  "book to market equity returns earnings yield",
+  "profitability accounting fundamentals equity returns",
+]
+
+[query_sets.fundamental_valuation.source_overrides.semantic_scholar]
+queries = [
+  "book to market equity returns earnings yield",
+  "profitability accounting fundamentals equity returns",
+]
+
 [query_sets.korea_kospi_context]
 description_ko = "KOSPI/Korea 시장 맥락 문헌"
+keywords = ["KOSPI", "KOSPI200", "Korean equity market", "daily returns", "technical indicators"]
+branch_hint = "technical"
+exclude_keywords = ["intraday", "options", "crypto", "order book"]
+max_results = 50
 queries = [
   "KOSPI stock momentum reversal daily returns",
   "Korean equity market technical analysis daily data",
   "KOSPI200 quantitative stock selection technical indicators",
+]
+
+[query_sets.korea_kospi_context.source_overrides.openalex]
+queries = [
+  "Korean stock market momentum reversal daily returns",
+  "KOSPI technical analysis stock returns",
+  "KOSPI200 stock selection technical indicators",
+]
+
+[query_sets.korea_kospi_context.source_overrides.crossref]
+queries = [
+  "Korean stock market momentum reversal daily returns",
+  "KOSPI technical analysis stock returns",
+]
+
+[query_sets.korea_kospi_context.source_overrides.semantic_scholar]
+queries = [
+  "Korean stock market momentum reversal daily returns",
+  "KOSPI technical analysis stock returns",
 ]

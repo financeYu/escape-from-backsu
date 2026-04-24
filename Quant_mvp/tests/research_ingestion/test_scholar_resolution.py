@@ -36,3 +36,18 @@ def test_unresolved_scholar_seed_reporting(workspace_tmp_path):
 def test_guard_fails_on_live_scholar_request():
     with pytest.raises(RuntimeError):
         assert_approved_resolution_url("https://scholar.google.com/scholar?q=momentum")
+
+
+def test_scholar_seed_resolution_ignores_malformed_raw_authors(sample_paper):
+    paper = sample_paper()
+    seed = make_discovery_seed(
+        source_channel="google_scholar_manual_title_list",
+        raw_title="Daily momentum and reversal in equity returns",
+        raw_year=2024,
+        local_input_path="titles.csv",
+    )
+    seed["raw_authors"] = "Jane Doe"
+
+    resolved = resolve_seed(seed, {"openalex": [paper]})
+
+    assert resolved["canonical_lookup_status"] == "matched_openalex"

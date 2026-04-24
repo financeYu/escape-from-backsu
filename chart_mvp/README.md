@@ -66,6 +66,7 @@ python -m app.run_gui
 GUI 기능:
 
 - Top-5 갱신 실행
+- GUI 시작 시 영업일 21시 기준 갱신이 누락되어 있으면 자동 갱신 실행
 - 상위 5개 목록 표시
 - 선택 종목 차트 창 열기
 - 임시 Top-5 override 안내 표시
@@ -86,6 +87,14 @@ python -m app.run_daily --pages 1 --no-render-charts
 ```powershell
 python -m app.run_daily --pages 1 --no-cache
 ```
+
+영업일 오후 9시 기준으로 갱신이 필요할 때만 실행하려면:
+
+```powershell
+python -m app.run_daily --due-only
+```
+
+이 명령은 `outputs/last_run_meta.json`의 마지막 성공일을 확인합니다. 영업일 21시 이후 성공 기록이 없으면 갱신하고, 이미 갱신되어 있거나 주말이면 조용히 건너뜁니다. 자정 직후에는 직전 날짜가 영업일인 경우 누락 갱신을 보정할 수 있습니다.
 
 유니버스 live refresh를 시도한 뒤 snapshot으로 fallback 하려면:
 
@@ -123,6 +132,7 @@ python main.py single --code 005930 --pages 20
 - `outputs/charts/<code>.png`
 
 기존 캐시 파일은 계속 `data/<code>_daily_prices.csv`에 저장됩니다.
+재무제표 검증용 캐시는 `data/<code>_financial_statements.csv`에 저장됩니다.
 
 ## 캐시 / 유니버스 준비
 
@@ -132,6 +142,14 @@ python main.py single --code 005930 --pages 20
 - 현재 정책은 그대로 유지됩니다.
   - 평일: 최신 데이터를 다시 가져옴
   - 주말: 기존 캐시가 있으면 재사용
+
+Step 2 재무제표 캐시 검증을 재현하려면:
+
+```powershell
+python scripts/refresh_financial_cache.py
+```
+
+이 명령은 로컬 runtime cache만 갱신합니다. valuation score, technical score, composite, ranking, backtest는 생성하지 않습니다.
 
 ### 유니버스 snapshot
 
@@ -186,7 +204,7 @@ cmd.exe
 5. 인수 추가:
 
 ```text
-/c "%USERPROFILE%\Project\master_mvp\chart_mvp\scripts\run_top5.bat" --pages 1 --no-render-charts
+/c "%USERPROFILE%\Project\master_mvp\chart_mvp\scripts\run_top5.bat" --due-only --pages 20 --no-render-charts
 ```
 
 6. 시작 위치:
@@ -197,10 +215,10 @@ cmd.exe
 
 ## cron 등록 예시
 
-매일 평일 오전 7시에 실행:
+매시간 실행하되, 실제 갱신은 가장 최근 도래한 영업일 오후 9시 기준으로 필요할 때만 수행:
 
 ```cron
-0 7 * * 1-5 cd /path/to/chart_mvp && sh scripts/run_top5.sh --pages 1 --no-render-charts
+0 * * * * cd /path/to/chart_mvp && python -m app.run_daily --due-only --pages 20 --no-render-charts
 ```
 
 ## 현재 placeholder 경계

@@ -93,7 +93,7 @@ def _find_matches(
     seed_arxiv = normalize_arxiv_id(seed.get("candidate_arxiv_id"))
     raw_title = normalize_title(seed.get("raw_title"))
     raw_year = seed.get("raw_year")
-    first_author = normalize_title((seed.get("raw_authors") or [None])[0])
+    first_author = normalize_title(_first_raw_author(seed.get("raw_authors")))
     matches: list[tuple[str, dict[str, Any], str]] = []
 
     for source, papers in candidates_by_source.items():
@@ -126,4 +126,22 @@ def _title_year_author_match(title: str, year: int | None, first_author_value: s
 def _best_match(matches: list[tuple[str, dict[str, Any], str]]) -> tuple[str, dict[str, Any], str]:
     priority = {"high": 0, "medium": 1, "low": 2}
     source_priority = {"crossref": 0, "arxiv": 1, "openalex": 2, "semantic_scholar": 3}
-    return sorted(matches, key=lambda item: (priority[item[2]], source_priority.get(item[0], 9)))[0]
+    best = min(matches, key=lambda match: _match_sort_key(match, priority, source_priority), default=None)
+    if best is None:
+        raise ValueError("_best_match requires at least one match.")
+    return best
+
+
+def _match_sort_key(
+    match: tuple[str, dict[str, Any], str],
+    priority: dict[str, int],
+    source_priority: dict[str, int],
+) -> tuple[int, int]:
+    source, _paper, confidence = match
+    return (priority.get(confidence, 9), source_priority.get(source, 9))
+
+
+def _first_raw_author(raw_authors: Any) -> str | None:
+    if isinstance(raw_authors, list):
+        return next((str(author) for author in raw_authors if author), None)
+    return None

@@ -17,6 +17,16 @@ At the end of every Step, report one of:
 - `PARTIALLY COMPLETE`
 - `NEEDS FIX`
 
+## Active Step Continuity
+
+When `docs/roadmap_status.md` marks earlier Steps as `COMPLETE`, trust those outputs by default. Do not restart implementation or full review loops for completed Steps unless the user's latest instruction explicitly asks for Step-end validation across the roadmap.
+
+During an active Step, inspect only the files and interfaces directly needed for that Step. If a completed Step artifact is a direct dependency, do only the smallest hard-stop check needed to confirm it does not violate current guardrails, then continue.
+
+Minor issues found in completed Steps should be recorded as TODOs or risk notes and must not block the active Step unless they break the active Step interface or create a hard-stop violation.
+
+`Step 2` may remain `PARTIALLY COMPLETE` because financial samples or point-in-time validation are incomplete. That status does not block technical Steps while PER/PBR/ROE or other valuation/fundamental data remain outside `technical_composite_score`, `final_composite_score`, and technical scoring.
+
 ## Purpose
 
 This workspace uses a master agent to coordinate the projects under `master_mvp`.
@@ -28,7 +38,7 @@ Subprojects:
 - `reserch_mvp`: research-ingestion specification and upstream evidence workflow
 - `Quant_mvp`: quant score design, technical-review governance, valuation boundary, and config policy
 - `chart_mvp`: executable KOSPI200 scanner, data cache, chart rendering, CLI, GUI, and tests
-- `review_mvp`: code-review tooling, minimal repair policy, and final workspace validation
+- `review_mvp`: specialist code-review tooling, minimal repair policy, and optional final-validation support
 
 The directory name `reserch_mvp` is intentionally preserved for now to avoid breaking existing paths. Rename it only through an explicit migration.
 
@@ -46,7 +56,7 @@ A master agent is needed because:
 4. Valuation logic requires point-in-time data rules and must stay separated from price-only technical signals.
 5. `chart_mvp` produces runtime caches and chart outputs that should not be confused with source-controlled project state.
 6. Cross-project changes need one place to decide ownership, handoff format, and verification expectations.
-7. Final code review should be separated from domain review so runtime bugs, merge conflicts, and security issues are checked consistently.
+7. Specialist code review should be separated from domain review so high-risk runtime bugs, merge conflicts, and security issues can be checked consistently without making every local change wait on one review bottleneck.
 
 ---
 
@@ -65,6 +75,158 @@ Before changing files, classify the request into one of these work types:
 
 Then route work to the narrowest responsible project.
 
+## Root boundary approval
+
+When working from a subproject or sub-agent scope, the root agent boundary is protected.
+
+Subproject agents may read root-level guidance that is required for routing, roadmap order, or safety checks, but they must not edit root-owned files, change repository-level policy, alter cross-project routing, or make root-level release/Git decisions unless they have explicit approval from the user or the master/root agent.
+
+Root-owned areas include:
+
+- `AGENTS.md`
+- `README.md`
+- `.gitignore`
+- `docs/project_registry.md`
+- repository-level CI, release notes, and Git hygiene policy
+- master review delegation, handoff, and integration-risk policy
+
+If a subproject task appears to require crossing into the root boundary, the subproject must stop at the boundary and request approval with:
+
+1. the root file or policy area it needs to touch
+2. the reason the subproject cannot complete safely without that root change
+3. the proposed minimal change
+4. the risk if the change is not made
+
+Without approval, record the root-level need as a handoff, TODO, or unresolved risk instead of making the root change.
+
+---
+
+## Review delegation rule
+
+By default, review starts inside the narrowest responsible subproject.
+
+Each subproject is responsible for:
+
+- project-local correctness review
+- project-local tests or checks
+- generated-output and cache boundary checks
+- project-specific `AGENTS.md` compliance
+- remaining risk summary before master-up
+
+The master project does not re-review every local implementation in detail.
+
+The master project reviews:
+
+- cross-project consistency
+- roadmap/order violations
+- Git hygiene
+- source-controlled vs generated-output boundaries
+- handoff completeness
+- unresolved risks reported by subprojects
+- hard stop rule violations
+
+`review_mvp` is not a mandatory bottleneck for every change.
+
+`review_mvp` is invoked when:
+
+- the change touches multiple subprojects
+- the change affects score definitions, normalization, ranking, composite logic, or backtest design
+- the change affects data schema, validation severity, or generated-output boundaries
+- the change creates unresolved risk that the responsible subproject cannot close
+- the master explicitly requests specialist review
+- the change is near a roadmap gate or Step-end decision
+
+Subprojects must submit a master-up summary before requesting master review.
+
+Master-up summary must prioritize:
+
+1. what was validated
+2. what remains risky
+3. what changed
+4. what was intentionally not changed
+5. whether `review_mvp` is requested or not
+
+Canonical supporting documents:
+
+- review flow: `docs/review_flow.md`
+- subproject local checklist: `docs/subproject_review_template.md`
+- required master-up template: `docs/master_up_template.md`
+- `review_mvp` specialist policy: `docs/review_mvp_policy.md`
+
+---
+
+## Master review scope
+
+Master is the integration gate, not the default local implementation reviewer.
+
+Master must review:
+
+- cross-project consistency
+- roadmap/order compliance
+- hard stop rule compliance
+- Git hygiene
+- source-controlled vs generated-output boundaries
+- handoff completeness
+- unresolved risks
+- whether `review_mvp` must be invoked
+
+Master should not repeat full local implementation review when:
+
+- the subproject has supplied a complete master-up summary
+- local tests/checks are present
+- risk is local and already resolved
+- no cross-project boundary is affected
+
+Master must HOLD or REJECT when:
+
+- master-up summary is missing
+- hard stop checks are absent
+- evidence is missing
+- generated output may have been committed incorrectly
+- score/backtest/valuation work appears before allowed roadmap step
+- financial data may have entered `technical_composite_score` or `final_composite_score`
+- cross-project risk is unresolved
+- `review_mvp` is required but not performed
+
+Master output format:
+
+```text
+[현재 위치]
+- Step:
+- Review flow: subproject-first -> master-up
+
+[Master-up 대상]
+- subproject:
+- change summary:
+
+[Subproject local review 확인]
+- scope:
+- tests/checks:
+- generated-output/cache boundary:
+- local AGENTS compliance:
+- hard stop check:
+
+[Master 통합 점검]
+- cross-project consistency:
+- roadmap/order:
+- Git hygiene:
+- source-controlled vs generated-output:
+- handoff completeness:
+- unresolved risks:
+
+[review_mvp 필요 여부]
+REQUIRED / OPTIONAL / NOT NEEDED
+
+[판정]
+ACCEPT / HOLD / REJECT
+
+[필수 조치]
+- ...
+
+[권장 조치]
+- ...
+```
+
 ---
 
 ## Routing table
@@ -76,8 +238,8 @@ Then route work to the narrowest responsible project.
 | Technical score definition or adoption review | `Quant_mvp` | `Quant_mvp/AGENTS.md`, `Quant_mvp/config/*.toml` |
 | Valuation or fundamental score review | `Quant_mvp/agents/valuation` | `Quant_mvp/agents/valuation/AGENTS.md` |
 | Runnable scanner, data cache, charts, GUI | `chart_mvp` | `chart_mvp/AGENTS.md`, `chart_mvp/README.md` |
-| Code review, bug-risk review, minimal repair guidance | `review_mvp` | `review_mvp/AGENTS.md`, `review_mvp/README.md` |
-| Final error, conflict, and integration check | root workspace plus `review_mvp` | `AGENTS.md`, `docs/project_registry.md`, `review_mvp/AGENTS.md` |
+| Specialist code review, bug-risk review, minimal repair guidance | `review_mvp` | `review_mvp/AGENTS.md`, `review_mvp/README.md`, `docs/review_mvp_policy.md` |
+| Final error, conflict, and integration check | root workspace, with `review_mvp` only when required | `AGENTS.md`, `docs/project_registry.md`, `docs/review_flow.md` |
 | Data-path or output-path policy | root plus affected project | root `.gitignore`, affected project `AGENTS.md` |
 
 When a request spans projects, write or update the handoff artifact before implementing downstream runtime behavior.
@@ -115,8 +277,11 @@ Final validation flow:
 ```text
 project change
   -> project-specific tests or checks
-  -> review_mvp code review when practical
-  -> master conflict/error summary
+  -> subproject local first review
+  -> master-up summary
+  -> master integration review
+  -> optional review_mvp specialist review when required
+  -> final master decision
 ```
 
 ---
@@ -168,7 +333,7 @@ The master project owns:
 - `.gitignore`
 - `docs/project_registry.md`
 - repository-level CI and release notes when added
-- final code-review routing and integration-risk summaries
+- final review delegation routing and integration-risk summaries
 
 The master project should not own runtime data, score formula adoption decisions, or valuation verdicts.
 It does own the final pass that checks whether changes across projects conflict, leave obvious errors, or require follow-up verification.

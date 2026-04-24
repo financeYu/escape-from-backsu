@@ -30,10 +30,11 @@ chart_mvp/data/
 chart_mvp/outputs/
 chart_mvp/reports/data_quality/
 
-# Root Step 6 preprocessing runtime artifacts
+# Root Step 6/7 runtime artifacts
 data/raw/
 data/processed/
 reports/preprocess/
+reports/indicators/
 
 # Quant_mvp research ingestion runtime artifacts
 Quant_mvp/data/research/raw/

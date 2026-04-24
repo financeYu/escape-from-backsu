@@ -29,6 +29,7 @@ from stock_core.charts.matplotlib_renderer import plot_stock_data
 from stock_core.cache.csv_cache import load_financial_statements
 from stock_core.pipeline.daily_update import (
     MARKET_CAP_OVERRIDE_MESSAGE,
+    get_daily_top5_due_status,
     load_latest_top5_snapshot,
     prepare_chart_dataframe,
     run_daily_top5_update,
@@ -66,6 +67,7 @@ class Top5App:
         self._build_ui()
         self._load_latest_results()
         self._load_latest_meta()
+        self._run_startup_due_check()
 
     def _build_ui(self) -> None:
         container = ttk.Frame(self.root, padding=12)
@@ -165,6 +167,13 @@ class Top5App:
         as_of = meta.get("as_of")
         if as_of:
             self.last_updated_var.set(f"마지막 갱신: {as_of}")
+
+    def _run_startup_due_check(self) -> None:
+        due_status = get_daily_top5_due_status()
+        if not due_status.is_due:
+            return
+        self.set_status(f"{due_status.reason} 자동 갱신을 시작합니다.")
+        self.root.after(500, self.run_update)
 
     def set_status(self, text: str) -> None:
         self.status_var.set(text)

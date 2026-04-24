@@ -2,9 +2,11 @@
 
 ## Purpose
 
-`review_mvp` is the code-review and final-validation project for the `master_mvp` workspace.
+`review_mvp` is the specialist code-review and final-validation support project for the `master_mvp` workspace.
 
-It owns the Python review tool, review criteria, safety checks, and tests that help the master agent inspect code changes before final handoff.
+It owns the Python review tool, review criteria, safety checks, and tests that help the master agent inspect high-risk or cross-project changes before final handoff.
+
+It is not the default mandatory review bottleneck for every local subproject change.
 
 Read the workspace root `AGENTS.md` first.
 
@@ -20,7 +22,7 @@ The workspace already has several specialized review concepts:
 
 Those are domain reviews, not final code reviews.
 
-`review_mvp` exists so the master agent has one dedicated place for code-level review, final error checks, conflict checks, and minimal safe repair guidance.
+`review_mvp` exists so the master agent has one dedicated specialist path for code-level review, final error checks, conflict checks, and minimal safe repair guidance when local subproject review is not enough.
 
 ---
 
@@ -36,6 +38,103 @@ Those are domain reviews, not final code reviews.
 
 ---
 
+## Local first review responsibility
+
+This subproject performs first-pass review for its own changes before master-up.
+
+Before master-up, this subproject must check:
+
+- local scope compliance
+- local tests or validation commands
+- local generated-output/cache boundary
+- local `AGENTS.md` compliance
+- hard stop rule violations
+- unresolved risks
+
+The subproject must not delegate ordinary local correctness review to master by default.
+
+The subproject must submit a master-up summary using the required template in the workspace root `docs/master_up_template.md`.
+
+---
+
+## review_mvp specialist review role
+
+`review_mvp` is a specialist review project, not the default mandatory review bottleneck.
+
+`review_mvp` is invoked only for:
+
+- high-risk changes
+- cross-project changes
+- changes affecting schema, validation severity, score definitions, normalization, ranking, composite logic, or backtest design
+- changes near Step-end gate decisions
+- changes with unresolved risks after subproject local review
+- master-requested independent review
+
+`review_mvp` must focus on:
+
+- hard stop violations
+- roadmap/order violations
+- lookahead/future-data risk
+- config-first violations
+- generated-output/source-control boundary
+- score redefinition risk
+- technical/fundamental boundary violations
+- diagnostics being treated as alpha signals
+- handoff quality and evidence quality
+
+`review_mvp` must not:
+
+- become the default reviewer for every small local change
+- rewrite local implementation unless explicitly asked
+- invent new scores
+- implement scores before allowed roadmap step
+- run or design backtests before allowed roadmap step
+- introduce valuation/fundamental scoring before allowed roadmap step
+
+`review_mvp` output format:
+
+```text
+[review_mvp 판정 대상]
+- source subproject:
+- master request reason:
+- changed files:
+
+[전문 리뷰 초점]
+- high-risk area:
+- cross-project impact:
+- roadmap gate impact:
+
+[Hard Stop 점검]
+- score implementation:
+- Research Tester score implementation:
+- backtest:
+- valuation/fundamental scoring:
+- financial data into technical_composite_score:
+- financial data into final_composite_score:
+- lookahead/future data:
+- diagnostics as alpha signal:
+
+[Evidence 검토]
+- provided evidence:
+- missing evidence:
+- reproducibility:
+
+[리스크]
+- blocking:
+- non-blocking:
+- unknown:
+
+[판정]
+ACCEPT / HOLD / REJECT
+
+[Master에 전달할 요약]
+- ...
+```
+
+See the canonical policy in the workspace root `docs/review_mvp_policy.md`.
+
+---
+
 ## Boundaries
 
 This agent must not:
@@ -44,6 +143,7 @@ This agent must not:
 - perform valuation review
 - decide research evidence quality
 - replace project-specific tests
+- become the default reviewer for every small local change
 - perform broad refactors when a small fix is enough
 - comment on subjective style without a concrete failure mode
 
@@ -70,14 +170,14 @@ Avoid low-value comments about formatting, naming, or broad cleanup unless they 
 
 ## Final validation role
 
-Before the master agent closes substantial work, use this project as the final review checkpoint when practical:
+Use this project as the final review checkpoint when the specialist invocation policy requires it:
 
 ```powershell
 python review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --exclude-dir samples --format markdown
 python -m unittest discover -s review_mvp/tests -v
 ```
 
-For narrow changes, run only the relevant project tests plus the relevant `review_mvp` checks.
+For narrow local changes, responsible subproject review and local tests/checks may be sufficient. Run `review_mvp` checks when the change is high-risk, cross-project, near a roadmap gate, or leaves unresolved risk.
 
 Review output is advisory. The master agent still decides which findings are real, which are false positives, and which need immediate fixes.
 

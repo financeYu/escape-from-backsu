@@ -15,7 +15,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from stock_core.cache.csv_cache import get_financial_statement_cache_path, save_financial_statements
-from stock_core.providers.naver_finance import extract_financial_statements_from_html
+from stock_core.providers.naver_finance import _make_unique_column_names, extract_financial_statements_from_html
 
 
 METRIC_REVENUE = "\ub9e4\ucd9c\uc561"
@@ -50,8 +50,36 @@ HTML_SAMPLE = f"""
 </html>
 """
 
+HTML_NON_PERIOD_SAMPLE = f"""
+<html>
+  <body>
+    <table>
+      <thead>
+        <tr>
+          <th>{HEADER_MAIN}</th>
+          <th>삼성전자*005930</th>
+          <th>SK하이닉스*000660</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>PER</td>
+          <td>10</td>
+          <td>20</td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
+"""
+
 
 class NaverFinanceTests(unittest.TestCase):
+    def test_make_unique_column_names_preserves_first_label(self) -> None:
+        columns = _make_unique_column_names(["metric", "2024/12", "2024/12", ""])
+
+        self.assertEqual(columns, ["metric", "2024/12", "2024/12__2", "column_3"])
+
     def test_extract_financial_statements_from_html_returns_tidy_rows(self) -> None:
         frame = extract_financial_statements_from_html(HTML_SAMPLE, code="005930")
 
@@ -63,19 +91,26 @@ class NaverFinanceTests(unittest.TestCase):
         self.assertEqual(frame["period"].tolist(), ["2023/12", "2024/12(E)", "2023/12", "2024/12(E)"])
         self.assertEqual(frame["value"].tolist(), ["100", "120", "10", "15"])
 
+    def test_extract_financial_statements_ignores_non_period_comparison_tables(self) -> None:
+        frame = extract_financial_statements_from_html(HTML_NON_PERIOD_SAMPLE, code="005930")
+
+        self.assertTrue(frame.empty)
+
     def test_save_financial_statements_uses_expected_cache_path(self) -> None:
         frame = pd.DataFrame(
             [{"code": "005930", "table_index": "0", "metric": METRIC_REVENUE, "period": "2023/12", "value": "100"}]
         )
-        cache_path = get_financial_statement_cache_path("005930")
 
-        try:
+        temp_data_dir = PROJECT_ROOT / "tests" / "_tmp" / "financial_cache"
+        with (
+            patch("stock_core.cache.csv_cache.DATA_DIR", temp_data_dir),
+            patch.object(pd.DataFrame, "to_csv") as mock_to_csv,
+        ):
+            cache_path = get_financial_statement_cache_path("005930")
             saved_path = save_financial_statements(frame, "005930")
-            self.assertEqual(saved_path, cache_path)
-            self.assertTrue(saved_path.exists())
-        finally:
-            if cache_path.exists():
-                cache_path.unlink()
+
+        self.assertEqual(saved_path, cache_path)
+        mock_to_csv.assert_called_once_with(cache_path, index=False, encoding="utf-8-sig")
 
     def test_refresh_stock_data_saves_financial_statements_when_fetching(self) -> None:
         from stock_core.cache import csv_cache

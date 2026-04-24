@@ -7,6 +7,9 @@ allow_proxy_rotation = false
 allowed_inputs = [
   "alert_email",
   "manual_bibtex",
+  "manual_endnote",
+  "manual_refman",
+  "manual_refworks",
   "manual_title_list",
   "manual_citation_seed",
 ]

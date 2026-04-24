@@ -13,6 +13,7 @@ CONFIG_FILES = {
     "classification": "research_classification.toml",
     "scholar_discovery": "research_scholar_discovery.toml",
 }
+ROOT_MARKER_CONFIG = "research_sources.toml"
 
 
 @dataclass(frozen=True)
@@ -34,8 +35,13 @@ class ProjectPaths:
 
 def find_project_root(start: Path | None = None) -> Path:
     current = (start or Path.cwd()).resolve()
-    for candidate in [current, *current.parents]:
-        if (candidate / "AGENTS.md").exists() and (candidate / "config").exists():
+    candidates = [current, current / "Quant_mvp", *current.parents]
+    candidates.extend(parent / "Quant_mvp" for parent in current.parents)
+    for candidate in candidates:
+        if (
+            (candidate / "AGENTS.md").exists()
+            and (candidate / "config" / ROOT_MARKER_CONFIG).exists()
+        ):
             return candidate
     raise FileNotFoundError("Could not locate Quant_mvp project root with AGENTS.md and config/.")
 
@@ -70,7 +76,8 @@ def get_query_set(config: dict[str, Any], query_set: str) -> dict[str, Any]:
     try:
         return config["queries"]["query_sets"][query_set]
     except KeyError as exc:
-        raise KeyError(f"Unknown research query set: {query_set}") from exc
+        available = ", ".join(sorted(config.get("queries", {}).get("query_sets", {})))
+        raise ValueError(f"알 수 없는 research query-set입니다: {query_set}. 사용 가능: {available}") from exc
 
 
 def validate_policy(config: dict[str, Any]) -> None:

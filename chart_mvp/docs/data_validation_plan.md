@@ -68,6 +68,14 @@ The financial statement validator only checks:
 
 If disclosure date or availability date is unavailable, the validator marks `point_in_time_status = unverified`.
 
+Current Step 2 completion note:
+
+- `chart_mvp` loader/cache functions were used to populate 200 local `data/<code>_financial_statements.csv` caches.
+- The refreshed financial cache contains 26,208 inventory rows across 200 unique KOSPI200 codes.
+- Financial statement validation was rerun in schema-inventory mode only.
+- Current extracted Naver financial rows do not include disclosure, filing, or availability dates, so `point_in_time_status = unverified`.
+- Financial data remains inventory-only and must not enable valuation scoring, technical scoring, composite scoring, ranking, or backtesting.
+
 ## Reports
 
 Reports are written to `reports/data_quality/`:
@@ -85,4 +93,3 @@ Reports are written to `reports/data_quality/`:
 - Keep threshold values configurable.
 - Treat financial statement data as inventory only until point-in-time safety is verified.
 - Keep price and financial statement data separate for this step.
-

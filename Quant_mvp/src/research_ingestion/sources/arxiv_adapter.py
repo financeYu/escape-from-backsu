@@ -1,14 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
+import re
 import time
 from typing import Any
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 import xml.etree.ElementTree as ET
 
 from ..normalize import clean_text, make_normalized_paper, normalize_arxiv_id
-from ..redaction import assert_no_scholar_request
+from ..redaction import redact_mapping
+from .http import SourceResponse, fetch_text_with_retries
 
 
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
@@ -35,7 +36,7 @@ class ArxivAdapter:
 
     def build_search_url(self, query: str, start: int = 0, max_results: int | None = None) -> str:
         params = {
-            "search_query": f"all:{query}",
+            "search_query": _arxiv_search_query(query),
             "start": start,
             "max_results": max_results or self.default_max_results,
             "sortBy": "submittedDate",
@@ -43,17 +44,29 @@ class ArxivAdapter:
         }
         return f"{self.base_url}?{urlencode(params)}"
 
-    def fetch_search(self, query: str, start: int = 0, max_results: int | None = None) -> str:
+    def request_headers(self) -> dict[str, str]:
+        return {"User-Agent": "QuantMVPResearchIngestion/0.1"}
+
+    def request_metadata(self, url: str, headers: dict[str, str] | None = None) -> dict[str, Any]:
+        return redact_mapping({"request_url": url, "headers": headers or self.request_headers()})
+
+    def fetch_search_response(self, query: str, start: int = 0, max_results: int | None = None) -> SourceResponse:
         elapsed = time.monotonic() - self._last_request_ts
         if elapsed < self.min_interval_seconds:
             time.sleep(self.min_interval_seconds - elapsed)
         url = self.build_search_url(query, start=start, max_results=max_results)
-        assert_no_scholar_request(url)
-        request = Request(url, headers={"User-Agent": "QuantMVPResearchIngestion/0.1"})
-        with urlopen(request, timeout=float(self.config.get("timeout_seconds", 20))) as response:
-            body = response.read().decode("utf-8")
+        response = fetch_text_with_retries(
+            url=url,
+            headers=self.request_headers(),
+            timeout_seconds=float(self.config.get("timeout_seconds", 20)),
+            max_retries=int(self.config.get("max_retries", 0)),
+            retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
+        )
         self._last_request_ts = time.monotonic()
-        return body
+        return response
+
+    def fetch_search(self, query: str, start: int = 0, max_results: int | None = None) -> str:
+        return self.fetch_search_response(query, start=start, max_results=max_results).body
 
     def parse_atom(self, xml_text: str, raw_snapshot_ref: str | None = None) -> list[dict[str, Any]]:
         root = ET.fromstring(xml_text)
@@ -119,6 +132,24 @@ class ArxivAdapter:
 def _find_text(entry: ET.Element, path: str) -> str | None:
     node = entry.find(path, ATOM_NS)
     return node.text if node is not None else None
+
+
+def _arxiv_search_query(query: str) -> str:
+    cleaned = " ".join(str(query).split())
+    if not cleaned:
+        return "all:"
+    if _looks_like_arxiv_query(cleaned):
+        return cleaned
+    terms = re.findall(r"[A-Za-z0-9_.-]+", cleaned)
+    if not terms:
+        return "all:"
+    return " AND ".join(f"all:{term}" for term in terms)
+
+
+def _looks_like_arxiv_query(query: str) -> bool:
+    if re.search(r"\b(?:all|ti|au|abs|cat|id|doi|jr|co|rn):", query, flags=re.IGNORECASE):
+        return True
+    return bool(re.search(r"\b(?:AND|OR|ANDNOT)\b", query, flags=re.IGNORECASE))
 
 
 def _arxiv_id_from_url(url: str | None) -> str | None:

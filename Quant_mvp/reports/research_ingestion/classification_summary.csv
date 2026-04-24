@@ -1,7 +1,1 @@
-research_branch,downstream_route,main_score_branch_candidate,count
-technical,technical_score_architect,technical,9
-diagnostic,diagnostic_backlog,diagnostic,2
-diagnostic,diagnostic_backlog,unavailable,1
-out_of_scope,reject_log,out_of_scope,4
-hybrid,hybrid_split_required,unavailable,0
-valuation,valuation_agent_handoff,unavailable,0
+research_branch,downstream_route,count,manual_review_count

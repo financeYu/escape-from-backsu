@@ -108,15 +108,51 @@ Step 5는 아래 기준이 모두 문서와 config에 반영되면 완료로 본
 - Step 5 결과가 score implementation, ranking generation, composite scoring, adoption decision, backtest를 활성화하지 않는다.
 - valuation/fundamental data는 계속 deferred 상태이며 technical 또는 final composite에 들어가지 않는다.
 
+## 4.3 Step 8 완료 기준
+
+Step 8은 아래 기준이 모두 문서와 체크리스트에 반영되면 완료로 본다.
+
+- `docs/step8_testing_normalization_protocol.md`가 작성되어 있다.
+- Step 7 raw indicator output을 입력 contract로 명시한다.
+- Step 9 Research Tester와 Step 10 normalization implementation으로 넘길 downstream contract를 명시한다.
+- no lookahead, ticker/date alignment, ticker leading-zero 보존, duplicate `ticker`/`date`, missing value, warmup, insufficient history, minimum observation policy를 테스트 기준으로 고정한다.
+- time-series normalization과 cross-sectional normalization의 의미와 분리 기준을 명시한다.
+- robust z-score, winsorization/clipping, tie handling, `coverage_status`, `warmup_status`, `data_quality_flag` semantics를 명시한다.
+- diagnostics는 coverage, stability, correlation, turnover proxy를 review material로만 정의하고 adoption evidence나 alpha signal로 표현하지 않는다.
+- implementation deviation log policy와 diagnostics output schema 초안을 포함한다.
+- toy-data tests의 허용 범위와 real market data score/ranking/normalized production output 금지 범위를 명시한다.
+- Step 9 Research Tester pre-implementation checklist를 포함한다.
+- production score, normalized score output, ranking, composite score, backtest, valuation/fundamental scoring을 구현하지 않는다.
+
+## 4.4 Step 18 준비 기준
+
+Step 18은 밸류에이션 확장 준비 단계다. Step 2에서 남겨둔 point-in-time financial availability 미검증 항목은 이 단계에서 먼저 처리해야 한다.
+
+Step 18 시작 시 필수로 진행할 항목:
+
+- `docs/step2_financial_validation_summary.md`를 확인한다.
+- financial metadata schema를 확정한다: `ticker`, `period`, `metric`, `value`, `filing_date`, `availability_date`, `disclosure_id` 또는 `source_report_id`, `source_vendor`, `collected_at`.
+- `collected_at`만으로 point-in-time safety를 verified로 보지 않는다.
+- disclosure, filing, availability date가 없거나 parse 불가능한 row는 valuation 후보 입력에서 제외한다.
+- reporting lag policy와 stale data policy를 문서화한다.
+- financial/fundamental data가 `technical_composite_score`, `final_composite_score`, technical scoring에 들어가지 않는다는 guardrail을 재확인한다.
+- Step 18 전에는 valuation/fundamental score, valuation-aware composite, valuation verdict를 구현하지 않는다.
+
 ## 5. 현재 상태
 
 - Step 1 = COMPLETE or mostly complete
-- Step 2 = PARTIALLY COMPLETE
+- Step 2 = COMPLETE
 - Step 3 = COMPLETE
 - Step 4 = COMPLETE
 - Step 5 = COMPLETE
 - Step 6 = COMPLETE
-- Step 7 = NEXT
+- Step 7 = COMPLETE
+- Step 8 = COMPLETE
+- Step 2 financial collector validation is complete; point-in-time financial availability follow-up is explicitly assigned to Step 18.
+- Step 9 = COMPLETE
+  - Part A/B raw score integration exists for the eight MVP candidates.
+  - `short_term_overreaction`, `atr_adjusted_oversold_distance`, and `rsi_price_divergence` now use explicit Step 9 MVP locked formula variants.
+  - Step 10 normalization, Step 11 composite, Step 15 ranking, Step 17 backtest, and valuation/fundamental scoring remain WAITING / deferred.
 
 ## 6. Step 종료 보고 형식
 
@@ -163,6 +199,15 @@ Step 18: ...
 Step 19: ...
 Step 20: ...
 ```
+
+## 6.1 활성 Step 진행 원칙
+
+- `COMPLETE`로 판정된 Step은 기본적으로 신뢰하고, 현재 Step 진행 중에는 재구현하거나 전체 재검토 루프로 되돌리지 않는다.
+- 현재 Step의 직접 의존성이 되는 completed Step 산출물은 hard stop 위반 여부만 최소 확인한다.
+- completed Step에서 발견한 사소한 개선점은 TODO 또는 risk note로 기록하고 현재 Step을 막지 않는다.
+- 단, 현재 Step 인터페이스를 깨거나 hard stop 위반을 만들면 `Step N dependency fix`로 표시하고 최소 수정한다.
+- 모든 Step을 다시 점검하는 전체 검증은 Step 종료 검증 또는 사용자의 명시 요청이 있을 때만 수행한다.
+- Step 2의 financial sample 또는 point-in-time 검증 부족은 valuation/fundamental data가 technical scoring, `technical_composite_score`, `final_composite_score`에 섞이지 않는 한 기술 Step 진행을 막지 않는다.
 
 ## 7. Hard Stop Rules
 

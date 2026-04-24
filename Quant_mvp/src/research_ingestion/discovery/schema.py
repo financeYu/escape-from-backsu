@@ -11,6 +11,9 @@ from ..redaction import redact_url
 ALLOWED_SOURCE_CHANNELS = {
     "google_scholar_alert_email",
     "google_scholar_manual_bibtex",
+    "google_scholar_manual_endnote",
+    "google_scholar_manual_refman",
+    "google_scholar_manual_refworks",
     "google_scholar_manual_title_list",
     "google_scholar_manual_citation_seed",
 }

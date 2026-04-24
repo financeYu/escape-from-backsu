@@ -25,7 +25,7 @@ This inventory documents existing legacy/background runtime artifacts found in t
 | `chart_mvp/outputs/charts/*.png` | generated_chart | unknown | background | No | 10 generated chart images observed. Useful only as prior rendering artifacts, not ranking or score evidence. |
 | `chart_mvp/data/*_daily_prices.csv` | cached_price_data | unknown | background | Maybe | 200 cached daily-price CSV files observed. Use only after schema/date/numeric/ticker validation; not a ranking result. |
 | `chart_mvp/data/005930_chart_preview.png` | generated_image | unknown | background | No | Local chart preview artifact under the cache directory. |
-| `chart_mvp/reports/data_quality/financial_data_check.md` | validation_report | Step 2 follow-up | background | Maybe | Background data-quality report only; financial data remains `valuation_deferred`. |
+| `chart_mvp/reports/data_quality/financial_data_check.md` | validation_report | Step 2 follow-up | regenerated_runtime_report | Maybe | Regenerated for Step 2 collector validation; financial data remains `valuation_deferred` and point-in-time unverified. |
 | `chart_mvp/reports/data_quality/loader_inventory.md` | validation_report | Step 2 follow-up | background | Maybe | Background loader inventory only; does not authorize score implementation or ranking use. |
 | `chart_mvp/reports/data_quality/missing_data_summary.csv` | validation_report | Step 2 follow-up | background | Maybe | Background missing-data report only; requires current schema context before reuse. |
 | `chart_mvp/reports/data_quality/price_data_check.md` | validation_report | Step 2 follow-up | background | Maybe | Background price-data report only; not score adoption evidence. |
@@ -58,4 +58,3 @@ Disallowed use:
 - `Quant_mvp/reports/technical_review/*`: governance/review material, not scanner runtime output.
 - `Quant_mvp/reports/valuation_review/*`: valuation-boundary material; valuation remains deferred.
 - Source files under `src/`, `chart_mvp/src/`, `Quant_mvp/src/`, and tests: source-controlled project state, not legacy output.
-

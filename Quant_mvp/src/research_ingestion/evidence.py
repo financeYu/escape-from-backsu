@@ -63,6 +63,8 @@ def generate_evidence_card(
             "classification_confidence": classification["classification_confidence"],
             "manual_review_required": bool(classification["manual_review_required"] or paper.get("is_retracted") is True),
             "classification_reason_ko": classification["classification_reason_ko"],
+            "management_lane": classification.get("management_lane") or paper.get("research_management_lane"),
+            "source_query_sets": classification.get("source_query_sets") or paper.get("research_query_sets", []),
         },
         "candidate_idea": {
             "candidate_name": candidate.get("candidate_name"),

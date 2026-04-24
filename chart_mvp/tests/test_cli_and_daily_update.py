@@ -42,6 +42,24 @@ class CliTests(unittest.TestCase):
             use_market_cap_override=False,
         )
 
+    def test_due_only_cli_path_uses_due_checked_pipeline(self) -> None:
+        with patch(
+            "app.cli.run_daily_top5_update_if_due",
+            return_value=(None, {"reason": "already updated", "due_at": None, "due_last_successful_update_date": "2026-04-20"}),
+        ) as mock_run:
+            exit_code = cli_main(["scan", "--due-only"])
+
+        self.assertEqual(exit_code, 0)
+        mock_run.assert_called_once_with(
+            pages=20,
+            use_cache=True,
+            refresh_universe=False,
+            render_charts=True,
+            max_workers=None,
+            top_n=5,
+            use_market_cap_override=False,
+        )
+
 
 class DailyUpdateTests(unittest.TestCase):
     def test_chart_render_failure_does_not_abort_batch(self) -> None:

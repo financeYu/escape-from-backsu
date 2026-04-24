@@ -3,10 +3,10 @@ from __future__ import annotations
 import os
 from typing import Any
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
 
 from ..normalize import make_normalized_paper, normalize_doi
-from ..redaction import assert_no_scholar_request, redact_mapping
+from ..redaction import redact_mapping
+from .http import SourceRateLimiter, SourceResponse, fetch_text_with_retries
 
 
 class OpenAlexAdapter:
@@ -19,6 +19,11 @@ class OpenAlexAdapter:
         self.api_key_env_var = config.get("api_key_env_var")
         self.mailto_env_var = config.get("mailto_env_var")
         self.pdf_download_enabled = bool(config.get("pdf_download_enabled", False))
+        self._rate_limiter = SourceRateLimiter(
+            min_interval_seconds=float(config.get("min_interval_seconds", 0.0)),
+            max_concurrency=int(config.get("max_concurrency", 1)),
+            source_name=self.source_name,
+        )
 
     def build_search_url(self, query: str, page: int = 1, per_page: int | None = None) -> str:
         params: dict[str, str | int] = {
@@ -34,18 +39,31 @@ class OpenAlexAdapter:
             params["api_key"] = api_key
         return f"{self.base_url}?{urlencode(params)}"
 
+    def request_headers(self) -> dict[str, str]:
+        return {"User-Agent": "QuantMVPResearchIngestion/0.1"}
+
     def request_metadata(self, url: str, headers: dict[str, str] | None = None) -> dict[str, Any]:
         return redact_mapping(
             {"request_url": url, "headers": headers or {}},
             env_var_names=[name for name in [self.api_key_env_var, self.mailto_env_var] if name],
         )
 
-    def fetch_search(self, query: str, page: int = 1, per_page: int | None = None) -> str:
+    def fetch_search_response(self, query: str, page: int = 1, per_page: int | None = None) -> SourceResponse:
         url = self.build_search_url(query, page=page, per_page=per_page)
-        assert_no_scholar_request(url)
-        request = Request(url, headers={"User-Agent": "QuantMVPResearchIngestion/0.1"})
-        with urlopen(request, timeout=float(self.config.get("timeout_seconds", 20))) as response:
-            return response.read().decode("utf-8")
+        self._rate_limiter.wait_before_request()
+        try:
+            return fetch_text_with_retries(
+                url=url,
+                headers=self.request_headers(),
+                timeout_seconds=float(self.config.get("timeout_seconds", 20)),
+                max_retries=int(self.config.get("max_retries", 0)),
+                retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
+            )
+        finally:
+            self._rate_limiter.mark_request_complete()
+
+    def fetch_search(self, query: str, page: int = 1, per_page: int | None = None) -> str:
+        return self.fetch_search_response(query, page=page, per_page=per_page).body
 
     def parse_works_json(self, payload: dict[str, Any], raw_snapshot_ref: str | None = None) -> list[dict[str, Any]]:
         results = payload if isinstance(payload, list) else payload.get("results", [])

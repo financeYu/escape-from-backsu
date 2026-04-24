@@ -61,5 +61,5 @@ gui_display = "allowed_if_already_present"
 technical_scoring_allowed = false
 final_composite_allowed = false
 current_cache_pattern = "chart_mvp/data/*_financial_statements.csv"
-cached_sample_status = "none_found_during_step_3_inspection"
+cached_sample_status = "local_runtime_cache_generated_for_step_2_validation_not_source_controlled"
 point_in_time_status = "unverified"

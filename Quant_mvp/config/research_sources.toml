@@ -21,18 +21,19 @@ max_retries = 2
 retry_backoff_seconds = 2.0
 min_interval_seconds = 3.2
 max_concurrency = 1
-default_max_results = 25
+default_max_results = 50
 pdf_download_enabled = false
 
 [sources.openalex]
 enabled = true
 base_url = "https://api.openalex.org/works"
+anonymous_allowed = false
 timeout_seconds = 20
 max_retries = 2
 retry_backoff_seconds = 2.0
 min_interval_seconds = 1.0
 max_concurrency = 1
-default_per_page = 25
+default_per_page = 50
 api_key_env_var = "OPENALEX_API_KEY"
 mailto_env_var = "OPENALEX_MAILTO"
 pdf_download_enabled = false
@@ -45,7 +46,7 @@ max_retries = 2
 retry_backoff_seconds = 2.0
 min_interval_seconds = 1.0
 max_concurrency = 1
-default_rows = 25
+default_rows = 50
 polite_email_env_var = "CROSSREF_MAILTO"
 plus_api_token_env_var = "CROSSREF_PLUS_API_TOKEN"
 pdf_download_enabled = false
@@ -54,12 +55,14 @@ pdf_download_enabled = false
 enabled = true
 base_url = "https://api.semanticscholar.org/graph/v1/paper/search"
 batch_base_url = "https://api.semanticscholar.org/graph/v1/paper/batch"
+paper_base_url = "https://api.semanticscholar.org/graph/v1/paper"
+public_without_key_allowed = true
 timeout_seconds = 20
 max_retries = 2
 retry_backoff_seconds = 2.0
 min_interval_seconds = 1.0
 max_concurrency = 1
-default_limit = 25
+default_limit = 50
 api_key_env_var = "SEMANTIC_SCHOLAR_API_KEY"
 fields = [
   "paperId",
@@ -73,6 +76,7 @@ fields = [
   "fieldsOfStudy",
   "citationCount",
   "influentialCitationCount",
+  "isRetracted",
   "isOpenAccess",
   "openAccessPdf",
   "url",

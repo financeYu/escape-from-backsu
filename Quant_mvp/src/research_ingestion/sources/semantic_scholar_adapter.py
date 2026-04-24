@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from typing import Any
-from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.parse import quote, urlencode
 
 from ..normalize import make_normalized_paper, normalize_arxiv_id, normalize_doi
-from ..redaction import assert_no_scholar_request, redact_mapping
+from ..redaction import redact_mapping
+from .http import SourceRateLimiter, SourceResponse, fetch_text_with_retries
 
 
 class SemanticScholarAdapter:
@@ -15,9 +15,15 @@ class SemanticScholarAdapter:
         self.config = config
         self.base_url = config.get("base_url", "https://api.semanticscholar.org/graph/v1/paper/search")
         self.batch_base_url = config.get("batch_base_url", "https://api.semanticscholar.org/graph/v1/paper/batch")
+        self.paper_base_url = config.get("paper_base_url", "https://api.semanticscholar.org/graph/v1/paper")
         self.default_limit = int(config.get("default_limit", 25))
         self.api_key_env_var = config.get("api_key_env_var")
         self.fields = config.get("fields", [])
+        self._rate_limiter = SourceRateLimiter(
+            min_interval_seconds=float(config.get("min_interval_seconds", 0.0)),
+            max_concurrency=int(config.get("max_concurrency", 1)),
+            source_name=self.source_name,
+        )
 
     def build_search_url(self, query: str, limit: int | None = None, offset: int = 0) -> str:
         params = {
@@ -27,6 +33,10 @@ class SemanticScholarAdapter:
             "fields": ",".join(self.fields),
         }
         return f"{self.base_url}?{urlencode(params)}"
+
+    def build_paper_url(self, paper_id_or_external_id: str) -> str:
+        params = {"fields": ",".join(self.fields)}
+        return f"{self.paper_base_url}/{quote(paper_id_or_external_id, safe=':')}?{urlencode(params)}"
 
     def build_batch_payload(self, ids: list[str]) -> dict[str, Any]:
         return {"ids": ids, "fields": ",".join(self.fields)}
@@ -44,16 +54,46 @@ class SemanticScholarAdapter:
     def request_metadata(self, url: str, headers: dict[str, str]) -> dict[str, Any]:
         return redact_mapping({"request_url": url, "headers": headers}, env_var_names=[self.api_key_env_var] if self.api_key_env_var else [])
 
-    def fetch_search(self, query: str, limit: int | None = None, offset: int = 0) -> str:
+    def fetch_search_response(self, query: str, limit: int | None = None, offset: int = 0) -> SourceResponse:
         url = self.build_search_url(query, limit=limit, offset=offset)
-        assert_no_scholar_request(url)
-        request = Request(url, headers=self.request_headers())
-        with urlopen(request, timeout=float(self.config.get("timeout_seconds", 20))) as response:
-            return response.read().decode("utf-8")
+        self._rate_limiter.wait_before_request()
+        try:
+            return fetch_text_with_retries(
+                url=url,
+                headers=self.request_headers(),
+                timeout_seconds=float(self.config.get("timeout_seconds", 20)),
+                max_retries=int(self.config.get("max_retries", 0)),
+                retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
+            )
+        finally:
+            self._rate_limiter.mark_request_complete()
+
+    def fetch_search(self, query: str, limit: int | None = None, offset: int = 0) -> str:
+        return self.fetch_search_response(query, limit=limit, offset=offset).body
+
+    def fetch_paper_response(self, paper_id_or_external_id: str) -> SourceResponse:
+        url = self.build_paper_url(paper_id_or_external_id)
+        self._rate_limiter.wait_before_request()
+        try:
+            return fetch_text_with_retries(
+                url=url,
+                headers=self.request_headers(),
+                timeout_seconds=float(self.config.get("timeout_seconds", 20)),
+                max_retries=int(self.config.get("max_retries", 0)),
+                retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
+            )
+        finally:
+            self._rate_limiter.mark_request_complete()
+
+    def fetch_paper(self, paper_id_or_external_id: str) -> str:
+        return self.fetch_paper_response(paper_id_or_external_id).body
 
     def parse_search_json(self, payload: dict[str, Any], raw_snapshot_ref: str | None = None) -> list[dict[str, Any]]:
         papers = payload if isinstance(payload, list) else payload.get("data", [])
         return [parse_semantic_scholar_paper(item, raw_snapshot_ref=raw_snapshot_ref) for item in papers]
+
+    def parse_paper_json(self, payload: dict[str, Any], raw_snapshot_ref: str | None = None) -> dict[str, Any]:
+        return parse_semantic_scholar_paper(payload, raw_snapshot_ref=raw_snapshot_ref)
 
 
 def parse_semantic_scholar_paper(item: dict[str, Any], raw_snapshot_ref: str | None = None) -> dict[str, Any]:

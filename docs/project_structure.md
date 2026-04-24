@@ -23,7 +23,7 @@ Child projects under the canonical root:
 - `chart_mvp`: current runnable scanner/runtime project
 - `Quant_mvp`: quant score governance and config-policy project
 - `reserch_mvp`: research-ingestion reference project
-- `review_mvp`: code-review and final-validation project
+- `review_mvp`: specialist code-review and optional final-validation support project
 
 External sibling projects near the root:
 
@@ -49,6 +49,12 @@ src/scanner
 ```
 
 These directories define future module ownership. They do not imply that existing working runtime code has been migrated.
+
+Step 6 adds the canonical preprocessing entry point:
+
+- `src/preprocess/daily_ohlcv.py`
+
+This module prepares config-defined daily OHLCV processed data only. It does not implement Step 7 indicators, Step 9 scores, rankings, composites, valuation integration, or backtests.
 
 ## Current Known Runtime Locations
 
@@ -87,4 +93,3 @@ Step 3 does not implement:
 - fundamental scores
 - financial-data integration into technical scoring
 - financial-data integration into final composite scoring
-

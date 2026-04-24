@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from research_ingestion.persistence import raw_snapshot_path, store_raw_response
 from research_ingestion.redaction import redact_headers, redact_mapping, redact_url
 
@@ -21,10 +23,19 @@ def test_raw_persistence_path_construction_and_secret_redaction(workspace_tmp_pa
         root=workspace_tmp_path,
         source="openalex",
         run_id="run",
-        response_body="body",
+        response_body="body secret-key",
         suffix=".json",
         request_metadata={"request_url": "https://api.test?api_key=secret-key"},
         redaction_env_vars=["OPENALEX_API_KEY"],
     )
     metadata = open(snapshot["metadata_path"], encoding="utf-8").read()
+    body = open(snapshot["body_path"], encoding="utf-8").read()
     assert "secret-key" not in metadata
+    assert "secret-key" not in body
+
+
+def test_raw_persistence_rejects_unsafe_path_segments(workspace_tmp_path):
+    with pytest.raises(ValueError):
+        raw_snapshot_path(workspace_tmp_path, "openalex", "..\\escape", "body", ".json")
+    with pytest.raises(ValueError):
+        raw_snapshot_path(workspace_tmp_path, "../openalex", "run", "body", ".json")

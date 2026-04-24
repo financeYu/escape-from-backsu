@@ -35,6 +35,7 @@ FINANCIAL_STATEMENT_ROW_KEYWORDS = (
     "PBR",
     "\ubc30\ub2f9\uc218\uc775\ub960",
 )
+FISCAL_PERIOD_LABEL_PATTERN = re.compile(r"\d{4}[/.-](?:\d{2}|Q[1-4])(?:\(E\))?")
 
 
 def build_session() -> requests.Session:
@@ -115,6 +116,19 @@ def _flatten_column_name(column: object) -> str:
     return str(column).strip()
 
 
+def _make_unique_column_names(columns: list[str]) -> list[str]:
+    """Make flattened table columns unique while preserving readable labels."""
+
+    seen: dict[str, int] = {}
+    unique_columns: list[str] = []
+    for index, column in enumerate(columns):
+        base_name = column or f"column_{index}"
+        count = seen.get(base_name, 0)
+        seen[base_name] = count + 1
+        unique_columns.append(base_name if count == 0 else f"{base_name}__{count + 1}")
+    return unique_columns
+
+
 def _looks_like_financial_statement(table: pd.DataFrame) -> bool:
     """Heuristically detect Naver Finance statement tables."""
 
@@ -141,16 +155,23 @@ def extract_financial_statements_from_html(html: str, code: str) -> pd.DataFrame
             continue
 
         normalized = table.copy()
-        normalized.columns = [_flatten_column_name(column) or f"column_{index}" for index, column in enumerate(normalized.columns)]
+        period_labels = [_flatten_column_name(column) or f"column_{index}" for index, column in enumerate(normalized.columns)]
+        normalized.columns = _make_unique_column_names(period_labels)
         metric_column = normalized.columns[0]
+        period_label_by_column = dict(zip(normalized.columns[1:], period_labels[1:]))
+        fiscal_period_columns = [
+            column for column in normalized.columns[1:] if FISCAL_PERIOD_LABEL_PATTERN.search(period_label_by_column[column])
+        ]
+        if not fiscal_period_columns:
+            continue
 
         for _, row in normalized.iterrows():
             metric = str(row.get(metric_column, "")).strip()
             if not metric or metric == "nan":
                 continue
 
-            for period in normalized.columns[1:]:
-                value = row.get(period)
+            for period_column in fiscal_period_columns:
+                value = row.get(period_column)
                 if pd.isna(value):
                     continue
                 value_text = str(value).strip()
@@ -162,7 +183,7 @@ def extract_financial_statements_from_html(html: str, code: str) -> pd.DataFrame
                         "code": code,
                         "table_index": str(table_index),
                         "metric": metric,
-                        "period": period,
+                        "period": period_label_by_column[period_column],
                         "value": value_text,
                     }
                 )

@@ -18,3 +18,23 @@ confirmation_phrase = "I confirm OA/license/source policy for PDF use"
 normalized_jsonl = "data/research/normalized/papers.jsonl"
 evidence_jsonl = "data/research/evidence/evidence_cards.jsonl"
 unresolved_scholar_seeds_jsonl = "data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl"
+
+[refresh_policy]
+enabled = true
+interval_days = 14
+stale_after_days = 21
+default_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+default_query_sets = [
+  "technical_momentum",
+  "technical_mean_reversion",
+  "technical_breakout",
+  "technical_volatility_liquidity",
+  "methodology_diagnostics",
+  "backtest_methodology",
+  "korea_kospi_context",
+]
+preserve_existing_papers = true
+write_new_only_artifact = true
+regenerate_evidence_cards = true
+recheck_unresolved_scholar_seeds = true
+fundamental_valuation_refresh = "opt_in_only"

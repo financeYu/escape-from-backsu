@@ -1,0 +1,28 @@
+[coverage]
+warn_score_coverage = 0.80
+min_score_coverage = 0.60
+min_family_coverage = 0.50
+min_branch_coverage = 0.50
+
+[outliers]
+winsorize_lower_pct = 0.01
+winsorize_upper_pct = 0.99
+max_gap_return_abs = 0.25
+max_intraday_range_multiple = 0.30
+volume_spike_zscore_warn = 5.0
+
+[stability]
+rank_stability_warn_floor = 0.50
+turnover_warn_ceiling = 0.35
+turnover_block_ceiling = 0.50
+
+[redundancy]
+spearman_warn = 0.80
+spearman_block = 0.90
+rank_overlap_warn = 0.70
+rank_overlap_block = 0.85
+
+[quality]
+min_non_nan_observations = 60
+min_cross_section_count = 20
+neutral_shrinkage_floor = 50.0

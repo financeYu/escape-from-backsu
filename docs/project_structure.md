@@ -1,0 +1,90 @@
+# Project Structure
+
+## Canonical Root
+
+Canonical root for the quant project is:
+
+```text
+master_mvp/
+```
+
+Evidence:
+
+- user instruction says to treat `master_mvp` as canonical unless repository evidence clearly shows a different root
+- root-level `AGENTS.md` exists and defines the master agent
+- root-level `README.md`, `docs/project_registry.md`, and child project directories are present
+
+No contrary repository evidence was found during Step 3 inspection.
+
+## Child and Legacy Project Handling
+
+Child projects under the canonical root:
+
+- `chart_mvp`: current runnable scanner/runtime project
+- `Quant_mvp`: quant score governance and config-policy project
+- `reserch_mvp`: research-ingestion reference project
+- `review_mvp`: code-review and final-validation project
+
+External sibling projects near the root:
+
+- `C:/Users/jjaew/Project/stock_mvp`: legacy or unknown prior stock project
+- `C:/Users/jjaew/Project/review_mvp`: empty leftover directory after `review_mvp` was moved under `master_mvp`
+
+Child and legacy logic must not be merged automatically. Any import, migration, or deletion requires an explicit reason and review.
+
+## Target Module Boundaries
+
+Step 3 creates these canonical target boundaries:
+
+```text
+src/loader
+src/preprocess
+src/indicators
+src/features
+src/scores
+src/normalize
+src/composite
+src/diagnostics
+src/scanner
+```
+
+These directories define future module ownership. They do not imply that existing working runtime code has been migrated.
+
+## Current Known Runtime Locations
+
+Current provider/loader code remains in `chart_mvp`:
+
+- `chart_mvp/src/stock_core/providers/naver_finance.py`
+- `chart_mvp/src/stock_core/providers/naver_price_provider.py`
+- `chart_mvp/src/stock_core/cache/csv_cache.py`
+- `chart_mvp/src/preprocess/schema_validator.py`
+- `chart_mvp/src/preprocess/price_data_validator.py`
+- `chart_mvp/src/preprocess/financial_data_validator.py`
+
+This is the current legacy/provider runtime location. Step 3 does not rename or move these files.
+
+## Legacy Output Handling
+
+Existing generated outputs are background artifacts:
+
+- `chart_mvp/outputs/latest_top*`
+- `chart_mvp/outputs/last_run_meta.json`
+- `chart_mvp/data/scan_results/*`
+- `chart_mvp/outputs/charts/*`
+- `chart_mvp/reports/data_quality/*`
+
+They are not fresh Step 3 rankings and must not be presented as current Step 3 results.
+
+## Intentionally Not Implemented In Step 3
+
+Step 3 does not implement:
+
+- technical scores
+- composite scores
+- final rankings
+- backtests
+- valuation scores
+- fundamental scores
+- financial-data integration into technical scoring
+- financial-data integration into final composite scoring
+

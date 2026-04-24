@@ -1,0 +1,20 @@
+[status]
+active_score_windows = false
+purpose = "Step 3 placeholder only; no score implementation is enabled."
+
+[warmup]
+minimum_price_history_days = 120
+minimum_indicator_warmup_days = 60
+notes = "Validation planning only. These values are not active score rules."
+
+[technical_window_groups]
+short_term = []
+medium_term = []
+long_term = []
+volatility = []
+volume = []
+
+[rolling_placeholders]
+enabled = false
+notes = "Rolling windows must be documented in score definitions before implementation."
+

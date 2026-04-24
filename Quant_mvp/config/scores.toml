@@ -1,0 +1,71 @@
+[[scores]]
+name = "short_term_overreaction"
+branch = "technical"
+family = "mean_reversion"
+enabled = true
+normalization = "rolling_percentile"
+required_data = ["ohlcv"]
+minimum_history = 60
+
+[[scores]]
+name = "atr_adjusted_oversold_distance"
+branch = "technical"
+family = "mean_reversion"
+enabled = true
+normalization = "rolling_percentile"
+required_data = ["ohlcv"]
+minimum_history = 60
+
+[[scores]]
+name = "donchian_breakout_distance"
+branch = "technical"
+family = "breakout"
+enabled = true
+normalization = "cross_sectional_percentile"
+required_data = ["ohlcv"]
+minimum_history = 60
+
+[[scores]]
+name = "bollinger_width_squeeze"
+branch = "technical"
+family = "squeeze_expansion"
+enabled = true
+normalization = "rolling_percentile"
+required_data = ["ohlcv"]
+minimum_history = 60
+
+[[scores]]
+name = "cmf_confirmation"
+branch = "technical"
+family = "flow"
+enabled = true
+normalization = "rolling_robust_zscore"
+required_data = ["ohlcv"]
+minimum_history = 60
+
+[[scores]]
+name = "rsi_price_divergence"
+branch = "technical"
+family = "oscillator_divergence"
+enabled = true
+normalization = "rolling_percentile"
+required_data = ["ohlcv"]
+minimum_history = 90
+
+[[scores]]
+name = "realized_vol_percentile"
+branch = "technical"
+family = "volatility_regime"
+enabled = true
+normalization = "rolling_percentile"
+required_data = ["ohlcv"]
+minimum_history = 120
+
+[[scores]]
+name = "efficiency_ratio_trend"
+branch = "technical"
+family = "trend_efficiency"
+enabled = true
+normalization = "rolling_percentile"
+required_data = ["ohlcv"]
+minimum_history = 60

@@ -1,0 +1,31 @@
+[project]
+name = "Quant_mvp"
+market = "KOSPI200"
+frequency = "daily"
+timezone = "Asia/Seoul"
+base_currency = "KRW"
+
+[communication]
+progress_language = "ko"
+status_language = "ko"
+documentation_language = "en"
+allow_user_override = true
+
+[branches]
+technical_enabled = true
+
+[external_agents]
+research_ingestion_agent_path = "agents/research/AGENTS.md"
+valuation_agent_path = "agents/valuation/AGENTS.md"
+valuation_examples_path = "docs/valuation_agent_examples.md"
+
+[scoring]
+neutral_score = 50.0
+score_min = 0.0
+score_max = 100.0
+allow_partial_branch_composite = true
+
+[policy]
+hardcoding_default = "forbidden"
+allow_narrow_documented_exception = true
+config_version = "0.1.0"

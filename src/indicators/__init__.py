@@ -1,0 +1,2 @@
+"""Technical indicator boundary placeholder."""
+

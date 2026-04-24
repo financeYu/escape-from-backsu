@@ -1,0 +1,41 @@
+[project]
+name = "master_mvp"
+domain = "KOSPI200 stock scanner"
+status = "step_3_directory_config_schema_cleanup"
+canonical_root = "master_mvp"
+canonical_root_assumption = "User instruction and root AGENTS.md indicate master_mvp is the canonical workspace root."
+timezone = "Asia/Seoul"
+base_currency = "KRW"
+
+[execution]
+run_mode = "validation_scaffold"
+ranking_generation_enabled = false
+backtest_enabled = false
+score_implementation_enabled = false
+composite_implementation_enabled = false
+
+[paths]
+docs_dir = "docs"
+config_dir = "config"
+reports_dir = "reports"
+data_quality_report_dir = "reports/data_quality"
+legacy_runtime_project = "chart_mvp"
+
+[logging]
+progress_language = "ko"
+status_language = "ko"
+documentation_language = "en"
+
+[valuation]
+valuation_status = "deferred"
+financial_data_usage = "valuation_deferred_inventory_only_gui_display_if_already_present"
+technical_score_integration = false
+final_composite_integration = false
+
+[policy]
+no_future_data = true
+no_lookahead = true
+no_silent_score_redefinition = true
+unknowns_remain_unknown = true
+diagnostics_are_not_alpha = true
+

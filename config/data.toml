@@ -1,0 +1,50 @@
+[paths]
+canonical_price_data_dir = "data/price"
+canonical_financial_data_dir = "data/financial"
+current_price_cache_dir = "chart_mvp/data"
+current_scan_results_dir = "chart_mvp/data/scan_results"
+current_output_dir = "chart_mvp/outputs"
+current_chart_output_dir = "chart_mvp/outputs/charts"
+current_provider_dir = "chart_mvp/src/stock_core/providers"
+current_cache_module = "chart_mvp/src/stock_core/cache/csv_cache.py"
+
+[universe]
+name = "KOSPI200"
+expected_constituent_count = 200
+current_snapshot_path = "chart_mvp/universe/kospi200_snapshot.csv"
+fallback_provider_snapshot_path = "chart_mvp/src/stock_core/providers/kospi200.csv"
+point_in_time_membership_status = "not_verified"
+
+[ticker]
+dtype = "string"
+format = "six_character_uppercase_alphanumeric"
+leading_zero_preservation_required = true
+integer_ticker_loading_allowed = false
+
+[ohlcv_schema]
+required_columns = ["ticker", "date", "open", "high", "low", "close", "volume"]
+optional_runtime_columns = ["source", "name", "market", "data_vendor", "collected_at"]
+numeric_columns = ["open", "high", "low", "close", "volume"]
+duplicate_key = ["ticker", "date"]
+date_parseability_required = true
+
+[aliases]
+ticker = ["ticker", "code", "종목코드"]
+date = ["date", "날짜", "일자"]
+open = ["open", "시가"]
+high = ["high", "고가"]
+low = ["low", "저가"]
+close = ["close", "종가"]
+volume = ["volume", "거래량"]
+source = ["source", "data_source"]
+
+[financial_data]
+status = "valuation_deferred"
+usage = "inventory_only"
+gui_display = "allowed_if_already_present"
+technical_scoring_allowed = false
+final_composite_allowed = false
+current_cache_pattern = "chart_mvp/data/*_financial_statements.csv"
+cached_sample_status = "none_found_during_step_3_inspection"
+point_in_time_status = "unverified"
+

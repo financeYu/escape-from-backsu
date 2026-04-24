@@ -1,0 +1,45 @@
+[project]
+name = "Quant_mvp"
+market = "KOSPI200"
+mode = "technical_first_quant_scanner"
+source_of_truth = "AGENTS.md"
+
+[step_1]
+status = "agent_setup"
+scope = "custom technical agents and workflow documentation only"
+score_implementation_allowed = false
+backtest_allowed = false
+data_loader_changes_allowed = false
+
+[agents]
+active = [
+  "score-architect",
+  "research-tester",
+  "technical-selection-reviewer",
+]
+
+[agent_files]
+score_architect = ".codex/agents/score-architect.toml"
+research_tester = ".codex/agents/research-tester.toml"
+technical_selection_reviewer = ".codex/agents/technical-selection-reviewer.toml"
+
+[valuation_policy]
+status = "deferred"
+active_valuation_agent_required_now = false
+do_not_create_active_agent = ".codex/agents/valuation-reviewer.toml"
+optional_placeholder = "agents/valuation/AGENTS.md"
+rule = "No valuation or fundamental output may be merged into technical_composite_score or final_composite_score during the technical-first phase."
+
+[global_guardrails]
+conservative_quant_engineering = true
+config_first_implementation = true
+no_lookahead = true
+no_future_data = true
+no_silent_score_redefinition = true
+no_valuation_claims_from_price_only_evidence = true
+technical_analysis_first = true
+valuation_deferred = true
+
+[communication]
+progress_language = "ko"
+preserve_code_identifiers = true

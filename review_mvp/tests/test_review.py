@@ -1,0 +1,121 @@
+from __future__ import annotations
+
+import textwrap
+import unittest
+from pathlib import Path
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+import review
+
+
+class ReviewTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_dir = Path(__file__).resolve().parent / "workspace"
+        self.temp_dir.mkdir(exist_ok=True)
+        self.target = self.temp_dir / f"{self._testMethodName}.py"
+
+    def tearDown(self) -> None:
+        if self.target.exists():
+            self.target.unlink()
+
+    def _write_temp_file(self, body: str) -> Path:
+        self.target.write_text(textwrap.dedent(body), encoding="utf-8")
+        return self.target
+
+    def test_detects_security_and_safety_findings(self) -> None:
+        target = self._write_temp_file(
+            """
+            import subprocess
+
+            password = "plain-text"
+
+            def run(items=[]):
+                print(f"debug password={password}")
+                subprocess.run("echo hi", shell=True)
+                return items[0]
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+        rules = {finding.rule for finding in result.findings}
+
+        self.assertIn("hardcoded-secret", rules)
+        self.assertIn("sensitive-data-logging", rules)
+        self.assertIn("subprocess-shell-true", rules)
+        self.assertIn("mutable-default-argument", rules)
+        self.assertIn("missing-bounds-check", rules)
+
+    def test_markdown_render_groups_findings(self) -> None:
+        target = self._write_temp_file(
+            """
+            token = "123"
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+        rendered = review.render_markdown(result)
+
+        self.assertIn("# Python 리뷰", rendered)
+        self.assertIn("## 높음", rendered)
+        self.assertIn("hardcoded-secret", rendered)
+
+    def test_clean_file_passes(self) -> None:
+        target = self._write_temp_file(
+            """
+            def first_item(items: list[str]) -> str | None:
+                if items:
+                    return items[0]
+                return None
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+        self.assertEqual([], result.findings)
+        self.assertFalse(review.should_fail(result, "high"))
+
+    def test_fail_on_thresholds_follow_severity_order(self) -> None:
+        result = review.ReviewResult(
+            findings=[
+                review.build_finding(
+                    self.target,
+                    1,
+                    "mutable-default-argument",
+                    name="run",
+                )
+            ],
+            scanned_files=[str(self.target)],
+        )
+
+        self.assertFalse(review.should_fail(result, "high"))
+        self.assertTrue(review.should_fail(result, "medium"))
+        self.assertTrue(review.should_fail(result, "low"))
+
+    def test_detects_sensitive_attribute_and_subscript_logging(self) -> None:
+        target = self._write_temp_file(
+            """
+            def run(user, config):
+                print(user.password)
+                print(config["token"])
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+        rules = [finding.rule for finding in result.findings]
+        self.assertEqual(2, rules.count("sensitive-data-logging"))
+
+    def test_unreadable_file_becomes_finding(self) -> None:
+        self.target.write_bytes(b"\x80not-utf8")
+
+        result = review.run_review([self.target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertEqual(1, len(result.findings))
+        self.assertEqual("file-decode-error", result.findings[0].rule)
+        self.assertTrue(review.should_fail(result, "high"))
+
+
+if __name__ == "__main__":
+    unittest.main()

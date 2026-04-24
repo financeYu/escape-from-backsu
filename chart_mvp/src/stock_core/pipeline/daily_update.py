@@ -1,0 +1,449 @@
+"""One-click daily update pipeline using the modular stock_core interfaces."""
+
+from __future__ import annotations
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
+from datetime import datetime
+import json
+from pathlib import Path
+from typing import Callable, Iterable, Optional
+
+import pandas as pd
+
+from stock_core.indicators.technicals import add_indicators
+from stock_core.providers.kospi200_universe_provider import UniverseEntry, get_kospi200_constituents
+from stock_core.providers.naver_price_provider import get_price_df
+from stock_core.ranking.scorer import score_stock
+from stock_core.ranking.selector import select_top_stocks
+from stock_core.utils.constants import CLOSE_COLUMN, DATE_COLUMN, VOLUME_COLUMN
+from stock_core.utils.logging_utils import get_logger
+from stock_core.utils.paths import DATA_DIR, OUTPUTS_CHARTS_DIR, OUTPUTS_DIR, RESULTS_DIR
+
+
+logger = get_logger(__name__)
+MIN_CHART_PAGES = 7
+CHART_WARMUP_PAGES = 3
+ROWS_PER_NAVER_PAGE = 10
+MARKET_CAP_LEADER_CODES = [
+    "005930",
+    "000660",
+    "005380",
+    "373220",
+    "402340",
+]
+MARKET_CAP_OVERRIDE_MESSAGE = (
+    "시가총액 상위 고정 종목 우선 선택 옵션이 활성화되었습니다."
+)
+DEFAULT_BATCH_WORKERS = 8
+DEFAULT_TOP_N = 5
+LATEST_TOP_CSV_NAME = "latest_top.csv"
+LATEST_TOP_JSON_NAME = "latest_top.json"
+LEGACY_LATEST_TOP_CSV_NAME = "latest_top5.csv"
+LEGACY_LATEST_TOP_JSON_NAME = "latest_top5.json"
+
+
+@dataclass
+class DailyUpdateRow:
+    code: str
+    name: str
+    score: float
+    latest_date: str
+    latest_close: float
+    latest_change: float
+    latest_volume: float
+    rsi14: float
+    data_source: str
+    df: pd.DataFrame
+
+
+@dataclass
+class DailyUpdateResult:
+    as_of: str
+    output_path: Path
+    chart_paths: list[Path]
+    rankings: pd.DataFrame
+    failed_codes: list[str]
+
+
+def _resolve_worker_count(explicit_workers: Optional[int] = None) -> int:
+    """Return a conservative worker count for local batch processing."""
+
+    if explicit_workers is not None and explicit_workers > 0:
+        return explicit_workers
+    return DEFAULT_BATCH_WORKERS
+
+
+def _resolve_top_n(explicit_top_n: int) -> int:
+    """Return a validated ranking size."""
+
+    if explicit_top_n < 1:
+        raise ValueError("top_n must be greater than or equal to 1.")
+    return explicit_top_n
+
+
+def _build_rankings_frame(rows: Iterable[DailyUpdateRow]) -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "종목코드": row.code,
+                "종목명": row.name,
+                "점수": row.score,
+                "최신일": row.latest_date,
+                "종가": row.latest_close,
+                "전일대비": row.latest_change,
+                "거래량": row.latest_volume,
+                "RSI14": row.rsi14,
+                "데이터소스": row.data_source,
+            }
+            for row in rows
+        ]
+    )
+
+
+def _build_universe_entries(refresh_universe: bool = False) -> list[UniverseEntry]:
+    constituents = get_kospi200_constituents(refresh=refresh_universe)
+    return [UniverseEntry(code=item["code"], name=item["name"]) for item in constituents]
+
+
+def load_latest_top5_snapshot() -> pd.DataFrame:
+    """Load the most recent top-ranked output if available."""
+
+    candidate_paths = [
+        OUTPUTS_DIR / LATEST_TOP_CSV_NAME,
+        OUTPUTS_DIR / LEGACY_LATEST_TOP_CSV_NAME,
+    ]
+    latest_csv = next((path for path in candidate_paths if path.exists()), None)
+    if latest_csv is None:
+        return pd.DataFrame()
+    frame = pd.read_csv(latest_csv, dtype={"종목코드": str})
+    if "종목코드" in frame.columns:
+        frame["종목코드"] = frame["종목코드"].astype(str).str.zfill(6)
+    return frame
+
+
+def _select_latest_summary_row(df: pd.DataFrame) -> pd.Series:
+    """Choose the most recent row suitable for summary tables.
+
+    If the newest row is an incomplete same-day row with zero volume, prefer the
+    latest row that has positive volume.
+    """
+
+    latest = df.iloc[-1]
+    if float(latest.get(VOLUME_COLUMN, 0.0)) > 0:
+        return latest
+
+    completed_rows = df[df[VOLUME_COLUMN] > 0]
+    if not completed_rows.empty:
+        return completed_rows.iloc[-1]
+
+    return latest
+
+
+def _calculate_latest_change(df: pd.DataFrame, summary_row: pd.Series) -> float:
+    """Calculate signed day-over-day close change for the selected summary row."""
+
+    if df.empty:
+        return 0.0
+
+    try:
+        summary_position = int(df.index.get_loc(summary_row.name))
+    except KeyError:
+        summary_position = len(df) - 1
+
+    if summary_position <= 0:
+        return 0.0
+
+    current_close = float(summary_row[CLOSE_COLUMN])
+    previous_close = float(df.iloc[summary_position - 1][CLOSE_COLUMN])
+    return current_close - previous_close
+
+
+def _process_universe_entry(entry: UniverseEntry, pages: int, use_cache: bool) -> DailyUpdateRow:
+    """Fetch, enrich, and score a single universe member."""
+
+    base_df = get_price_df(entry.code, pages=pages, use_cache=use_cache)
+    indicator_df = add_indicators(base_df)
+    latest = _select_latest_summary_row(indicator_df)
+    latest_change = _calculate_latest_change(indicator_df, latest)
+    return DailyUpdateRow(
+        code=entry.code,
+        name=entry.name,
+        score=score_stock(indicator_df),
+        latest_date=pd.Timestamp(latest[DATE_COLUMN]).strftime("%Y-%m-%d"),
+        latest_close=float(latest[CLOSE_COLUMN]),
+        latest_change=latest_change,
+        latest_volume=float(latest[VOLUME_COLUMN]),
+        rsi14=float(latest.get("RSI14", float("nan"))),
+        data_source="cache_or_fetch" if use_cache else "direct_fetch",
+        df=indicator_df,
+    )
+
+
+def _apply_market_cap_leader_override(results_df: pd.DataFrame, top_n: int) -> pd.DataFrame:
+    """Prioritize the configured market-cap leaders, then fill any remaining slots."""
+
+    logger.info(MARKET_CAP_OVERRIDE_MESSAGE)
+
+    selected_frames: list[pd.DataFrame] = []
+    for code in MARKET_CAP_LEADER_CODES:
+        matched = results_df[results_df["종목코드"] == code]
+        if not matched.empty:
+            selected_frames.append(matched.head(1))
+
+    if not selected_frames:
+        logger.warning("Market-cap override could not match any stocks; using selector fallback.")
+        return select_top_stocks(results_df, top_n=top_n)
+
+    top_rankings = pd.concat(selected_frames, ignore_index=True).head(top_n)
+    if len(top_rankings) < top_n:
+        excluded_codes = set(top_rankings["종목코드"].tolist())
+        remaining = results_df[~results_df["종목코드"].isin(excluded_codes)].copy()
+        fallback = select_top_stocks(remaining, top_n=top_n - len(top_rankings))
+        fallback = fallback.drop(columns=["순위"], errors="ignore")
+        top_rankings = pd.concat([top_rankings, fallback], ignore_index=True)
+
+    top_rankings.insert(0, "순위", range(1, len(top_rankings) + 1))
+    ordered_columns = ["순위", "종목코드", "종목명", "점수", "최신일", "종가", "전일대비", "거래량", "RSI14", "데이터소스"]
+    return top_rankings.loc[:, [column for column in ordered_columns if column in top_rankings.columns]]
+
+
+def get_minimum_chart_pages(requested_pages: int) -> int:
+    """Return a chart-friendly page count that covers at least about three months."""
+
+    return max(requested_pages, MIN_CHART_PAGES)
+
+
+def prepare_chart_dataframe(code: str, requested_pages: int, use_cache: bool = True) -> pd.DataFrame:
+    """Fetch extra history for indicators, then trim to the display window."""
+
+    display_pages = get_minimum_chart_pages(requested_pages)
+    fetch_pages = display_pages + CHART_WARMUP_PAGES
+    display_rows = display_pages * ROWS_PER_NAVER_PAGE
+
+    base_df = get_price_df(code=code, pages=fetch_pages, use_cache=use_cache)
+    indicator_df = add_indicators(base_df)
+    return indicator_df.tail(display_rows).reset_index(drop=True)
+
+
+def _export_outputs(top_rankings: pd.DataFrame, meta: dict) -> None:
+    top_rankings.to_csv(OUTPUTS_DIR / LATEST_TOP_CSV_NAME, index=False, encoding="utf-8-sig")
+    top_rankings.to_json(OUTPUTS_DIR / LATEST_TOP_JSON_NAME, orient="records", force_ascii=False, indent=2)
+    top_rankings.to_csv(OUTPUTS_DIR / LEGACY_LATEST_TOP_CSV_NAME, index=False, encoding="utf-8-sig")
+    top_rankings.to_json(OUTPUTS_DIR / LEGACY_LATEST_TOP_JSON_NAME, orient="records", force_ascii=False, indent=2)
+    (OUTPUTS_DIR / "last_run_meta.json").write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def _render_selected_charts(
+    rows: Iterable[DailyUpdateRow],
+    selected_codes: set[str],
+    pages: int,
+    use_cache: bool,
+    output_dir: Path,
+    file_name_builder: Callable[[DailyUpdateRow], str],
+) -> tuple[list[str], list[str]]:
+    """Render charts for selected rows while isolating per-stock failures."""
+
+    from stock_core.charts.renderer import render_stock_chart
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    chart_paths: list[str] = []
+    chart_failed_codes: list[str] = []
+
+    for row in rows:
+        if row.code not in selected_codes:
+            continue
+
+        chart_path = output_dir / file_name_builder(row)
+        try:
+            chart_df = prepare_chart_dataframe(row.code, requested_pages=pages, use_cache=use_cache)
+            render_stock_chart(chart_df, row.code, row.name, str(chart_path))
+            chart_paths.append(str(chart_path))
+        except Exception as exc:
+            chart_failed_codes.append(row.code)
+            logger.warning("Failed to render chart for %s (%s): %s", row.name, row.code, exc)
+
+    return chart_paths, chart_failed_codes
+
+
+def run_daily_update(
+    pages: int = 20,
+    render_charts: bool = True,
+    chart_dir: Optional[str] = None,
+    limit: Optional[int] = None,
+    top_n: int = DEFAULT_TOP_N,
+) -> DailyUpdateResult:
+    """Run the daily KOSPI200 update pipeline end-to-end."""
+
+    top_n = _resolve_top_n(top_n)
+    universe = _build_universe_entries(refresh_universe=False)
+    if limit is not None:
+        universe = universe[:limit]
+
+    logger.info("Running daily update for %s stocks", len(universe))
+
+    rows: list[DailyUpdateRow] = []
+    failed_codes: list[str] = []
+
+    for entry in universe:
+        try:
+            base_df = get_price_df(entry.code, pages=pages, use_cache=True)
+            indicator_df = add_indicators(base_df)
+            latest = _select_latest_summary_row(indicator_df)
+            latest_change = _calculate_latest_change(indicator_df, latest)
+            rows.append(
+                DailyUpdateRow(
+                    code=entry.code,
+                    name=entry.name,
+                    score=score_stock(indicator_df),
+                    latest_date=pd.Timestamp(latest[DATE_COLUMN]).strftime("%Y-%m-%d"),
+                    latest_close=float(latest[CLOSE_COLUMN]),
+                    latest_change=latest_change,
+                    latest_volume=float(latest[VOLUME_COLUMN]),
+                    rsi14=float(latest.get("RSI14", float("nan"))),
+                    data_source="cache_or_fetch",
+                    df=indicator_df,
+                )
+            )
+        except Exception as exc:
+            failed_codes.append(entry.code)
+            logger.warning("Failed to update %s (%s): %s", entry.name, entry.code, exc)
+
+    if not rows:
+        raise ValueError("No stocks were updated successfully.")
+
+    rankings = _build_rankings_frame(rows)
+    top_rankings = select_top_stocks(rankings, top_n=top_n)
+    as_of = datetime.now().strftime("%Y%m%d")
+    output_path = RESULTS_DIR / f"top{top_n}_scan_{as_of}.csv"
+    top_rankings.to_csv(output_path, index=False, encoding="utf-8-sig")
+    logger.info("Saved top rankings to %s", output_path)
+
+    chart_output_dir = Path(chart_dir) if chart_dir else DATA_DIR / "scan_results" / f"charts_{as_of}"
+    chart_paths: list[Path] = []
+    if render_charts:
+        selected_codes = set(top_rankings["종목코드"].tolist())
+        rendered_chart_paths, _ = _render_selected_charts(
+            rows=rows,
+            selected_codes=selected_codes,
+            pages=pages,
+            use_cache=True,
+            output_dir=chart_output_dir,
+            file_name_builder=lambda row: f"{row.code}_{as_of}.png",
+        )
+        chart_paths = [Path(path) for path in rendered_chart_paths]
+
+    return DailyUpdateResult(
+        as_of=as_of,
+        output_path=output_path,
+        chart_paths=chart_paths,
+        rankings=top_rankings,
+        failed_codes=failed_codes,
+    )
+
+
+def run_daily_top5_update(
+    pages: int = 20,
+    use_cache: bool = True,
+    refresh_universe: bool = False,
+    render_charts: bool = True,
+    max_workers: Optional[int] = None,
+    progress_callback: Optional[Callable[[int, int, int], None]] = None,
+    top_n: int = DEFAULT_TOP_N,
+    use_market_cap_override: bool = False,
+) -> tuple[pd.DataFrame, dict]:
+    """Run the full KOSPI200 batch and export the latest top-ranked artifacts."""
+
+    top_n = _resolve_top_n(top_n)
+    universe = _build_universe_entries(refresh_universe=refresh_universe)
+    worker_count = _resolve_worker_count(max_workers)
+    logger.info(
+        "Running daily Top-N update for %s stocks (pages=%s, use_cache=%s, refresh_universe=%s, workers=%s, top_n=%s)",
+        len(universe),
+        pages,
+        use_cache,
+        refresh_universe,
+        worker_count,
+        top_n,
+    )
+
+    rows: list[DailyUpdateRow] = []
+    failed_codes: list[str] = []
+    completed_count = 0
+
+    future_to_entry: dict = {}
+    with ThreadPoolExecutor(max_workers=worker_count, thread_name_prefix="topn") as executor:
+        for entry in universe:
+            future = executor.submit(_process_universe_entry, entry, pages, use_cache)
+            future_to_entry[future] = entry
+
+        for future in as_completed(future_to_entry):
+            entry = future_to_entry[future]
+            try:
+                rows.append(future.result())
+            except Exception as exc:
+                failed_codes.append(entry.code)
+                logger.warning("Failed to process %s (%s): %s", entry.name, entry.code, exc)
+            finally:
+                completed_count += 1
+                if progress_callback is not None:
+                    progress_callback(completed_count, len(universe), len(failed_codes))
+
+    if not rows:
+        raise ValueError("No stocks were processed successfully.")
+
+    results_df = _build_rankings_frame(rows)
+    ordered_results = results_df.sort_values(
+        by=["점수", "최신일", "종목코드"],
+        ascending=[False, False, True],
+    ).reset_index(drop=True)
+    if use_market_cap_override:
+        top_df = _apply_market_cap_leader_override(ordered_results, top_n=top_n)
+    else:
+        top_df = select_top_stocks(ordered_results, top_n=top_n)
+
+    chart_paths: list[str] = []
+    chart_failed_codes: list[str] = []
+    if render_charts:
+        selected_codes = set(top_df["종목코드"].tolist())
+        chart_paths, chart_failed_codes = _render_selected_charts(
+            rows=rows,
+            selected_codes=selected_codes,
+            pages=pages,
+            use_cache=use_cache,
+            output_dir=OUTPUTS_CHARTS_DIR,
+            file_name_builder=lambda row: f"{row.code}.png",
+        )
+
+    meta = {
+        "as_of": datetime.now().strftime("%Y-%m-%d"),
+        "pages": pages,
+        "top_n": top_n,
+        "use_market_cap_override": use_market_cap_override,
+        "use_cache": use_cache,
+        "refresh_universe": refresh_universe,
+        "render_charts": render_charts,
+        "max_workers": worker_count,
+        "universe_size": len(universe),
+        "processed_count": len(rows),
+        "failed_count": len(failed_codes),
+        "failed_codes": failed_codes,
+        "output_csv": str(OUTPUTS_DIR / LATEST_TOP_CSV_NAME),
+        "output_json": str(OUTPUTS_DIR / LATEST_TOP_JSON_NAME),
+        "output_meta": str(OUTPUTS_DIR / "last_run_meta.json"),
+        "chart_paths": chart_paths,
+        "chart_failed_count": len(chart_failed_codes),
+        "chart_failed_codes": chart_failed_codes,
+        "live_universe_enabled": False,
+        "market_cap_override": use_market_cap_override,
+        "market_cap_override_message": MARKET_CAP_OVERRIDE_MESSAGE if use_market_cap_override else "",
+        "market_cap_override_codes": MARKET_CAP_LEADER_CODES if use_market_cap_override else [],
+    }
+    _export_outputs(top_df, meta)
+    logger.info("Exported latest top-ranked outputs to %s", OUTPUTS_DIR)
+
+    return top_df, meta

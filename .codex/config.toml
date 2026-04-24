@@ -1,0 +1,11 @@
+[project]
+name = "quant-project"
+default_roadmap = "docs/project_checklist.md"
+current_status = "docs/roadmap_status.md"
+
+[guardrails]
+valuation_deferred = true
+no_lookahead = true
+no_future_data = true
+config_first = true
+

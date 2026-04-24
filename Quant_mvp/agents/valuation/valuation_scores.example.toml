@@ -1,0 +1,44 @@
+[[scores]]
+name = "earnings_yield"
+branch = "valuation"
+family = "value"
+enabled = false
+normalization = "cross_sectional_percentile"
+required_data = ["point_in_time_fundamentals"]
+minimum_history = 4
+
+[[scores]]
+name = "book_to_price"
+branch = "valuation"
+family = "value"
+enabled = false
+normalization = "cross_sectional_percentile"
+required_data = ["point_in_time_fundamentals"]
+minimum_history = 4
+
+[[scores]]
+name = "operating_cash_flow_yield"
+branch = "valuation"
+family = "value"
+enabled = false
+normalization = "cross_sectional_percentile"
+required_data = ["point_in_time_fundamentals"]
+minimum_history = 4
+
+[[scores]]
+name = "gross_profitability"
+branch = "valuation"
+family = "profitability"
+enabled = false
+normalization = "cross_sectional_percentile"
+required_data = ["point_in_time_fundamentals"]
+minimum_history = 4
+
+[[scores]]
+name = "accrual_quality_penalty"
+branch = "valuation"
+family = "accounting_quality"
+enabled = false
+normalization = "cross_sectional_percentile"
+required_data = ["point_in_time_fundamentals", "quality_fields"]
+minimum_history = 4

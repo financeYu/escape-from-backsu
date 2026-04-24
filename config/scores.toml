@@ -1,0 +1,31 @@
+[status]
+score_implementation = "not_implemented"
+active_technical_scores = false
+active_composite_score = false
+active_valuation_scores = false
+active_fundamental_scores = false
+step_3_policy = "toggles_and_placeholders_only"
+
+[technical_scores]
+enabled = []
+implemented = []
+placeholders = []
+notes = "Technical score definitions must be documented and approved before implementation."
+
+[diagnostics]
+enabled = []
+implemented = []
+diagnostics_are_alpha = false
+
+[composite]
+enabled = false
+implemented = false
+technical_composite_score = "not_implemented"
+final_composite_score = "not_implemented"
+
+[valuation_scores]
+enabled = []
+implemented = []
+status = "valuation_deferred"
+financial_data_usage = "inventory_only"
+

@@ -1,0 +1,25 @@
+[branches]
+technical = 1.00
+
+[technical_families]
+mean_reversion = 1.00
+breakout = 1.00
+squeeze_expansion = 0.75
+flow = 0.75
+oscillator_divergence = 0.75
+volatility_regime = 0.50
+correlation_structure = 0.50
+serial_dependency = 0.50
+trend_efficiency = 0.75
+adaptive_edge = 0.25
+
+[composite]
+within_family_method = "mean"
+within_branch_method = "weighted_mean"
+final_method = "weighted_mean"
+
+[shrinkage]
+neutral_score = 50.0
+min_coverage_for_full_weight = 0.85
+branch_penalty_when_missing = 0.50
+family_penalty_when_sparse = 0.75

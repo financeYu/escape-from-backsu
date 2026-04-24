@@ -1,0 +1,39 @@
+[returns]
+short = 5
+medium = 20
+long = 60
+trend = 120
+
+[volatility]
+atr = 14
+realized_vol = 20
+vol_of_vol = 60
+
+[indicators]
+rsi = 14
+stochastic = 14
+cci = 20
+williams_r = 14
+macd_fast = 12
+macd_slow = 26
+macd_signal = 9
+bollinger = 20
+donchian = 20
+cmf = 20
+obv_slope = 20
+adl_slope = 20
+
+[statistics]
+autocorrelation = 20
+abs_return_autocorrelation = 20
+volume_return_correlation = 60
+efficiency_ratio = 20
+noise_ratio = 20
+
+[normalization]
+time_series_window = 252
+cross_section_min_names = 20
+
+[warmup]
+base_buffer_days = 5
+min_history_for_full_score_set = 252

@@ -1,0 +1,215 @@
+# chart_mvp
+
+로컬에서 실행하는 주식 데이터 수집, 기술지표 계산, 차트 렌더링, KOSPI200 Top-5 배치 분석 프로젝트입니다.
+
+현재 프로젝트는 다음 원칙을 유지합니다.
+
+- 로컬 실행 전용
+- 웹 UI 없음
+- 무거운 프레임워크 없음
+- `matplotlib` 기반 로컬 차트 렌더링 유지
+- 스코어링 알고리즘은 placeholder 상태 유지
+
+## 구조
+
+```text
+chart_mvp/
+├─ app/
+│  └─ run_daily.py
+├─ data/
+├─ outputs/
+│  └─ charts/
+├─ scripts/
+│  ├─ run_top5.bat
+│  └─ run_top5.sh
+├─ src/
+│  ├─ app/
+│  ├─ chart_mvp/
+│  └─ stock_core/
+├─ tests/
+├─ universe/
+│  └─ kospi200_snapshot.csv
+├─ main.py
+└─ requirements.txt
+```
+
+## 설치
+
+```powershell
+& 'C:\Users\jjaew\AppData\Local\Programs\Python\Python312\python.exe' -m pip install -r requirements.txt
+```
+
+## 수동 실행
+
+### 1. 권장 원클릭 실행
+
+프로젝트 루트에서:
+
+```powershell
+python -m app.run_daily
+```
+
+빠르게 돌리려면:
+
+```powershell
+python -m app.run_daily --pages 1 --workers 8 --no-render-charts
+```
+
+### 1-1. 그래픽 인터페이스 실행
+
+Top-5 목록을 보고, 항목을 더블클릭하거나 버튼을 눌러 개별 차트를 확인하려면:
+
+```powershell
+python -m app.run_gui
+```
+
+GUI 기능:
+
+- Top-5 갱신 실행
+- 상위 5개 목록 표시
+- 선택 종목 차트 창 열기
+- 임시 Top-5 override 안내 표시
+- 저장된 `latest_top5.csv`가 있으면 GUI 시작 시 즉시 먼저 표시
+- `빠른 갱신 모드` 사용 시 최근 데이터 중심으로 더 빠르게 실행
+- 진행률 바 표시
+- 마지막 갱신 시각 표시
+- 자동 새로고침 설정 가능
+
+안전한 경량 실행 예시:
+
+```powershell
+python -m app.run_daily --pages 1 --no-render-charts
+```
+
+직접 캐시를 무시하려면:
+
+```powershell
+python -m app.run_daily --pages 1 --no-cache
+```
+
+유니버스 live refresh를 시도한 뒤 snapshot으로 fallback 하려면:
+
+```powershell
+python -m app.run_daily --refresh-universe
+```
+
+### 2. 스크립트 실행
+
+Windows:
+
+```powershell
+scripts\run_top5.bat --pages 1 --no-render-charts
+```
+
+Linux/macOS:
+
+```bash
+sh scripts/run_top5.sh --pages 1 --no-render-charts
+```
+
+### 3. 기존 단일 종목 차트
+
+```powershell
+& 'C:\Users\jjaew\AppData\Local\Programs\Python\Python312\python.exe' main.py single --code 005930 --pages 20
+```
+
+## 출력 파일 위치
+
+배치 실행 후 자동으로 아래 파일들이 생성되거나 갱신됩니다.
+
+- `outputs/latest_top5.csv`
+- `outputs/latest_top5.json`
+- `outputs/last_run_meta.json`
+- `outputs/charts/<code>.png`
+
+기존 캐시 파일은 계속 `data/<code>_daily_prices.csv`에 저장됩니다.
+
+## 캐시 / 유니버스 준비
+
+### 캐시
+
+- 캐시는 자동 생성됩니다.
+- 현재 정책은 그대로 유지됩니다.
+  - 평일: 최신 데이터를 다시 가져옴
+  - 주말: 기존 캐시가 있으면 재사용
+
+### 유니버스 snapshot
+
+우선 경로:
+
+- `universe/kospi200_snapshot.csv`
+
+fallback 경로:
+
+- `src/stock_core/providers/kospi200.csv`
+
+snapshot CSV 형식은 반드시 아래 두 컬럼만 사용해야 합니다.
+
+```text
+code,name
+005930,삼성전자
+000660,SK하이닉스
+...
+```
+
+규칙:
+
+- `code`는 6자리 종목코드로 정규화됩니다.
+- 중복 코드는 제거됩니다.
+- 최종적으로 200개 종목이 있어야 합니다.
+
+## 테스트
+
+가벼운 로컬 테스트는 표준 라이브러리 `unittest`로 실행합니다.
+
+```powershell
+python -m unittest discover -s tests -v
+```
+
+현재 포함된 테스트:
+
+- selector 동작
+- trading calendar 동작
+- simple helper 동작
+
+## Windows Task Scheduler 등록 예시
+
+1. 작업 스케줄러 열기
+2. `기본 작업 만들기` 선택
+3. 매일 원하는 시간 지정
+4. 프로그램/스크립트:
+
+```text
+cmd.exe
+```
+
+5. 인수 추가:
+
+```text
+/c C:\Users\jjaew\Project\master_mvp\chart_mvp\scripts\run_top5.bat --pages 1 --no-render-charts
+```
+
+6. 시작 위치:
+
+```text
+C:\Users\jjaew\Project\master_mvp\chart_mvp
+```
+
+## cron 등록 예시
+
+매일 평일 오전 7시에 실행:
+
+```cron
+0 7 * * 1-5 cd /path/to/chart_mvp && sh scripts/run_top5.sh --pages 1 --no-render-charts
+```
+
+## 현재 placeholder 경계
+
+- `score_stock(df)`는 항상 `0.0`을 반환합니다.
+- `fetch_kospi200_universe_live()`는 아직 stub입니다.
+- `trading_calendar`는 한국 휴장일을 반영하지 않고 평일/주말만 구분합니다.
+
+## 참고
+
+- 차트 렌더링은 기존 `matplotlib` 로컬 방식 그대로 유지됩니다.
+- 일부 snapshot 데이터 품질 문제는 배치에서 개별 종목 실패로 기록되고 전체 실행은 계속 진행됩니다.

@@ -1,0 +1,31 @@
+[paths]
+ohlcv_dir = "data/ohlcv"
+fundamental_dir = "data/fundamentals"
+universe_membership_path = "data/universe_membership/membership.parquet"
+ticker_metadata_path = "data/reference/tickers.parquet"
+cache_dir = "data/cache"
+export_dir = "reports"
+
+[availability]
+ohlcv = true
+point_in_time_fundamentals = false
+analyst_revisions = false
+quality_fields = false
+sector_metadata = false
+
+[schema]
+required_ohlcv_columns = ["date", "open", "high", "low", "close", "volume"]
+optional_ohlcv_columns = ["adj_close", "adj_open", "adj_high", "adj_low", "adj_volume"]
+
+[universe]
+name = "KOSPI200"
+use_point_in_time_membership = false
+allow_survivorship_fallback = true
+missing_membership_policy = "warn"
+
+[validation]
+sort_ascending = true
+drop_duplicate_dates = false
+enforce_daily_frequency = true
+zero_or_negative_price_policy = "flag"
+zero_volume_policy = "allow_with_flag"

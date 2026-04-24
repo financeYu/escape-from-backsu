@@ -1,0 +1,23 @@
+[status]
+alpha_thresholds_enabled = false
+purpose = "Validation thresholds only; no alpha or ranking thresholds are active in Step 3."
+
+[validation]
+min_history_length = 120
+warmup_min_history_length = 60
+suspicious_return_threshold = 0.30
+flat_pattern_window = 5
+latest_coverage_lag_days = 10
+duplicate_ticker_date_allowed = false
+numeric_conversion_failures_allowed = false
+date_parse_failures_allowed = false
+
+[missing_data]
+missing_required_column_allowed = false
+missing_close_allowed = false
+missing_volume_allowed = false
+
+[financial]
+point_in_time_required_before_valuation = true
+financial_scoring_enabled = false
+

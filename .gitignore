@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local secrets and machine config
+.env
+.env.*
+!.env.example
+
+# Matplotlib / local runtime config
+.mplconfig/
+**/.mplconfig/
+
+# chart_mvp runtime artifacts
+chart_mvp/data/
+chart_mvp/outputs/
+chart_mvp/reports/data_quality/
+
+# review_mvp runtime artifacts
+review_mvp/tests/workspace/
+
+# Generated media and ad-hoc exports
+*.log
+*.tmp
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

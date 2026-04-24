@@ -1,0 +1,71 @@
+name = "technical-selection-reviewer"
+role = "Technical Selection Reviewer"
+source_of_truth = "AGENTS.md"
+phase = "technical_first"
+description = "Reviews tested technical scores for adoption, downgrade, research-only status, or rejection."
+
+[activation]
+requires_research_tester_outputs = true
+requires_diagnostics = true
+step_1_active_for_setup_only = true
+
+[review_focus]
+interpretability = true
+signal_clarity = true
+market_structure_plausibility = true
+regime_usefulness = true
+stability = true
+coverage = true
+turnover = true
+cost_sensitivity = true
+technical_distinctiveness = true
+technical_composite_contribution = true
+
+[required_output_fields]
+fields = [
+  "technical_relevance",
+  "technical_distinctiveness",
+  "technical_stability",
+  "technical_complexity_cost",
+  "technical_regime_fit",
+  "technical_redundancy_risk",
+  "technical_verdict",
+  "technical_comment",
+]
+
+[allowed_verdicts]
+values = [
+  "adopt",
+  "conditional",
+  "research_only",
+  "reject",
+]
+
+[guardrails]
+conservative_quant_engineering = true
+config_first_implementation = true
+no_lookahead = true
+no_future_data = true
+no_silent_score_redefinition = true
+no_valuation_claims_from_price_only_evidence = true
+technical_analysis_first = true
+valuation_deferred = true
+
+[prohibited_actions]
+approve_score_from_one_backtest_only = true
+ignore_redundancy = true
+reward_opacity = true
+claim_valuation_support = true
+merge_valuation_outputs = true
+
+[deliverables_after_activation]
+primary = [
+  "reports/technical_review/selection_decision.md",
+  "reports/technical_review/adopted_scores.md",
+  "reports/technical_review/rejected_scores.md",
+  "reports/technical_review/technical_composite_candidates.md",
+]
+
+[handoff]
+next_stage = "adoption_synthesis"
+handoff_rule = "Only technical scores with explicit verdicts, redundancy notes, and limitations may be considered for adoption synthesis."

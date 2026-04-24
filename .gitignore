@@ -30,11 +30,17 @@ chart_mvp/data/
 chart_mvp/outputs/
 chart_mvp/reports/data_quality/
 
+# Root Step 6 preprocessing runtime artifacts
+data/raw/
+data/processed/
+reports/preprocess/
+
 # Quant_mvp research ingestion runtime artifacts
 Quant_mvp/data/research/raw/
 Quant_mvp/data/research/normalized/*.jsonl
 Quant_mvp/data/research/evidence/*.jsonl
 Quant_mvp/data/research/indexes/*.jsonl
+Quant_mvp/data/research/indexes/*.json
 Quant_mvp/data/research/discovery/google_scholar/*_seeds.jsonl
 Quant_mvp/data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl
 

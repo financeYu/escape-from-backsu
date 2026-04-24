@@ -2,7 +2,7 @@
 
 ## 현재 활성 단계
 
-Step 6 = 데이터 전처리 파이프라인 구현
+Step 7 = 기술 지표 계산 레이어 구현
 
 ## 현재 판정
 
@@ -11,7 +11,35 @@ Step 6 = 데이터 전처리 파이프라인 구현
 - Step 3 verdict: COMPLETE
 - Step 4 verdict: COMPLETE
 - Step 5 verdict: COMPLETE
-- Step 6 permission: Yes
+- Step 6 verdict: COMPLETE
+- Step 7 permission: Next, not implemented yet
+
+## Step 6 완료 상태
+
+완료:
+
+- `src/preprocess/daily_ohlcv.py`에 config-first 일봉 OHLCV 전처리 파이프라인 추가
+- `config/data.toml`에 Step 6 입력/출력/리포트 경로 추가
+- `src/preprocess/schema_validator.py`에 future date 및 non-negative volume 검증 추가
+- ticker를 문자열로 보존하고 leading-zero 손실 후보를 명시적으로 reject/report
+- date parseability, future date, 안전한 numeric conversion, duplicate ticker/date, missing required value, negative volume 검증
+- 처리 결과는 canonical OHLCV 컬럼만 포함
+- `reports/preprocess/preprocess_summary.md` 및 `reports/preprocess/preprocess_validation_summary.csv` 생성 경로 구성
+- focused unit tests 추가: `tests/test_step6_preprocess.py`
+
+유지되는 제한:
+
+- technical indicator 계산 없음
+- score, ranking, composite, latest ranking 생성 없음
+- backtest 없음
+- financial/fundamental data 병합 없음
+- financial_data_status는 `valuation_deferred` 유지
+
+검증 / 후속:
+
+- root `python -m pytest` 실행을 위한 `pytest.ini` 추가
+- Step 6 preprocess policy가 허용되지 않은 값을 조용히 수용하지 않도록 fail-fast 검증 추가
+- Step 7은 다음 단계로 열려 있으나 indicator implementation은 아직 별도 Step 7 작업으로 남아 있음
 
 ## Step 5 완료 상태
 

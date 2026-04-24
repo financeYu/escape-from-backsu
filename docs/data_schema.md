@@ -73,6 +73,26 @@ ticker + date
 
 Duplicate `ticker`/`date` rows are invalid or must be explicitly reported before downstream use.
 
+## Step 6 Preprocessed Output
+
+Step 6 writes clean daily OHLCV data to the config-defined path:
+
+```text
+config/data.toml -> [preprocess].processed_price_output_path
+```
+
+The preprocessed output preserves only the canonical OHLCV columns:
+
+- `ticker`
+- `date`
+- `open`
+- `high`
+- `low`
+- `close`
+- `volume`
+
+Rows with invalid ticker, invalid date, future date, unsafe numeric value, negative volume, missing required value, or duplicate `ticker`/`date` key are rejected from the processed output and reported separately.
+
 ## Current Alias Mapping
 
 Current Naver cache columns may be normalized as:
@@ -98,4 +118,3 @@ inventory_only
 ```
 
 Financial data must not be used in technical scoring or final composite scoring.
-

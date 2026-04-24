@@ -7,6 +7,8 @@ market data, implement scores, generate rankings, or run backtests.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, datetime
+from numbers import Number
 from pathlib import Path
 import re
 from typing import Iterable
@@ -36,6 +38,8 @@ PRICE_COLUMN_ALIASES = {
 }
 
 TICKER_PATTERN = re.compile(r"^[0-9A-Z]{6}$")
+PLAIN_NUMERIC_PATTERN = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$")
+COMMA_NUMERIC_PATTERN = re.compile(r"^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d*)?$")
 
 
 @dataclass(frozen=True)
@@ -178,6 +182,66 @@ def validate_date_parseability(frame: pd.DataFrame, *, dataset: str = "price") -
     ]
 
 
+def _as_date(value: date | datetime | pd.Timestamp | None) -> date:
+    if value is None:
+        return date.today()
+    if isinstance(value, pd.Timestamp):
+        return value.date()
+    if isinstance(value, datetime):
+        return value.date()
+    return value
+
+
+def validate_future_dates_absent(
+    frame: pd.DataFrame,
+    *,
+    dataset: str = "price",
+    as_of_date: date | datetime | pd.Timestamp | None = None,
+) -> list[SchemaCheck]:
+    """Validate that parsed dates do not exceed the as-of date."""
+
+    normalized = normalize_price_columns(frame)
+    if "date" not in normalized.columns:
+        return [SchemaCheck(dataset=dataset, check="future_dates_absent", status="fail", details="missing date column")]
+
+    parsed_dates = pd.to_datetime(normalized["date"], errors="coerce")
+    cutoff = pd.Timestamp(_as_date(as_of_date))
+    future_dates = parsed_dates.notna() & (parsed_dates > cutoff)
+    future_count = int(future_dates.sum())
+    return [
+        SchemaCheck(
+            dataset=dataset,
+            check="future_dates_absent",
+            status="fail" if future_count else "pass",
+            details=f"future_rows={future_count};as_of_date={cutoff.date().isoformat()}",
+        )
+    ]
+
+
+def is_safe_numeric_value(value: object) -> bool:
+    """Return whether a value can be converted without stripping unknown text."""
+
+    if pd.isna(value) or isinstance(value, bool):
+        return False
+    if isinstance(value, Number):
+        return True
+
+    text = str(value).strip()
+    if not text:
+        return False
+    return bool(PLAIN_NUMERIC_PATTERN.fullmatch(text) or COMMA_NUMERIC_PATTERN.fullmatch(text))
+
+
+def to_safe_numeric(series: pd.Series) -> tuple[pd.Series, pd.Series]:
+    """Convert safe numeric values and return ``(converted, invalid_mask)``."""
+
+    valid_mask = series.map(is_safe_numeric_value)
+    normalized = series.astype(str).str.strip().str.replace(",", "", regex=False)
+    converted = pd.to_numeric(normalized.where(valid_mask), errors="coerce")
+    invalid_mask = series.notna() & ~valid_mask
+    return converted, invalid_mask
+
+
 def validate_numeric_columns_convertible(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
     """Validate OHLCV numeric convertibility without silently coercing source data."""
 
@@ -196,8 +260,7 @@ def validate_numeric_columns_convertible(frame: pd.DataFrame, *, dataset: str = 
             continue
 
         values = normalized[column]
-        converted = pd.to_numeric(values, errors="coerce")
-        invalid_numeric = values.notna() & converted.isna()
+        _, invalid_numeric = to_safe_numeric(values)
         invalid_count = int(invalid_numeric.sum())
         checks.append(
             SchemaCheck(
@@ -208,6 +271,28 @@ def validate_numeric_columns_convertible(frame: pd.DataFrame, *, dataset: str = 
             )
         )
     return checks
+
+
+def validate_non_negative_volume(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
+    """Validate that volume is convertible and not negative."""
+
+    normalized = normalize_price_columns(frame)
+    if "volume" not in normalized.columns:
+        return [SchemaCheck(dataset=dataset, check="non_negative_volume", status="fail", details="missing column")]
+
+    converted, invalid_numeric = to_safe_numeric(normalized["volume"])
+    negative_volume = converted.notna() & (converted < 0)
+    negative_count = int(negative_volume.sum())
+    invalid_count = int(invalid_numeric.sum())
+    status = "fail" if negative_count or invalid_count else "pass"
+    return [
+        SchemaCheck(
+            dataset=dataset,
+            check="non_negative_volume",
+            status=status,
+            details=f"negative_rows={negative_count};invalid_numeric_rows={invalid_count}",
+        )
+    ]
 
 
 def validate_duplicate_ticker_date_absent(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
@@ -253,7 +338,12 @@ def append_schema_validation_summary(checks: list[SchemaCheck], *, dataset: str 
     ]
 
 
-def validate_standard_price_schema(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
+def validate_standard_price_schema(
+    frame: pd.DataFrame,
+    *,
+    dataset: str = "price",
+    as_of_date: date | datetime | pd.Timestamp | None = None,
+) -> list[SchemaCheck]:
     """Validate standard price schema presence and Step 3 safety checks."""
 
     normalized = normalize_price_columns(frame)
@@ -269,19 +359,28 @@ def validate_standard_price_schema(frame: pd.DataFrame, *, dataset: str = "price
     )
     checks.extend(validate_ticker_column(normalized, dataset=dataset))
     checks.extend(validate_date_parseability(normalized, dataset=dataset))
+    checks.extend(validate_future_dates_absent(normalized, dataset=dataset, as_of_date=as_of_date))
     checks.extend(validate_numeric_columns_convertible(normalized, dataset=dataset))
+    checks.extend(validate_non_negative_volume(normalized, dataset=dataset))
     checks.extend(validate_duplicate_ticker_date_absent(normalized, dataset=dataset))
     return append_schema_validation_summary(checks, dataset=dataset)
 
 
-def validate_standard_ohlcv_schema(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
+def validate_standard_ohlcv_schema(
+    frame: pd.DataFrame,
+    *,
+    dataset: str = "price",
+    as_of_date: date | datetime | pd.Timestamp | None = None,
+) -> list[SchemaCheck]:
     """Validate the canonical OHLCV schema without requiring runtime source metadata."""
 
     normalized = normalize_price_columns(frame)
     checks = validate_required_columns(normalized, CANONICAL_OHLCV_COLUMNS, dataset=dataset)
     checks.extend(validate_ticker_column(normalized, dataset=dataset))
     checks.extend(validate_date_parseability(normalized, dataset=dataset))
+    checks.extend(validate_future_dates_absent(normalized, dataset=dataset, as_of_date=as_of_date))
     checks.extend(validate_numeric_columns_convertible(normalized, dataset=dataset))
+    checks.extend(validate_non_negative_volume(normalized, dataset=dataset))
     checks.extend(validate_duplicate_ticker_date_absent(normalized, dataset=dataset))
     return append_schema_validation_summary(checks, dataset=dataset)
 

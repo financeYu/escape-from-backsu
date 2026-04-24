@@ -28,6 +28,22 @@ numeric_columns = ["open", "high", "low", "close", "volume"]
 duplicate_key = ["ticker", "date"]
 date_parseability_required = true
 
+[preprocess]
+raw_price_input_glob = "chart_mvp/data/*_daily_prices.csv"
+processed_price_output_path = "data/processed/daily_ohlcv.csv"
+summary_report_path = "reports/preprocess/preprocess_summary.md"
+validation_summary_path = "reports/preprocess/preprocess_validation_summary.csv"
+invalid_rows_report_path = "reports/preprocess/preprocess_invalid_rows.csv"
+future_date_policy = "reject_and_report"
+invalid_row_policy = "reject_and_report"
+financial_data_status = "valuation_deferred"
+
+[indicators]
+input_price_path = "data/processed/daily_ohlcv.csv"
+output_path = "data/processed/technical_indicators.csv"
+summary_report_path = "reports/indicators/indicator_summary.md"
+validation_report_path = "reports/indicators/indicator_validation_summary.csv"
+
 [aliases]
 ticker = ["ticker", "code", "종목코드"]
 date = ["date", "날짜", "일자"]
@@ -47,4 +63,3 @@ final_composite_allowed = false
 current_cache_pattern = "chart_mvp/data/*_financial_statements.csv"
 cached_sample_status = "none_found_during_step_3_inspection"
 point_in_time_status = "unverified"
-

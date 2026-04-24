@@ -73,6 +73,14 @@ Current Step 3 reports:
 
 Existing child-project reports under `chart_mvp/reports/data_quality/` are legacy/background artifacts unless explicitly regenerated in a validation-only step.
 
+Step 6 preprocessing reports are configured in `config/data.toml`:
+
+- `[preprocess].summary_report_path`
+- `[preprocess].validation_summary_path`
+- `[preprocess].invalid_rows_report_path`
+
+These reports are preprocessing validation artifacts only. They must include `financial_data_status = valuation_deferred` and must not include indicators, scores, rankings, composites, or backtest results.
+
 ## Boundaries
 
 Validation must not:
@@ -84,4 +92,3 @@ Validation must not:
 - merge financial data into technical scores
 - merge financial data into final composite scores
 - mark old outputs as current results
-

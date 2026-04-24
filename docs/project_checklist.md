@@ -115,7 +115,8 @@ Step 5는 아래 기준이 모두 문서와 config에 반영되면 완료로 본
 - Step 3 = COMPLETE
 - Step 4 = COMPLETE
 - Step 5 = COMPLETE
-- Step 6 = NEXT
+- Step 6 = COMPLETE
+- Step 7 = NEXT
 
 ## 6. Step 종료 보고 형식
 

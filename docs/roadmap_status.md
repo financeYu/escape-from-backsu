@@ -2,13 +2,15 @@
 
 ## Current Active Step
 
-Step 3 = 디렉터리 / config / 표준 스키마 정리
+Step 5 = Score Architect: MVP 기술 점수 후보 정의
 
 ## Current Verdicts
 
 - Step 1 verdict: COMPLETE or mostly complete
 - Step 2 verdict: PARTIALLY COMPLETE
-- Step 3 permission: Yes, with minor follow-up
+- Step 3 verdict: COMPLETE
+- Step 4 verdict: COMPLETE
+- Step 5 permission: Yes, with minor follow-up
 
 ## Step 2 Remaining Follow-Ups
 
@@ -30,6 +32,13 @@ Step 3 = 디렉터리 / config / 표준 스키마 정리
 - `financial_data_in_technical_score = false`
 - `financial_data_in_final_composite_score = false`
 
+## Step 4 Boundary Status
+
+- Technical and valuation boundaries are fixed in `docs/technical_valuation_boundary.md`.
+- Price-only evidence must not be described as valuation evidence.
+- Financial data remains excluded from technical and final composite scoring.
+- Valuation review remains deferred until point-in-time-safe financial data is available.
+
 ## Active Guardrails
 
 - no future data
@@ -39,4 +48,3 @@ Step 3 = 디렉터리 / config / 표준 스키마 정리
 - no score implementation before documented score definitions
 - no backtest before Step 17
 - no valuation language for price-only evidence
-

@@ -87,7 +87,9 @@ Stage 4: Adoption Synthesis
 
 - Step 1 = COMPLETE or mostly complete
 - Step 2 = PARTIALLY COMPLETE
-- Step 3 = NEXT
+- Step 3 = COMPLETE
+- Step 4 = COMPLETE
+- Step 5 = NEXT
 
 ## 6. Step-End Reporting Format
 
@@ -145,4 +147,3 @@ Step 20: ...
 - No valuation language for price-only evidence.
 - No valuation or fundamental scoring while valuation status is deferred.
 - No ranking generation unless the active Step explicitly permits it.
-

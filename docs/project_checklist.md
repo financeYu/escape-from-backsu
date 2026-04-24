@@ -1,66 +1,66 @@
-# Quant Project Checklist
+# 퀀트 프로젝트 체크리스트
 
-## 1. Project Goal
+## 1. 프로젝트 목표
 
-Build a KOSPI200 constituent-level daily OHLCV technical/statistical multi-score ranking engine.
+KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통계적 멀티 스코어 랭킹 엔진을 만든다.
 
-The project must remain:
+이 프로젝트는 다음 성격을 유지한다.
 
-- explainable
-- modular
-- backtest-friendly
-- conservative in quant engineering assumptions
-- config-first
-- safe against future data and lookahead
+- 설명 가능해야 한다.
+- 모듈화되어야 한다.
+- 백테스트가 가능하도록 설계해야 한다.
+- 보수적인 quant engineering을 우선한다.
+- config-first 원칙을 따른다.
+- future data와 lookahead를 막아야 한다.
 
-This is not a single trading strategy repository.
-This is not an AI black-box alpha repository.
-Valuation and fundamental analysis are deferred until after the technical scanner is completed.
+이 저장소는 단일 매매 전략 저장소가 아니다.
+이 저장소는 AI black-box alpha 저장소가 아니다.
+valuation/fundamental analysis는 기술 스캐너가 완성된 뒤로 미룬다.
 
-## 2. Global Rules
+## 2. 전역 규칙
 
-- Use conservative quant engineering.
-- Prefer config-first implementation.
-- Do not use future data.
-- Do not allow lookahead.
-- Do not silently redefine scores after seeing results.
-- Document score definitions before implementation.
-- Keep diagnostics separate from alpha signals.
-- Do not infer valuation from price-only evidence.
-- Do not describe technical oversoldness as cheap or value.
-- Keep unknowns marked as unknown.
-- Mark inference explicitly.
-- Keep paths, config keys, column names, and function names in English.
-- Korean summaries are allowed and preferred for user-facing status.
+- conservative quant engineering을 기본값으로 둔다.
+- config-first implementation을 우선한다.
+- future data를 사용하지 않는다.
+- lookahead를 허용하지 않는다.
+- 결과를 본 뒤 score definition을 조용히 바꾸지 않는다.
+- score definition을 문서화하기 전에는 score implementation을 하지 않는다.
+- diagnostics를 alpha signal처럼 표현하지 않는다.
+- price-only evidence에서 valuation을 추론하지 않는다.
+- technical oversold 상태를 cheap 또는 value라고 부르지 않는다.
+- unknown은 unknown으로 남긴다.
+- inference는 inference라고 표시한다.
+- paths, config keys, column names, function names는 English를 유지한다.
+- 사용자에게 보여주는 요약과 상태 보고는 한국어를 기본으로 한다.
 
-## 3. Agent Workflow
+## 3. 에이전트 워크플로우
 
 Stage 1: Score Architect
 
-- Define candidate score purpose, family, branch, raw inputs, formula path, normalization candidates, minimum history, overlap risk, and failure modes.
-- Do not implement, backtest, optimize, or adopt scores.
+- 후보 점수의 목적, family, branch, raw inputs, formula path, normalization candidates, minimum history, overlap risk, failure modes를 정의한다.
+- score 구현, backtest, optimization, adoption을 하지 않는다.
 
 Stage 2: Research Tester
 
-- Implement only documented and approved MVP technical score candidates.
-- Produce reproducible tests, diagnostics, and normalized outputs.
-- Do not redefine scores silently after results.
+- 문서화되고 승인된 MVP technical score 후보만 구현한다.
+- 재현 가능한 tests, diagnostics, normalized outputs를 만든다.
+- 결과를 본 뒤 score를 조용히 재정의하지 않는다.
 
 Stage 3: Technical Selection Reviewer
 
-- Compare tested technical scores for usefulness, stability, redundancy, and market-structure plausibility.
-- Adopt, defer, downgrade, or reject technical scores conservatively.
-- Do not perform valuation review.
+- 테스트된 technical score를 usefulness, stability, redundancy, market-structure plausibility 기준으로 비교한다.
+- 기술 점수를 보수적으로 adopt, defer, downgrade, reject한다.
+- valuation review를 수행하지 않는다.
 
 Stage 4: Adoption Synthesis
 
-- Convert accepted technical-review decisions into an explicit implementation/adoption plan.
-- Keep composite design transparent and documented.
-- Do not merge financial data into technical or final composite scoring.
+- Technical Selection Reviewer의 결정을 명시적인 adoption plan으로 변환한다.
+- composite design은 투명하고 문서화되어야 한다.
+- financial data를 technical 또는 final composite scoring에 병합하지 않는다.
 
-## 4. Full Roadmap
+## 4. 전체 로드맵
 
-| Step | Name |
+| Step | 이름 |
 | --- | --- |
 | Step 1 | 에이전트 / 운영 규칙 수립 |
 | Step 2 | 네이버 파이낸셜 데이터 수집기 검증 |
@@ -83,7 +83,7 @@ Stage 4: Adoption Synthesis
 | Step 19 | 자동 실행 파이프라인 구성 |
 | Step 20 | 최종 Done 검증 |
 
-## 5. Current Status
+## 5. 현재 상태
 
 - Step 1 = COMPLETE or mostly complete
 - Step 2 = PARTIALLY COMPLETE
@@ -91,9 +91,9 @@ Stage 4: Adoption Synthesis
 - Step 4 = COMPLETE
 - Step 5 = NEXT
 
-## 6. Step-End Reporting Format
+## 6. Step 종료 보고 형식
 
-Use this format at the end of every Step:
+모든 Step 종료 시 아래 형식으로 보고한다.
 
 ```text
 [현재 위치]
@@ -139,11 +139,11 @@ Step 20: ...
 
 ## 7. Hard Stop Rules
 
-- No score implementation before score definitions.
-- No composite score implementation before documented composite design.
-- No backtest before Step 17.
-- No financial data in `technical_composite_score`.
-- No financial data in `final_composite_score`.
-- No valuation language for price-only evidence.
-- No valuation or fundamental scoring while valuation status is deferred.
-- No ranking generation unless the active Step explicitly permits it.
+- score definition 전에는 score implementation 금지.
+- documented composite design 전에는 composite score implementation 금지.
+- Step 17 전에는 backtest 금지.
+- financial data를 `technical_composite_score`에 넣지 않는다.
+- financial data를 `final_composite_score`에 넣지 않는다.
+- price-only evidence에 valuation language를 쓰지 않는다.
+- valuation status가 deferred인 동안 valuation/fundamental scoring을 하지 않는다.
+- active Step이 명시적으로 허용하기 전에는 ranking generation을 하지 않는다.

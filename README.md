@@ -1,26 +1,89 @@
-# master_mvp
+# 퀀트 프로젝트
 
-Git-first workspace for coordinating the KOSPI200 research, quant-design, and scanner-runtime MVPs.
+KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통계적 멀티 스코어 랭킹 엔진 MVP입니다.
 
-## Projects
+이 저장소는 하나의 매매 전략을 빠르게 만드는 프로젝트가 아닙니다. 리서치, 점수 설계, 데이터 검증, 실행 코드, 코드 리뷰를 분리해서 보수적으로 쌓아가는 퀀트 엔지니어링 워크스페이스입니다.
 
-| Project | Role | Main agent/document |
-| --- | --- | --- |
-| `reserch_mvp` | Research-ingestion specification and evidence preparation | `reserch_mvp/AGENTS.md` |
-| `Quant_mvp` | Score design, config policy, technical review, valuation boundary | `Quant_mvp/AGENTS.md` |
-| `chart_mvp` | Executable scanner, data cache, chart rendering, CLI, GUI | `chart_mvp/AGENTS.md` |
-| `review_mvp` | Code-review tooling, minimal repair policy, final validation support | `review_mvp/AGENTS.md` |
+## 현재 상태
 
-## Why this structure
+| 항목 | 상태 |
+| --- | --- |
+| 현재 단계 | Step 5: `Score Architect: MVP 기술 점수 후보 정의` |
+| Step 1 | COMPLETE or mostly complete |
+| Step 2 | PARTIALLY COMPLETE |
+| Step 3 | COMPLETE |
+| Step 4 | COMPLETE |
+| 밸류에이션 상태 | `valuation_status = deferred` |
+| 금융 데이터 사용 | `inventory_only_or_gui_display_only` |
+| 백테스트 | Step 17 전까지 금지 |
+| 랭킹 생성 | 허용된 단계 전까지 금지 |
 
-The workspace separates research evidence, score governance, runtime implementation, and final code review so each change has a clear owner. This keeps Git diffs reviewable, prevents generated data from becoming source code, and reduces the risk of mixing valuation claims into price-only technical logic.
+자세한 진행 상태는 [docs/roadmap_status.md](docs/roadmap_status.md)를 봅니다.
 
-Read `AGENTS.md` first, then the relevant subproject `AGENTS.md`.
+## 핵심 원칙
 
-## Git policy
+- 미래 데이터와 lookahead를 금지합니다.
+- 점수 정의 없이 score implementation을 하지 않습니다.
+- 결과를 본 뒤 score definition을 조용히 바꾸지 않습니다.
+- diagnostics를 alpha signal처럼 표현하지 않습니다.
+- 가격 기반 신호를 valuation evidence로 부르지 않습니다.
+- 기술적 oversold 상태를 cheap/value로 표현하지 않습니다.
+- financial data는 `technical_composite_score`와 `final_composite_score`에 들어가지 않습니다.
+- valuation/fundamental analysis는 기술 스캐너가 완성된 뒤로 미룹니다.
+- paths, config keys, column names, function names는 English를 유지합니다.
 
-Commit code, docs, tests, config, and small reference fixtures.
+## 프로젝트 구조
 
-Do not commit local caches, generated chart images, scan outputs, virtual environments, bytecode, or secrets.
+| 경로 | 역할 |
+| --- | --- |
+| `AGENTS.md` | 마스터 에이전트 운영 규칙 |
+| `docs/project_checklist.md` | 전체 로드맵과 hard stop rules |
+| `docs/roadmap_status.md` | 현재 단계와 남은 follow-up |
+| `docs/technical_valuation_boundary.md` | 기술 분석과 밸류에이션 경계 |
+| `config/` | root-level config 초안 |
+| `src/` | Step 3에서 만든 target module boundary |
+| `chart_mvp/` | 현재 실행 가능한 스캐너/차트/캐시 하위 프로젝트 |
+| `Quant_mvp/` | 점수 설계, 기술 검토, 밸류에이션 경계 문서 |
+| `reserch_mvp/` | 리서치 수집/증거 준비 reference project |
+| `review_mvp/` | 코드 리뷰와 최종 검증 보조 도구 |
 
-See `docs/project_registry.md` for the current project map and handoff rules.
+## 로드맵
+
+전체 Step 1-20 로드맵은 [docs/project_checklist.md](docs/project_checklist.md)에 있습니다.
+
+현재 기준:
+
+```text
+Step 1: 에이전트 / 운영 규칙 수립 = COMPLETE or mostly complete
+Step 2: 네이버 파이낸셜 데이터 수집기 검증 = PARTIALLY COMPLETE
+Step 3: 디렉터리 / config / 표준 스키마 정리 = COMPLETE
+Step 4: 기술 분석과 밸류에이션 경계 고정 = COMPLETE
+Step 5: Score Architect: MVP 기술 점수 후보 정의 = NEXT
+```
+
+## Git 관리 정책
+
+Git에 포함합니다:
+
+- source code
+- tests
+- docs
+- config
+- 작은 reference fixture
+- agent instructions
+
+Git에 포함하지 않습니다:
+
+- `chart_mvp/data/`
+- `chart_mvp/outputs/`
+- `chart_mvp/reports/`
+- `__pycache__/`
+- `*.pyc`
+- virtual environment
+- secrets
+
+## 실행 전 주의
+
+현재 저장소에는 legacy/background artifact가 일부 남아 있습니다. 예를 들어 `outputs/latest_top*`와 `data/scan_results/*`는 과거 산출물이며, 현재 Step에서 새로 만든 랭킹이 아닙니다.
+
+Step 5부터는 Score Architect 단계입니다. 즉, 먼저 점수 후보의 목적, 입력, 공식 설계 경로, normalization 후보, 실패 모드, 중복 위험을 문서화해야 합니다. 구현은 그 다음입니다.

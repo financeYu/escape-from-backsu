@@ -29,6 +29,27 @@ Rules:
 - no implementation before score purpose, formula path, input fields, normalization, and failure modes are documented
 - no diagnostic may be presented as an alpha signal
 - no valuation or fundamental score may be enabled while valuation status is deferred
+- root `config/scores.toml` is the active runtime guardrail and keeps all runtime score/composite toggles off
+- `Quant_mvp/config/scores.toml` may list Step 5 candidate registry entries, but `runtime_enabled = false` means those entries are not implemented production scores
+
+## Branch Policy
+
+The Step 4 branch policy is fixed in:
+
+```text
+docs/score_branch_policy.md
+docs/selection_criteria.md
+```
+
+Allowed branch labels are:
+
+- `technical`
+- `valuation`
+- `diagnostic`
+- `hybrid`
+- `out_of_scope`
+
+Only `technical` and `diagnostic` candidates may proceed to Step 5 definition work in the main technical flow. `valuation` and unresolved `hybrid` candidates remain separated or blocked until point-in-time fundamentals are explicitly verified.
 
 ## Config Change Documentation
 
@@ -76,4 +97,3 @@ Financial data must not enter:
 - valuation scoring
 
 Point-in-time financial availability must be explicit before any valuation work can proceed.
-

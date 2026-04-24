@@ -1,0 +1,18 @@
+[google_scholar]
+enabled = true
+mode = "discovery_only"
+allow_live_scholar_requests = false
+allow_headless_browser = false
+allow_proxy_rotation = false
+allowed_inputs = [
+  "alert_email",
+  "manual_bibtex",
+  "manual_title_list",
+  "manual_citation_seed",
+]
+require_canonical_resolution = true
+must_resolve_via = ["openalex", "crossref", "arxiv", "semantic_scholar"]
+use_as_evidence_source = false
+snippets_are_evidence = false
+rankings_are_evidence = false
+citation_counts_are_evidence = false

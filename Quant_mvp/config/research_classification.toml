@@ -1,0 +1,85 @@
+[branches.technical]
+keywords = [
+  "momentum",
+  "reversal",
+  "mean reversion",
+  "breakout",
+  "trend",
+  "relative strength",
+  "moving average",
+  "rsi",
+  "oscillator",
+  "volatility",
+  "liquidity",
+  "volume",
+  "price-volume",
+  "serial correlation",
+  "daily returns",
+]
+signal_families = [
+  "momentum",
+  "mean_reversion",
+  "breakout",
+  "volatility_liquidity",
+  "trend_efficiency",
+]
+
+[branches.valuation]
+keywords = [
+  "book-to-market",
+  "book to market",
+  "earnings yield",
+  "cash flow",
+  "profitability",
+  "accrual",
+  "leverage",
+  "enterprise value",
+  "fundamental",
+  "valuation",
+  "accounting",
+  "analyst",
+]
+
+[branches.diagnostic]
+keywords = [
+  "data snooping",
+  "overfitting",
+  "multiple testing",
+  "transaction cost",
+  "turnover",
+  "survivorship",
+  "lookahead",
+  "publication bias",
+  "robustness",
+  "factor decay",
+  "redundancy",
+  "correlation matrix",
+]
+
+[branches.out_of_scope]
+keywords = [
+  "intraday",
+  "tick data",
+  "order book",
+  "market making",
+  "execution algorithm",
+  "options",
+  "futures",
+  "crypto",
+  "high frequency",
+  "black box",
+]
+
+[routing]
+technical = "technical_score_architect"
+valuation = "valuation_agent_handoff"
+hybrid = "hybrid_split_required"
+diagnostic = "diagnostic_backlog"
+out_of_scope = "reject_log"
+
+[fallback]
+research_branch = "out_of_scope"
+downstream_route = "reject_log"
+main_score_branch_candidate = "out_of_scope"
+manual_review_required = true
+classification_confidence = "low"

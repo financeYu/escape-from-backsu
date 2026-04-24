@@ -4,7 +4,21 @@ active_technical_scores = false
 active_composite_score = false
 active_valuation_scores = false
 active_fundamental_scores = false
-step_3_policy = "toggles_and_placeholders_only"
+step_policy = "step_4_boundary_fixed_before_step_5_definitions"
+
+[branch_policy]
+policy_doc = "docs/score_branch_policy.md"
+selection_criteria_doc = "docs/selection_criteria.md"
+allowed_branches = ["technical", "valuation", "diagnostic", "hybrid", "out_of_scope"]
+runtime_enabled_branches = []
+technical_status = "definition_allowed_only"
+valuation_status = "valuation_deferred"
+diagnostic_status = "diagnostics_only_not_alpha"
+hybrid_status = "blocked_by_data_until_point_in_time_valuation_is_verified"
+out_of_scope_status = "reject_or_defer"
+price_only_valuation_language_allowed = false
+financial_data_in_technical_score = false
+financial_data_in_final_composite_score = false
 
 [technical_scores]
 enabled = []
@@ -28,4 +42,3 @@ enabled = []
 implemented = []
 status = "valuation_deferred"
 financial_data_usage = "inventory_only"
-

@@ -1,0 +1,20 @@
+[guardrails]
+no_score_adoption = true
+no_backtest = true
+no_alpha_claim = true
+pdf_download_default = false
+require_manual_review_for_hybrid = true
+require_point_in_time_warning_for_fundamentals = true
+do_not_infer_valuation_from_price = true
+scholar_snippets_are_not_evidence = true
+citation_count_does_not_upgrade_confidence = true
+
+[pdf_policy]
+allow_pdf = false
+explicit_confirmation_required = true
+confirmation_phrase = "I confirm OA/license/source policy for PDF use"
+
+[outputs]
+normalized_jsonl = "data/research/normalized/papers.jsonl"
+evidence_jsonl = "data/research/evidence/evidence_cards.jsonl"
+unresolved_scholar_seeds_jsonl = "data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl"

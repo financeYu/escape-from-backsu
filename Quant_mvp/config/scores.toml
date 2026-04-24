@@ -1,71 +1,177 @@
+# In this file, `enabled = true` means visible in the Step 5 candidate
+# registry for Score Architect review only. It does not enable runtime score
+# calculation, Research Tester implementation, ranking, composite scoring, or
+# backtesting.
+
+[registry_status]
+registry_stage = "step_5_score_architect_candidate_registry"
+registry_alignment = "official_step_5_score_definitions"
+official_candidate_count = 8
+runtime_score_implementation = false
+production_scoring_enabled = false
+research_tester_implementation_enabled = false
+ranking_generation_enabled = false
+composite_scoring_enabled = false
+backtest_enabled = false
+valuation_branch_enabled = false
+candidate_enabled_key_meaning = "eligible_for_score_architect_review_only"
+branch_policy_doc = "../docs/score_branch_policy.md"
+score_catalog_doc = "docs/score_catalog.md"
+score_definitions_doc = "docs/score_definitions.md"
+family_map_doc = "docs/family_map.md"
+allowed_score_sources = ["daily_ohlcv", "derived_technical_statistics"]
+forbidden_score_sources = ["financials", "fundamentals", "valuation_metrics", "future_data"]
+deferred_candidate_policy = "candidates_not_defined_in_score_definitions_require_versioned_score_architect_update"
+missing_data_policy = "later_research_tester_protocol_must_treat_insufficient_history_as_missing_or_neutral"
+
 [[scores]]
+score_id = "short_term_overreaction"
 name = "short_term_overreaction"
 branch = "technical"
 family = "mean_reversion"
+role = "core_candidate"
+first_pass_status = "define_for_mvp_testing"
 enabled = true
-normalization = "rolling_percentile"
+runtime_enabled = false
+normalization = "cross_sectional_percentile"
+secondary_normalization = "rolling_percentile"
 required_data = ["ohlcv"]
+required_inputs = ["close", "trailing_returns", "optional_realized_volatility"]
 minimum_history = 60
+score_direction = "higher_is_stronger_technical_oversold_reversal_setup"
+blocked_by_data = false
+definition_doc_anchor = "short_term_overreaction"
+notes = "Technical mean-reversion candidate only; not valuation cheapness."
 
 [[scores]]
+score_id = "atr_adjusted_oversold_distance"
 name = "atr_adjusted_oversold_distance"
 branch = "technical"
 family = "mean_reversion"
+role = "robustness_variant"
+first_pass_status = "define_for_mvp_testing_with_redundancy_warning"
 enabled = true
+runtime_enabled = false
 normalization = "rolling_percentile"
+secondary_normalization = "cross_sectional_percentile"
 required_data = ["ohlcv"]
+required_inputs = ["high", "low", "close", "atr", "moving_average_or_reference_price"]
 minimum_history = 60
+score_direction = "higher_is_deeper_atr_scaled_technical_oversold_distance"
+blocked_by_data = false
+definition_doc_anchor = "atr_adjusted_oversold_distance"
+notes = "Reference choice must be fixed before Step 9 implementation."
 
 [[scores]]
+score_id = "donchian_breakout_distance"
 name = "donchian_breakout_distance"
 branch = "technical"
 family = "breakout"
+role = "core_candidate"
+first_pass_status = "define_for_mvp_testing"
 enabled = true
+runtime_enabled = false
 normalization = "cross_sectional_percentile"
+secondary_normalization = "clipped_robust_zscore_if_atr_scaled"
 required_data = ["ohlcv"]
+required_inputs = ["high", "close", "optional_atr"]
 minimum_history = 60
+score_direction = "higher_is_closer_to_or_above_prior_channel_high"
+blocked_by_data = false
+definition_doc_anchor = "donchian_breakout_distance"
+notes = "Use prior completed rolling high to avoid same-bar ambiguity."
 
 [[scores]]
+score_id = "bollinger_width_squeeze"
 name = "bollinger_width_squeeze"
 branch = "technical"
 family = "squeeze_expansion"
+role = "regime_conditional_candidate"
+first_pass_status = "define_for_mvp_testing_as_technical_context"
 enabled = true
+runtime_enabled = false
 normalization = "rolling_percentile"
+secondary_normalization = "cross_sectional_percentile_after_role_review"
 required_data = ["ohlcv"]
+required_inputs = ["close", "moving_average", "rolling_standard_deviation", "bollinger_band_width"]
 minimum_history = 60
+score_direction = "higher_is_stronger_squeeze_or_compression_setup_context"
+blocked_by_data = false
+definition_doc_anchor = "bollinger_width_squeeze"
+notes = "Setup/regime candidate, not standalone alpha until reviewed."
 
 [[scores]]
+score_id = "cmf_confirmation"
 name = "cmf_confirmation"
 branch = "technical"
 family = "flow"
+role = "confirmation_candidate"
+first_pass_status = "define_for_mvp_testing"
 enabled = true
+runtime_enabled = false
 normalization = "rolling_robust_zscore"
+secondary_normalization = "cross_sectional_percentile_after_clipping"
 required_data = ["ohlcv"]
+required_inputs = ["high", "low", "close", "volume", "chaikin_money_flow"]
 minimum_history = 60
+score_direction = "higher_is_stronger_positive_price_volume_confirmation"
+blocked_by_data = false
+definition_doc_anchor = "cmf_confirmation"
+notes = "Standalone versus interaction role must be fixed before implementation."
 
 [[scores]]
+score_id = "rsi_price_divergence"
 name = "rsi_price_divergence"
 branch = "technical"
 family = "oscillator_divergence"
+role = "cautious_pattern_proxy"
+first_pass_status = "define_only_as_deterministic_proxy"
 enabled = true
+runtime_enabled = false
 normalization = "rolling_percentile"
+secondary_normalization = "cross_sectional_percentile_after_sparsity_review"
 required_data = ["ohlcv"]
+required_inputs = ["close", "rsi", "trailing_price_change", "trailing_rsi_change"]
 minimum_history = 90
+score_direction = "higher_is_stronger_bullish_divergence_proxy"
+blocked_by_data = false
+definition_doc_anchor = "rsi_price_divergence"
+notes = "Subjective swing or chart-pattern labeling is out of scope for MVP."
 
 [[scores]]
+score_id = "realized_vol_percentile"
 name = "realized_vol_percentile"
-branch = "technical"
+branch = "diagnostic"
 family = "volatility_regime"
+role = "regime_diagnostic"
+first_pass_status = "diagnostic_context_only"
 enabled = true
+runtime_enabled = false
 normalization = "rolling_percentile"
+secondary_normalization = "cross_sectional_diagnostic_percentile"
 required_data = ["ohlcv"]
+required_inputs = ["close", "daily_returns", "rolling_realized_volatility"]
 minimum_history = 120
+score_direction = "higher_is_higher_realized_volatility_regime"
+blocked_by_data = false
+definition_doc_anchor = "realized_vol_percentile"
+notes = "Diagnostic/regime context only; not direct alpha ranking."
 
 [[scores]]
+score_id = "efficiency_ratio_trend"
 name = "efficiency_ratio_trend"
 branch = "technical"
 family = "trend_efficiency"
+role = "distinctness_candidate"
+first_pass_status = "define_for_mvp_testing"
 enabled = true
-normalization = "rolling_percentile"
+runtime_enabled = false
+normalization = "cross_sectional_percentile"
+secondary_normalization = "rolling_percentile"
 required_data = ["ohlcv"]
+required_inputs = ["close", "trailing_endpoint_change", "sum_absolute_daily_changes"]
 minimum_history = 60
+score_direction = "higher_is_cleaner_positive_signed_trend_if_signed_variant_selected"
+blocked_by_data = false
+definition_doc_anchor = "efficiency_ratio_trend"
+notes = "Signed versus unsigned role must be fixed before implementation."

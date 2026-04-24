@@ -40,6 +40,8 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 | `docs/project_checklist.md` | 전체 로드맵과 hard stop rules |
 | `docs/roadmap_status.md` | 현재 단계와 남은 follow-up |
 | `docs/technical_valuation_boundary.md` | 기술 분석과 밸류에이션 경계 |
+| `docs/score_branch_policy.md` | Step 4 score branch 분류 정책 |
+| `docs/selection_criteria.md` | Step 4 technical / valuation / diagnostic routing 기준 |
 | `config/` | root-level config 초안 |
 | `src/` | Step 3에서 만든 target module boundary |
 | `chart_mvp/` | 현재 실행 가능한 스캐너/차트/캐시 하위 프로젝트 |
@@ -61,6 +63,13 @@ Step 4: 기술 분석과 밸류에이션 경계 고정 = COMPLETE
 Step 5: Score Architect: MVP 기술 점수 후보 정의 = NEXT
 ```
 
+Step 4 정리 기준:
+
+- `technical`, `valuation`, `diagnostic`, `hybrid`, `out_of_scope` branch를 분리합니다.
+- root `config/scores.toml`은 runtime score/composite를 모두 비활성화합니다.
+- `Quant_mvp/config/scores.toml`의 candidate registry는 Step 5 검토용이며 production scoring permission이 아닙니다.
+- `PER`, `PBR`, `ROE` 등 financial display 값은 technical scoring이나 final composite에 들어가지 않습니다.
+
 ## Git 관리 정책
 
 Git에 포함합니다:
@@ -81,6 +90,20 @@ Git에 포함하지 않습니다:
 - `*.pyc`
 - virtual environment
 - secrets
+
+## PowerShell 인코딩
+
+Windows PowerShell에서 한글 출력이 깨지면 프로젝트 루트에서 아래 스크립트를 현재 세션에 적용합니다.
+
+```powershell
+. .\scripts\Initialize-PowerShellUtf8.ps1
+```
+
+새 PowerShell을 프로젝트 폴더에서 열 때마다 자동 적용하려면 한 번만 설치합니다.
+
+```powershell
+.\scripts\Install-PowerShellUtf8Profile.ps1
+```
 
 ## 실행 전 주의
 

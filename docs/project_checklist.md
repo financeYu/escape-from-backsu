@@ -83,13 +83,39 @@ Stage 4: Adoption Synthesis
 | Step 19 | 자동 실행 파이프라인 구성 |
 | Step 20 | 최종 Done 검증 |
 
+## 4.1 Step 4 완료 기준
+
+Step 4는 아래 기준이 모두 문서와 config에 반영되면 완료로 본다.
+
+- `technical`, `valuation`, `diagnostic`, `hybrid`, `out_of_scope` branch가 분리되어 있다.
+- daily OHLCV 기반 technical score와 point-in-time fundamental 기반 valuation score의 역할이 분리되어 있다.
+- `valuation_status`가 현재 `valuation_deferred` 또는 `unavailable`로 유지된다.
+- price-only evidence를 cheap, value, undervalued, bargain 같은 valuation language로 표현하지 않는다.
+- financial data가 `technical_composite_score` 또는 `final_composite_score`에 들어가지 않는다는 정책이 명시되어 있다.
+- `PER`, `PBR`, `ROE` display 값은 technical scoring이나 final composite에 영향을 주지 않는다.
+- diagnostics는 alpha signal이나 stock-selection score로 표현하지 않는다.
+- Step 5 전 production score implementation, Step 9 전 Research Tester implementation, Step 17 전 backtest를 금지한다.
+- legacy ranking-like outputs는 current Step evidence로 사용하지 않는다.
+
+## 4.2 Step 5 완료 기준
+
+Step 5는 아래 기준이 모두 문서와 config에 반영되면 완료로 본다.
+
+- MVP technical 또는 diagnostic 후보의 `score_name`, `score_family`, `score_branch`, purpose, regime fit, raw inputs, formula design path, normalization candidates, minimum history, overlap risk, failure modes, data requirements, interpretability notes가 명시되어 있다.
+- `Quant_mvp/docs/score_catalog.md`, `Quant_mvp/docs/score_definitions.md`, `Quant_mvp/docs/family_map.md`가 작성되어 있다.
+- 중복 위험이 큰 trend, breakout, relative strength, mean-reversion 후보가 family map에서 watchlist로 분리되어 있다.
+- direct alpha가 아닌 regime 또는 diagnostic 후보는 `diagnostic` 또는 conditional context로 표시되어 있다.
+- Step 5 결과가 score implementation, ranking generation, composite scoring, adoption decision, backtest를 활성화하지 않는다.
+- valuation/fundamental data는 계속 deferred 상태이며 technical 또는 final composite에 들어가지 않는다.
+
 ## 5. 현재 상태
 
 - Step 1 = COMPLETE or mostly complete
 - Step 2 = PARTIALLY COMPLETE
 - Step 3 = COMPLETE
 - Step 4 = COMPLETE
-- Step 5 = NEXT
+- Step 5 = COMPLETE
+- Step 6 = NEXT
 
 ## 6. Step 종료 보고 형식
 

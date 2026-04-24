@@ -3,6 +3,7 @@ from __future__ import annotations
 import textwrap
 import unittest
 from pathlib import Path
+import shutil
 import sys
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -115,6 +116,19 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(1, len(result.findings))
         self.assertEqual("file-decode-error", result.findings[0].rule)
         self.assertTrue(review.should_fail(result, "high"))
+
+    def test_default_excludes_sample_dirs_but_explicit_file_can_be_scanned(self) -> None:
+        samples_dir = self.temp_dir / "samples"
+        self.addCleanup(lambda: shutil.rmtree(samples_dir, ignore_errors=True))
+        samples_dir.mkdir(exist_ok=True)
+        sample_file = samples_dir / "vulnerable.py"
+        sample_file.write_text('token = "plain-text"\n', encoding="utf-8")
+
+        directory_result = review.run_review([self.temp_dir], review.DEFAULT_EXCLUDE_DIRS)
+        explicit_file_result = review.run_review([sample_file], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertEqual([], directory_result.findings)
+        self.assertEqual(["hardcoded-secret"], [finding.rule for finding in explicit_file_result.findings])
 
 
 if __name__ == "__main__":

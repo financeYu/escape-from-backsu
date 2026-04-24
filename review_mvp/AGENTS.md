@@ -73,7 +73,7 @@ Avoid low-value comments about formatting, naming, or broad cleanup unless they 
 Before the master agent closes substantial work, use this project as the final review checkpoint when practical:
 
 ```powershell
-python review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --format markdown
+python review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --exclude-dir samples --format markdown
 python -m unittest discover -s review_mvp/tests -v
 ```
 
@@ -99,4 +99,3 @@ Do not commit:
 - `*.pyc`
 - `tests/workspace`
 - temporary review outputs
-

@@ -51,6 +51,7 @@ DEFAULT_EXCLUDE_DIRS = {
     ".venv",
     "venv",
     "node_modules",
+    "samples",
 }
 MAX_FUNCTION_LINES = 50
 BOUNDS_CHECK_LOOKBACK_LINES = 4

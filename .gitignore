@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.pytest_tmp/
+pytest-cache-files-*/
+**/tests/_tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -26,6 +29,14 @@ env/
 chart_mvp/data/
 chart_mvp/outputs/
 chart_mvp/reports/data_quality/
+
+# Quant_mvp research ingestion runtime artifacts
+Quant_mvp/data/research/raw/
+Quant_mvp/data/research/normalized/*.jsonl
+Quant_mvp/data/research/evidence/*.jsonl
+Quant_mvp/data/research/indexes/*.jsonl
+Quant_mvp/data/research/discovery/google_scholar/*_seeds.jsonl
+Quant_mvp/data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl
 
 # review_mvp runtime artifacts
 review_mvp/tests/workspace/

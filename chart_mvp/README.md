@@ -36,7 +36,7 @@ chart_mvp/
 ## 설치
 
 ```powershell
-& 'C:\Users\jjaew\AppData\Local\Programs\Python\Python312\python.exe' -m pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ## 수동 실행
@@ -110,7 +110,7 @@ sh scripts/run_top5.sh --pages 1 --no-render-charts
 ### 3. 기존 단일 종목 차트
 
 ```powershell
-& 'C:\Users\jjaew\AppData\Local\Programs\Python\Python312\python.exe' main.py single --code 005930 --pages 20
+python main.py single --code 005930 --pages 20
 ```
 
 ## 출력 파일 위치
@@ -186,13 +186,13 @@ cmd.exe
 5. 인수 추가:
 
 ```text
-/c C:\Users\jjaew\Project\master_mvp\chart_mvp\scripts\run_top5.bat --pages 1 --no-render-charts
+/c "%USERPROFILE%\Project\master_mvp\chart_mvp\scripts\run_top5.bat" --pages 1 --no-render-charts
 ```
 
 6. 시작 위치:
 
 ```text
-C:\Users\jjaew\Project\master_mvp\chart_mvp
+%USERPROFILE%\Project\master_mvp\chart_mvp
 ```
 
 ## cron 등록 예시

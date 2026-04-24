@@ -15,7 +15,12 @@ This directory is the single source of truth for runtime parameters that would o
 - `windows.toml`: indicator, return, normalization, and warmup windows
 - `thresholds.toml`: coverage, outlier, redundancy, and stability thresholds
 - `weights.toml`: family, branch, and shrinkage weights
-- `scores.toml`: technical score registry and enable/disable switches
+- `scores.toml`: Step 5 technical candidate registry. In this file, `enabled = true` means candidate review visibility only; `runtime_enabled = false` keeps production scoring off.
+- `research_sources.toml`: approved research metadata sources, rate limits, retry settings, and secret-redaction settings
+- `research_queries.toml`: conservative research query packs for technical, diagnostic, valuation, and Korea/KOSPI context discovery
+- `research_policy.toml`: hard-stop policy for research ingestion, including no score adoption, no backtest, and PDF-disabled defaults
+- `research_classification.toml`: transparent keyword rules for research_branch and downstream_route assignment
+- `research_scholar_discovery.toml`: Google Scholar discovery-only policy for local human-assisted inputs
 
 Valuation score examples are separated into `agents/valuation/valuation_scores.example.toml`.
 They are not part of the main technical scanner config.
@@ -26,3 +31,4 @@ They are not part of the main technical scanner config.
 - prefer editing config before editing code
 - document any unavoidable hardcoding in code comments and review notes
 - do not treat disabled valuation config as proof that valuation data is point-in-time safe
+- do not treat candidate-registry `enabled = true` as runtime implementation permission

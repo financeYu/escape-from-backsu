@@ -1,0 +1,80 @@
+[defaults]
+timeout_seconds = 20
+max_retries = 2
+retry_backoff_seconds = 2.0
+pdf_download_default = false
+
+[redaction]
+redact_query_params = ["api_key", "apikey", "token", "key"]
+redact_headers = ["authorization", "x-api-key", "crossref-plus-api-token"]
+redact_env_vars = [
+  "OPENALEX_API_KEY",
+  "SEMANTIC_SCHOLAR_API_KEY",
+  "CROSSREF_PLUS_API_TOKEN",
+]
+
+[sources.arxiv]
+enabled = true
+base_url = "https://export.arxiv.org/api/query"
+timeout_seconds = 20
+max_retries = 2
+retry_backoff_seconds = 2.0
+min_interval_seconds = 3.2
+max_concurrency = 1
+default_max_results = 25
+pdf_download_enabled = false
+
+[sources.openalex]
+enabled = true
+base_url = "https://api.openalex.org/works"
+timeout_seconds = 20
+max_retries = 2
+retry_backoff_seconds = 2.0
+min_interval_seconds = 1.0
+max_concurrency = 1
+default_per_page = 25
+api_key_env_var = "OPENALEX_API_KEY"
+mailto_env_var = "OPENALEX_MAILTO"
+pdf_download_enabled = false
+
+[sources.crossref]
+enabled = true
+base_url = "https://api.crossref.org/works"
+timeout_seconds = 20
+max_retries = 2
+retry_backoff_seconds = 2.0
+min_interval_seconds = 1.0
+max_concurrency = 1
+default_rows = 25
+polite_email_env_var = "CROSSREF_MAILTO"
+plus_api_token_env_var = "CROSSREF_PLUS_API_TOKEN"
+pdf_download_enabled = false
+
+[sources.semantic_scholar]
+enabled = true
+base_url = "https://api.semanticscholar.org/graph/v1/paper/search"
+batch_base_url = "https://api.semanticscholar.org/graph/v1/paper/batch"
+timeout_seconds = 20
+max_retries = 2
+retry_backoff_seconds = 2.0
+min_interval_seconds = 1.0
+max_concurrency = 1
+default_limit = 25
+api_key_env_var = "SEMANTIC_SCHOLAR_API_KEY"
+fields = [
+  "paperId",
+  "externalIds",
+  "title",
+  "authors",
+  "year",
+  "publicationDate",
+  "venue",
+  "abstract",
+  "fieldsOfStudy",
+  "citationCount",
+  "influentialCitationCount",
+  "isOpenAccess",
+  "openAccessPdf",
+  "url",
+]
+pdf_download_enabled = false

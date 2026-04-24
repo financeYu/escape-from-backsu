@@ -2,15 +2,15 @@
 
 ## Purpose
 
-`reserch_mvp` holds the research-ingestion specification for upstream evidence collection.
+`reserch_mvp` is now a staging/reference folder only.
 
-The current detailed specification lives in:
+The canonical integrated research-ingestion agent lives in:
 
 ```text
-research_ingestion_AGENTS_final_with_google_scholar.md
+../Quant_mvp/agents/research/AGENTS.md
 ```
 
-Read the workspace root `AGENTS.md` first. Then use this file as the project-level entry point and the detailed specification above as the long-form operating manual.
+Use that file as the source of truth for research-ingestion behavior.
 
 The directory name `reserch_mvp` is preserved for path compatibility. Do not rename it unless the user requests a dedicated migration.
 
@@ -26,12 +26,9 @@ This separation is necessary because a paper, abstract, citation count, or Googl
 
 ## Responsibilities
 
-- define approved research-ingestion behavior
-- define Google Scholar discovery-only constraints
-- define EvidenceCard expectations
-- define source, metadata, and raw snapshot policies
-- route research-derived ideas to downstream agents
-- document limitations and rejected evidence conservatively
+- keep a lightweight pointer to the integrated research agent
+- avoid maintaining duplicate long-form research-ingestion specs
+- preserve path compatibility for any existing notes that reference `reserch_mvp`
 
 ---
 
@@ -39,7 +36,7 @@ This separation is necessary because a paper, abstract, citation count, or Googl
 
 `Quant_mvp/agents/research/AGENTS.md` is the integrated research agent for the quant workspace.
 
-Use `reserch_mvp` as the source/reference project for the research-ingestion design, and use `Quant_mvp/agents/research` when the output needs to integrate directly with the quant score workflow.
+Use `Quant_mvp/agents/research` when the output needs to integrate directly with the quant score workflow.
 
 Allowed downstream routes:
 
@@ -75,3 +72,8 @@ This agent must not:
 - downstream handoff summaries
 - reject logs and manual-review queues
 
+---
+
+## Cleanup note
+
+The previous long-form draft `research_ingestion_AGENTS_final_with_google_scholar.md` was superseded by the integrated agent file and removed to avoid duplicate Markdown specifications.

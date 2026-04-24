@@ -88,7 +88,7 @@ py -3 -m unittest discover -s tests
 `master_mvp` 루트에서 실행할 때:
 
 ```bash
-py -3 review_mvp/review.py . --exclude-dir data --exclude-dir outputs --format markdown
+py -3 review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --exclude-dir samples --format markdown
 py -3 -m unittest discover -s review_mvp/tests -v
 ```
 

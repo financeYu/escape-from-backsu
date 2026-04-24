@@ -1,0 +1,55 @@
+[query_sets.technical_momentum]
+description_ko = "일간 가격 기반 momentum, trend, relative strength 후보 문헌"
+queries = [
+  "daily stock momentum technical indicators cross sectional ranking",
+  "time series momentum equity daily returns technical analysis",
+  "relative strength stock ranking daily OHLCV",
+]
+
+[query_sets.technical_mean_reversion]
+description_ko = "일간 가격 기반 mean reversion, reversal 후보 문헌"
+queries = [
+  "short term reversal equity returns daily mean reversion",
+  "RSI mean reversion stock technical analysis daily",
+  "contrarian signal daily stock returns reversal",
+]
+
+[query_sets.technical_breakout]
+description_ko = "breakout, channel, trend-following 후보 문헌"
+queries = [
+  "price breakout technical analysis equities daily data",
+  "channel breakout trend following stock returns daily",
+  "moving average breakout equity technical trading rules",
+]
+
+[query_sets.technical_volatility_liquidity]
+description_ko = "일간 변동성, 유동성, 거래량 기반 후보 문헌"
+queries = [
+  "stock volatility liquidity volume technical signal daily",
+  "volatility breakout trading rule equity daily",
+  "volume price relationship stock returns daily technical",
+]
+
+[query_sets.methodology_diagnostics]
+description_ko = "데이터 누수, 과최적화, 거래비용, 생존편향 진단 문헌"
+queries = [
+  "backtest overfitting data snooping equity anomalies",
+  "transaction costs turnover factor investing daily data",
+  "survivorship bias lookahead bias quantitative finance",
+]
+
+[query_sets.fundamental_valuation]
+description_ko = "별도 valuation agent로 넘겨야 하는 fundamental / valuation 문헌"
+queries = [
+  "value investing book to market earnings yield point in time fundamentals",
+  "quality profitability accounting fundamentals equity returns",
+  "fundamental valuation factors equity expected returns",
+]
+
+[query_sets.korea_kospi_context]
+description_ko = "KOSPI/Korea 시장 맥락 문헌"
+queries = [
+  "KOSPI stock momentum reversal daily returns",
+  "Korean equity market technical analysis daily data",
+  "KOSPI200 quantitative stock selection technical indicators",
+]

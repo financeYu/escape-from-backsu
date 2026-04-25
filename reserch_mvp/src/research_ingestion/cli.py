@@ -2138,15 +2138,21 @@ def _write_new_only_outputs(
         for seed in scholar_seeds
         if seed.get("canonical_lookup_status") in {"unresolved", "ambiguous", "rejected"}
     ]
+    backtest_cards = [card for card in new_cards if _card_management_lane(card) == "backtest_methodology"]
+    non_backtest_cards = [card for card in new_cards if _card_management_lane(card) != "backtest_methodology"]
     write_jsonl(normalized_dir / "normalized_papers_new.jsonl", new_papers)
-    write_jsonl(evidence_dir / "evidence_cards_new.jsonl", new_cards)
+    write_jsonl(evidence_dir / "evidence_cards_new.jsonl", non_backtest_cards)
     write_jsonl(
         evidence_dir / "technical_candidates_new.jsonl",
-        [card for card in new_cards if card["classification"]["downstream_route"] == "technical_score_architect"],
+        [card for card in non_backtest_cards if card["classification"]["downstream_route"] == "technical_score_architect"],
+    )
+    write_jsonl(
+        evidence_dir / "valuation_candidates_new.jsonl",
+        [card for card in new_cards if card["classification"]["downstream_route"] == "valuation_agent_handoff"],
     )
     write_jsonl(
         evidence_dir / "diagnostic_items_new.jsonl",
-        [card for card in new_cards if card["classification"]["downstream_route"] == "diagnostic_backlog"],
+        [card for card in non_backtest_cards if card["classification"]["downstream_route"] == "diagnostic_backlog"],
     )
     write_jsonl(
         evidence_dir / "hybrid_review_required_new.jsonl",
@@ -2156,6 +2162,7 @@ def _write_new_only_outputs(
         evidence_dir / "reject_log_new.jsonl",
         [card for card in new_cards if card["classification"]["downstream_route"] == "reject_log"],
     )
+    write_jsonl(evidence_dir / "backtest_methodology_items_new.jsonl", backtest_cards)
     write_jsonl(discovery_dir / "unresolved_seeds_new.jsonl", unresolved)
 
 

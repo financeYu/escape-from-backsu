@@ -12,6 +12,9 @@ from .redaction import redact_mapping, redact_text
 from .sources.http import SourceResponse
 
 
+CACHE_FILENAME_HASH_CHARS = 32
+
+
 @dataclass(frozen=True)
 class CacheLookup:
     response: SourceResponse | None
@@ -57,6 +60,8 @@ class RequestCache:
         payload = read_json(path, default=None)
         if not isinstance(payload, dict):
             return CacheLookup(response=None, cache_key=cache_key, status="miss")
+        if payload.get("cache_key") not in {None, cache_key}:
+            return CacheLookup(response=None, cache_key=cache_key, status="miss")
         if self._is_stale(payload):
             return CacheLookup(response=None, cache_key=cache_key, status="stale")
         response = payload.get("response") or {}
@@ -93,6 +98,7 @@ class RequestCache:
             return cache_key
         payload = {
             "source": source,
+            "cache_key": cache_key,
             "query": query,
             "page_size": page_size,
             "offset": offset,
@@ -134,7 +140,10 @@ class RequestCache:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
     def _cache_path(self, source: str, cache_key: str) -> Path:
-        return self.root / "data" / "research" / "request_cache" / source / f"{cache_key}.json"
+        return self.root / "data" / "research" / "request_cache" / source / f"{self._cache_filename(cache_key)}.json"
+
+    def _cache_filename(self, cache_key: str) -> str:
+        return str(cache_key)[:CACHE_FILENAME_HASH_CHARS]
 
     def _is_stale(self, payload: dict[str, Any]) -> bool:
         if self.ttl_days <= 0:

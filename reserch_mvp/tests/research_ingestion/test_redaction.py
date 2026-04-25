@@ -15,6 +15,22 @@ def test_api_key_redaction(monkeypatch):
     assert "abc" not in str(redacted)
 
 
+def test_header_redaction_applies_configured_env_values(monkeypatch):
+    monkeypatch.setenv("CROSSREF_MAILTO", "research@example.test")
+
+    direct = redact_headers(
+        {"User-Agent": "QuantMVP (mailto:research@example.test)"},
+        env_var_names=["CROSSREF_MAILTO"],
+    )
+    nested = redact_mapping(
+        {"headers": {"User-Agent": "QuantMVP (mailto:research@example.test)"}},
+        env_var_names=["CROSSREF_MAILTO"],
+    )
+
+    assert "research@example.test" not in str(direct)
+    assert "research@example.test" not in str(nested)
+
+
 def test_raw_persistence_path_construction_and_secret_redaction(workspace_tmp_path, monkeypatch):
     monkeypatch.setenv("OPENALEX_API_KEY", "secret-key")
     path = raw_snapshot_path(workspace_tmp_path, "openalex", "run", "body", ".json")

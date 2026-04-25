@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from research_ingestion.request_cache import RequestCache
+from research_ingestion.request_cache import CACHE_FILENAME_HASH_CHARS, RequestCache
 from research_ingestion.sources.http import SourceResponse
 
 
@@ -14,6 +14,17 @@ def test_request_cache_key_uses_policy_version_and_page_fields(workspace_tmp_pat
 
     assert key_v1 != key_v2
     assert key_v1 != key_page_2
+
+
+def test_request_cache_uses_portable_cache_filename(workspace_tmp_path):
+    cache = RequestCache(root=workspace_tmp_path, enabled=True, policy_version="policy.v1", ttl_days=7)
+    cache_key = cache.cache_key(source="openalex", query="momentum", page_size=25, offset=0, page_number=1)
+
+    path = cache._cache_path("openalex", cache_key)
+    full_hash_path = workspace_tmp_path / "data" / "research" / "request_cache" / "openalex" / f"{cache_key}.json"
+
+    assert path.name == f"{cache_key[:CACHE_FILENAME_HASH_CHARS]}.json"
+    assert len(str(path)) == len(str(full_hash_path)) - (64 - CACHE_FILENAME_HASH_CHARS)
 
 
 def test_request_cache_returns_cached_source_response(workspace_tmp_path):

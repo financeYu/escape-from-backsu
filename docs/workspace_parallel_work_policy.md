@@ -15,6 +15,11 @@ Before a sub-agent or subproject worker edits files, it must pass the Branch Sta
 3. Add or update the worktree's root `WORKSPACE_MANIFEST.md`.
 4. Confirm the write scope matches the branch role.
 
+Use the lightest operating path that still preserves the branch/worktree boundary.
+The isolation rule is mandatory; duplicating every review, audit, and full
+validation step for low-risk support work is not. Apply the risk-based operating
+levels below before creating extra role worktrees.
+
 Do not switch a workspace from one role to another after work has started. If implementation work becomes review work, create a review worktree. If review finds a fix that is not explicitly assigned to the reviewer, hand it back to the implementation workspace or create a separate fix workspace.
 
 The master workspace is integration, verification, and status-control only.
@@ -79,6 +84,132 @@ git worktree add ..\worktrees\research_ingestion -b research/ingestion-followup
 git worktree add ..\worktrees\audit_scope_watchdog -b audit/scope-watchdog
 ```
 
+## Scripted Branch Start Gate
+
+Use `scripts/Start-RoleWorktree.ps1` to remove the repeated setup cost for new
+role worktrees. The script creates the role branch, worktree directory, and
+initial `WORKSPACE_MANIFEST.md` from one command.
+
+Example Level 1 docs/support setup:
+
+```powershell
+.\scripts\Start-RoleWorktree.ps1 `
+  -Role docs `
+  -Step 15 `
+  -Scope worktree-speed `
+  -Lightweight `
+  -AllowedWritePaths @("docs/workspace_parallel_work_policy.md", "scripts/Start-RoleWorktree.ps1") `
+  -ExpectedOutput @("policy update", "worktree bootstrap helper", "branch-local commit") `
+  -RequiredValidation @("PowerShell parser check", "git status/diff review")
+```
+
+Example Level 2 implementation setup:
+
+```powershell
+.\scripts\Start-RoleWorktree.ps1 `
+  -Role codex `
+  -Step 15 `
+  -Scope ranking-core `
+  -AllowedWritePaths @("src/scanner/", "tests/scanner/") `
+  -ExpectedOutput @("Step 15 ranking core implementation", "branch-local commit", "worker handoff summary") `
+  -RequiredValidation @("focused pytest for changed scanner tests", "forbidden-scope search")
+```
+
+Manual `git worktree add` remains allowed when the script does not fit the task,
+but new worktrees should still follow the same branch naming and manifest shape.
+The script refuses to start from a base ref that already tracks the shared root
+`WORKSPACE_MANIFEST.md` unless `-AllowTrackedManifest` is passed, because that
+case is likely to create a manifest merge conflict.
+
+## Branch-Local Commit Default
+
+After a role branch finishes its assigned work, commit the branch-local
+source-controlled changes by default. This commit is not a Step-end acceptance
+decision; it is a checkpoint that preserves the worktree state and makes master
+integration faster.
+
+Before a branch-local commit, run only the checks needed for that branch:
+
+- confirm the diff stays inside the manifest's allowed write paths
+- run the focused validation listed in the manifest
+- run a forbidden-scope search when the branch touches roadmap-gated behavior
+- exclude local `WORKSPACE_MANIFEST.md`, runtime caches, generated reports, and
+  unrelated dirty files unless the master explicitly promotes them
+
+Do not require full review, audit/scope watchdog, broad validation, or Cross-Step
+Conflict Checkpoint before every branch-local commit. Those heavier gates run
+when the Step is about to move forward, when master integration consumes a risky
+handoff, or when the operating level explicitly requires them.
+
+Commit messages should name the Step, role, and bounded scope, for example:
+
+```text
+Step 15 docs: streamline worktree branch workflow
+Step 15 scanner: add latest ranking core
+Step 15 validation: add latest ranking guardrails
+```
+
+## Risk-Based Operating Levels
+
+Worktree separation prevents conflicts, but the amount of process around each
+worktree should match the change risk.
+
+### Level 1: Lightweight support
+
+Use this for docs-only governance support, small process automation, narrow
+handoff templates, or tests/check helpers that do not touch runtime behavior,
+ranking/composite/backtest/valuation logic, generated-output paths, schemas, or
+cross-project handoff contracts.
+
+Requirements:
+
+- separate minor/support branch and worktree
+- compact `WORKSPACE_MANIFEST.md`
+- allowed write paths limited to the named docs/scripts/test helper files
+- focused validation for changed files only
+- git status/diff review before handoff
+- branch-local commit after focused validation passes
+
+Do not pre-create review or audit worktrees for Level 1 work unless the master
+explicitly assigns them or the change reveals a boundary risk.
+
+### Level 2: Standard implementation support
+
+Use this for normal Step implementation slices, chart runtime changes,
+validation helpers that enforce roadmap-gated behavior, and support branches
+that may be consumed by implementation.
+
+Requirements:
+
+- separate role branch and worktree
+- full manifest with forbidden actions and handoff notes
+- focused tests plus forbidden-scope search
+- master-up summary before integration
+- branch-local commit after focused validation and scope checks pass
+- review or audit worktree only when required by the change risk, Step gate, or
+  master instruction
+
+### Level 3: Gate-critical or cross-project work
+
+Use this for changes touching ranking output contracts, composite behavior,
+score definitions, normalization, diagnostics, data schemas, generated-output
+boundaries, backtest preparation, valuation/fundamental boundaries, or multiple
+subprojects.
+
+Requirements:
+
+- separate implementation, review, and audit/scope watchdog worktrees as needed
+- complete manifest and handoff template
+- Cross-Step Conflict Checkpoint at important stage boundaries
+- affected validation reruns after required fixes
+- Step-end gate sequence before final integrated Step commit
+- branch-local commits may still be made before Step-end, but they do not replace
+  Step-end validation, review, audit, or master acceptance
+
+If a Level 1 or Level 2 task expands into Level 3 territory, stop and either
+update the manifest with master approval or create a new correctly scoped
+worktree.
+
 ## Step 15+ Branch Separation Process
 
 Step 15 is the first roadmap stage allowed to produce latest ranking output.
@@ -113,6 +244,10 @@ Process:
 6. Produce the role-specific handoff before master integration consumes the branch.
 7. Merge into the master workspace one branch at a time, with focused validation and a Cross-Step Conflict Checkpoint between branches.
 
+Use `scripts/Start-RoleWorktree.ps1` from the master workspace when practical to
+create the branch, worktree, and initial manifest in one command. Manual setup is
+still allowed, but the branch name and manifest must match this policy.
+
 Do not reuse a Step implementation branch for chart runtime fixes unless the
 manifest already declares chart runtime ownership for that exact Step slice. Do
 not reuse quant, chart, research, review, or audit branches for roadmap status updates.
@@ -132,6 +267,11 @@ git worktree add ..\worktrees\step15_research_handoff -b research/step15-handoff
 git worktree add ..\worktrees\step15_review -b review/step15-ranking
 git worktree add ..\worktrees\step15_audit -b audit/step15-scope
 ```
+
+Create review and audit worktrees when their work is ready to start, not as idle
+placeholders. A Step may list expected review/audit branches up front, but those
+branches should be materialized only when there is a specific diff, packet, or
+handoff to inspect.
 
 ## Workspace Types
 
@@ -327,6 +467,18 @@ Every non-master worktree must include a root-level `WORKSPACE_MANIFEST.md` befo
 
 The manifest is the branch-local scope contract for that workspace. It must be updated when the assigned scope changes. If a worker needs to write outside the manifest, it must stop and request root/master approval or create a new workspace with the correct scope.
 
+For Level 1 lightweight support work, keep the manifest compact and refer back
+to this policy for common hard stops instead of duplicating every global rule.
+The manifest must still include the branch, task type, active Step, allowed
+write paths, forbidden actions, expected output, and required validation.
+
+By default, the root `WORKSPACE_MANIFEST.md` is local workspace contract
+metadata. Do not stage or commit it unless the master explicitly asks for a
+source-controlled manifest artifact. If a durable handoff record is needed,
+prefer a branch-specific note or integration report under an assigned docs path.
+Committing the shared root manifest from multiple role branches creates
+predictable merge conflicts.
+
 Minimum manifest schema:
 
 ```markdown
@@ -420,19 +572,21 @@ Recommended branch prefixes:
 - `codex/stepXX-...`
 - `quant/stepXX-...`
 - `review/stepXX-...`
-- `research/...`
-- `audit/...`
+- `research/stepXX-...`
+- `chart/stepXX-...`
+- `audit/stepXX-...`
 - `docs/...`
 - `hotfix/...`
 
 Good examples:
 
-- `codex/step14-adoption-impl-a`
+- `codex/step15-ranking-core`
+- `chart/step15-ranking-runtime`
 - `quant/step15-governance`
-- `review/step14`
-- `research/ingestion-followup`
-- `audit/scope-watchdog`
-- `docs/parallel-workspace-policy`
+- `review/step15-ranking`
+- `research/step15-handoff`
+- `audit/step15-scope`
+- `docs/step15-worktree-speed`
 - `hotfix/step13-report-guardrail`
 
 Bad examples to avoid:
@@ -445,17 +599,21 @@ Bad examples to avoid:
 
 Branches should name the role and the bounded task. A branch name that cannot explain its purpose is not ready for parallel work.
 
+Existing non-conforming branch names may be finished if renaming would disrupt
+active work, but new Step 15+ branches should use the role/step/scope pattern.
+
 ## Integration Order
 
 1. Worker branch completes local task.
-2. Worker reports changed files, tests run, risks, and handoff notes.
-3. Review workspace checks diff and guardrails.
-4. Audit / scope watchdog checks for roadmap bypass, scope creep, forbidden outputs, and terminology laundering.
+2. Worker runs branch-local focused validation and scope checks.
+3. Worker commits source-controlled branch changes by default, excluding local manifests and generated/runtime outputs unless explicitly promoted.
+4. Worker reports changed files, tests run, risks, handoff notes, and commit SHA.
 5. Master workspace merges one branch at a time.
-6. Master runs focused tests.
-7. Master runs Cross-Step Conflict Checkpoint.
-8. Master updates context only after validation.
-9. Master commits final integrated state.
+6. Master runs focused integration checks for the merged branch.
+7. Review workspace checks diff and guardrails when required by the operating level, Step gate, or master instruction.
+8. Audit / scope watchdog checks for roadmap bypass, scope creep, forbidden outputs, and terminology laundering when required by the operating level, Step gate, or master instruction.
+9. Before moving to the next roadmap Step, master runs the Step-end review/check sequence: integration validation, Cross-Step Conflict Checkpoint, required review/audit, required fixes, affected reruns, final Step verdict, and context refresh.
+10. Master commits final integrated Step state after the Step-end gate passes.
 
 Do not merge a second worker branch until the current branch's integration risk and conflicts are understood.
 

@@ -1,0 +1,38 @@
+[status]
+step = "Step 17"
+purpose = "conservative_backtest_evaluation_only"
+enabled = true
+valuation_fundamental_scoring = false
+score_formula_changes_allowed = false
+ranking_formula_changes_allowed = false
+
+[defaults]
+rebalance_frequency = "every_ranking_date"
+holding_period_days = 20
+top_n = 20
+weight_method = "equal_weight"
+execution_lag_days = 1
+execution_price_policy = "open"
+exit_price_policy = "close"
+transaction_cost_bps = 10.0
+slippage_bps = 5.0
+missing_price_policy = "flag_and_skip"
+limitation_flags = [
+  "universe_survivorship_bias_warning",
+  "corporate_action_adjustment_unknown",
+  "non_point_in_time_constituent_warning",
+]
+
+[input_contract]
+ranking_date_aliases = ["ranking_date", "decision_date", "date"]
+rank_aliases = ["rank", "latest_rank"]
+minimum_price_columns = ["ticker", "date", "open", "high", "low", "close", "volume"]
+ticker_policy = "six_digit_string_required"
+selection_policy = "top_n_by_upstream_rank_only"
+
+[forbidden]
+valuation_fundamental_data = true
+score_redefinition = true
+ranking_redefinition = true
+result_based_parameter_optimization = true
+realized_returns_into_upstream_outputs = true

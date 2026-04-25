@@ -514,13 +514,18 @@ def _assert_no_duplicate_ticker_date(frame: pd.DataFrame, *, context: str) -> No
 def _assert_rank_values_are_stable(frame: pd.DataFrame, *, context: str) -> None:
     ranks = frame["rank"]
     numeric = pd.to_numeric(ranks, errors="coerce")
-    if numeric.isna().any():
+    blocked = _blocked_output_rows(frame)
+    if (numeric.isna() & ~blocked).any():
         raise ValueError(f"{context} rank values must be numeric.")
-    if (numeric <= 0).any():
+    if (numeric.notna() & blocked).any():
+        raise ValueError(f"{context} blocked rows must not receive rank values.")
+
+    rankable = numeric.loc[~blocked]
+    if (rankable <= 0).any():
         raise ValueError(f"{context} rank values must be positive.")
-    if not _is_integer_like_series(numeric):
+    if not _is_integer_like_series(rankable):
         raise ValueError(f"{context} rank values must be integer-like.")
-    if numeric.duplicated().any():
+    if rankable.duplicated().any():
         raise ValueError(f"{context} rank values must be unique.")
 
 
@@ -530,10 +535,20 @@ def _assert_score_columns_are_finite(
     *,
     context: str,
 ) -> None:
+    blocked = _blocked_output_rows(frame)
     for column in columns:
         values = pd.to_numeric(frame[column], errors="coerce")
-        if values.isna().any() or not np.isfinite(values.to_numpy()).all():
+        finite = pd.Series(np.isfinite(values), index=values.index)
+        if (values.isna() & ~blocked).any() or (values.notna() & ~finite).any():
             raise ValueError(f"{context} {column} must contain finite numeric values.")
+
+
+def _blocked_output_rows(frame: pd.DataFrame) -> pd.Series:
+    blocked = pd.Series(False, index=frame.index)
+    for column in ("coverage_status", "ranking_validity_flag", "validity_flag"):
+        if column in frame.columns:
+            blocked |= frame[column].astype("string").str.strip().str.lower().eq("blocked")
+    return blocked
 
 
 def _assert_allowed_values(

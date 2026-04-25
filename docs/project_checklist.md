@@ -174,7 +174,7 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
 - Step 9 = COMPLETE
   - Part A/B raw score integration exists for the eight MVP candidates.
   - `short_term_overreaction`, `atr_adjusted_oversold_distance`, and `rsi_price_divergence` now use explicit Step 9 MVP locked formula variants.
-  - Step 15 ranking, Step 17 backtest, and valuation/fundamental scoring remain WAITING / deferred.
+  - Step 15 latest ranking output is now complete downstream; Step 17 backtest and valuation/fundamental scoring remain WAITING / deferred.
 - Step 10 = COMPLETE
   - Step 10A ticker-local time-series normalization is implemented and tested.
   - Step 10B cross-sectional normalization, diagnostics, and policy documentation are implemented and tested.
@@ -195,7 +195,7 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
   - Step 13 output is a technical review recommendation table for Step 14 material only.
   - `review_status` values remain technical recommendations, not final adoption states.
   - Generated Step 13 reports are constrained to `reports/selection/` and must include `technical selection review material only`.
-  - Step 15 ranking, Step 17 backtest, and Step 18 valuation/fundamental scoring remain not implemented.
+  - Step 15 latest ranking output is now complete downstream; Step 17 backtest and Step 18 valuation/fundamental scoring remain not implemented.
 - Step 14 = COMPLETE
   - Adoption synthesis docs, contracts, engine, report guardrails, and tests are complete.
   - Step 14 output remains adoption synthesis material only and preserves Step 13 `review_status` separately as `source_review_status`.
@@ -204,7 +204,15 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
   - Focused Step 14 / research-ingestion validation: 180 passed, 4 skipped.
   - `review_mvp` specialist review found no high or medium findings on changed production code; low style findings are non-blocking.
   - Cross-Step Conflict Checkpoint passed with no blocking issue.
-- Step 15 = WAITING / branch setup required
+- Step 15 = COMPLETE
+  - Worker A/B latest ranking implementation and validation branches are integrated through the master integration branch.
+  - `src/scanner/latest_ranking.py` builds deterministic latest-date technical ranking output from Step 14 adoption synthesis and Step 10 normalized technical score inputs.
+  - Step 15 output uses technical-only `technical_composite_score` / `final_composite_score` and rejects future/performance, trading, valuation, and financial/fundamental columns.
+  - `src/validation/step15_latest_ranking_guardrails.py` validates Step 15 output and input-plan boundaries, including blocked-row handling.
+  - `docs/architecture/research_backtest_boundary_design.md` documents the one-way Step 15/16 output -> Step 17 backtest input boundary without implementing Step 17.
+  - Latest local validation: `python -m pytest -q` = 434 passed, 4 skipped, 25 subtests passed.
+  - `review_mvp` specialist review found no high findings; required Step 15 guardrail fix was applied and revalidated.
+- Step 16 = WAITING / branch setup required
 - Step 17 = WAITING / not started
 - Step 18 valuation/fundamental expansion = DEFERRED
 - Research ingestion scope expansion note:

@@ -4,12 +4,12 @@
 
 ## 현재 활성 단계
 
-Step 15 = 최신 랭킹 출력 구현, WAITING / branch setup required
+Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
 
-- Recently completed: Step 14 = Adoption Synthesis, COMPLETE
-- Recently completed before that: Step 13 = Technical Selection Reviewer, COMPLETE
-- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14 technical work.
-- Current gate: Step 15 must start from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
+- Recently completed: Step 15 = 최신 랭킹 출력 구현, COMPLETE
+- Recently completed before that: Step 14 = Adoption Synthesis, COMPLETE
+- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16 technical work.
+- Current gate: Step 16 must start from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
 
 ## 병렬 Workspace 운영 메모
 
@@ -39,8 +39,8 @@ Step 15 = 최신 랭킹 출력 구현, WAITING / branch setup required
 | Step 12 | COMPLETE |
 | Step 13 | COMPLETE |
 | Step 14 | COMPLETE |
-| Step 15 | WAITING / branch setup required |
-| Step 16 | WAITING / not started |
+| Step 15 | COMPLETE |
+| Step 16 | WAITING / branch setup required |
 | Step 17 | WAITING / not started |
 | Step 18 | DEFERRED / waiting for valuation expansion |
 | Step 19 | WAITING / not started |
@@ -63,6 +63,20 @@ Step 15 = 최신 랭킹 출력 구현, WAITING / branch setup required
 - ranking, latest ranking, composite score, backtest, valuation/fundamental scoring은 여전히 생성하지 않는다.
 
 ## 최근 완료 Step 요약
+
+### Step 15 = Latest Ranking Output
+
+- Step 15 Worker A/B implementation and validation branches are integrated into the master integration branch.
+- `src/scanner/latest_ranking.py` builds a deterministic latest-date technical ranking snapshot from Step 14 adoption synthesis material and Step 10 normalized technical score inputs.
+- Step 15 output keeps `technical_composite_score` and `final_composite_score` technical-only and rejects future/performance, trading, valuation, and financial/fundamental columns.
+- `src/validation/step15_latest_ranking_guardrails.py` validates Step 15 output and input-plan guardrails, including blocked-row handling.
+- `docs/architecture/research_backtest_boundary_design.md` documents the one-way Step 15/16 output -> Step 17 backtest input boundary without implementing backtests.
+- `scripts/Start-RoleWorktree.ps1` and `docs/workspace_parallel_work_policy.md` add lightweight role-worktree setup support without weakening Step 15+ branch separation.
+- Latest local validation: `python -m pytest -q` = 434 passed, 4 skipped, 25 subtests passed.
+- Focused Step 15 validation: 44 passed.
+- Research ingestion focused validation: 96 passed, 4 skipped.
+- `review_mvp` specialist review found no high findings; remaining medium/low findings are pre-existing static-review items or non-blocking style/length warnings after required Step 15 guardrail fix.
+- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, hard-stop, valuation, future-return, backtest, generated-output, or dirty-worktree blocking issue found.
 
 ### Step 14 = Adoption Synthesis
 

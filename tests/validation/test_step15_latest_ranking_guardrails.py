@@ -28,7 +28,7 @@ from src.validation.step15_latest_ranking_guardrails import (  # noqa: E402
 
 
 def latest_ranking_frame() -> pd.DataFrame:
-    spec = DEFAULT_COMPOSITE_INPUT_REGISTRY[0]
+    spec = next(iter(DEFAULT_COMPOSITE_INPUT_REGISTRY))
     return pd.DataFrame(
         [
             {
@@ -222,6 +222,22 @@ def test_output_rank_and_ticker_values_must_be_stable() -> None:
     lost_leading_zero.loc[0, "ticker"] = "5930"
     with pytest.raises(ValueError, match="six-digit string"):
         validate_step15_latest_ranking_output(lost_leading_zero)
+
+
+def test_blocked_output_rows_may_omit_rank_and_composite_scores() -> None:
+    frame = latest_ranking_frame()
+    frame["coverage_status"] = ["adequate", "blocked"]
+    frame["ranking_validity_flag"] = ["valid", "blocked"]
+    frame.loc[1, "rank"] = pd.NA
+    frame.loc[1, "technical_composite_score"] = pd.NA
+    frame.loc[1, "final_composite_score"] = pd.NA
+
+    validate_step15_latest_ranking_output(frame)
+
+    blocked_with_rank = frame.copy()
+    blocked_with_rank.loc[1, "rank"] = 2
+    with pytest.raises(ValueError, match="blocked rows must not receive rank"):
+        validate_step15_latest_ranking_output(blocked_with_rank)
 
 
 def test_direct_input_plan_allows_known_technical_candidate_signal_normalized_column() -> None:

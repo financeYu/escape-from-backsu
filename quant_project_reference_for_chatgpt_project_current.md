@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-25T16:43:08+09:00
+Generated at: 2026-04-25T16:54:01+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -19,17 +19,19 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Step 14 = Adoption Synthesis, IN_PROGRESS / pre-commit gate
-- Recently completed: Step 13 = Technical Selection Reviewer, COMPLETE
-- Recently completed before that: Step 12 = redundancy / correlation diagnostics, COMPLETE
+Step 15 = 최신 랭킹 출력 구현, WAITING / branch setup required
+- Recently completed: Step 14 = Adoption Synthesis, COMPLETE
+- Recently completed before that: Step 13 = Technical Selection Reviewer, COMPLETE
 - Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14 technical work.
-- Current gate: Step 14 implementation and validation material are present locally; Step-end commit is not complete yet.
+- Current gate: Step 15 must start from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
 ## 병렬 Workspace 운영 메모
 - Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
-- Step 15부터는 Step implementation, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
+- Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
+- Step implementation은 major Step branch(`codex/stepXX-<scope>`)에서만 진행하고, Quant/research/review/audit/chart 작업은 minor/support branch(`quant/`, `research/`, `review/`, `audit/`, `chart/`)에서 분리한다.
+- 모든 하위 에이전트는 파일 편집 전에 role branch/worktree를 만들거나 선택하고 루트 `WORKSPACE_MANIFEST.md`를 작성해야 한다.
 - `C:\Users\jjaew\Project\master_mvp`는 integration / verification / status-control 전용 workspace로 유지한다.
 - 모든 non-master worktree는 루트의 `WORKSPACE_MANIFEST.md`를 포함해야 한다.
-- 이 운영 메모는 Step 상태를 변경하지 않는다.
+- omitted 1 additional lines for compact context
 
 ## Roadmap Verdicts
 
@@ -48,8 +50,8 @@ Step 14 = Adoption Synthesis, IN_PROGRESS / pre-commit gate
 | Step 11 | COMPLETE |
 | Step 12 | COMPLETE |
 | Step 13 | COMPLETE |
-| Step 14 | IN_PROGRESS / pre-commit gate |
-| Step 15 | WAITING / not started |
+| Step 14 | COMPLETE |
+| Step 15 | WAITING / branch setup required |
 | Step 16 | WAITING / not started |
 | Step 17 | WAITING / not started |
 | Step 18 | DEFERRED / waiting for valuation expansion |
@@ -66,11 +68,13 @@ Step 14 = Adoption Synthesis, IN_PROGRESS / pre-commit gate
 ## Most Recent Completed Step
 
 ### Step 14 = Adoption Synthesis
-- Step 14 adoption synthesis docs, contracts, engine, report guardrails, and tests are present locally.
+- Step 14 adoption synthesis docs, contracts, engine, report guardrails, and tests are complete.
 - Step 14 output remains adoption synthesis material only and preserves Step 13 `review_status` as `source_review_status`.
 - Step 14 does not generate ranking output, latest ranking output, `technical_composite_score`, `final_composite_score`, backtest, trading signals, or valuation/fundamental scoring.
 - Latest recorded local validation: `python -m pytest` = 387 passed, 4 skipped.
-- Step-end commit and post-commit context refresh are still pending.
+- Focused Step 14 / research-ingestion validation: 180 passed, 4 skipped.
+- `review_mvp` specialist review: no high or medium findings on changed production code; low style findings are non-blocking.
+- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, hard-stop, composite, valuation, diagnostics, or generated-output blocking issue found.
 ### Step 13 = Technical Selection Reviewer
 - Step 13 review contract, status vocabulary, validation guardrail, reviewer engine, report builder, and generated report path/language guardrails are implemented.
 - Step 13 output remains technical review recommendation material for Step 14 only.
@@ -181,54 +185,20 @@ A candidate score or score family should be assigned one of the following final 
 ## Git Snapshot
 
 - branch: `step14-adoption-engine`
-- commit: `a7e9ff9`
+- commit: `68ed9a9`
 - status:
 ```text
-M .gitignore
- M AGENTS.md
- M Quant_mvp/.codex/config.toml
- M Quant_mvp/AGENTS.md
- M Quant_mvp/agents/research/AGENTS.md
- M Quant_mvp/config/context_snapshot.toml
- M Quant_mvp/config/global.toml
- D Quant_mvp/config/research_classification.toml
- D Quant_mvp/config/research_policy.toml
- D Quant_mvp/config/research_queries.toml
- D Quant_mvp/config/research_scholar_discovery.toml
- D Quant_mvp/config/research_sources.toml
- M Quant_mvp/docs/research_ingestion_usage.md
- D Quant_mvp/reports/research_ingestion/classification_summary.csv
- D Quant_mvp/reports/research_ingestion/handoff_summary.md
- D Quant_mvp/reports/research_ingestion/ingestion_report.md
- D Quant_mvp/reports/research_ingestion/rejected_items.md
- D Quant_mvp/reports/research_ingestion/scholar_discovery_report.md
- D Quant_mvp/reports/research_ingestion/source_health.md
- D Quant_mvp/reports/research_ingestion/step5_candidate_evidence.md
- D Quant_mvp/src/research_ingestion/__init__.py
- D Quant_mvp/src/research_ingestion/__main__.py
- D Quant_mvp/src/research_ingestion/classify.py
- D Quant_mvp/src/research_ingestion/cli.py
- D Quant_mvp/src/research_ingestion/config.py
- D Quant_mvp/src/research_ingestion/dedupe.py
- D Quant_mvp/src/research_ingestion/discovery/__init__.py
- D Quant_mvp/src/research_ingestion/discovery/schema.py
- D Quant_mvp/src/research_ingestion/discovery/scholar_alert_email.py
- D Quant_mvp/src/research_ingestion/discovery/scholar_bibtex.py
- D Quant_mvp/src/research_ingestion/discovery/scholar_citation_export.py
- D Quant_mvp/src/research_ingestion/discovery/scholar_resolution.py
- D Quant_mvp/src/research_ingestion/discovery/scholar_title_list.py
- D Quant_mvp/src/research_ingestion/evidence.py
- D Quant_mvp/src/research_ingestion/normalize.py
- D Quant_mvp/src/research_ingestion/persistence.py
- D Quant_mvp/src/research_ingestion/redaction.py
- D Quant_mvp/src/research_ingestion/refresh.py
- D Quant_mvp/src/research_ingestion/relevance.py
- D Quant_mvp/src/research_ingestion/reporting.py
-... omitted 64 additional status lines
+clean
 ```
 
 ## Step-End Context Policy
 
-- Refresh this file after Step-end validation, review, requir
+- Refresh this file after Step-end validation, review, required fixes, rerun, and commit.
+- Keep latest-only local retention: remove obsolete local context files listed in config.
+- Do not include `.env`, API keys, local runtime caches, chart images, generated data caches, or secrets.
 
-[Context truncated by `max_chars`; consult repository docs for full detail.]
+## Next Allowed Work
+
+- Step 15 latest ranking output is the next roadmap step.
+- Start Step 15 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
+- Step 17 backtest and Step 18 valuation/fundamental scoring remain gated.

@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-25T20:55:59+09:00
+Generated at: 2026-04-25T21:04:33+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -19,11 +19,11 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Step 17 = 보수적 백테스트, WAITING / not started
-- Recently completed: Step 16 = 종목별 상세 리포트 구현, COMPLETE
-- Recently completed before that: Step 15 = 최신 랭킹 출력 구현, COMPLETE
+Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expansion
+- Recently completed: Step 17 = 보수적 백테스트, COMPLETE
+- Recently completed before that: Step 16 = 종목별 상세 리포트 구현, COMPLETE
 - Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16/17 technical or backtest work.
-- Current gate: Step 17 is not started. It must begin from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits, and must not introduce valuation/fundamental scoring.
+- Current gate: Step 18 valuation/fundamental expansion remains deferred and must not start without explicit user/root assignment and PIT financial-data boundary validation.
 ## 병렬 Workspace 운영 메모
 - Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
 - Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
@@ -53,7 +53,7 @@ Step 17 = 보수적 백테스트, WAITING / not started
 | Step 14 | COMPLETE |
 | Step 15 | COMPLETE |
 | Step 16 | COMPLETE |
-| Step 17 | WAITING / not started |
+| Step 17 | COMPLETE |
 | Step 18 | DEFERRED / waiting for valuation expansion |
 | Step 19 | WAITING / not started |
 | Step 20 | WAITING / not started |
@@ -67,6 +67,16 @@ Step 17 = 보수적 백테스트, WAITING / not started
 
 ## Most Recent Completed Step
 
+### Step 17 = Conservative Backtest
+- Step 17 Worker A/B conservative backtest core and guardrail branches are integrated through `integration/step17-conservative-backtest-merge`.
+- `src/backtest/` implements deterministic evaluation-only backtest contracts and runner logic using frozen Step 15/16-compatible technical ranking context as read-only input.
+- Step 17 output permits realized/evaluation return fields only in Step 17 result/output context and rejects those fields as upstream inputs.
+- `src/validation/step17_backtest_guardrails.py` rejects valuation/fundamental, future/forward/expected return, trading recommendation, forbidden report language, and return-feedback leakage.
+- `reports/backtest/README.md`, `docs/step17_conservative_backtest_core.md`, `docs/step17_backtest_guardrails.md`, and `docs/architecture/step17_backtest_boundary.md` document the evaluation-only, generated-output, no-feedback, and Step 18 valuation boundary.
+- Latest local validation: `python -m pytest -q` = 607 passed, 4 skipped, 25 subtests passed.
+- Focused Step 17 validation: `tests/backtest` = 18 passed; `tests/validation/test_step17_backtest_guardrails.py` = 39 passed; `tests/reports` = 68 passed; `tests/scanner tests/reports tests/validation` = 188 passed.
+- `review_mvp` specialist review found no high findings; the only Step 17 medium static warning was a false positive around guarded `start_positions[0]`; remaining Step 17 findings are non-blocking style/length warnings.
+- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, Step 18 valuation/fundamental leakage, trading-signal leakage, Step 15 ranking rewrite, Step 16 report rewrite, generated-output boundary break, return-feedback loop, or dirty-worktree blocker found.
 ### Step 16 = Security Detail Report
 - Step 16 Worker A/B implementation and guardrail branches are integrated into the master integration branch.
 - `src/reports/security_detail_report.py` builds deterministic per-security technical-only detail reports from the Step 15 latest ranking snapshot as read-only context.
@@ -89,17 +99,7 @@ Step 17 = 보수적 백테스트, WAITING / not started
 - Focused Step 15 validation: 44 passed.
 - Research ingestion focused validation: 96 passed, 4 skipped.
 - `review_mvp` specialist review found no high findings; remaining medium/low findings are pre-existing static-review items or non-blocking style/length warnings after required Step 15 guardrail fix.
-- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, hard-stop, valuation, future-return, backtest, generated-output, or dirty-worktree blocking issue found.
-### Step 14 = Adoption Synthesis
-- Step 14 adoption synthesis docs, contracts, engine, report guardrails, and tests are complete.
-- Step 14 output remains adoption synthesis material only and preserves Step 13 `review_status` as `source_review_status`.
-- Step 14 does not generate ranking output, latest ranking output, `technical_composite_score`, `final_composite_score`, backtest, trading signals, or valuation/fundamental scoring.
-- Latest recorded local validation: `python -m pytest` = 387 passed, 4 skipped.
-- Focused Step 14 / research-ingestion validation: 180 passed, 4 skipped.
-- `review_mvp` specialist review: no high or medium findings on changed production code; low style findings are non-blocking.
-- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, hard-stop, composite, valuation, diagnostics, or generated-output blocking issue found.
-### Step 13 = Technical Selection Reviewer
-- omitted 11 additional lines for compact context
+- omitted 21 additional lines for compact context
 
 ## Cross-Step Conflict Checkpoint
 
@@ -129,12 +129,11 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 
 ## Git Snapshot
 
-- branch: `integration/step16-detail-report-merge`
-- commit: `564db56`
+- branch: `integration/step17-conservative-backtest-merge`
+- commit: `d6b94bc`
 - status:
 ```text
-M quant_project_reference_for_chatgpt_project_current.md
- M scripts/refresh_quant_project_context.py
+clean
 ```
 
 ## Step-End Context Policy
@@ -201,11 +200,5 @@ A candidate score or score family should be assigned one of the following final 
 | `price_near_52w_high` | folded into `donchian_breakout_distance` as longer-window alternative | concept is useful but redundant in first MVP set |
 | `time_series_trend_return` | folded into `efficiency_ratio_trend` review | too close to relative strength unless separate use is proven later |
 | `volume_participation_momentum_filter` | future conditional filter / diagnostic backlog | strict turnover may require shares outstanding; OHLCV proxy needs review |
-| `trading_activity_variability_penalty` | diagnostic backlog | risk/liquidity context, not first-pass ranking alpha |
-
-## Family Map Snapshot
-
-| `mean_reversion` | `short_term_overreaction`, `atr_adjusted_oversold_distance` | `technical` | reversal candidates | high within family | implement both only if diagnostics compare distinctness |
-| `breakout` | `donchian_breakout_distance` | `technical` | continuation candidate | high with trend ideas | keep one simple breakout definition first |
 
 [Context truncated by `max_chars`; consult repository docs for full detail.]

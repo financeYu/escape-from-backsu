@@ -1,2 +1,65 @@
-"""Diagnostics boundary placeholder."""
+"""Step 12 diagnostics contract and report boundary."""
 
+from .diagnostic_contracts import (
+    STEP12_REVIEW_MATERIAL_NOTICE,
+    Step12DiagnosticStatus,
+    Step12ThresholdPolicy,
+    assert_no_forbidden_diagnostic_output_columns,
+    classify_spearman_diagnostic_status,
+    find_forbidden_diagnostic_output_columns,
+    load_step12_threshold_policy,
+    threshold_flag_for_status,
+    validate_step12_coverage_summary,
+    validate_step12_deviation_log,
+    validate_step12_diagnostics_bundle,
+    validate_step12_pair_diagnostics,
+)
+from .diagnostic_reports import (
+    render_step12_markdown_report,
+    validate_step12_report_language,
+    write_step12_markdown_report,
+)
+from .score_redundancy import (
+    PAIR_DATE_COLUMNS,
+    PAIR_SUMMARY_COLUMNS,
+    RedundancyScoreInput,
+    ScoreRedundancyConfig,
+    ScoreRedundancyConfigError,
+    build_score_redundancy_diagnostics,
+    calculate_score_pair_correlations,
+    load_score_redundancy_config,
+    prepare_redundancy_input_frame,
+    score_inputs_from_columns,
+    score_inputs_from_registry,
+    summarize_score_redundancy,
+)
+
+__all__ = (
+    "STEP12_REVIEW_MATERIAL_NOTICE",
+    "PAIR_DATE_COLUMNS",
+    "PAIR_SUMMARY_COLUMNS",
+    "RedundancyScoreInput",
+    "ScoreRedundancyConfig",
+    "ScoreRedundancyConfigError",
+    "Step12DiagnosticStatus",
+    "Step12ThresholdPolicy",
+    "assert_no_forbidden_diagnostic_output_columns",
+    "build_score_redundancy_diagnostics",
+    "calculate_score_pair_correlations",
+    "classify_spearman_diagnostic_status",
+    "find_forbidden_diagnostic_output_columns",
+    "load_score_redundancy_config",
+    "load_step12_threshold_policy",
+    "prepare_redundancy_input_frame",
+    "render_step12_markdown_report",
+    "score_inputs_from_columns",
+    "score_inputs_from_registry",
+    "summarize_score_redundancy",
+    "threshold_flag_for_status",
+    "validate_step12_coverage_summary",
+    "validate_step12_deviation_log",
+    "validate_step12_diagnostics_bundle",
+    "validate_step12_pair_diagnostics",
+    "validate_step12_report_language",
+    "write_step12_markdown_report",
+)

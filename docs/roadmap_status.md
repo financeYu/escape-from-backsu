@@ -2,9 +2,8 @@
 
 ## 현재 활성 단계
 
-Step 11 = Composite Score structure design, COMPLETE
-Next gated stage: Step 12 = redundancy / correlation diagnostics, WAITING / not started
-Recently completed: Step 11 = Composite Score structure design, COMPLETE
+Step 13 = Technical Selection Reviewer, NEXT / not started
+Recently completed: Step 12 = redundancy / correlation diagnostics, COMPLETE
 Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11 technical scoring.
 
 ## 현재 판정
@@ -20,8 +19,8 @@ Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 1
 - Step 9 status: COMPLETE
 - Step 10 status: COMPLETE
 - Step 11 status: COMPLETE
-- Step 12 status: WAITING / not started
-- Step 13 status: WAITING / not started
+- Step 12 status: COMPLETE
+- Step 13 status: NEXT / not started
 - Step 15 status: WAITING / not started
 - Step 17 status: WAITING / not started
 - Step 18 status: DEFERRED / waiting for valuation expansion
@@ -61,6 +60,44 @@ Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 1
 - 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/test_step10_normalization_timeseries.py tests/test_step10_normalization_cross_sectional.py tests/test_step10_normalization_diagnostics.py`: 26 passed
 - 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest`: 225 passed, 4 skipped
 - Step 11 통합 점검에서 A 설계 문서와 B schema registry의 family/role/eligibility 용어를 설계 문서 기준으로 정렬
+
+## Step 12 통합 완료 상태
+
+완료:
+
+- `docs/step12_redundancy_correlation_diagnostics.md` 작성
+- Step 12 목적을 normalized score/component score 간 redundancy/correlation 진단 및 Step 13 review material 생성으로 고정
+- Step 12 input contract에 `ticker`, `date`, Step 10 normalized score columns, Step 11 score family/component metadata를 명시
+- score pair diagnostics, coverage summary, threshold flags, insufficient data reasons, implementation deviation log output contract 명시
+- `src/diagnostics/score_redundancy.py`에 same-date cross-sectional Spearman redundancy/correlation 계산 엔진 추가
+- Worker A engine output을 Worker B contract-facing `pair_diagnostics` / `coverage_summary` schema로 변환하고 validator로 검증
+- normalized score column이 없을 때 raw score로 조용히 대체하지 않고 `insufficient_input` / upstream missing reason을 명시
+- pairwise NaN exclusion, insufficient cross-section, constant column, undefined correlation, config missing 처리를 구현
+- `src/diagnostics/diagnostic_contracts.py`에 Step 12 schema/status/threshold/forbidden-column guardrail helper 추가
+- `src/diagnostics/diagnostic_reports.py`에 generated markdown report writer와 report-language guardrail 추가
+- `reports/diagnostics/README.md`에 generated runtime output boundary 명시
+- `tests/diagnostics/test_step12_score_redundancy.py` 추가
+- `tests/diagnostics/test_step12_diagnostic_contracts.py` 추가
+- `tests/diagnostics/test_step12_report_guardrails.py` 추가
+
+유지되는 제한:
+
+- ranking generation 없음
+- latest ranking 없음
+- `technical_composite_score` / `final_composite_score` 생성 없음
+- backtest 없음
+- forward/future return 계산 없음
+- valuation/fundamental scoring 없음
+- diagnostics를 alpha signal, adoption decision, ranking, backtest, valuation verdict로 표현하지 않음
+
+검증:
+
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/diagnostics/test_step12_score_redundancy.py`: 9 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/diagnostics/test_step12_diagnostic_contracts.py`: 5 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/diagnostics/test_step12_report_guardrails.py`: 5 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/diagnostics`: 19 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/test_step10_normalization_cross_sectional.py tests/test_step10_normalization_diagnostics.py tests/test_step10_normalization_timeseries.py tests/test_step11_composite_schema.py`: 37 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest`: 246 passed, 4 skipped
 
 ## Step 10 통합 상태
 

@@ -161,7 +161,13 @@ Step 18 시작 시 필수로 진행할 항목:
   - `docs/step11_composite_score_design.md` defines technical composite family structure and policy.
   - `src/composite/contracts.py`, `src/composite/schema.py`, and `tests/test_step11_composite_schema.py` define and test schema/guardrail skeletons only.
   - Step 11 is design-only; no `technical_composite_score`, `final_composite_score`, ranking, backtest, or valuation/fundamental scoring is implemented.
-- Step 12 = WAITING / not started
+- Step 12 = COMPLETE
+  - Worker A core redundancy/correlation calculation engine is implemented in `src/diagnostics/score_redundancy.py`.
+  - Worker B output contract, docs, report schema, guardrail, and report writer are implemented.
+  - `docs/step12_redundancy_correlation_diagnostics.md` fixes Step 12 input/output/status/threshold semantics.
+  - Worker A engine output now exposes both engine-level pair summaries and contract-facing pair diagnostics / coverage summaries validated by Worker B helpers.
+  - Step 12 computes same-date cross-sectional Spearman diagnostics only; ranking, composite scoring, backtest, forward/future return, and valuation/fundamental scoring remain absent.
+- Step 13 = NEXT / not started
 - Step 15 = WAITING / not started
 - Step 17 = WAITING / not started
 - Step 18 valuation/fundamental expansion = DEFERRED

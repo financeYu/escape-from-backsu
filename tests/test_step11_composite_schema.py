@@ -112,6 +112,11 @@ def test_diagnostic_and_context_only_scores_are_not_candidate_signals() -> None:
     assert by_name["cmf_confirmation"].role is CompositeRole.CONFIRMATION
     assert {spec.score_name for spec in candidate_signal_specs()} == {
         "short_term_overreaction",
+        "donchian_breakout_distance",
+        "efficiency_ratio_trend",
+    }
+    assert {spec.score_name for spec in candidate_signal_specs(include_conditional=True)} == {
+        "short_term_overreaction",
         "atr_adjusted_oversold_distance",
         "donchian_breakout_distance",
         "rsi_price_divergence",
@@ -143,10 +148,16 @@ def test_step11_forbidden_composite_and_ranking_outputs_are_blocked() -> None:
 
     for column in (
         "technical_composite_score",
+        "technical_composite_score_candidate",
         "final_composite_score",
+        "final_composite_score_candidate",
+        "composite_score_candidate",
+        "family_weighted_score_candidate",
         "rank",
+        "rank_score",
         "latest_rank",
         "latest_ranking",
+        "cross_sectional_ranking_score",
         "buy_signal",
         "sell_signal",
         "alpha_signal",
@@ -181,9 +192,12 @@ def test_valuation_and_fundamental_columns_are_not_allowed_in_registry_or_frame(
     with pytest.raises(ValueError, match="valuation/fundamental columns"):
         validate_normalized_score_columns(frame)
 
-    bad_registry = (
-        replace(DEFAULT_COMPOSITE_INPUT_REGISTRY[0], raw_column="per_raw"),
-    ) + DEFAULT_COMPOSITE_INPUT_REGISTRY[1:]
+    bad_registry = tuple(
+        replace(spec, raw_column="per_raw")
+        if spec.score_name == "short_term_overreaction"
+        else spec
+        for spec in DEFAULT_COMPOSITE_INPUT_REGISTRY
+    )
     with pytest.raises(ValueError, match="valuation/fundamental columns"):
         validate_composite_input_registry(bad_registry)
 
@@ -232,8 +246,12 @@ def test_config_production_runtime_flags_remain_disabled() -> None:
         root_scores_config=PROJECT_ROOT / "config" / "scores.toml",
     )
 
+
+def test_config_blocks_step11_production_registry_flags() -> None:
     bad_quant_config = {
         "registry_status": {
+            "runtime_score_implementation": False,
+            "production_scoring_enabled": False,
             "ranking_generation_enabled": False,
             "composite_scoring_enabled": True,
             "backtest_enabled": False,
@@ -247,8 +265,30 @@ def test_config_production_runtime_flags_remain_disabled() -> None:
             root_scores_config={"status": {}, "composite": {"enabled": False, "implemented": False}},
         )
 
+    bad_production_config = {
+        "registry_status": {
+            "runtime_score_implementation": True,
+            "production_scoring_enabled": True,
+            "ranking_generation_enabled": False,
+            "composite_scoring_enabled": False,
+            "backtest_enabled": False,
+            "valuation_branch_enabled": False,
+            "runtime_enabled": False,
+        },
+        "scores": [{"score_id": "short_term_overreaction", "runtime_enabled": False}],
+    }
+    with pytest.raises(ValueError, match="production flags"):
+        validate_step11_config_flags(
+            quant_scores_config=bad_production_config,
+            root_scores_config={"status": {}, "composite": {"enabled": False, "implemented": False}},
+        )
+
+
+def test_config_blocks_runtime_score_and_root_composite_status_flags() -> None:
     bad_runtime_config = {
         "registry_status": {
+            "runtime_score_implementation": False,
+            "production_scoring_enabled": False,
             "ranking_generation_enabled": False,
             "composite_scoring_enabled": False,
             "backtest_enabled": False,
@@ -260,4 +300,19 @@ def test_config_production_runtime_flags_remain_disabled() -> None:
         validate_step11_config_flags(
             quant_scores_config=bad_runtime_config,
             root_scores_config={"status": {}, "composite": {"enabled": False, "implemented": False}},
+        )
+
+    bad_root_composite_status = {
+        "status": {},
+        "composite": {
+            "enabled": False,
+            "implemented": False,
+            "technical_composite_score": "implemented",
+            "final_composite_score": "not_implemented",
+        },
+    }
+    with pytest.raises(ValueError, match="not_implemented"):
+        validate_step11_config_flags(
+            quant_scores_config=bad_runtime_config | {"scores": []},
+            root_scores_config=bad_root_composite_status,
         )

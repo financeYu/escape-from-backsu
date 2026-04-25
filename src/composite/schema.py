@@ -122,6 +122,25 @@ STEP11_FORBIDDEN_SUFFIXES = (
     "_ranking",
     "_signal",
 )
+STEP11_FORBIDDEN_TOKENS = frozenset(
+    {
+        "alpha",
+        "buy",
+        "rank",
+        "ranking",
+        "recommendation",
+        "sell",
+        "signal",
+    }
+)
+STEP11_FORBIDDEN_SUBSTRINGS = (
+    "composite_score",
+    "family_weighted_score",
+    "final_composite",
+    "final_composite_score",
+    "technical_composite",
+    "technical_composite_score",
+)
 VALUATION_FIELD_TOKENS = frozenset(
     {
         "per",
@@ -140,6 +159,8 @@ VALUATION_FIELD_TOKENS = frozenset(
     }
 )
 PRODUCTION_DISABLED_REGISTRY_FLAGS = (
+    "runtime_score_implementation",
+    "production_scoring_enabled",
     "ranking_generation_enabled",
     "composite_scoring_enabled",
     "backtest_enabled",
@@ -150,6 +171,10 @@ ROOT_DISABLED_STATUS_FLAGS = (
     "active_composite_score",
     "active_valuation_scores",
     "active_fundamental_scores",
+)
+ROOT_DISABLED_COMPOSITE_STATUS_FIELDS = (
+    "technical_composite_score",
+    "final_composite_score",
 )
 
 
@@ -164,6 +189,8 @@ def find_forbidden_step11_output_columns(columns: Iterable[str]) -> list[str]:
             or normalized.startswith(STEP11_FORBIDDEN_PREFIXES)
             or normalized.endswith(STEP11_FORBIDDEN_SUFFIXES)
             or normalized.startswith("latest_rank")
+            or any(substring in normalized for substring in STEP11_FORBIDDEN_SUBSTRINGS)
+            or bool(STEP11_FORBIDDEN_TOKENS.intersection(normalized.split("_")))
         ):
             forbidden.append(column)
     return forbidden
@@ -244,15 +271,20 @@ def validate_composite_input_registry(
 
 def candidate_signal_specs(
     registry: Sequence[CompositeInputSpec] = DEFAULT_COMPOSITE_INPUT_REGISTRY,
+    *,
+    include_conditional: bool = False,
 ) -> tuple[CompositeInputSpec, ...]:
-    """Return direct future-composite candidates after registry validation."""
+    """Return design-stage eligible candidate signals after registry validation."""
 
     validate_composite_input_registry(registry)
+    allowed_eligibility = {CompositeEligibility.ELIGIBLE}
+    if include_conditional:
+        allowed_eligibility.add(CompositeEligibility.CONDITIONAL)
     return tuple(
         spec
         for spec in registry
         if spec.role is CompositeRole.CANDIDATE_SIGNAL
-        and spec.eligibility in {CompositeEligibility.ELIGIBLE, CompositeEligibility.CONDITIONAL}
+        and spec.eligibility in allowed_eligibility
     )
 
 
@@ -317,13 +349,25 @@ def validate_step11_config_flags(
     root_config = _load_config(root_scores_config)
 
     registry_status = _mapping(quant_config.get("registry_status", {}))
+    _assert_registry_status_flags_disabled(registry_status)
+    _assert_score_runtime_flags_disabled(quant_config.get("scores", []))
+
+    root_status = _mapping(root_config.get("status", {}))
+    _assert_root_status_flags_disabled(root_status)
+
+    composite = _mapping(root_config.get("composite", {}))
+    _assert_root_composite_flags_disabled(composite)
+
+
+def _assert_registry_status_flags_disabled(registry_status: Mapping[str, object]) -> None:
     enabled_flags = [
         key for key in PRODUCTION_DISABLED_REGISTRY_FLAGS if bool(registry_status.get(key))
     ]
     if enabled_flags:
         raise ValueError(f"Step 11 production flags must remain disabled: {', '.join(enabled_flags)}")
 
-    score_entries = quant_config.get("scores", [])
+
+def _assert_score_runtime_flags_disabled(score_entries: object) -> None:
     if isinstance(score_entries, list):
         enabled_runtime_scores = [
             str(entry.get("score_id") or entry.get("name") or "<unknown>")
@@ -336,7 +380,8 @@ def validate_step11_config_flags(
                 f"{', '.join(enabled_runtime_scores)}"
             )
 
-    root_status = _mapping(root_config.get("status", {}))
+
+def _assert_root_status_flags_disabled(root_status: Mapping[str, object]) -> None:
     enabled_root_status = [
         key for key in ROOT_DISABLED_STATUS_FLAGS if bool(root_status.get(key))
     ]
@@ -346,9 +391,20 @@ def validate_step11_config_flags(
             f"{', '.join(enabled_root_status)}"
         )
 
-    composite = _mapping(root_config.get("composite", {}))
+
+def _assert_root_composite_flags_disabled(composite: Mapping[str, object]) -> None:
     if bool(composite.get("enabled")) or bool(composite.get("implemented")):
         raise ValueError("Root composite enabled/implemented flags must remain false.")
+    enabled_composite_status = [
+        key
+        for key in ROOT_DISABLED_COMPOSITE_STATUS_FIELDS
+        if composite.get(key) not in (None, False, "not_implemented")
+    ]
+    if enabled_composite_status:
+        raise ValueError(
+            "Root composite score status fields must remain not_implemented: "
+            f"{', '.join(enabled_composite_status)}"
+        )
 
 
 def _assert_no_valuation_fundamental_frame_columns(
@@ -404,6 +460,7 @@ def _mapping(value: object) -> Mapping[str, object]:
 __all__ = (
     "PRODUCTION_DISABLED_REGISTRY_FLAGS",
     "ROOT_DISABLED_STATUS_FLAGS",
+    "ROOT_DISABLED_COMPOSITE_STATUS_FIELDS",
     "ALLOWED_COMPOSITE_FAMILIES",
     "EXPECTED_COMPOSITE_POLICY",
     "STEP11_FORBIDDEN_EXACT_COLUMNS",

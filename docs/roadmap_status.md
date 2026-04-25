@@ -4,12 +4,12 @@
 
 ## 현재 활성 단계
 
-Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
+Step 17 = 보수적 백테스트, WAITING / not started
 
-- Recently completed: Step 15 = 최신 랭킹 출력 구현, COMPLETE
-- Recently completed before that: Step 14 = Adoption Synthesis, COMPLETE
-- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16 technical work.
-- Current gate: Step 16 must start from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
+- Recently completed: Step 16 = 종목별 상세 리포트 구현, COMPLETE
+- Recently completed before that: Step 15 = 최신 랭킹 출력 구현, COMPLETE
+- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16/17 technical or backtest work.
+- Current gate: Step 17 is not started. It must begin from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits, and must not introduce valuation/fundamental scoring.
 
 ## 병렬 Workspace 운영 메모
 
@@ -40,7 +40,7 @@ Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
 | Step 13 | COMPLETE |
 | Step 14 | COMPLETE |
 | Step 15 | COMPLETE |
-| Step 16 | WAITING / branch setup required |
+| Step 16 | COMPLETE |
 | Step 17 | WAITING / not started |
 | Step 18 | DEFERRED / waiting for valuation expansion |
 | Step 19 | WAITING / not started |
@@ -63,6 +63,19 @@ Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
 - ranking, latest ranking, composite score, backtest, valuation/fundamental scoring은 여전히 생성하지 않는다.
 
 ## 최근 완료 Step 요약
+
+### Step 16 = Security Detail Report
+
+- Step 16 Worker A/B implementation and guardrail branches are integrated into the master integration branch.
+- `src/reports/security_detail_report.py` builds deterministic per-security technical-only detail reports from the Step 15 latest ranking snapshot as read-only context.
+- Step 16 output displays ticker/date, source latest ranking date, read-only rank fields, technical-only composite score context, score/component breakdowns, source/adoption metadata, diagnostics, quality flags, explanations, and an explicit `technical-only detail report` boundary notice.
+- `src/validation/step16_detail_report_guardrails.py` validates Step 16 report inputs and outputs, including recursive structured-output language checks after code-review fixes.
+- Step 16 does not create a new ranking, re-rank securities, run backtests, compute future/forward/realized returns, create trading recommendations, or use valuation/fundamental scoring.
+- `docs/step16_security_detail_report.md`, `docs/architecture/step16_report_backtest_boundary.md`, and `reports/security/README.md` document the generated-output and Step 15 read-only boundaries.
+- Latest local validation: `python -m pytest -q` = 548 passed, 4 skipped, 25 subtests passed.
+- Focused Step 16 validation: `tests/reports` = 66 passed; `tests/validation/test_step16_detail_report_guardrails.py` = 37 passed; `tests/scanner tests/reports tests/validation` = 147 passed.
+- `review_mvp` specialist review found no high or medium findings after required Step 16 review fixes; remaining low style/length warnings are non-blocking.
+- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, Step 17 backtest leakage, Step 18 valuation/fundamental leakage, trading-signal leakage, Step 15 read-only boundary, generated-output boundary, or dirty-worktree blocker found.
 
 ### Step 15 = Latest Ranking Output
 
@@ -117,13 +130,11 @@ Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
   - `docs/step7_indicator_layer.md`
   - `docs/step2_financial_validation_summary.md`
 
-## Step 14 진행 / 종료 기준
+## Step 17 진행 / 시작 기준
 
-- Use Step 13 technical review recommendations as Step 14 input material.
-- Convert technical review recommendations into an explicit adoption synthesis plan only.
-- Keep diagnostic/context-only candidates visibly separate from direct candidate signal adoption.
-- Do not generate latest ranking output before Step 15.
-- Do not implement backtest before Step 17.
+- Start Step 17 only after explicit user/root assignment and a new role branch/worktree with `WORKSPACE_MANIFEST.md`.
+- Use Step 15 latest ranking output and Step 16 technical-only detail reports only as frozen input context.
+- Do not alter Step 15 ranking generation or Step 16 report generation while implementing Step 17.
 - Do not implement valuation/fundamental scoring before Step 18.
 - Do not merge financial/fundamental data into `technical_composite_score` or `final_composite_score`.
 
@@ -142,7 +153,7 @@ Required trigger examples:
 Use `docs/cross_step_conflict_check.md` and generate a compact review packet with:
 
 ```powershell
-python scripts/build_review_packet.py --step "Step 14" --stage "<stage name>"
+python scripts/build_review_packet.py --step "<current step>" --stage "<stage name>"
 ```
 
 Completed Step artifacts are trusted by default. The checkpoint checks only whether the current stage conflicts with roadmap order, hard stops, cross-project handoffs, generated-output boundaries, or unresolved carry-forward risks.

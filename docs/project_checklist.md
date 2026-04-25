@@ -212,7 +212,16 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
   - `docs/architecture/research_backtest_boundary_design.md` documents the one-way Step 15/16 output -> Step 17 backtest input boundary without implementing Step 17.
   - Latest local validation: `python -m pytest -q` = 434 passed, 4 skipped, 25 subtests passed.
   - `review_mvp` specialist review found no high findings; required Step 15 guardrail fix was applied and revalidated.
-- Step 16 = WAITING / branch setup required
+- Step 16 = COMPLETE
+  - Worker A/B detail report implementation, guardrails, docs, and tests are integrated through the master integration branch.
+  - `src/reports/security_detail_report.py` builds deterministic per-stock technical-only detail reports from Step 15 latest ranking output as read-only snapshot context.
+  - Step 16 reports can display ticker/date, source latest ranking date, read-only Step 15 rank fields, technical-only composite score context, score/component breakdowns, source/adoption metadata, diagnostics, quality flags, blocked/manual-review explanations, and an explicit `technical-only detail report` boundary notice.
+  - `src/validation/step16_detail_report_guardrails.py` rejects forbidden future/backtest/performance, trading-signal, valuation/fundamental, and generated-output language, including nested structured report text.
+  - Step 16 does not create a new ranking, re-rank securities, run backtests, create trading recommendations, or use valuation/fundamental scoring.
+  - Latest local validation: `python -m pytest -q` = 548 passed, 4 skipped, 25 subtests passed.
+  - Focused Step 16 validation: `tests/reports` = 66 passed; `tests/validation/test_step16_detail_report_guardrails.py` = 37 passed; related scanner/reports/validation = 147 passed.
+  - `review_mvp` specialist review found no high or medium findings after required Step 16 review fixes; remaining low style/length warnings are non-blocking.
+  - Cross-Step Conflict Checkpoint passed with no blocking roadmap/order, Step 17 backtest leakage, Step 18 valuation/fundamental leakage, future-return leakage, trading-signal leakage, Step 15 read-only boundary, generated-output boundary, or dirty-worktree issue.
 - Step 17 = WAITING / not started
 - Step 18 valuation/fundamental expansion = DEFERRED
 - Research ingestion scope expansion note:

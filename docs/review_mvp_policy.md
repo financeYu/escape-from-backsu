@@ -13,6 +13,8 @@
 - changes with unresolved risks after subproject local review
 - master-requested independent review
 
+For Step-end closure, `review_mvp` is required when the Step change touches code, tests, config, schemas, generated-output boundaries, cross-project handoffs, or roadmap-gated behavior. Narrow docs-only governance changes may use master code review unless the master or user explicitly requests specialist review.
+
 `review_mvp` must focus on:
 
 - hard stop violations

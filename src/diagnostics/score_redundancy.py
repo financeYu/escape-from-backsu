@@ -255,9 +255,6 @@ def calculate_score_pair_correlations(
     """Return per-date same-cross-section Spearman diagnostics by score pair."""
 
     active_inputs = _resolve_score_inputs(score_inputs, score_columns)
-    active_config = config or load_score_redundancy_config(
-        thresholds_config_path=thresholds_config_path
-    )
     prepared = prepare_redundancy_input_frame(
         frame,
         score_inputs=active_inputs,
@@ -265,6 +262,10 @@ def calculate_score_pair_correlations(
     )
     if len(active_inputs) < 2:
         return pd.DataFrame(columns=PAIR_DATE_COLUMNS)
+
+    active_config = config or load_score_redundancy_config(
+        thresholds_config_path=thresholds_config_path
+    )
 
     rows: list[dict[str, object]] = []
     for left, right in combinations(active_inputs, 2):
@@ -289,6 +290,11 @@ def summarize_score_redundancy(
     """Return pair-level Step 12 redundancy summary diagnostics."""
 
     active_inputs = _resolve_score_inputs(score_inputs, score_columns)
+    prepared = prepare_redundancy_input_frame(
+        frame,
+        score_inputs=active_inputs,
+        as_of_date=as_of_date,
+    )
     if len(active_inputs) < 2:
         return pd.DataFrame(columns=PAIR_SUMMARY_COLUMNS)
 
@@ -300,10 +306,9 @@ def summarize_score_redundancy(
         return _config_missing_summary(active_inputs, str(exc))
 
     details = calculate_score_pair_correlations(
-        frame,
+        prepared,
         score_inputs=active_inputs,
         config=active_config,
-        as_of_date=as_of_date,
     )
     if details.empty:
         return pd.DataFrame(columns=PAIR_SUMMARY_COLUMNS)
@@ -327,6 +332,11 @@ def build_score_redundancy_diagnostics(
     """Build Step 12 engine and contract-facing diagnostic tables."""
 
     active_inputs = _resolve_score_inputs(score_inputs, score_columns)
+    prepared = prepare_redundancy_input_frame(
+        frame,
+        score_inputs=active_inputs,
+        as_of_date=as_of_date,
+    )
     try:
         active_config = config or load_score_redundancy_config(
             thresholds_config_path=thresholds_config_path
@@ -346,16 +356,14 @@ def build_score_redundancy_diagnostics(
         }
 
     pair_date = calculate_score_pair_correlations(
-        frame,
+        prepared,
         score_inputs=active_inputs,
         config=active_config,
-        as_of_date=as_of_date,
     )
     pair_summary = summarize_score_redundancy(
-        frame,
+        prepared,
         score_inputs=active_inputs,
         config=active_config,
-        as_of_date=as_of_date,
     )
     pair_diagnostics = _pair_summary_to_contract(
         pair_summary=pair_summary,
@@ -363,10 +371,9 @@ def build_score_redundancy_diagnostics(
         score_inputs=active_inputs,
     )
     coverage_summary = _build_coverage_summary(
-        frame,
+        prepared,
         score_inputs=active_inputs,
         config=active_config,
-        as_of_date=as_of_date,
     )
     validate_step12_pair_diagnostics(pair_diagnostics)
     validate_step12_coverage_summary(coverage_summary)
@@ -589,6 +596,7 @@ def _pair_summary_to_contract(
         right_name = str(summary["score_b"])
         pair_dates = _pair_date_rows(pair_date_diagnostics, left_name, right_name)
         status = str(summary["redundancy_status"])
+        contract_spearman = _contract_spearman_value(summary, pair_dates)
         rows.append(
             {
                 "diagnostic_name": "score_pair_correlation",
@@ -602,8 +610,8 @@ def _pair_summary_to_contract(
                 "end_date": _date_bound(pair_dates, "max"),
                 "observation_count": _pair_observation_count(pair_dates),
                 "cross_section_count": int(summary["dates_evaluated"]),
-                "spearman_correlation": summary["median_spearman"],
-                "abs_spearman_correlation": summary["max_abs_spearman"],
+                "spearman_correlation": contract_spearman,
+                "abs_spearman_correlation": _absolute_or_na(contract_spearman),
                 "threshold_flag": threshold_flag_for_status(status),
                 "diagnostic_status": status,
                 "insufficient_data_reason": _insufficient_reason(status, summary),
@@ -625,7 +633,7 @@ def _build_coverage_summary(
     *,
     score_inputs: Sequence[RedundancyScoreInput],
     config: ScoreRedundancyConfig,
-    as_of_date: str | pd.Timestamp | None,
+    as_of_date: str | pd.Timestamp | None = None,
 ) -> pd.DataFrame:
     prepared = prepare_redundancy_input_frame(
         frame,
@@ -656,15 +664,15 @@ def _build_coverage_summary(
         coverage_ratio = (
             non_nan_observation_count / observation_count if observation_count else 0.0
         )
-        status = (
-            Step12DiagnosticStatus.OK.value
-            if non_nan_observation_count >= config.min_non_nan_observations
-            else Step12DiagnosticStatus.INSUFFICIENT_DATA.value
+        same_date_usable_cross_sections = _same_date_usable_cross_section_count(
+            prepared,
+            score_input,
+            config,
         )
-        reason = (
-            ""
-            if status == Step12DiagnosticStatus.OK.value
-            else "non_nan_observation_count_below_min_required_observations"
+        status, reason = _coverage_status_and_reason(
+            non_nan_observation_count,
+            same_date_usable_cross_sections,
+            config,
         )
         rows.append(
             _coverage_row(
@@ -676,6 +684,7 @@ def _build_coverage_summary(
                 config=config,
                 status=status,
                 reason=reason,
+                same_date_usable_cross_sections=same_date_usable_cross_sections,
             )
         )
     output = pd.DataFrame(rows, columns=STEP12_COVERAGE_SUMMARY_COLUMNS)
@@ -721,6 +730,7 @@ def _coverage_row(
     config: ScoreRedundancyConfig,
     status: str,
     reason: str,
+    same_date_usable_cross_sections: int = 0,
 ) -> dict[str, object]:
     return {
         "diagnostic_name": "coverage_summary",
@@ -737,7 +747,10 @@ def _coverage_row(
         "diagnostic_status": status,
         "insufficient_data_reason": reason,
         "implementation_deviation_id": "",
-        "notes": "diagnostic_only_review_material",
+        "notes": (
+            "diagnostic_only_review_material;"
+            f"same_date_usable_cross_sections={same_date_usable_cross_sections}"
+        ),
     }
 
 
@@ -754,6 +767,31 @@ def _pair_date_rows(
     ]
 
 
+def _contract_spearman_value(summary: pd.Series, pair_dates: pd.DataFrame) -> object:
+    """Return the signed Spearman value whose absolute value drives the contract row."""
+
+    if pair_dates.empty or "spearman" not in pair_dates:
+        return summary["median_spearman"]
+    ok_spearman = pd.to_numeric(
+        pair_dates.loc[pair_dates["diagnostic_status"].eq("ok"), "spearman"],
+        errors="coerce",
+    ).dropna()
+    if ok_spearman.empty:
+        return summary["median_spearman"]
+    max_abs_index = ok_spearman.abs().idxmax()
+    return float(ok_spearman.loc[max_abs_index])
+
+
+def _absolute_or_na(value: object) -> object:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return pd.NA
+    if not np.isfinite(numeric):
+        return pd.NA
+    return abs(numeric)
+
+
 def _date_bound(pair_dates: pd.DataFrame, method: str) -> object:
     if pair_dates.empty or "date" not in pair_dates:
         return ""
@@ -768,6 +806,32 @@ def _pair_observation_count(pair_dates: pd.DataFrame) -> int:
         return 0
     observations = pd.to_numeric(pair_dates["pair_observations"], errors="coerce")
     return int(observations.dropna().sum())
+
+
+def _same_date_usable_cross_section_count(
+    prepared: pd.DataFrame,
+    score_input: RedundancyScoreInput,
+    config: ScoreRedundancyConfig,
+) -> int:
+    values = _numeric_score_values(prepared, score_input)
+    finite = _finite_mask(values)
+    finite_by_date = finite.groupby(prepared["date"]).sum()
+    return int(finite_by_date.ge(config.min_cross_section_count).sum())
+
+
+def _coverage_status_and_reason(
+    non_nan_observation_count: int,
+    same_date_usable_cross_sections: int,
+    config: ScoreRedundancyConfig,
+) -> tuple[str, str]:
+    reasons: list[str] = []
+    if non_nan_observation_count < config.min_non_nan_observations:
+        reasons.append("non_nan_observation_count_below_min_required_observations")
+    if same_date_usable_cross_sections < 1:
+        reasons.append("no_same_date_cross_section_met_min_cross_section_count")
+    if reasons:
+        return Step12DiagnosticStatus.INSUFFICIENT_DATA.value, ";".join(reasons)
+    return Step12DiagnosticStatus.OK.value, ""
 
 
 def _pair_normalization_scope(

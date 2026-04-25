@@ -297,6 +297,15 @@ def test_missing_threshold_keys_report_config_missing_without_defaults() -> None
             "[quality]\nmin_cross_section_count = 4\n",
             encoding="utf-8",
         )
+        blocked = frame.copy()
+        blocked["PER"] = 8.5
+        with pytest.raises(ValueError, match="valuation/fundamental"):
+            build_score_redundancy_diagnostics(
+                blocked,
+                score_inputs=score_inputs(SCORE_A, SCORE_POS),
+                thresholds_config_path=missing,
+            )
+
         diagnostics = build_score_redundancy_diagnostics(
             frame,
             score_inputs=score_inputs(SCORE_A, SCORE_POS),
@@ -311,6 +320,71 @@ def test_missing_threshold_keys_report_config_missing_without_defaults() -> None
     finally:
         if missing.exists():
             missing.unlink()
+
+
+def test_coverage_requires_at_least_one_same_date_usable_cross_section() -> None:
+    rows: list[dict[str, object]] = []
+    for day in range(1, 6):
+        for ticker_index in range(15):
+            rows.append(
+                {
+                    "ticker": f"{ticker_index + 1:06d}",
+                    "date": f"2026-01-{day:02d}",
+                    SCORE_A: float(ticker_index),
+                    SCORE_POS: float(ticker_index * 2),
+                }
+            )
+    frame = pd.DataFrame(rows)
+    diagnostics = build_score_redundancy_diagnostics(
+        frame,
+        score_inputs=score_inputs(SCORE_A, SCORE_POS),
+        config=ScoreRedundancyConfig(
+            min_cross_section_count=20,
+            min_non_nan_observations=60,
+            spearman_warn=0.8,
+            spearman_block=0.9,
+        ),
+    )
+
+    coverage = diagnostics["coverage_summary"]
+    assert set(coverage["diagnostic_status"]) == {"insufficient_data"}
+    assert coverage["non_nan_observation_count"].tolist() == [75, 75]
+    assert coverage["insufficient_data_reason"].str.contains(
+        "no_same_date_cross_section_met_min_cross_section_count",
+        regex=False,
+    ).all()
+    assert diagnostics["pair_summary"].iloc[0]["dates_evaluated"] == 0
+
+
+def test_pair_contract_spearman_and_abs_spearman_are_the_same_value_pair() -> None:
+    frame = toy_frame(
+        {
+            "2026-01-01": {
+                SCORE_A: [1.0, 2.0, 3.0, 4.0],
+                SCORE_POS: [1.0, 2.0, 3.0, 4.0],
+            },
+            "2026-01-02": {
+                SCORE_A: [1.0, 2.0, 3.0, 4.0],
+                SCORE_POS: [4.0, 3.0, 2.0, 1.0],
+            },
+        }
+    )
+
+    diagnostics = build_score_redundancy_diagnostics(
+        frame,
+        score_inputs=score_inputs(SCORE_A, SCORE_POS),
+        config=config(min_count=4),
+    )
+
+    summary = diagnostics["pair_summary"].iloc[0]
+    contract = diagnostics["pair_diagnostics"].iloc[0]
+    assert summary["median_spearman"] == pytest.approx(0.0)
+    assert summary["max_abs_spearman"] == pytest.approx(1.0)
+    assert contract["diagnostic_status"] == "block_candidate"
+    assert contract["spearman_correlation"] == pytest.approx(1.0)
+    assert contract["abs_spearman_correlation"] == pytest.approx(
+        abs(contract["spearman_correlation"])
+    )
 
 
 def test_diagnostic_outputs_do_not_include_forbidden_columns_or_terms() -> None:

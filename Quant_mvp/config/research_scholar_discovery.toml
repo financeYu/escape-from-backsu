@@ -12,6 +12,7 @@ allowed_inputs = [
   "manual_refworks",
   "manual_title_list",
   "manual_citation_seed",
+  "user_provided_doi_list",
 ]
 require_canonical_resolution = true
 must_resolve_via = ["openalex", "crossref", "arxiv", "semantic_scholar"]
@@ -19,3 +20,16 @@ use_as_evidence_source = false
 snippets_are_evidence = false
 rankings_are_evidence = false
 citation_counts_are_evidence = false
+
+[seed_lifecycle]
+allowed_statuses = [
+  "local_seed_ingested",
+  "canonical_resolution_attempted",
+  "resolved_unique",
+  "resolved_ambiguous",
+  "unresolved",
+  "manual_review_required",
+]
+default_status = "local_seed_ingested"
+seed_origin_is_evidence = false
+canonical_resolution_required_for_evidence_card = true

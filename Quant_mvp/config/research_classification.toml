@@ -38,6 +38,12 @@ keywords = [
   "valuation",
   "accounting",
   "analyst",
+  "per",
+  "pbr",
+  "roe",
+  "earnings",
+  "book value",
+  "analyst estimate",
 ]
 
 [branches.diagnostic]
@@ -54,6 +60,9 @@ keywords = [
   "factor decay",
   "redundancy",
   "correlation matrix",
+  "rank stability",
+  "multiple testing",
+  "look-ahead",
 ]
 
 [branches.out_of_scope]
@@ -82,4 +91,33 @@ research_branch = "out_of_scope"
 downstream_route = "reject_log"
 main_score_branch_candidate = "out_of_scope"
 manual_review_required = true
+
+[rules]
+valuation_required_input_terms = [
+  "PER",
+  "PBR",
+  "ROE",
+  "earnings",
+  "book value",
+  "fundamental",
+  "fundamentals",
+  "analyst estimate",
+  "profitability",
+  "cash flow",
+  "enterprise value",
+]
+forbidden_price_only_valuation_language = [
+  "cheap",
+  "value",
+  "undervalued",
+  "bargain",
+]
+rule_names = [
+  "classify_required_inputs_boundary",
+  "classify_ohlcv_compatibility",
+  "classify_methodology_diagnostic",
+  "classify_market_context_transfer_risk",
+  "classify_hybrid_technical_valuation_split",
+  "classify_forbidden_valuation_language",
+]
 classification_confidence = "low"

@@ -19,6 +19,7 @@ The goal is not to create more bureaucracy. The goal is to keep research, quant 
 | P4 | Valuation Review | `Quant_mvp/agents/valuation` | Point-in-time fundamental availability and valuation verdicts | Prevents price-only signals from being mislabeled as valuation evidence |
 | P5 | Ops and Reproducibility | root plus affected project | Ignore rules, dependency setup, CI, data/output path policy | Makes the repo cloneable, testable, and reviewable on machines other than the original local PC |
 | P6 | Specialist Review and Final Validation | `review_mvp`, root workspace | High-risk code review, minimal safe repair guidance, final conflict/error checks | Gives the master agent a specialist checkpoint for correctness, security, reliability, and cross-project integration risk without making every local change wait on `review_mvp` |
+| P7 | Scope Compliance Audit | `Quant_mvp/agents/audit` | Instruction compliance, roadmap-order checks, worker scope containment, terminology and evidence-strength audit | Lets a strict watchdog stop scope creep before worker changes are treated as normal project progress |
 
 ---
 
@@ -48,6 +49,13 @@ Subproject to master:
 - Owner: responsible subproject
 - Output: master-up summary using `docs/master_up_template.md`, local evidence, unresolved risk summary, and `review_mvp` request status
 
+Worker to scope watchdog:
+
+- Input: worker scope declaration, active roadmap Step, intended files, changed files, evidence, generated-output status, and unresolved risks
+- Owner: `Quant_mvp/agents/audit` for audit verdict; responsible worker for fixes or clarifications
+- Output: `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION`
+- Invocation: required by `docs/scope_audit_process.md` when a worker touches roadmap-gated behavior, score/normalization/diagnostic/selection/composite/ranking/backtest/valuation semantics, schema/config/generated-output boundaries, cross-project handoffs, or root-boundary requests
+
 Valuation handoff:
 
 - Input: valuation or fundamental candidate
@@ -65,7 +73,14 @@ Final master checkpoint:
 
 - Input: master-up summary, project-specific test results, and any required specialist review findings
 - Owner: root master agent
-- Output: concise summary of cross-project consistency, roadmap/order status, Git hygiene, generated-output boundaries, unresolved risks, and recommended next actions
+- Output: concise summary of cross-project consistency, Cross-Step Conflict Checkpoint status, roadmap/order status, Git hygiene, generated-output boundaries, unresolved risks, and recommended next actions
+
+Cross-step conflict checkpoint:
+
+- Input: compact review packet from `scripts/build_review_packet.py`, current diff or changed-file manifest, active roadmap status, master-up summary, and relevant handoff documents
+- Owner: root master agent; affected subproject supplies local evidence
+- Output: `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION` for roadmap/order, hard stops, score/composite boundary, valuation boundary, diagnostics boundary, handoff consistency, generated-output boundary, and dirty worktree isolation
+- Invocation: required when an important in-Step stage ends and before Step-end code review
 
 ---
 
@@ -99,5 +114,6 @@ Each change should answer:
 - Are generated outputs excluded from Git?
 - What verification was run?
 - Was a complete master-up summary supplied?
+- Was watchdog audit required, and if so what was the verdict?
 - Are unrelated dirty files separated from the owned change set?
 - Is `review_mvp` required, optional, or not needed?

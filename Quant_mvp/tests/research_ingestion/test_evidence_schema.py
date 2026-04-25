@@ -20,6 +20,13 @@ def test_evidence_card_schema_and_hard_guardrails(sample_paper):
     assert card["guardrails"]["no_score_adopted"] is True
     assert card["guardrails"]["no_backtest_performed"] is True
     assert card["guardrails"]["valuation_not_inferred_from_price"] is True
+    assert card["source"]["seed_origin_is_evidence"] is False
+    assert card["source"]["citation_count_metadata_only"] is True
+    assert card["guardrails"]["citation_count_metadata_only"] is True
+    assert card["extraction"]["fulltext_available"] is False
+    assert card["extraction"]["fulltext_used"] is False
+    assert card["extraction"]["pdf_downloaded"] is False
+    assert card["backtest_context"]["paper_reported_backtest_treatment"] == "diagnostic_note_only"
 
 
 def test_scholar_snippet_is_not_used_as_evidence(sample_paper):
@@ -38,6 +45,20 @@ def test_retracted_item_is_flagged_conservatively(sample_paper):
     card = generate_evidence_card(paper, classification, "run")
     assert card["classification"]["manual_review_required"] is True
     assert card["classification"]["downstream_route"] == "reject_log"
+
+
+def test_price_only_forbidden_valuation_language_stays_out_of_technical_candidates(sample_paper):
+    paper = sample_paper(
+        title="Cheap oversold reversal with daily prices",
+        abstract="We define a daily RSI reversal signal and call the price-only oversold state cheap.",
+        topics=[],
+        fields_of_study=[],
+    )
+    config = load_research_config(Path(__file__).resolve().parents[2])
+    classification = classify_paper(paper, config["classification"], config["policy"])
+    card = generate_evidence_card(paper, classification, "run")
+    assert card["classification"]["downstream_route"] == "reject_log"
+    assert card["classification"]["guardrail_violations"] == ["language_guardrail_violation"]
 
 
 def test_backtest_methodology_cards_are_written_to_separate_lane(sample_paper, workspace_tmp_path):

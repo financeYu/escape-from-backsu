@@ -167,10 +167,26 @@ Step 18 시작 시 필수로 진행할 항목:
   - `docs/step12_redundancy_correlation_diagnostics.md` fixes Step 12 input/output/status/threshold semantics.
   - Worker A engine output now exposes both engine-level pair summaries and contract-facing pair diagnostics / coverage summaries validated by Worker B helpers.
   - Step 12 computes same-date cross-sectional Spearman diagnostics only; ranking, composite scoring, backtest, forward/future return, and valuation/fundamental scoring remain absent.
-- Step 13 = NEXT / not started
+- Step 13 = COMPLETE
+  - Worker A review contract, status vocabulary, validation guardrail, and documentation are implemented.
+  - Worker B review engine, report builder, generated report path guardrail, and report language guardrail are implemented.
+  - Step 13 output is a technical review recommendation table for Step 14 material only.
+  - `review_status` values remain technical recommendations, not final adoption states.
+  - Generated Step 13 reports are constrained to `reports/selection/` and must include `technical selection review material only`.
+  - Step 14 final adoption synthesis, Step 15 ranking, Step 17 backtest, and Step 18 valuation/fundamental scoring remain not implemented.
+- Step 14 = NEXT / not started
 - Step 15 = WAITING / not started
 - Step 17 = WAITING / not started
 - Step 18 valuation/fundamental expansion = DEFERRED
+- Research ingestion scope expansion note:
+  - `docs/research_ingestion_expansion.md` documents expanded paper query-set coverage, source expansion candidates, seed lifecycle, and new-only run artifacts.
+  - EvidenceCard is not a score definition.
+  - EvidenceCard is not an adoption decision.
+  - Paper-reported backtest is diagnostic metadata only.
+  - Citation count is metadata only, not evidence strength.
+  - Scholar seeds are discovery inputs only.
+  - PDF fulltext download is disabled by default.
+  - Financial/fundamental data must not enter technical_composite_score or final_composite_score.
 
 ## 6. Step 종료 보고 형식
 
@@ -191,6 +207,18 @@ COMPLETE / PARTIALLY COMPLETE / NEEDS FIX
 
 [리스크]
 - ...
+
+[Step 종료 게이트]
+- 통합 검증:
+- 코드리뷰:
+- 코드리뷰 필수 수정:
+- 재검증:
+- git commit:
+
+[컨텍스트 스냅샷]
+- local context:
+- latest-only prune:
+- refresh status:
 
 [다음 Step 진입 가능 여부]
 Yes / Yes, with minor follow-up / No

@@ -155,12 +155,15 @@ def cmd_collect(args: argparse.Namespace, config: dict[str, Any], paths: Project
     sources = _split_csv(args.sources)
     _validate_sources(sources, config)
     query_set = get_query_set(config, args.query_set)
+    _validate_query_allowed_sources(sources, query_set)
     plan = _collection_plan(args, config, paths, sources, query_set)
     if args.dry_run:
         print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
     if args.offline:
         health = _empty_source_health(sources, skipped_reason="--offline 지정으로 network call을 수행하지 않았습니다.")
+        for source_health in health.values():
+            source_health["query_set"] = args.query_set
         summary = _collection_summary(args, sources, query_set, raw_counts={}, normalized_count=0, plan=plan)
         write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_collected_papers.jsonl", [])
         _write_run_metadata(paths, args.run_id, health, summary)
@@ -170,6 +173,8 @@ def cmd_collect(args: argparse.Namespace, config: dict[str, Any], paths: Project
     papers: list[dict[str, Any]] = []
     raw_counts: Counter[str] = Counter()
     health = _new_source_health(sources, config)
+    for source_health in health.values():
+        source_health["query_set"] = args.query_set
     for source in sources:
         adapter = _adapter_for_source(source, config)
         source_limit = _source_max_results(args, query_set, source, adapter)
@@ -217,6 +222,8 @@ def cmd_collect(args: argparse.Namespace, config: dict[str, Any], paths: Project
                     health[source]["last_raw_snapshot_ref"] = snapshot["body_path"]
                     if response.status in {403, 429}:
                         health[source]["rate_limit_observations"].append(f"HTTP {response.status} observed for {query_id}")
+                    if response.status == 429:
+                        health[source]["http_429_count"] += 1
                     break
                 health[source]["success_count"] += 1
                 health[source]["status"] = "ok"
@@ -248,7 +255,7 @@ def cmd_collect(args: argparse.Namespace, config: dict[str, Any], paths: Project
                 break
     for source_health in health.values():
         source_health["http_status_summary"] = dict(source_health["http_status_summary"])
-    papers = [_annotate_collection_lane(paper, args.query_set, query_set) for paper in papers]
+    papers = [_annotate_collection_lane(paper, args.query_set, query_set, args.run_id) for paper in papers]
     accepted_papers, rejected_papers = apply_collection_relevance_gate(
         papers,
         query_set,
@@ -350,18 +357,27 @@ def _store_source_response_snapshot(
 def _write_run_metadata(paths: ProjectPaths, run_id: str, source_health: dict[str, Any], collection_summary: dict[str, Any]) -> None:
     indexes_dir = paths.data_dir / "indexes"
     write_json(indexes_dir / f"{run_id}_source_health.json", source_health)
+    write_json(indexes_dir / f"{run_id}_source_health_report.json", source_health)
+    write_json(indexes_dir / "source_health_report.json", source_health)
     write_json(indexes_dir / f"{run_id}_collection_summary.json", collection_summary)
 
 
-def _annotate_collection_lane(paper: dict[str, Any], query_set_name: str, query_set: dict[str, Any]) -> dict[str, Any]:
+def _annotate_collection_lane(paper: dict[str, Any], query_set_name: str, query_set: dict[str, Any], run_id: str) -> dict[str, Any]:
     annotated = dict(paper)
     branch_hint = query_set.get("branch_hint")
     management_lane = query_set.get("management_lane")
+    downstream_route = query_set.get("downstream_route")
     annotated["research_query_set"] = query_set_name
     annotated["research_query_sets"] = _append_unique(annotated.get("research_query_sets", []), query_set_name)
+    annotated["source_query_set"] = query_set_name
+    annotated["query_run_id"] = run_id
+    annotated["region_scope"] = query_set.get("region_scope")
+    annotated["required_input_policy"] = query_set.get("required_input_policy")
     if branch_hint:
         annotated["research_branch_hint"] = branch_hint
         annotated["research_branch_hints"] = _append_unique(annotated.get("research_branch_hints", []), branch_hint)
+    if downstream_route:
+        annotated["research_downstream_route"] = downstream_route
     if management_lane:
         annotated["research_management_lane"] = management_lane
         annotated["research_management_lanes"] = _append_unique(annotated.get("research_management_lanes", []), management_lane)
@@ -438,6 +454,8 @@ def _write_enrichment_metadata(paths: ProjectPaths, run_id: str, source_health: 
     existing_health = read_json(indexes_dir / f"{run_id}_source_health.json", default={}) or {}
     existing_health.update(source_health)
     write_json(indexes_dir / f"{run_id}_source_health.json", existing_health)
+    write_json(indexes_dir / f"{run_id}_source_health_report.json", existing_health)
+    write_json(indexes_dir / "source_health_report.json", existing_health)
     write_json(indexes_dir / f"{run_id}_enrichment_summary.json", enrichment_summary)
     collection_summary = read_json(indexes_dir / f"{run_id}_collection_summary.json", default={}) or {}
     collection_summary["enrichment"] = enrichment_summary
@@ -707,6 +725,8 @@ def cmd_enrich(args: argparse.Namespace, config: dict[str, Any], paths: ProjectP
             health[source]["last_raw_snapshot_ref"] = snapshot["body_path"]
             if response.status in {403, 429}:
                 health[source]["rate_limit_observations"].append(f"HTTP {response.status} observed for enrichment {target['lookup_id']}")
+            if response.status == 429:
+                health[source]["http_429_count"] += 1
             enrichment_index.append({**target, "status": "failed", "http_status": response.status, "raw_snapshot_ref": snapshot["body_path"], "notes_ko": "approved metadata API enrichment 응답이 성공 상태가 아닙니다."})
             continue
 
@@ -837,9 +857,13 @@ def cmd_refresh(args: argparse.Namespace, config: dict[str, Any], paths: Project
             plan=plan,
         )
         write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl", [])
+        _write_new_only_outputs(paths, [], [], [])
         write_json(paths.data_dir / "indexes" / f"{args.run_id}_refresh_summary.json", summary)
         write_json(paths.data_dir / "indexes" / f"{args.run_id}_collection_summary.json", summary)
-        write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health.json", _offline_refresh_health())
+        offline_health = _offline_refresh_health()
+        write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health.json", offline_health)
+        write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health_report.json", offline_health)
+        write_json(paths.data_dir / "indexes" / "source_health_report.json", offline_health)
         print("offline mode: refresh network call 없이 metadata artifact를 생성했습니다.")
         return
 
@@ -865,6 +889,8 @@ def cmd_refresh(args: argparse.Namespace, config: dict[str, Any], paths: Project
     refreshed_papers = deduplicate_papers([*existing_papers, *new_papers])
     classifications = [classify_paper(paper, config["classification"], config["policy"]) for paper in refreshed_papers]
     cards = generate_evidence_cards(refreshed_papers, classifications, args.run_id)
+    new_classifications = [classify_paper(paper, config["classification"], config["policy"]) for paper in new_papers]
+    new_cards = generate_evidence_cards(new_papers, new_classifications, args.run_id)
     source_health = _aggregate_refresh_source_health(paths, child_runs)
     summary = build_refresh_summary(
         run_id=args.run_id,
@@ -882,6 +908,7 @@ def cmd_refresh(args: argparse.Namespace, config: dict[str, Any], paths: Project
     )
 
     write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl", new_papers)
+    _write_new_only_outputs(paths, new_papers, new_cards, read_jsonl(_seeds_path(paths, args.run_id)))
     write_jsonl(paths.data_dir / "normalized" / "papers.jsonl", refreshed_papers)
     _write_lane_paper_outputs(paths, refreshed_papers)
     write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_dedupe_index.jsonl", [_dedupe_index_row(paper) for paper in refreshed_papers])
@@ -895,6 +922,8 @@ def cmd_refresh(args: argparse.Namespace, config: dict[str, Any], paths: Project
     write_json(paths.data_dir / "indexes" / f"{args.run_id}_refresh_summary.json", summary)
     write_json(paths.data_dir / "indexes" / f"{args.run_id}_collection_summary.json", summary)
     write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health.json", source_health)
+    write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health_report.json", source_health)
+    write_json(paths.data_dir / "indexes" / "source_health_report.json", source_health)
     generate_reports(
         output_dir=paths.reports_dir,
         run_id=args.run_id,
@@ -924,6 +953,7 @@ def _run_all_plan(args: argparse.Namespace, config: dict[str, Any], paths: Proje
     sources = _split_csv(args.sources)
     _validate_sources(sources, config)
     query_set = get_query_set(config, args.query_set)
+    _validate_query_allowed_sources(sources, query_set)
     collect_plan = _collection_plan(args, config, paths, sources, query_set)
     enrich_sources = _split_csv(getattr(args, "enrich_sources", ""))
     enrich_plan = None
@@ -1000,9 +1030,17 @@ def _refresh_plan(
         "dry_run": bool(args.dry_run),
         "outputs": {
             "new_papers_jsonl": str(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl"),
+            "normalized_papers_new_jsonl": str(paths.data_dir / "normalized" / "normalized_papers_new.jsonl"),
             "normalized_papers_jsonl": str(paths.data_dir / "normalized" / "papers.jsonl"),
             "refresh_summary_json": str(paths.data_dir / "indexes" / f"{args.run_id}_refresh_summary.json"),
             "evidence_cards_jsonl": str(paths.data_dir / "evidence" / f"{args.run_id}_evidence_cards.jsonl"),
+            "evidence_cards_new_jsonl": str(paths.data_dir / "evidence" / "evidence_cards_new.jsonl"),
+            "technical_candidates_new_jsonl": str(paths.data_dir / "evidence" / "technical_candidates_new.jsonl"),
+            "diagnostic_items_new_jsonl": str(paths.data_dir / "evidence" / "diagnostic_items_new.jsonl"),
+            "hybrid_review_required_new_jsonl": str(paths.data_dir / "evidence" / "hybrid_review_required_new.jsonl"),
+            "unresolved_seeds_new_jsonl": str(paths.data_dir / "discovery" / "google_scholar" / "unresolved_seeds_new.jsonl"),
+            "reject_log_new_jsonl": str(paths.data_dir / "evidence" / "reject_log_new.jsonl"),
+            "source_health_report_json": str(paths.data_dir / "indexes" / "source_health_report.json"),
             "reports_dir": str(paths.reports_dir),
         },
         "guardrails_ko": [
@@ -1045,11 +1083,25 @@ def _refresh_collect_args(
 def _offline_refresh_health() -> dict[str, Any]:
     return {
         "periodic_refresh": {
+            "source": "periodic_refresh",
+            "adapter_version": "research_ingestion.v1",
+            "query_set": None,
             "status": "skipped",
             "request_count": 0,
+            "rate_limit_wait_count": 0,
             "success_count": 0,
             "failure_count": 0,
             "http_status_summary": {},
+            "http_429_count": 0,
+            "parse_error_count": 0,
+            "schema_error_count": 0,
+            "dedup_ratio": None,
+            "new_item_count": 0,
+            "candidate_route_counts": {},
+            "reject_reason_counts": {},
+            "manual_review_required_count": 0,
+            "unresolved_seed_count": 0,
+            "pdf_download_attempt_count": 0,
             "rate_limit_observations": [],
             "skipped_source_reason": "--offline 지정으로 refresh network call을 수행하지 않았습니다.",
         }
@@ -1064,11 +1116,25 @@ def _aggregate_refresh_source_health(paths: ProjectPaths, child_runs: list[str])
             target = aggregate.setdefault(
                 source,
                 {
+                    "source": source,
+                    "adapter_version": "research_ingestion.v1",
+                    "query_set": None,
                     "status": "planned",
                     "request_count": 0,
+                    "rate_limit_wait_count": 0,
                     "success_count": 0,
                     "failure_count": 0,
                     "http_status_summary": Counter(),
+                    "http_429_count": 0,
+                    "parse_error_count": 0,
+                    "schema_error_count": 0,
+                    "dedup_ratio": None,
+                    "new_item_count": 0,
+                    "candidate_route_counts": {},
+                    "reject_reason_counts": {},
+                    "manual_review_required_count": 0,
+                    "unresolved_seed_count": 0,
+                    "pdf_download_attempt_count": 0,
                     "rate_limit_observations": [],
                     "missing_api_key_note_ko": None,
                     "skipped_source_reason": None,
@@ -1077,8 +1143,16 @@ def _aggregate_refresh_source_health(paths: ProjectPaths, child_runs: list[str])
             )
             target["child_runs"].append(child_run)
             target["request_count"] += int(payload.get("request_count", 0) or 0)
+            target["rate_limit_wait_count"] += int(payload.get("rate_limit_wait_count", 0) or 0)
             target["success_count"] += int(payload.get("success_count", 0) or 0)
             target["failure_count"] += int(payload.get("failure_count", 0) or 0)
+            target["http_429_count"] += int(payload.get("http_429_count", 0) or 0)
+            target["parse_error_count"] += int(payload.get("parse_error_count", 0) or 0)
+            target["schema_error_count"] += int(payload.get("schema_error_count", 0) or 0)
+            target["new_item_count"] += int(payload.get("new_item_count", 0) or 0)
+            target["manual_review_required_count"] += int(payload.get("manual_review_required_count", 0) or 0)
+            target["unresolved_seed_count"] += int(payload.get("unresolved_seed_count", 0) or 0)
+            target["pdf_download_attempt_count"] += int(payload.get("pdf_download_attempt_count", 0) or 0)
             target["http_status_summary"].update(payload.get("http_status_summary", {}))
             target["rate_limit_observations"].extend(payload.get("rate_limit_observations", []))
             target["missing_api_key_note_ko"] = target["missing_api_key_note_ko"] or payload.get("missing_api_key_note_ko")
@@ -1136,6 +1210,18 @@ def _validate_sources(sources: list[str], config: dict[str, Any]) -> None:
         raise ValueError(f"config에서 비활성화된 source입니다: {', '.join(disabled)}")
 
 
+def _validate_query_allowed_sources(sources: list[str], query_set: dict[str, Any]) -> None:
+    allowed = [str(source) for source in query_set.get("allowed_sources", []) if str(source).strip()]
+    if not allowed:
+        return
+    disallowed = [source for source in sources if source not in allowed]
+    if disallowed:
+        raise ValueError(
+            "query-set allowed_sources 밖의 source입니다: "
+            f"{', '.join(disallowed)}. 사용 가능: {', '.join(sorted(allowed))}"
+        )
+
+
 def _collection_plan(
     args: argparse.Namespace,
     config: dict[str, Any],
@@ -1159,8 +1245,16 @@ def _collection_plan(
     return {
         "run_id": args.run_id,
         "query_set": args.query_set,
+        "query_set_name": query_set.get("name") or args.query_set,
         "branch_hint": query_set.get("branch_hint"),
+        "downstream_route": query_set.get("downstream_route"),
         "management_lane": query_set.get("management_lane"),
+        "allowed_sources": query_set.get("allowed_sources", []),
+        "region_scope": query_set.get("region_scope"),
+        "required_input_policy": query_set.get("required_input_policy"),
+        "refresh_cadence_days": query_set.get("refresh_cadence_days"),
+        "precision_mode": query_set.get("precision_mode"),
+        "notes": query_set.get("notes"),
         "exclude_keywords": query_set.get("exclude_keywords", []),
         "relevance_defaults": config.get("queries", {}).get("relevance_defaults", {}),
         "planned_sources": planned_sources,
@@ -1253,11 +1347,25 @@ def _new_source_health(sources: list[str], config: dict[str, Any]) -> dict[str, 
     for source in sources:
         adapter = _adapter_for_source(source, config)
         health[source] = {
+            "source": source,
+            "adapter_version": "research_ingestion.v1",
+            "query_set": None,
             "status": "planned",
             "request_count": 0,
+            "rate_limit_wait_count": 0,
             "success_count": 0,
             "failure_count": 0,
             "http_status_summary": Counter(),
+            "http_429_count": 0,
+            "parse_error_count": 0,
+            "schema_error_count": 0,
+            "dedup_ratio": None,
+            "new_item_count": 0,
+            "candidate_route_counts": {},
+            "reject_reason_counts": {},
+            "manual_review_required_count": 0,
+            "unresolved_seed_count": 0,
+            "pdf_download_attempt_count": 0,
             "rate_limit_observations": [],
             "missing_api_key_note_ko": _missing_key_note(source, adapter),
             "skipped_source_reason": None,
@@ -1268,11 +1376,25 @@ def _new_source_health(sources: list[str], config: dict[str, Any]) -> dict[str, 
 def _empty_source_health(sources: list[str], skipped_reason: str) -> dict[str, Any]:
     return {
         source: {
+            "source": source,
+            "adapter_version": "research_ingestion.v1",
+            "query_set": None,
             "status": "skipped",
             "request_count": 0,
+            "rate_limit_wait_count": 0,
             "success_count": 0,
             "failure_count": 0,
             "http_status_summary": {},
+            "http_429_count": 0,
+            "parse_error_count": 0,
+            "schema_error_count": 0,
+            "dedup_ratio": None,
+            "new_item_count": 0,
+            "candidate_route_counts": {},
+            "reject_reason_counts": {},
+            "manual_review_required_count": 0,
+            "unresolved_seed_count": 0,
+            "pdf_download_attempt_count": 0,
             "rate_limit_observations": [],
             "missing_api_key_note_ko": None,
             "skipped_source_reason": skipped_reason,
@@ -1411,6 +1533,41 @@ def _write_evidence_outputs(
     if run_id:
         write_jsonl(evidence_dir / f"{run_id}_backtest_methodology_items.jsonl", backtest_cards)
     write_jsonl(evidence_dir / "reject_log.jsonl", [card for card in cards if card["classification"]["downstream_route"] == "reject_log"])
+
+
+def _write_new_only_outputs(
+    paths: ProjectPaths,
+    new_papers: list[dict[str, Any]],
+    new_cards: list[dict[str, Any]],
+    scholar_seeds: list[dict[str, Any]],
+) -> None:
+    normalized_dir = paths.data_dir / "normalized"
+    evidence_dir = paths.data_dir / "evidence"
+    discovery_dir = paths.data_dir / "discovery" / "google_scholar"
+    unresolved = [
+        seed
+        for seed in scholar_seeds
+        if seed.get("canonical_lookup_status") in {"unresolved", "ambiguous", "rejected"}
+    ]
+    write_jsonl(normalized_dir / "normalized_papers_new.jsonl", new_papers)
+    write_jsonl(evidence_dir / "evidence_cards_new.jsonl", new_cards)
+    write_jsonl(
+        evidence_dir / "technical_candidates_new.jsonl",
+        [card for card in new_cards if card["classification"]["downstream_route"] == "technical_score_architect"],
+    )
+    write_jsonl(
+        evidence_dir / "diagnostic_items_new.jsonl",
+        [card for card in new_cards if card["classification"]["downstream_route"] == "diagnostic_backlog"],
+    )
+    write_jsonl(
+        evidence_dir / "hybrid_review_required_new.jsonl",
+        [card for card in new_cards if card["classification"]["downstream_route"] == "hybrid_split_required"],
+    )
+    write_jsonl(
+        evidence_dir / "reject_log_new.jsonl",
+        [card for card in new_cards if card["classification"]["downstream_route"] == "reject_log"],
+    )
+    write_jsonl(discovery_dir / "unresolved_seeds_new.jsonl", unresolved)
 
 
 def _card_management_lane(card: dict[str, Any]) -> str | None:

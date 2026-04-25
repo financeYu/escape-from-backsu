@@ -16,6 +16,7 @@ ALLOWED_SOURCE_CHANNELS = {
     "google_scholar_manual_refworks",
     "google_scholar_manual_title_list",
     "google_scholar_manual_citation_seed",
+    "user_provided_doi_list",
 }
 
 ALLOWED_LOOKUP_STATUSES = {
@@ -41,6 +42,8 @@ DISCOVERY_SEED_REQUIRED_FIELDS = [
     "alert_query",
     "local_input_path",
     "canonical_lookup_status",
+    "lifecycle_status",
+    "canonical_resolution_status",
     "matched_source",
     "canonical_paper_id",
     "resolution_confidence",
@@ -80,6 +83,8 @@ def make_discovery_seed(
         "alert_query": clean_text(alert_query),
         "local_input_path": str(local_input_path),
         "canonical_lookup_status": "unresolved",
+        "lifecycle_status": "local_seed_ingested",
+        "canonical_resolution_status": "unresolved",
         "matched_source": None,
         "canonical_paper_id": None,
         "resolution_confidence": "unresolved",
@@ -87,6 +92,8 @@ def make_discovery_seed(
         "notes_ko": notes_ko or "Google Scholar 기반 로컬 discovery seed입니다. 정식 EvidenceCard가 아니며 canonical metadata resolution이 필요합니다.",
         "candidate_doi": clean_text(candidate_doi),
         "candidate_arxiv_id": clean_text(candidate_arxiv_id),
+        "seed_origin_type": source_channel,
+        "seed_origin_is_evidence": False,
         "guardrails": {
             "scholar_seed_only": True,
             "not_evidence": True,
@@ -105,6 +112,10 @@ def validate_discovery_seed(seed: dict[str, Any]) -> None:
         raise ValueError(f"Invalid source_channel: {seed['source_channel']}")
     if seed["canonical_lookup_status"] not in ALLOWED_LOOKUP_STATUSES:
         raise ValueError(f"Invalid canonical_lookup_status: {seed['canonical_lookup_status']}")
+    if seed["canonical_resolution_status"] not in ALLOWED_LOOKUP_STATUSES:
+        raise ValueError(f"Invalid canonical_resolution_status: {seed['canonical_resolution_status']}")
+    if seed.get("seed_origin_is_evidence") is not False:
+        raise ValueError("DiscoverySeed must not be treated as evidence.")
     guardrails = seed.get("guardrails", {})
     if guardrails.get("scholar_seed_only") is not True or guardrails.get("not_evidence") is not True:
         raise ValueError("Scholar DiscoverySeed guardrails must remain true.")

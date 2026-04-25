@@ -367,3 +367,423 @@ queries = [
   "Korean stock market momentum reversal daily returns",
   "KOSPI technical analysis stock returns",
 ]
+
+[query_sets.technical_trend_efficiency]
+name = "technical_trend_efficiency"
+description_ko = "일간 OHLCV 기반 trend efficiency, directional persistence 문헌"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_only"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "technical_candidates.jsonl 후보 수집용이며 score 채택이나 ranking 생성이 아니다."
+keywords = ["trend efficiency", "directional persistence", "efficiency ratio", "trend quality", "daily returns", "equity"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation"]
+max_results = 50
+queries = [
+  "trend efficiency equity daily returns technical analysis",
+  "directional persistence stock returns daily OHLCV",
+  "efficiency ratio trend quality stock market daily data",
+]
+
+[query_sets.technical_time_series_momentum]
+name = "technical_time_series_momentum"
+description_ko = "time-series momentum과 return continuation 후보 문헌"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_only"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "research ingestion 후보일 뿐 실제 time-series signal 계산이나 ranking 생성은 하지 않는다."
+keywords = ["time series momentum", "return continuation", "trend following", "daily returns", "equity"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation"]
+max_results = 50
+queries = [
+  "time series momentum equity daily returns",
+  "return continuation stock returns trend following daily",
+  "daily equity trend following time series momentum",
+]
+
+[query_sets.technical_cross_sectional_momentum]
+name = "technical_cross_sectional_momentum"
+description_ko = "cross-sectional momentum과 relative strength 후보 문헌"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_only"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "cross-sectional momentum 문헌 수집용이다. 이 query-set 자체가 ranking output을 생성하지 않는다."
+keywords = ["cross sectional momentum", "relative strength", "stock ranking", "daily returns", "equity"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation"]
+max_results = 50
+queries = [
+  "cross sectional momentum stock returns daily data",
+  "relative strength equity ranking daily returns technical analysis",
+  "buying winners selling losers daily stock returns",
+]
+
+[query_sets.technical_mean_reversion_extended]
+name = "technical_mean_reversion_extended"
+description_ko = "short-term reversal, contrarian, oversold distance 문헌 확장"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_only_no_valuation_language"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "oversold/reversal은 technical condition일 뿐 cheap/value/undervalued 표현을 금지한다."
+keywords = ["short term reversal", "mean reversion", "contrarian", "oversold", "RSI", "daily returns", "equity"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation", "cheap", "undervalued"]
+max_results = 50
+queries = [
+  "short term reversal equity daily returns contrarian",
+  "mean reversion oversold technical indicator stock daily",
+  "RSI reversal equity returns daily technical analysis",
+]
+
+[query_sets.technical_oscillator_divergence]
+name = "technical_oscillator_divergence"
+description_ko = "RSI/MACD 등 oscillator divergence 후보 및 ambiguity 진단 문헌"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_only_manual_review_if_formula_unclear"
+refresh_cadence_days = 14
+precision_mode = "high_precision"
+notes = "formula가 불명확하면 diagnostic_items.jsonl 또는 manual review 대상으로 둔다."
+keywords = ["oscillator divergence", "RSI divergence", "MACD divergence", "technical analysis", "daily data", "equity"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation"]
+max_results = 40
+queries = [
+  "oscillator divergence stock technical analysis daily data",
+  "RSI divergence equity returns daily technical signal",
+  "MACD divergence stock returns daily technical analysis",
+]
+
+[query_sets.technical_breakout_confirmation]
+name = "technical_breakout_confirmation"
+description_ko = "breakout과 volume/volatility confirmation 조합 문헌"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_only"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "breakout confirmation 후보 수집용이며 family weighted composite 계산을 수행하지 않는다."
+keywords = ["breakout", "confirmation", "volume confirmation", "volatility breakout", "channel breakout", "daily data"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation"]
+max_results = 50
+queries = [
+  "breakout confirmation volume stock returns daily",
+  "volatility breakout equity technical analysis daily data",
+  "channel breakout volume confirmation stock market",
+]
+
+[query_sets.technical_volatility_regime]
+name = "technical_volatility_regime"
+description_ko = "volatility regime, volatility clustering, compression/expansion context 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "technical_diagnostics"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_diagnostic_context"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "diagnostic_items.jsonl 우선이며 formula가 명확한 독립 technical portion만 후속 검토한다."
+keywords = ["volatility regime", "volatility clustering", "volatility compression", "volatility expansion", "daily returns", "equity"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation"]
+max_results = 50
+queries = [
+  "volatility regime equity returns daily technical analysis",
+  "volatility clustering stock returns daily data",
+  "volatility compression expansion stock market daily",
+]
+
+[query_sets.technical_range_position]
+name = "technical_range_position"
+description_ko = "price range position, distance from high/low, channel location 후보 문헌"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_only_no_valuation_language"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "range position은 valuation이 아니며 cheap/value 언어를 쓰지 않는다."
+keywords = ["range position", "distance from high", "distance from low", "price channel", "daily returns", "technical analysis"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation", "cheap", "undervalued"]
+max_results = 40
+queries = [
+  "price range position stock returns daily technical analysis",
+  "distance from high equity returns daily",
+  "price channel location stock technical indicator daily",
+]
+
+[query_sets.technical_liquidity_proxy_daily]
+name = "technical_liquidity_proxy_daily"
+description_ko = "daily volume/liquidity proxy와 거래 가능성 진단 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "technical_diagnostics"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_liquidity_proxy_only"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "daily liquidity proxy는 diagnostic route 우선이며 alpha signal로 표현하지 않는다."
+keywords = ["liquidity proxy", "turnover", "trading volume", "Amihud illiquidity", "daily volume", "equity"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation"]
+max_results = 50
+queries = [
+  "daily liquidity proxy stock returns trading volume",
+  "Amihud illiquidity daily equity returns",
+  "turnover trading volume stock market daily data",
+]
+
+[query_sets.technical_volume_price_confirmation]
+name = "technical_volume_price_confirmation"
+description_ko = "volume-price confirmation, price-volume relationship 후보 문헌"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "daily_ohlcv_only"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "technical_candidates.jsonl 후보 수집용이며 score adoption은 수행하지 않는다."
+keywords = ["volume price", "price-volume", "volume confirmation", "on balance volume", "daily volume", "stock returns"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental", "valuation"]
+max_results = 50
+queries = [
+  "volume price confirmation stock returns daily",
+  "price volume relationship equity returns daily technical",
+  "on balance volume stock technical analysis daily data",
+]
+
+[query_sets.technical_correlation_redundancy]
+name = "technical_correlation_redundancy"
+description_ko = "technical factor correlation, redundancy, overlap 진단 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "technical_diagnostics"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "diagnostic_metadata_only"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "diagnostic_items.jsonl 전용이며 score count를 늘리기 위한 후보가 아니다."
+keywords = ["factor correlation", "redundancy", "correlation matrix", "factor overlap", "technical indicators", "equity"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental valuation"]
+max_results = 40
+queries = [
+  "technical indicators correlation redundancy equity",
+  "factor overlap correlation matrix stock returns",
+  "redundancy technical trading rules stock market",
+]
+
+[query_sets.technical_rank_stability_diagnostics]
+name = "technical_rank_stability_diagnostics"
+description_ko = "rank stability, turnover proxy, signal stability 진단 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "technical_diagnostics"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "diagnostic_metadata_only_no_ranking_output"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "ranking output 생성이 아니라 rank stability 방법론 문헌 수집용이다."
+keywords = ["rank stability", "signal stability", "turnover proxy", "factor stability", "equity ranking", "daily data"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental valuation"]
+max_results = 40
+queries = [
+  "rank stability equity factors turnover proxy",
+  "signal stability stock ranking daily data",
+  "factor stability turnover stock returns",
+]
+
+[query_sets.technical_turnover_cost_diagnostics]
+name = "technical_turnover_cost_diagnostics"
+description_ko = "turnover와 transaction cost sensitivity 진단 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "technical_diagnostics"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "diagnostic_metadata_only_no_backtest"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "transaction cost sensitivity literature 수집용이며 repository backtest가 아니다."
+keywords = ["transaction costs", "turnover", "cost sensitivity", "trading frictions", "equity strategies"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto"]
+max_results = 50
+queries = [
+  "transaction costs turnover equity factors daily data",
+  "trading frictions turnover quantitative equity strategies",
+  "cost sensitivity stock selection turnover",
+]
+
+[query_sets.methodology_multiple_testing]
+name = "methodology_multiple_testing"
+description_ko = "multiple testing, data snooping, false discovery control 방법론 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "methodology_diagnostics"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "diagnostic_metadata_only"
+refresh_cadence_days = 28
+precision_mode = "high_precision"
+notes = "diagnostic route 전용이며 alpha evidence로 쓰지 않는다."
+keywords = ["multiple testing", "data snooping", "false discovery", "p-hacking", "equity anomalies", "quantitative finance"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto"]
+max_results = 40
+queries = [
+  "multiple testing data snooping equity anomalies",
+  "false discovery quantitative finance trading strategies",
+  "p hacking factor investing stock returns",
+]
+
+[query_sets.methodology_survivorship_lookahead]
+name = "methodology_survivorship_lookahead"
+description_ko = "survivorship bias, lookahead bias, data leakage 방법론 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "methodology_diagnostics"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "diagnostic_metadata_only"
+refresh_cadence_days = 28
+precision_mode = "high_precision"
+notes = "data leakage guardrail 개선용 문헌이며 backtest output을 생성하지 않는다."
+keywords = ["survivorship bias", "lookahead bias", "data leakage", "backtest bias", "equity backtesting"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto"]
+max_results = 40
+queries = [
+  "survivorship bias lookahead bias equity backtesting",
+  "data leakage quantitative finance stock returns",
+  "backtest bias stock selection survivorship",
+]
+
+[query_sets.methodology_publication_bias]
+name = "methodology_publication_bias"
+description_ko = "publication bias, factor decay, anomaly decay 방법론 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "methodology_diagnostics"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "diagnostic_metadata_only"
+refresh_cadence_days = 28
+precision_mode = "balanced"
+notes = "paper claim을 검증된 alpha로 표현하지 않기 위한 diagnostic evidence 수집용이다."
+keywords = ["publication bias", "factor decay", "anomaly decay", "equity anomalies", "replication"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto"]
+max_results = 40
+queries = [
+  "publication bias equity anomalies factor investing",
+  "factor decay stock returns anomalies replication",
+  "anomaly decay quantitative finance equity returns",
+]
+
+[query_sets.korea_kospi_expanded]
+name = "korea_kospi_expanded"
+description_ko = "KOSPI/KOSPI200 technical, methodology, market microstructure context 확장 문헌"
+branch_hint = "technical"
+downstream_route = "technical_score_architect"
+management_lane = "quant_algorithm"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "korea_kospi"
+required_input_policy = "daily_ohlcv_only_or_diagnostic_if_formula_unclear"
+refresh_cadence_days = 14
+precision_mode = "balanced"
+notes = "구현 공식이 불명확하면 diagnostic_items.jsonl 또는 manual review로 둔다."
+keywords = ["KOSPI", "KOSPI200", "Korean equity market", "Korean stock market", "daily returns", "technical analysis"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto", "fundamental valuation"]
+max_results = 50
+queries = [
+  "KOSPI200 technical indicators daily returns stock selection",
+  "Korean stock market momentum reversal daily data",
+  "KOSPI volatility volume technical analysis equity returns",
+]
+
+[query_sets.asia_pacific_equity_context]
+name = "asia_pacific_equity_context"
+description_ko = "Asia-Pacific equity context 및 transfer risk 진단 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "market_context"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "asia_pacific"
+required_input_policy = "market_context_only_manual_review_for_transfer"
+refresh_cadence_days = 28
+precision_mode = "balanced"
+notes = "KOSPI200으로의 transfer assumption이 필요하므로 diagnostic_items.jsonl 우선이다."
+keywords = ["Asia Pacific", "APAC", "Asian equity markets", "stock returns", "market anomalies", "daily returns"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto"]
+max_results = 40
+queries = [
+  "Asia Pacific equity market anomalies daily returns",
+  "Asian stock markets momentum reversal daily data",
+  "APAC equity technical analysis stock returns",
+]
+
+[query_sets.emerging_market_equity_anomalies]
+name = "emerging_market_equity_anomalies"
+description_ko = "emerging market equity anomalies와 KOSPI transfer risk 진단 문헌"
+branch_hint = "diagnostic"
+downstream_route = "diagnostic_backlog"
+management_lane = "market_context"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "emerging_markets"
+required_input_policy = "market_context_only_manual_review_for_transfer"
+refresh_cadence_days = 28
+precision_mode = "balanced"
+notes = "시장 구조 차이와 universe mismatch risk를 EvidenceCard에 기록한다."
+keywords = ["emerging markets", "equity anomalies", "stock returns", "market efficiency", "daily returns"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto"]
+max_results = 40
+queries = [
+  "emerging market equity anomalies daily returns",
+  "emerging stock markets momentum reversal anomalies",
+  "market efficiency emerging equity returns daily",
+]
+
+[query_sets.hybrid_technical_valuation_split]
+name = "hybrid_technical_valuation_split"
+description_ko = "technical + valuation/fundamental 결합 논문을 split-required로 수집"
+branch_hint = "hybrid"
+downstream_route = "hybrid_split_required"
+management_lane = "hybrid_split_required"
+allowed_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+region_scope = "global_equity"
+required_input_policy = "split_technical_and_point_in_time_fundamentals"
+refresh_cadence_days = 28
+precision_mode = "high_precision"
+notes = "valuation/fundamental portion은 Step 18 이후 handoff 전까지 technical_candidates로 직접 보내지 않는다."
+keywords = ["momentum", "technical analysis", "book to market", "earnings", "fundamental", "valuation", "stock returns"]
+exclude_keywords = ["intraday", "tick data", "order book", "options", "futures", "crypto"]
+max_results = 40
+queries = [
+  "technical analysis book to market equity returns",
+  "momentum fundamentals stock returns valuation",
+  "technical indicators earnings yield stock selection",
+]

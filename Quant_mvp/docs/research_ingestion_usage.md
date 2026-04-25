@@ -52,6 +52,36 @@ $env:PYTHONPATH='src'; python -m research_ingestion run-all --sources arxiv,open
 - 이 수집은 실제 backtest, forward return 계산, score 채택, alpha 검증을 수행하지 않습니다.
 - Step 17 전에는 백테스트 결과 파일이나 performance report를 생성하지 않습니다.
 
+## Expanded Query Sets
+
+논문 수집 범위 확장은 `config/research_queries.toml`의 query-set metadata로 관리합니다. 확장 query-set도 EvidenceCard 생성을 위한 upstream metadata collection일 뿐입니다.
+
+필수 경계:
+
+- EvidenceCard is not a score definition.
+- EvidenceCard is not an adoption decision.
+- Paper-reported backtest is diagnostic metadata only.
+- Citation count is metadata only, not evidence strength.
+- Scholar seeds are discovery inputs only.
+- PDF fulltext download is disabled by default.
+- Financial/fundamental data must not enter technical_composite_score or final_composite_score.
+
+확장 query-set 예:
+
+```powershell
+$env:PYTHONPATH='src'; python -m research_ingestion collect --dry-run --sources arxiv,openalex,crossref,semantic_scholar --query-set technical_trend_efficiency --run-id trend_efficiency_YYYYMMDD --no-pdf
+$env:PYTHONPATH='src'; python -m research_ingestion collect --dry-run --sources arxiv,openalex,crossref,semantic_scholar --query-set technical_rank_stability_diagnostics --run-id rank_stability_YYYYMMDD --no-pdf
+$env:PYTHONPATH='src'; python -m research_ingestion collect --dry-run --sources arxiv,openalex,crossref,semantic_scholar --query-set hybrid_technical_valuation_split --run-id hybrid_split_YYYYMMDD --no-pdf
+```
+
+운영 규칙:
+
+- `technical_cross_sectional_momentum`은 후보 논문 수집용이며 ranking output을 만들지 않습니다.
+- `technical_rank_stability_diagnostics`는 diagnostic literature 수집용이며 ranking output을 만들지 않습니다.
+- `technical_turnover_cost_diagnostics`는 transaction cost sensitivity literature 수집용이며 repository backtest가 아닙니다.
+- `asia_pacific_equity_context`와 `emerging_market_equity_anomalies`는 KOSPI200 transfer assumption risk 때문에 diagnostic route를 우선합니다.
+- `hybrid_technical_valuation_split`은 `hybrid_review_required.jsonl` route이며 valuation/fundamental portion을 technical candidate로 직접 보내지 않습니다.
+
 ## End-to-End Run
 
 ```powershell
@@ -72,6 +102,17 @@ $env:PYTHONPATH='src'; python -m research_ingestion run-all --sources arxiv,open
 ## Periodic Refresh
 
 `refresh`는 기존 `data/research/normalized/papers.jsonl`을 보존하면서 승인된 metadata source를 다시 조회하고, 아직 corpus에 없는 논문만 `data/research/normalized/{run_id}_refresh_new_papers.jsonl`에 기록한 뒤 dedupe된 `papers.jsonl`, EvidenceCard, Korean reports를 갱신합니다.
+
+Refresh는 new-only artifact도 함께 쓸 수 있습니다.
+
+- `data/research/normalized/normalized_papers_new.jsonl`
+- `data/research/evidence/evidence_cards_new.jsonl`
+- `data/research/evidence/technical_candidates_new.jsonl`
+- `data/research/evidence/diagnostic_items_new.jsonl`
+- `data/research/evidence/hybrid_review_required_new.jsonl`
+- `data/research/discovery/google_scholar/unresolved_seeds_new.jsonl`
+- `data/research/evidence/reject_log_new.jsonl`
+- `data/research/indexes/source_health_report.json`
 
 기본 주기와 query-set은 `config/research_policy.toml`의 `[refresh_policy]`에서 관리합니다. 현재 기본값은 14일마다 technical/methodology/backtest/Korea query-set을 점검하고, `fundamental_valuation`은 valuation 경계 때문에 opt-in으로 둡니다.
 

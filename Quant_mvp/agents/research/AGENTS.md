@@ -409,6 +409,7 @@ Allowed Google Scholar discovery inputs:
 6. Manual RefWorks exports created by the user from the Scholar `Cite` UI.
 7. Manual title lists curated by the user.
 8. Manual citation-alert seed lists selected by the user.
+9. User-provided DOI lists curated by the user.
 
 Allowed `source_channel` values:
 
@@ -419,6 +420,7 @@ Allowed `source_channel` values:
 - `google_scholar_manual_refworks`
 - `google_scholar_manual_title_list`
 - `google_scholar_manual_citation_seed`
+- `user_provided_doi_list`
 
 Scholar-derived items are discovery seeds only. They are not paper evidence and are not normalized papers until resolved through approved metadata sources.
 
@@ -634,8 +636,8 @@ Scholar-derived inputs must first become `DiscoverySeed` records.
 ```yaml
 DiscoverySeed:
   discovery_seed_id: string
-  source: google_scholar
-  source_channel: google_scholar_alert_email | google_scholar_manual_bibtex | google_scholar_manual_endnote | google_scholar_manual_refman | google_scholar_manual_refworks | google_scholar_manual_title_list | google_scholar_manual_citation_seed
+  source: google_scholar | user_provided
+  source_channel: google_scholar_alert_email | google_scholar_manual_bibtex | google_scholar_manual_endnote | google_scholar_manual_refman | google_scholar_manual_refworks | google_scholar_manual_title_list | google_scholar_manual_citation_seed | user_provided_doi_list
   discovered_at: string
   alert_query: string | null
   raw_title: string
@@ -650,7 +652,9 @@ DiscoverySeed:
     doi: string | null
     arxiv_id: string | null
   resolution:
+    lifecycle_status: local_seed_ingested | canonical_resolution_attempted | resolved_unique | resolved_ambiguous | unresolved | manual_review_required
     canonical_lookup_status: matched_openalex | matched_crossref | matched_arxiv | matched_semantic_scholar | multi_source_match | ambiguous_match | unresolved
+    canonical_resolution_status: matched_openalex | matched_crossref | matched_arxiv | matched_semantic_scholar | multi_source_match | ambiguous_match | unresolved
     matched_source: string | null
     canonical_paper_id: string | null
     matched_source_ids: list[string]
@@ -661,6 +665,7 @@ DiscoverySeed:
     scholar_seed_only: true
     not_evidence: true
     no_score_adopted: true
+    seed_origin_is_evidence: false
 ```
 
 Hard rules:
@@ -1004,6 +1009,47 @@ Rules:
 - Unresolved Scholar seeds may be rechecked only through approved metadata APIs, never through direct Scholar scraping.
 - `fundamental_valuation` refresh should remain opt-in while valuation/fundamental scoring is deferred.
 - Refresh reports must state that no score adoption, backtest, alpha validation, or valuation review occurred.
+
+## Research scope expansion policy
+
+Expanded query-set coverage is allowed only as research ingestion scope expansion.
+
+Required boundary phrases:
+
+- EvidenceCard is not a score definition.
+- EvidenceCard is not an adoption decision.
+- Paper-reported backtest is diagnostic metadata only.
+- Citation count is metadata only, not evidence strength.
+- Scholar seeds are discovery inputs only.
+- PDF fulltext download is disabled by default.
+- Financial/fundamental data must not enter technical_composite_score or final_composite_score.
+
+Expanded query-set metadata must live in `config/research_queries.toml` and include:
+
+- `name`
+- `branch_hint`
+- `downstream_route`
+- `allowed_sources`
+- `region_scope`
+- `required_input_policy`
+- `refresh_cadence_days`
+- `precision_mode`
+- `notes`
+
+Conservative expansion rules:
+
+- technical trend, momentum, reversal, breakout, oscillator, range, volume/price, and daily liquidity query-sets remain research candidates only.
+- volatility regime, liquidity proxy, correlation/redundancy, rank stability, turnover/cost, multiple testing, survivorship/lookahead, and publication bias query-sets route to `diagnostic_backlog` unless an independently clear technical portion is later reviewed.
+- Korea/KOSPI query-sets may route to technical candidates only when daily-OHLCV formula and inputs are clear; otherwise they remain diagnostic market-context material.
+- APAC and emerging-market query-sets carry transfer-assumption risk and route to diagnostics first.
+- hybrid technical/valuation query-sets must route to `hybrid_split_required`; valuation/fundamental portions must not enter `technical_candidates.jsonl`.
+- `technical_cross_sectional_momentum` is a research-ingestion query-set, not ranking generation.
+- `technical_rank_stability_diagnostics` is diagnostic literature collection, not ranking output.
+- `technical_turnover_cost_diagnostics` is transaction-cost methodology collection, not repository backtest.
+
+Source expansion candidates are documented in root `docs/research_ingestion_expansion.md`.
+
+No new external source adapter is allowed until source policy, official access method, rate limits, metadata license, raw snapshot policy, redaction behavior, and dedup mapping are reviewed.
 
 ---
 

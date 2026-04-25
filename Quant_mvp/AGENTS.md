@@ -58,7 +58,7 @@ Prefer explicit downgrades, deferrals, or narrower implementations.
 
 ## Multi-agent operating model
 
-This repository uses one separated upstream research agent plus **three distinct technical agents** with different responsibilities.
+This repository uses one separated upstream research agent, one strict scope watchdog, and **three distinct technical agents** with different responsibilities.
 
 Upstream evidence agent:
 
@@ -67,6 +67,15 @@ Upstream evidence agent:
    - collects approved paper metadata and local discovery seeds
    - normalizes research sources and creates conservative EvidenceCards
    - routes candidates without adopting scores, running backtests, claiming alpha, or performing valuation review
+
+Scope watchdog:
+
+0a. **Instruction Compliance Auditor / Scope Creep Watchdog**
+   - lives in `agents/audit/AGENTS.md`
+   - audits whether workers stayed inside the latest request, active roadmap Step, project boundary, terminology rules, and hard-stop guardrails
+   - checks score, normalization, diagnostics, selection, ranking, composite, backtest, valuation, future-return, generated-output, config, and evidence-overclaim boundaries
+   - returns `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION`
+   - does not implement features, repair code by default, or change roadmap state
 
 Technical workflow agents:
 
@@ -86,6 +95,8 @@ These agents must **not** collapse into one generic role.
 
 Each agent has a different job.
 Each agent should challenge different failure modes.
+
+Workers must use the root `docs/scope_audit_process.md` when watchdog audit is required before master-up.
 
 Research ingestion is intentionally separated into `agents/research/AGENTS.md`.
 The research agent may collect approved paper metadata, normalize sources, classify paper-derived ideas, and prepare EvidenceCards, but it must not adopt scores, run backtests, claim alpha, or perform valuation review.
@@ -681,6 +692,8 @@ Valuation review lives in a separated agent document and should be invoked only 
 
 - `agents/`
   - `research/`
+    - `AGENTS.md`
+  - `audit/`
     - `AGENTS.md`
   - `valuation/`
     - `AGENTS.md`

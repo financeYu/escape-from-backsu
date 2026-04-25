@@ -40,6 +40,19 @@ def merge_papers(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str
     merged["research_query_set"] = primary.get("research_query_set") or secondary.get("research_query_set")
     merged["research_branch_hint"] = primary.get("research_branch_hint") or secondary.get("research_branch_hint")
     merged["research_management_lane"] = primary.get("research_management_lane") or secondary.get("research_management_lane")
+    merged["source_query_set"] = primary.get("source_query_set") or secondary.get("source_query_set")
+    merged["query_run_id"] = primary.get("query_run_id") or secondary.get("query_run_id")
+    merged["source_record_id"] = primary.get("source_record_id") or secondary.get("source_record_id")
+    merged["retrieved_at"] = primary.get("retrieved_at") or secondary.get("retrieved_at")
+    merged["seed_origin_type"] = _merge_seed_origin_type(primary, secondary)
+    merged["seed_origin_is_evidence"] = False
+    merged["canonical_resolution_status"] = _merge_resolution_status(primary, secondary)
+    merged["resolution_confidence"] = _merge_resolution_confidence(primary, secondary)
+    merged["duplicate_of"] = primary.get("duplicate_of") or secondary.get("duplicate_of")
+    merged["fulltext_available"] = bool(primary.get("fulltext_available") or secondary.get("fulltext_available"))
+    merged["fulltext_used"] = False
+    merged["pdf_downloaded"] = False
+    merged["citation_count_metadata_only"] = True
     merged["abstract"] = _prefer_longer(primary.get("abstract"), secondary.get("abstract"))
     merged["abstract_available"] = bool(merged.get("abstract"))
     for field in [
@@ -54,6 +67,7 @@ def merge_papers(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str
         "oa_status",
         "open_access_status",
         "license",
+        "metadata_license",
         "is_retracted",
         "citation_count",
         "influential_citation_count",
@@ -78,6 +92,7 @@ def merge_papers(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str
         title=merged.get("title"),
         publication_year=merged.get("publication_year"),
     )
+    merged["dedup_key"] = merged["canonical_paper_id"]
     merged["updated_at"] = utc_now_iso()
     return merged
 
@@ -162,3 +177,31 @@ def _conflict_notes(primary: dict[str, Any], secondary: dict[str, Any]) -> list[
                     continue
             notes.append(f"{field} conflict between sources")
     return notes
+
+
+def _merge_seed_origin_type(primary: dict[str, Any], secondary: dict[str, Any]) -> str:
+    values = {primary.get("seed_origin_type"), secondary.get("seed_origin_type")}
+    if "scholar_local_seed" in values:
+        return "scholar_local_seed"
+    return str(primary.get("seed_origin_type") or secondary.get("seed_origin_type") or "metadata_api")
+
+
+def _merge_resolution_status(primary: dict[str, Any], secondary: dict[str, Any]) -> str:
+    statuses = {primary.get("canonical_resolution_status"), secondary.get("canonical_resolution_status")}
+    if "resolved" in statuses:
+        return "resolved"
+    if "ambiguous" in statuses:
+        return "ambiguous"
+    return str(primary.get("canonical_resolution_status") or secondary.get("canonical_resolution_status") or "unresolved")
+
+
+def _merge_resolution_confidence(primary: dict[str, Any], secondary: dict[str, Any]) -> str:
+    priority = {"high": 0, "medium": 1, "low": 2, "unresolved": 3}
+    values = [
+        str(value)
+        for value in [primary.get("resolution_confidence"), secondary.get("resolution_confidence")]
+        if value
+    ]
+    if not values:
+        return "unresolved"
+    return min(values, key=lambda value: priority.get(value, 9))

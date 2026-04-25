@@ -17,6 +17,32 @@ At the end of every Step, report one of:
 - `PARTIALLY COMPLETE`
 - `NEEDS FIX`
 
+## Step-End Validation, Code Review, and Commit Gate
+
+At the end of each roadmap Step, use this sequence before considering the Step closed:
+
+```text
+integration validation
+-> cross-step conflict checkpoint
+-> code review
+-> fix required code review findings
+-> rerun affected validation/checks
+-> cross-step conflict checkpoint after required fixes when needed
+-> commit to git
+-> refresh latest local Quant project context snapshot
+```
+
+Rules:
+
+- Do not commit Step work before master integration validation and the Step-end code review are complete.
+- Run the Cross-Step Conflict Checkpoint from `docs/cross_step_conflict_check.md` when an important in-Step stage ends and at Step-end before code review. Use `scripts/build_review_packet.py` to keep review input compact.
+- If code review finds required fixes, route the fix to the narrowest responsible project, make the minimal repair, then rerun the affected tests/checks and integration validation.
+- Repeat the review/fix/validation loop until required findings are resolved, explicitly downgraded to non-blocking risk, or the Step is reported as `PARTIALLY COMPLETE` / `NEEDS FIX`.
+- Use `review_mvp` for Step-end specialist review when the change touches code, tests, config, schemas, generated-output boundaries, cross-project handoffs, roadmap-gated behavior, or any existing `review_mvp` trigger. Narrow docs-only governance changes may use master code review unless the master or user requests `review_mvp`.
+- Commit only source-controlled files that belong to the Step. Keep unrelated dirty files, runtime caches, generated reports, and local outputs out of the commit unless explicitly promoted as review fixtures.
+- If a commit cannot be made, report why and include the remaining Git state in the Step-end summary.
+- After the Step commit, run `python scripts/refresh_quant_project_context.py` so the current Quant project context file keeps only the latest compact local snapshot. This workflow must not call paid APIs or embed secrets in the repository.
+
 ## Active Step Continuity
 
 When `docs/roadmap_status.md` marks earlier Steps as `COMPLETE`, trust those outputs by default. Do not restart implementation or full review loops for completed Steps unless the user's latest instruction explicitly asks for Step-end validation across the roadmap.
@@ -75,6 +101,8 @@ Before changing files, classify the request into one of these work types:
 
 Then route work to the narrowest responsible project.
 
+When a task is assigned to a worker, the worker must declare the intended scope before changing files. If the task touches roadmap-gated behavior, score definitions, normalization, diagnostics, selection, ranking, composite, backtest, valuation, generated-output boundaries, config defaults, cross-project handoffs, or root-boundary requests, use the scope watchdog process in `docs/scope_audit_process.md`.
+
 ## Root boundary approval
 
 When working from a subproject or sub-agent scope, the root agent boundary is protected.
@@ -107,6 +135,7 @@ By default, review starts inside the narrowest responsible subproject.
 
 Each subproject is responsible for:
 
+- worker scope declaration and watchdog-trigger decision
 - project-local correctness review
 - project-local tests or checks
 - generated-output and cache boundary checks
@@ -144,11 +173,13 @@ Master-up summary must prioritize:
 2. what remains risky
 3. what changed
 4. what was intentionally not changed
-5. whether `review_mvp` is requested or not
+5. whether watchdog audit was required and the final watchdog verdict
+6. whether `review_mvp` is requested or not
 
 Canonical supporting documents:
 
 - review flow: `docs/review_flow.md`
+- scope watchdog process: `docs/scope_audit_process.md`
 - subproject local checklist: `docs/subproject_review_template.md`
 - required master-up template: `docs/master_up_template.md`
 - `review_mvp` specialist policy: `docs/review_mvp_policy.md`
@@ -162,6 +193,7 @@ Master is the integration gate, not the default local implementation reviewer.
 Master must review:
 
 - cross-project consistency
+- cross-step conflict checkpoint status
 - roadmap/order compliance
 - hard stop rule compliance
 - Git hygiene
@@ -180,7 +212,9 @@ Master should not repeat full local implementation review when:
 Master must HOLD or REJECT when:
 
 - master-up summary is missing
+- required watchdog audit is missing, unresolved, or blocking
 - hard stop checks are absent
+- required cross-step conflict checkpoint is missing, unresolved, or blocking
 - evidence is missing
 - generated output may have been committed incorrectly
 - score/backtest/valuation work appears before allowed roadmap step
@@ -200,6 +234,8 @@ Master output format:
 - change summary:
 
 [Subproject local review 확인]
+- worker scope declaration:
+- watchdog audit:
 - scope:
 - tests/checks:
 - generated-output/cache boundary:
@@ -208,11 +244,25 @@ Master output format:
 
 [Master 통합 점검]
 - cross-project consistency:
+- cross-step conflict checkpoint:
 - roadmap/order:
 - Git hygiene:
 - source-controlled vs generated-output:
 - handoff completeness:
 - unresolved risks:
+
+[Step 종료 게이트]
+- integration validation:
+- cross-step conflict checkpoint:
+- code review:
+- required review fixes:
+- validation rerun:
+- commit status:
+
+[컨텍스트 스냅샷]
+- local context:
+- latest-only prune:
+- refresh status:
 
 [review_mvp 필요 여부]
 REQUIRED / OPTIONAL / NOT NEEDED
@@ -236,6 +286,7 @@ ACCEPT / HOLD / REJECT
 | Git layout, ignore rules, CI, release process | root workspace | `AGENTS.md`, `docs/project_registry.md` |
 | Research source collection or paper evidence | `reserch_mvp`, `Quant_mvp/agents/research` | `reserch_mvp/AGENTS.md`, `Quant_mvp/agents/research/AGENTS.md` |
 | Technical score definition or adoption review | `Quant_mvp` | `Quant_mvp/AGENTS.md`, `Quant_mvp/config/*.toml` |
+| Scope compliance audit / worker scope creep check | `Quant_mvp/agents/audit` | `Quant_mvp/agents/audit/AGENTS.md`, `docs/scope_audit_process.md` |
 | Valuation or fundamental score review | `Quant_mvp/agents/valuation` | `Quant_mvp/agents/valuation/AGENTS.md` |
 | Runnable scanner, data cache, charts, GUI | `chart_mvp` | `chart_mvp/AGENTS.md`, `chart_mvp/README.md` |
 | Specialist code review, bug-risk review, minimal repair guidance | `review_mvp` | `review_mvp/AGENTS.md`, `review_mvp/README.md`, `docs/review_mvp_policy.md` |
@@ -276,13 +327,25 @@ Final validation flow:
 
 ```text
 project change
+  -> worker scope declaration
+  -> scope watchdog audit when required
   -> project-specific tests or checks
   -> subproject local first review
+  -> pre-master-up scope watchdog audit when required
   -> master-up summary
   -> master integration review
-  -> optional review_mvp specialist review when required
+  -> cross-step conflict checkpoint at important stage boundaries
+  -> Step-end code review
+  -> required code review fixes
+  -> affected validation/check rerun
+  -> cross-step conflict checkpoint after required fixes when needed
+  -> review_mvp specialist review when required
   -> final master decision
+  -> git commit
 ```
+
+Do not confuse `Quant_mvp/agents/audit` with `review_mvp`.
+The former checks instruction compliance and scope creep. The latter checks specialist code and integration risk when required.
 
 ---
 

@@ -1,56 +1,30 @@
-# Quant Project Step 12 Reference For ChatGPT Upload
+# Quant Project Current Context
 
-이 문서는 ChatGPT Project 또는 별도 GPT 세션에 업로드하기 위한 Step 12 현재 컨텍스트 파일이다.
-기준 시점은 2026-04-25 Asia/Seoul이다.
+Generated at: 2026-04-25T15:37:03+09:00
+Workspace: `repository root`
+Project target: `current_quant_project`
+Context key: `quant_project_current_context`
 
-최신 상태 판단은 항상 아래 순서를 따른다.
+This file is the only local context snapshot kept by the master workspace.
+Older local snapshots managed by this script are removed during refresh.
+No paid API upload is performed by this local-only workflow.
 
-1. 사용자의 최신 명시 지시
-2. 루트 `AGENTS.md`
+## Authority Order
+
+1. User's latest explicit instruction
+2. Root `AGENTS.md`
 3. `docs/project_checklist.md`
 4. `docs/roadmap_status.md`
-5. 관련 source, tests, docs, config
+5. Related source, tests, docs, and config
 
-현재 루트 워크스페이스:
+## Current Roadmap Position
 
-```text
-C:\Users\jjaew\Project\master_mvp
-```
+Step 14 = Adoption Synthesis, NEXT / not started
+- Recently completed: Step 13 = Technical Selection Reviewer, COMPLETE
+- Recently completed before that: Step 12 = redundancy / correlation diagnostics, COMPLETE
+- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14 technical work.
 
-## 1. Current Position
-
-현재 활성 단계:
-
-```text
-Step 12 = redundancy / correlation diagnostics
-roadmap verdict = COMPLETE
-```
-
-`docs/roadmap_status.md` 기준 Step 12는 통합 완료 상태다.
-Worker A calculation engine과 Worker B output contract/report guardrail이 통합되었다.
-다음 단계는 Step 13 Technical Selection Reviewer다.
-
-## 2. Work Classification And Routing
-
-Step 12 관련 작업 유형:
-
-```text
-score_design / final_validation
-```
-
-주 책임 영역:
-
-- root workspace: roadmap status, generated-output boundary, integration decision
-- `src/diagnostics`: Step 12 calculation, contracts, report guardrails
-- `Quant_mvp/config/thresholds.toml`: config-first threshold source
-- `src/composite/contracts.py`: Step 11 composite input metadata registry
-
-`review_mvp`는 모든 변경의 필수 bottleneck은 아니다.
-다만 Step 12 completion gate 또는 cross-project integration risk가 남으면 specialist review가 필요할 수 있다.
-
-## 3. Roadmap State Summary
-
-현재 판정:
+## Roadmap Verdicts
 
 | Step | Status |
 | --- | --- |
@@ -66,463 +40,147 @@ score_design / final_validation
 | Step 10 | COMPLETE |
 | Step 11 | COMPLETE |
 | Step 12 | COMPLETE |
-| Step 13 | NEXT / not started |
+| Step 13 | COMPLETE |
+| Step 14 | NEXT / not started |
 | Step 15 | WAITING / not started |
+| Step 16 | WAITING / not started |
 | Step 17 | WAITING / not started |
 | Step 18 | DEFERRED / waiting for valuation expansion |
-
-Step 13 Technical Selection Reviewer는 Step 12 diagnostic output을 받은 뒤 진행한다.
-Step 15 ranking, Step 17 backtest, Step 18 valuation expansion은 아직 허용되지 않는다.
-
-## 4. Absolute Hard Stops
-
-항상 금지:
-
-- ranking 또는 latest ranking 생성
-- `technical_composite_score` 생성
-- `final_composite_score` 생성
-- family weighted composite 계산
-- buy/sell/trading signal 생성
-- alpha evidence 표현
-- forward/future return 계산 또는 label 생성
-- backtest 실행 또는 backtest output 생성
-- valuation/fundamental scoring
-- financial/fundamental data를 technical scoring에 사용
-- financial/fundamental data를 `technical_composite_score` 또는 `final_composite_score`에 사용
-- price-only evidence를 cheap, value, undervalued, bargain 등 valuation language로 표현
-- diagnostics를 adoption/rejection decision처럼 표현
-
-Step 12 산출물은 반드시:
-
-```text
-diagnostic/review material only
-```
-
-이어야 한다.
-
-## 5. Step 12 Purpose
-
-Step 12의 목적은 Step 10 normalized score 및 Step 11 component candidate 사이의
-redundancy/correlation을 진단하고, Step 13 Technical Selection Reviewer에게 넘길 review material을 만드는 것이다.
-
-Step 12는 아래를 하지 않는다.
-
-- score formula 재정의
-- normalization formula 재정의
-- composite score 계산
-- score 채택 또는 탈락 판정
-- ranking 생성
-- backtest
-- valuation verdict
-
-## 6. Required Files To Read First In A Step 12 Session
-
-다음 Step 12 세션을 시작하면 먼저 아래 파일을 확인한다.
-
-```text
-docs/project_checklist.md
-docs/roadmap_status.md
-docs/step12_redundancy_correlation_diagnostics.md
-Quant_mvp/config/thresholds.toml
-src/composite/contracts.py
-src/diagnostics/diagnostic_contracts.py
-src/diagnostics/diagnostic_reports.py
-src/diagnostics/score_redundancy.py
-tests/diagnostics/test_step12_diagnostic_contracts.py
-tests/diagnostics/test_step12_report_guardrails.py
-tests/diagnostics/test_step12_score_redundancy.py
-```
-
-If the task is only documentation or GPT context preparation, avoid full implementation review loops.
-If the task is Step 12 completion, inspect the listed files and run the relevant focused tests.
-
-## 7. Step 12 Worker Split
-
-Worker A responsibility:
-
-```text
-src/diagnostics/score_redundancy.py
-```
-
-Expected responsibility:
-
-- normalized/component score column input preparation
-- same-date cross-sectional Spearman correlation diagnostics
-- pair-level redundancy summary
-- config-first threshold loading
-- no raw-score fallback
-- no ranking/composite/backtest/valuation output
-
-Worker B responsibility:
-
-```text
-docs/step12_redundancy_correlation_diagnostics.md
-src/diagnostics/diagnostic_contracts.py
-src/diagnostics/diagnostic_reports.py
-reports/diagnostics/README.md
-```
-
-Expected responsibility:
-
-- Step 12 output schema contract
-- status and threshold flag semantics
-- forbidden-column guardrails
-- report-language guardrails
-- generated-output boundary
-- integration-facing bundle validation
-
-Worker B should not make large changes to Worker A's calculation engine unless explicitly assigned.
-
-## 8. Current Worker A Implementation Candidate
-
-`src/diagnostics/score_redundancy.py` currently exposes:
-
-```text
-RedundancyScoreInput
-ScoreRedundancyConfig
-ScoreRedundancyConfigError
-load_score_redundancy_config
-score_inputs_from_registry
-score_inputs_from_columns
-prepare_redundancy_input_frame
-calculate_score_pair_correlations
-summarize_score_redundancy
-build_score_redundancy_diagnostics
-```
-
-Current Worker A output tables:
-
-```text
-pair_summary
-pair_date_diagnostics
-```
-
-Current `pair_summary` columns:
-
-```text
-score_a
-score_b
-dates_evaluated
-dates_insufficient
-min_pair_observations
-median_pair_observations
-median_spearman
-mean_spearman
-max_abs_spearman
-redundancy_status
-redundancy_reason
-```
-
-Current `pair_date_diagnostics` columns:
-
-```text
-score_a
-score_b
-date
-pair_observations
-spearman
-diagnostic_status
-diagnostic_reason
-```
-
-Important integration note:
-
-Worker A also produces contract-facing `pair_diagnostics` and `coverage_summary`.
-Those tables map engine output into Worker B's `STEP12_PAIR_DIAGNOSTIC_COLUMNS` and
-`STEP12_COVERAGE_SUMMARY_COLUMNS` and are validated before report generation.
-
-## 9. Worker B Contract
-
-`src/diagnostics/diagnostic_contracts.py` defines:
-
-```text
-STEP12_PAIR_DIAGNOSTIC_COLUMNS
-STEP12_COVERAGE_SUMMARY_COLUMNS
-STEP12_DEVIATION_LOG_COLUMNS
-Step12DiagnosticStatus
-Step12ThresholdPolicy
-load_step12_threshold_policy
-validate_step12_pair_diagnostics
-validate_step12_coverage_summary
-validate_step12_deviation_log
-validate_step12_diagnostics_bundle
-classify_spearman_diagnostic_status
-threshold_flag_for_status
-```
-
-Allowed `diagnostic_status` values:
-
-```text
-ok
-warn
-block_candidate
-severe_redundancy
-insufficient_data
-insufficient_input
-config_missing
-undefined_correlation
-```
-
-These are Step 13 review flags only.
-They are not adoption/rejection decisions.
-
-Forbidden output columns include:
-
-```text
-rank
-ranking
-latest_rank
-technical_composite_score
-final_composite_score
-forward_return
-future_return
-backtest_return
-alpha
-signal
-buy
-sell
-valuation_score
-undervalued
-cheap
-bargain
-```
-
-`src/diagnostics/diagnostic_reports.py` writes generated Markdown reports and rejects forbidden report language.
-Generated reports must not be written under `docs/`.
-
-## 10. Config-First Thresholds
-
-Required config source:
-
-```text
-Quant_mvp/config/thresholds.toml
-```
-
-Required keys:
-
-```text
-[redundancy].spearman_warn
-[redundancy].spearman_block
-[quality].min_cross_section_count
-[quality].min_non_nan_observations
-```
-
-Current reference values:
-
-```text
-[redundancy].spearman_warn = 0.80
-[redundancy].spearman_block = 0.90
-[quality].min_cross_section_count = 20
-[quality].min_non_nan_observations = 60
-```
-
-Do not silently hardcode fallback thresholds.
-If required config is missing, report `config_missing` or raise a config error.
-`spearman_warn` must not exceed `spearman_block`.
-
-## 11. Upstream Contracts From Steps 9-11
-
-Step 9 raw score implementation is complete for eight MVP candidates:
-
-```text
-short_term_overreaction_raw
-atr_adjusted_oversold_distance_raw
-donchian_breakout_distance_raw
-bollinger_width_squeeze_raw
-cmf_confirmation_raw
-rsi_price_divergence_raw
-realized_vol_percentile_raw
-efficiency_ratio_trend_raw
-```
-
-Step 10 normalization is complete and provides normalized score columns such as:
-
-```text
-{score_name}_cross_sectional_robust_z
-{score_name}_ts_robust_zscore
-```
-
-Step 11 composite structure design is complete but design-only.
-It defines metadata and candidate inputs in:
-
-```text
-src/composite/contracts.py
-```
-
-Important Step 11 guardrail:
-
-- Step 11 may classify composite inputs.
-- Step 11 does not calculate composite scores.
-- Step 12 may use Step 11 metadata for diagnostics.
-- Step 12 must not activate composite scoring.
-
-## 12. Step 11 Composite Input Registry
-
-Default Step 11 registry maps eight score names to family, branch, role, and eligibility.
-
-Families:
-
-```text
-mean_reversion
-trend_breakout
-volatility_context
-volume_flow
-```
-
-Roles:
-
-```text
-candidate_signal
-confirmation
-setup_context
-diagnostic_context
-```
-
-Eligibility:
-
-```text
-eligible
-conditional
-diagnostic_only
-blocked
-```
-
-`realized_vol_percentile` is diagnostic/context-only.
-`bollinger_width_squeeze` is setup/regime context.
-`cmf_confirmation` is confirmation candidate.
-
-## 13. Step 12 Completion Result
-
-Step 12 completion work is done:
-
-1. Worker A calculation behavior is implemented and tested.
-2. Worker A output is aligned with Worker B contracts.
-3. Coverage summary output exists and validates against `STEP12_COVERAGE_SUMMARY_COLUMNS`.
-4. Pair diagnostics validate against `STEP12_PAIR_DIAGNOSTIC_COLUMNS`.
-5. Config-first threshold loading is preserved from `Quant_mvp/config/thresholds.toml`.
-6. Forbidden output columns/language are rejected by tests.
-7. Focused Step 12 tests pass.
-8. `docs/roadmap_status.md` and `docs/project_checklist.md` mark Step 12 COMPLETE.
-
-Do not expand into Step 13 adoption review unless explicitly requested.
-
-## 14. Relevant Focused Tests
-
-Step 12 focused tests currently present:
-
-```text
-tests/diagnostics/test_step12_diagnostic_contracts.py
-tests/diagnostics/test_step12_report_guardrails.py
-tests/diagnostics/test_step12_score_redundancy.py
-```
-
-Useful focused test command:
-
+| Step 19 | WAITING / not started |
+| Step 20 | WAITING / not started |
+## Research ingestion 범위 확장 상태
+- `Quant_mvp/config/research_queries.toml`에 technical, diagnostic, Korea/APAC/EM context, hybrid split query-set 확장 metadata를 추가했다.
+- `Quant_mvp/config/research_classification.toml`에 required input boundary, forbidden valuation language, 명시적 classification rule name을 추가했다.
+- `Quant_mvp/config/research_scholar_discovery.toml`에 user-provided DOI seed와 seed lifecycle을 문서화했다.
+- `docs/research_ingestion_expansion.md`에 source 확장 후보와 정책 검토 조건을 문서화했다.
+- EvidenceCard is not a score definition.
+- omitted 7 additional lines for compact context
+
+## Most Recent Completed Step
+
+### Step 13 = Technical Selection Reviewer
+- Step 13 review contract, status vocabulary, validation guardrail, reviewer engine, report builder, and generated report path/language guardrails are implemented.
+- Step 13 output remains technical review recommendation material for Step 14 only.
+- `review_status` values are technical recommendations, not final adoption states.
+- `diagnostic_only` and context roles remain constrained to diagnostic/context recommendation paths.
+- Severe redundancy or blocked candidate diagnostics cannot auto-promote to adoption.
+- Generated Step 13 reports are constrained to `reports/selection/` and must include `technical selection review material only`.
+- Latest recorded validation: `$env:PYTHONPATH="src"; python -m pytest` = 277 passed, 4 skipped.
+### Step 12 = Redundancy / Correlation Diagnostics
+- Same-date cross-sectional Spearman redundancy/correlation diagnostics are implemented for review material.
+- Normalized score columns are required; raw score fallback is not allowed.
+- Diagnostics remain non-alpha, non-adoption, non-ranking, non-backtest, and non-valuation material.
+
+## Cross-Step Conflict Checkpoint
+
+Run a Cross-Step Conflict Checkpoint whenever an important in-Step stage ends and before each Step is closed.
+Required trigger examples:
+- design or output contract is locked
+- implementation is ready for master-up
+- cross-project handoff is about to be consumed downstream
+- Step-end validation has passed and code review is about to begin
+- required review fixes are complete and validation is about to be rerun
+Use `docs/cross_step_conflict_check.md` and generate a compact review packet with:
 ```powershell
-$env:PYTHONPATH="src"; python -m pytest tests/diagnostics --basetemp=tests/_tmp/pytest_step12_diagnostics
+python scripts/build_review_packet.py --step "Step 14" --stage "<stage name>"
 ```
+Completed Step artifacts are trusted by default. The checkpoint checks only whether the current stage conflicts with roadmap order, hard stops, cross-project handoffs, generated-output boundaries, or unresolved carry-forward risks.
 
-Broader tests may be run after focused tests if Step 12 completion touches shared schema/composite code:
+## Active Guardrails
 
-```powershell
-$env:PYTHONPATH="src"; python -m pytest tests/test_step11_composite_schema.py tests/diagnostics
-```
+- score definition 전에는 score implementation 금지.
+- documented composite design 전에는 composite score implementation 금지.
+- Step 17 전에는 backtest 금지.
+- financial data를 `technical_composite_score`에 넣지 않는다.
+- financial data를 `final_composite_score`에 넣지 않는다.
+- price-only evidence에 valuation language를 쓰지 않는다.
+- valuation status가 deferred인 동안 valuation/fundamental scoring을 하지 않는다.
+- active Step이 명시적으로 허용하기 전에는 ranking generation을 하지 않는다.
 
-Do not claim tests were rerun unless they were actually rerun in the current session.
+## Quant Agent Scope
 
-## 15. Generated Output Boundary
+This repository uses Codex as a **multi-agent conservative quant engineering system** for a **KOSPI200 constituent-level stock scanner**.
+The main objective is to build an **explainable, modular, backtest-friendly technical multi-score engine** that ranks KOSPI200 constituent stocks using:
+- daily OHLCV-derived technical/statistical signals
+- explicit regime, diagnostic, and composite scoring logic
+This is **not** a single-strategy repository.
+This is **not** an "AI black box alpha" repository.
+Valuation / fundamental review is handled by a separate agent, not by this main technical agent.
+The goal is to:
+1. define candidate scores clearly
+2. implement and test them conservatively
+3. compare them from a technical usefulness, stability, and redundancy perspective
+4. adopt only the strongest and most defensible technical score set
+Prioritize:
+1. implementation realism
+2. rule clarity
+3. explainability
+4. robustness over novelty
+5. modularity and diagnostics
+6. conservative rejection of weak or ambiguous ideas
+When uncertain, do **not** resolve ambiguity optimistically.
+Prefer explicit downgrades, deferrals, or narrower implementations.
+---
 
-Source-controlled by default:
+## Quant Adoption Synthesis Policy
 
-- code
-- tests
-- docs
-- config
-- small reference fixtures
-- project-level agent instructions
-- `reports/diagnostics/README.md` as boundary documentation
+A candidate score or score family should be assigned one of the following final states:
+- `core_adopted`
+- `conditional_adopted`
+- `technical_only`
+- `regime_only`
+- `diagnostic_only`
+- `research_only`
+- `rejected`
+- `blocked_by_data`
 
-Not source-controlled by default:
+## Score Catalog Snapshot
 
-- generated diagnostic reports
-- implementation deviation logs produced by current runs
-- daily price caches
-- financial statement caches
-- scan outputs
-- chart images
-- local runtime reports
-- `__pycache__`
-- `*.pyc`
-- virtual environments
-- `.env` and secrets
+| `short_term_overreaction` | `mean_reversion` | `technical` | core candidate | define for MVP testing | Korea reversal evidence plus short-horizon reversal literature |
+| `atr_adjusted_oversold_distance` | `mean_reversion` | `technical` | robustness variant | define for MVP testing with redundancy warning | volatility-scaled oversold proxy |
+| `donchian_breakout_distance` | `breakout` | `technical` | core candidate | define for MVP testing | trading range breakout evidence |
+| `bollinger_width_squeeze` | `squeeze_expansion` | `technical` | regime/conditional candidate | define for MVP testing as technical-only context | volatility compression and expansion setup |
+| `cmf_confirmation` | `flow` | `technical` | confirmation candidate | define for MVP testing | price-volume participation evidence |
+| `rsi_price_divergence` | `oscillator_divergence` | `technical` | cautious pattern proxy | define only as deterministic proxy | oscillator divergence, with pattern-mining warning |
+| `realized_vol_percentile` | `volatility_regime` | `diagnostic` | regime diagnostic | keep out of direct alpha ranking until reviewed | risk/regime context and testing discipline |
+| `efficiency_ratio_trend` | `trend_efficiency` | `technical` | distinctness candidate | define for MVP testing | smooth-trend versus noisy-trend proxy |
+| `medium_term_relative_strength` | folded into trend/breakout review queue | Korea evidence is mixed and overlap with breakout, 52-week high, and trend return is high |
+| `moving_average_trend_structure` | folded into `efficiency_ratio_trend` or later trend review | high overlap with breakout and relative strength |
+| `price_near_52w_high` | folded into `donchian_breakout_distance` as longer-window alternative | concept is useful but redundant in first MVP set |
+| `time_series_trend_return` | folded into `efficiency_ratio_trend` review | too close to relative strength unless separate use is proven later |
+| `volume_participation_momentum_filter` | future conditional filter / diagnostic backlog | strict turnover may require shares outstanding; OHLCV proxy needs review |
+| `trading_activity_variability_penalty` | diagnostic backlog | risk/liquidity context, not first-pass ranking alpha |
 
-Generated Step 12 reports should live under:
+## Family Map Snapshot
 
+| `mean_reversion` | `short_term_overreaction`, `atr_adjusted_oversold_distance` | `technical` | reversal candidates | high within family | implement both only if diagnostics compare distinctness |
+| `breakout` | `donchian_breakout_distance` | `technical` | continuation candidate | high with trend ideas | keep one simple breakout definition first |
+| `squeeze_expansion` | `bollinger_width_squeeze` | `technical` | setup/regime candidate | medium with volatility diagnostics | report as conditional context unless review supports ranking use |
+| `flow` | `cmf_confirmation` | `technical` | volume confirmation | medium with liquidity diagnostics | define whether standalone or interaction before coding |
+| `oscillator_divergence` | `rsi_price_divergence` | `technical` | cautious reversal proxy | medium-high with mean reversion | use deterministic proxy only |
+| `volatility_regime` | `realized_vol_percentile` | `diagnostic` | risk/regime context | medium with squeeze and ATR scores | keep out of direct alpha ranking until reviewed |
+| `trend_efficiency` | `efficiency_ratio_trend` | `technical` | cleaner trend candidate | medium with breakout | signed versus unsigned role must be fixed |
+| Short-term reversal cluster | `short_term_overreaction`, `atr_adjusted_oversold_distance`, `rsi_price_divergence` | compare correlation, rank overlap, warmup coverage, and trigger sparsity; downgrade duplicates |
+| Trend and breakout cluster | `donchian_breakout_distance`, `efficiency_ratio_trend`, folded relative-strength ideas | do not add 52-week high, moving-average trend, and medium-term return variants until distinctness is shown |
+| Volatility context cluster | `bollinger_width_squeeze`, `realized_vol_percentile`, ATR scaling | keep setup/regime diagnostics separate from direct ranking signals |
+| Volume and activity cluster | `cmf_confirmation`, folded volume participation ideas, folded trading activity variability | avoid strict turnover unless shares outstanding becomes point-in-time safe and explicitly allowed |
+
+## Git Snapshot
+
+- branch: `step12-diagnostics`
+- commit: `d3752c9`
+- status:
 ```text
-reports/diagnostics/
+clean
 ```
 
-Generated Step 12 reports must include:
+## Step-End Context Policy
 
-```text
-diagnostic/review material only
-```
+- Refresh this file after Step-end validation, review, required fixes, rerun, and commit.
+- Keep latest-only local retention: remove obsolete local context files listed in config.
+- Do not include `.env`, API keys, local runtime caches, chart images, generated data caches, or secrets.
 
-## 16. Valuation Boundary
+## Next Allowed Work
 
-Current valuation state:
-
-```text
-valuation_status = deferred
-financial_data_usage_now = inventory_only_or_gui_display_only
-point_in_time_status = unverified
-financial_data_in_technical_score = false
-financial_data_in_final_composite_score = false
-```
-
-Step 2 financial collector validation is complete, but point-in-time financial availability follow-up is assigned to Step 18.
-
-PER/PBR/ROE or other financial/fundamental display values must not affect:
-
-- technical scoring
-- Step 12 diagnostics
-- technical composite scoring
-- final composite scoring
-- ranking
-- adoption decisions
-- valuation verdicts
-
-## 17. ChatGPT Behavior For This Project
-
-When helping inside this project:
-
-- Use Korean for progress, status, and final summaries unless the user asks otherwise.
-- Keep code identifiers, config keys, file paths, column names, and function names in English.
-- Treat unknowns as unknown.
-- Label inference as inference.
-- Do not make optimistic claims about alpha, robustness, valuation, or trading usefulness.
-- Do not infer valuation from price-only technical evidence.
-- Do not silently redefine score formulas after seeing outputs.
-- Completed Steps 1-11 are trusted by default.
-- For Step 12, inspect only direct dependencies unless the user requests full roadmap validation.
-- If a Step-end report is requested, report exactly one of:
-
-```text
-COMPLETE
-PARTIALLY COMPLETE
-NEEDS FIX
-```
-
-## 18. Minimal Decision Rule
-
-The safe default interpretation:
-
-```text
-Step 12 is COMPLETE.
-Worker A calculation engine and Worker B contracts/report guardrails are integrated.
-Step 13 is NEXT / not started.
-Ranking remains blocked until Step 15.
-Backtest remains blocked until Step 17.
-Valuation/fundamental scoring remains blocked until Step 18 readiness and PIT validation.
-Financial/fundamental data must stay out of technical scoring, Step 12 diagnostics, and final composite scoring.
-```
+- Step 14 Adoption Synthesis is the next active roadmap step.
+- Step 15 ranking, Step 17 backtest, and Step 18 valuation/fundamental scoring remain gated.

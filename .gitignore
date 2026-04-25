@@ -35,6 +35,10 @@ data/raw/
 data/processed/
 reports/preprocess/
 reports/indicators/
+reports/diagnostics/*
+!reports/diagnostics/README.md
+reports/selection/*
+!reports/selection/README.md
 
 # Quant_mvp research ingestion runtime artifacts
 Quant_mvp/data/research/raw/
@@ -49,6 +53,7 @@ Quant_mvp/data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl
 review_mvp/tests/workspace/
 
 # Generated media and ad-hoc exports
+docs/current_review_packet.md
 *.log
 *.tmp
 

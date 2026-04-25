@@ -9,7 +9,10 @@ Master-up summary must prioritize:
 3. what changed
 4. what was intentionally not changed
 5. which files are owned by this change and which dirty files are unrelated
-6. whether `review_mvp` is requested or not
+6. whether watchdog audit was required and the final watchdog verdict
+7. whether Cross-Step Conflict Checkpoint was required and the final verdict
+8. whether `review_mvp` is requested or not
+9. whether the change is ready for the Step-end code review / fix / commit gate
 
 ```text
 [Subproject]
@@ -28,6 +31,10 @@ Master-up summary must prioritize:
 - mixed-change files requiring hunk-level staging:
 
 [Local review completed]
+- worker scope declaration:
+- watchdog audit required:
+- watchdog verdict:
+- watchdog unresolved warnings:
 - scope compliance:
 - local tests/checks:
 - generated-output/cache boundary:
@@ -51,9 +58,40 @@ Master-up summary must prioritize:
 - unknown:
 - inference:
 
+[Scope watchdog audit]
+- required / optional / not needed:
+- verdict: PASS / WARNING / BLOCKING_ISSUE / NEEDS_CLARIFICATION / not run
+- reason:
+- blocking findings:
+- warnings carried to master:
+
+[Cross-Step Conflict Checkpoint]
+- required / optional / not needed:
+- trigger:
+- review packet:
+- verdict: PASS / WARNING / BLOCKING_ISSUE / NEEDS_CLARIFICATION / not run
+- roadmap/order:
+- hard stops:
+- score/composite boundary:
+- valuation boundary:
+- diagnostics boundary:
+- handoff consistency:
+- generated-output boundary:
+- dirty worktree isolation:
+- warnings carried to master:
+- blocking findings:
+
 [review_mvp request]
 - required / optional / not needed
 - reason:
+
+[Step-end gate readiness]
+- integration validation evidence ready:
+- cross-step conflict checkpoint ready:
+- code review owner:
+- expected fix owner:
+- validation rerun plan:
+- commit scope:
 
 [Master decision requested]
 - ACCEPT / HOLD / REJECT

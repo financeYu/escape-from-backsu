@@ -15,6 +15,19 @@ ALLOWED_DOWNSTREAM_ROUTES = {
     "reject_log",
 }
 ALLOWED_MAIN_SCORE_BRANCHES = {"technical", "diagnostic", "out_of_scope", "unavailable"}
+DIAGNOSTIC_MANAGEMENT_LANES = {
+    "backtest_methodology",
+    "methodology_diagnostics",
+    "diagnostic_methodology",
+    "technical_diagnostics",
+    "market_context",
+}
+REGIONAL_CONTEXT_QUERY_SETS = {
+    "korea_kospi_context",
+    "korea_kospi_expanded",
+    "asia_pacific_equity_context",
+    "emerging_market_equity_anomalies",
+}
 
 
 def classify_paper(
@@ -24,57 +37,118 @@ def classify_paper(
 ) -> dict[str, Any]:
     text = _paper_text(paper)
     management_lane = _management_lane(paper)
+    branch_hint = _branch_hint(paper)
+    formula_clarity = _formula_clarity(paper)
     branch_hits = {
         branch: _keyword_hits(text, classification_config.get("branches", {}).get(branch, {}).get("keywords", []))
         for branch in ["technical", "valuation", "diagnostic", "out_of_scope"]
     }
+    required_input_boundary = _required_input_boundary(paper, text, classification_config)
+    forbidden_language_hits = _forbidden_valuation_language_hits(text, classification_config)
+    rule_names: list[str] = []
 
     if branch_hits["out_of_scope"]:
         branch = "out_of_scope"
-    elif management_lane == "backtest_methodology":
+        rule_names.append("classify_out_of_scope_keywords")
+    elif required_input_boundary == "hybrid":
+        branch = "hybrid"
+        rule_names.append("classify_required_inputs_boundary")
+    elif required_input_boundary == "valuation":
+        branch = "valuation"
+        rule_names.append("classify_required_inputs_boundary")
+    elif branch_hint == "hybrid":
+        branch = "hybrid"
+        rule_names.append("classify_hybrid_technical_valuation_split")
+    elif management_lane in DIAGNOSTIC_MANAGEMENT_LANES or branch_hint == "diagnostic":
         branch = "diagnostic"
+        rule_names.append("classify_methodology_diagnostic")
     elif branch_hits["diagnostic"] and not branch_hits["technical"] and not branch_hits["valuation"]:
         branch = "diagnostic"
+        rule_names.append("classify_methodology_diagnostic")
+    elif _market_context_without_formula(paper, formula_clarity) and not branch_hits["valuation"]:
+        branch = "diagnostic"
+        rule_names.append("classify_market_context_transfer_risk")
     elif branch_hits["technical"] and branch_hits["valuation"]:
         branch = "hybrid"
+        rule_names.append("classify_hybrid_technical_valuation_split")
     elif branch_hits["valuation"]:
         branch = "valuation"
+        rule_names.append("classify_required_inputs_boundary")
     elif branch_hits["technical"]:
         branch = "technical"
+        rule_names.append("classify_ohlcv_compatibility")
     elif branch_hits["diagnostic"]:
         branch = "diagnostic"
+        rule_names.append("classify_methodology_diagnostic")
     else:
         fallback = classification_config.get("fallback", {})
         branch = fallback.get("research_branch", "out_of_scope")
+        rule_names.append("classify_fallback_low_information")
+
+    language_guardrail_violation = bool(forbidden_language_hits and branch == "technical" and required_input_boundary is None)
+    if language_guardrail_violation:
+        branch = "out_of_scope"
+        rule_names.append("classify_forbidden_valuation_language")
 
     route = classification_config.get("routing", {}).get(branch, "reject_log")
     manual_review = _manual_review_required(branch, paper, policy_config)
-    formula_clarity = _formula_clarity(paper)
     if formula_clarity in {"vague", "not_specified"}:
         manual_review = True
+    if _market_context_without_formula(paper, formula_clarity):
+        manual_review = True
+    if language_guardrail_violation:
+        manual_review = True
+        route = "reject_log"
     if paper.get("is_retracted") is True:
         manual_review = True
         route = "reject_log"
 
     main_branch = _main_score_branch(branch)
     confidence = _confidence(branch, paper, formula_clarity, branch_hits)
+    required_inputs = _required_inputs(branch, branch_hits, paper, classification_config)
+    unavailable_inputs = _unavailable_inputs(branch)
+    paper_reported_backtest_present = _paper_reported_backtest_present(text)
+    ohlcv_compatible = _ohlcv_compatible(branch, required_inputs, text)
+    daily_frequency_compatible = _daily_frequency_compatible(text)
+    classification_reason_ko = _reason_ko(branch, branch_hits, paper, management_lane)
+    if language_guardrail_violation:
+        classification_reason_ko = "price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다."
     classification = {
         "research_branch": branch,
         "downstream_route": route,
         "main_score_branch_candidate": main_branch,
         "classification_confidence": confidence,
         "manual_review_required": manual_review,
-        "classification_reason_ko": _reason_ko(branch, branch_hits, paper, management_lane),
+        "classification_reason_ko": classification_reason_ko,
         "management_lane": management_lane,
+        "branch_hint": branch_hint,
         "source_query_sets": list(paper.get("research_query_sets", [])),
+        "rule_names": rule_names,
+        "guardrail_violations": ["language_guardrail_violation"] if language_guardrail_violation else [],
+        "manual_review_priority": _manual_review_priority(branch, manual_review, language_guardrail_violation, formula_clarity),
+        "paper_claim_type": "paper_reported_backtest" if paper_reported_backtest_present else "paper_claim_only",
+        "paper_reported_backtest_present": paper_reported_backtest_present,
+        "paper_reported_backtest_treatment": "diagnostic_note_only",
         "candidate_idea": {
             "candidate_name": paper.get("title"),
             "idea_summary_ko": _idea_summary_ko(paper, branch),
             "idea_summary_en": paper.get("abstract"),
             "signal_family_candidate": None if management_lane == "backtest_methodology" else _signal_family(text, classification_config),
-            "required_inputs": _required_inputs(branch, branch_hits),
-            "unavailable_inputs": _unavailable_inputs(branch),
+            "required_inputs": required_inputs,
+            "unavailable_inputs": unavailable_inputs,
+            "ohlcv_compatible": ohlcv_compatible,
+            "daily_frequency_compatible": daily_frequency_compatible,
             "point_in_time_fundamentals_required": branch in {"valuation", "hybrid"},
+            "valuation_content_present": branch in {"valuation", "hybrid"} or bool(branch_hits["valuation"]),
+            "hybrid_split_required": branch == "hybrid",
+            "technical_portion_summary": _technical_portion_summary(branch, paper),
+            "valuation_portion_summary": _valuation_portion_summary(branch, paper),
+            "universe_market": _universe_market(paper, text),
+            "universe_region": _universe_region(paper, text),
+            "universe_asset_class": _universe_asset_class(text),
+            "universe_frequency": _universe_frequency(text),
+            "universe_mismatch_risk": _universe_mismatch_risk(paper, text),
+            "transfer_assumption_required": _transfer_assumption_required(paper, text),
             "formula_clarity": formula_clarity,
             "implementation_readiness": _implementation_readiness(formula_clarity, branch),
         },
@@ -92,6 +166,10 @@ def validate_classification(classification: dict[str, Any]) -> None:
         raise ValueError("Invalid main_score_branch_candidate")
     if classification["research_branch"] == "valuation" and classification["main_score_branch_candidate"] == "valuation":
         raise ValueError("Valuation must not be emitted as main technical score branch.")
+    if classification["research_branch"] == "technical" and classification["candidate_idea"].get("point_in_time_fundamentals_required"):
+        raise ValueError("Technical candidates must not require point-in-time fundamentals.")
+    if classification.get("paper_reported_backtest_treatment") != "diagnostic_note_only":
+        raise ValueError("Paper-reported backtests must remain diagnostic metadata only.")
 
 
 def _paper_text(paper: dict[str, Any]) -> str:
@@ -127,6 +205,26 @@ def _manual_review_required(branch: str, paper: dict[str, Any], policy_config: d
     return False
 
 
+def _branch_hint(paper: dict[str, Any]) -> str | None:
+    hints: list[str] = []
+    hint = paper.get("research_branch_hint")
+    if hint:
+        hints.append(str(hint))
+    for value in paper.get("research_branch_hints") or []:
+        text = str(value)
+        if text not in hints:
+            hints.append(text)
+    if "hybrid" in hints:
+        return "hybrid"
+    if "valuation" in hints:
+        return "valuation"
+    if "diagnostic" in hints:
+        return "diagnostic"
+    if "technical" in hints:
+        return "technical"
+    return next(iter(hints), None)
+
+
 def _management_lane(paper: dict[str, Any]) -> str | None:
     lanes: list[str] = []
     lane = paper.get("research_management_lane")
@@ -138,6 +236,9 @@ def _management_lane(paper: dict[str, Any]) -> str | None:
             lanes.append(text)
     if "backtest_methodology" in lanes:
         return "backtest_methodology"
+    for lane in lanes:
+        if lane in DIAGNOSTIC_MANAGEMENT_LANES:
+            return lane
     if lanes:
         return str(lanes[0])
     return None
@@ -179,6 +280,8 @@ def _reason_ko(branch: str, hits: dict[str, list[str]], paper: dict[str, Any], m
         return "retracted flag가 있어 보수적으로 reject_log 및 수동 검토 대상으로 표시했습니다."
     if management_lane == "backtest_methodology" and branch == "diagnostic":
         return "backtest_methodology lane으로 수집되어 score 후보가 아닌 백테스트 설계/검증 diagnostic backlog로 분리했습니다."
+    if "language_guardrail_violation" in paper.get("guardrail_violations", []):
+        return "price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다."
     if branch == "hybrid":
         return "technical keyword와 valuation/fundamental keyword가 함께 감지되어 hybrid_split_required로 분리했습니다."
     if branch == "valuation":
@@ -210,7 +313,15 @@ def _signal_family(text: str, config: dict[str, Any]) -> str | None:
     return None
 
 
-def _required_inputs(branch: str, hits: dict[str, list[str]]) -> list[str]:
+def _required_inputs(
+    branch: str,
+    hits: dict[str, list[str]],
+    paper: dict[str, Any],
+    config: dict[str, Any],
+) -> list[str]:
+    explicit = _explicit_required_inputs(paper)
+    if explicit:
+        return explicit
     if branch == "valuation":
         return ["point_in_time_fundamentals", "daily_market_cap_or_price"]
     if branch == "hybrid":
@@ -232,3 +343,137 @@ def _implementation_readiness(formula_clarity: str, branch: str) -> int:
     if branch in {"valuation", "hybrid", "out_of_scope"}:
         return 0
     return {"exact": 3, "partial": 2, "vague": 1, "not_specified": 0}.get(formula_clarity, 0)
+
+
+def _explicit_required_inputs(paper: dict[str, Any]) -> list[str]:
+    values = paper.get("required_inputs") or paper.get("candidate_required_inputs") or []
+    if isinstance(values, str):
+        return [values]
+    return [str(value) for value in values if str(value).strip()]
+
+
+def _required_input_boundary(paper: dict[str, Any], text: str, config: dict[str, Any]) -> str | None:
+    explicit_inputs = " ".join(_explicit_required_inputs(paper))
+    valuation_terms = config.get("rules", {}).get("valuation_required_input_terms", [])
+    required_text = normalize_title(f"{explicit_inputs} {text}")
+    valuation_hits = _keyword_hits(required_text, valuation_terms)
+    if not valuation_hits:
+        return None
+    technical_hits = _keyword_hits(required_text, config.get("branches", {}).get("technical", {}).get("keywords", []))
+    return "hybrid" if technical_hits else "valuation"
+
+
+def _forbidden_valuation_language_hits(text: str, config: dict[str, Any]) -> list[str]:
+    return _keyword_hits(text, config.get("rules", {}).get("forbidden_price_only_valuation_language", []))
+
+
+def _market_context_without_formula(paper: dict[str, Any], formula_clarity: str) -> bool:
+    query_sets = set(paper.get("research_query_sets") or [])
+    query_set = paper.get("research_query_set")
+    if query_set:
+        query_sets.add(str(query_set))
+    return bool(query_sets & REGIONAL_CONTEXT_QUERY_SETS and formula_clarity in {"vague", "not_specified"})
+
+
+def _paper_reported_backtest_present(text: str) -> bool:
+    return bool(
+        _keyword_hits(
+            text,
+            [
+                "backtest",
+                "backtesting",
+                "out of sample",
+                "out-of-sample",
+                "walk forward",
+                "strategy performance",
+                "sharpe ratio",
+                "alpha",
+            ],
+        )
+    )
+
+
+def _ohlcv_compatible(branch: str, required_inputs: list[str], text: str) -> bool:
+    if branch != "technical":
+        return False
+    if any("fundamental" in normalize_title(value) for value in required_inputs):
+        return False
+    return not any(term in text for term in ["intraday", "tick data", "order book"])
+
+
+def _daily_frequency_compatible(text: str) -> bool:
+    return not any(term in text for term in ["intraday", "tick data", "high frequency", "order book"])
+
+
+def _technical_portion_summary(branch: str, paper: dict[str, Any]) -> str | None:
+    if branch not in {"technical", "hybrid"}:
+        return None
+    return f"{paper.get('title') or '제목 없음'} 중 daily OHLCV 또는 가격-거래량 기반 부분만 technical portion 후보입니다."
+
+
+def _valuation_portion_summary(branch: str, paper: dict[str, Any]) -> str | None:
+    if branch not in {"valuation", "hybrid"}:
+        return None
+    return "fundamental/valuation portion은 point-in-time 검증 전까지 technical 후보로 직접 전달하지 않습니다."
+
+
+def _universe_market(paper: dict[str, Any], text: str) -> str | None:
+    if "kospi" in text or "korean stock" in text:
+        return "KOSPI/Korean equity"
+    if "asia pacific" in text or "apac" in text:
+        return "Asia-Pacific equity"
+    if "emerging market" in text:
+        return "emerging market equity"
+    return paper.get("universe_market")
+
+
+def _universe_region(paper: dict[str, Any], text: str) -> str | None:
+    if "korea" in text or "korean" in text or "kospi" in text:
+        return "Korea"
+    if "asia pacific" in text or "apac" in text:
+        return "Asia-Pacific"
+    if "emerging market" in text:
+        return "Emerging markets"
+    return paper.get("universe_region")
+
+
+def _universe_asset_class(text: str) -> str:
+    if "option" in text:
+        return "options"
+    if "future" in text:
+        return "futures"
+    if "crypto" in text:
+        return "crypto"
+    return "equity"
+
+
+def _universe_frequency(text: str) -> str:
+    if "intraday" in text:
+        return "intraday"
+    if "tick data" in text:
+        return "tick"
+    return "daily_or_unspecified"
+
+
+def _universe_mismatch_risk(paper: dict[str, Any], text: str) -> bool:
+    query_sets = set(paper.get("research_query_sets") or [])
+    return bool(query_sets & {"asia_pacific_equity_context", "emerging_market_equity_anomalies"}) or any(
+        term in text for term in ["emerging market", "asia pacific", "apac"]
+    )
+
+
+def _transfer_assumption_required(paper: dict[str, Any], text: str) -> bool:
+    return _universe_mismatch_risk(paper, text) or _market_context_without_formula(paper, _formula_clarity(paper))
+
+
+def _manual_review_priority(
+    branch: str,
+    manual_review: bool,
+    language_guardrail_violation: bool,
+    formula_clarity: str,
+) -> str:
+    if language_guardrail_violation or branch in {"hybrid", "valuation"}:
+        return "high"
+    if manual_review or formula_clarity in {"vague", "not_specified"}:
+        return "medium"
+    return "low"

@@ -8,10 +8,12 @@ import re
 EVIDENCE_REQUIRED_TOP_LEVEL = [
     "evidence_card_id",
     "source_run_id",
+    "source",
     "paper",
     "extraction",
     "classification",
     "candidate_idea",
+    "backtest_context",
     "risks",
     "guardrails",
 ]
@@ -30,6 +32,21 @@ def generate_evidence_card(
         "evidence_card_id": _evidence_id(source_run_id, paper["canonical_paper_id"], parent_evidence_card_id),
         "parent_evidence_card_id": parent_evidence_card_id,
         "source_run_id": source_run_id,
+        "source": {
+            "source_adapter": paper.get("source_adapter") or next(iter(paper.get("source_adapters", [])), None),
+            "source_record_id": paper.get("source_record_id"),
+            "source_query_set": paper.get("source_query_set") or paper.get("research_query_set"),
+            "query_run_id": paper.get("query_run_id") or source_run_id,
+            "retrieved_at": paper.get("retrieved_at") or paper.get("collected_at_utc"),
+            "seed_origin_type": paper.get("seed_origin_type", "metadata_api"),
+            "seed_origin_is_evidence": False,
+            "canonical_resolution_status": paper.get("canonical_resolution_status", "resolved"),
+            "resolution_confidence": paper.get("resolution_confidence", "medium"),
+            "dedup_key": paper.get("dedup_key") or paper.get("canonical_paper_id"),
+            "duplicate_of": paper.get("duplicate_of"),
+            "metadata_license": paper.get("metadata_license") or paper.get("license"),
+            "citation_count_metadata_only": True,
+        },
         "paper": {
             "canonical_paper_id": paper["canonical_paper_id"],
             "doi": paper.get("doi"),
@@ -51,6 +68,7 @@ def generate_evidence_card(
             "extraction_scope": "abstract_only" if abstract else "metadata_only",
             "evidence_status": "abstract_supported" if abstract else "metadata_only",
             "abstract_available": bool(abstract),
+            "fulltext_available": bool(paper.get("fulltext_available", False)),
             "fulltext_used": False,
             "pdf_downloaded": False,
             "evidence_snippets_short": _abstract_snippets(abstract),
@@ -63,6 +81,13 @@ def generate_evidence_card(
             "classification_confidence": classification["classification_confidence"],
             "manual_review_required": bool(classification["manual_review_required"] or paper.get("is_retracted") is True),
             "classification_reason_ko": classification["classification_reason_ko"],
+            "card_scope": "research_ingestion_evidence",
+            "branch_hint": classification.get("branch_hint") or paper.get("research_branch_hint"),
+            "paper_claim_type": classification.get("paper_claim_type", "paper_claim_only"),
+            "paper_reported_backtest_treatment": classification.get("paper_reported_backtest_treatment", "diagnostic_note_only"),
+            "guardrail_violations": classification.get("guardrail_violations", []),
+            "rule_names": classification.get("rule_names", []),
+            "manual_review_priority": classification.get("manual_review_priority", "low"),
             "management_lane": classification.get("management_lane") or paper.get("research_management_lane"),
             "source_query_sets": classification.get("source_query_sets") or paper.get("research_query_sets", []),
         },
@@ -73,7 +98,19 @@ def generate_evidence_card(
             "signal_family_candidate": candidate.get("signal_family_candidate"),
             "required_inputs": candidate.get("required_inputs", []),
             "unavailable_inputs": candidate.get("unavailable_inputs", []),
+            "ohlcv_compatible": bool(candidate.get("ohlcv_compatible", branch == "technical")),
+            "daily_frequency_compatible": bool(candidate.get("daily_frequency_compatible", True)),
             "point_in_time_fundamentals_required": bool(candidate.get("point_in_time_fundamentals_required", False)),
+            "valuation_content_present": bool(candidate.get("valuation_content_present", branch in {"valuation", "hybrid"})),
+            "hybrid_split_required": bool(candidate.get("hybrid_split_required", branch == "hybrid")),
+            "technical_portion_summary": candidate.get("technical_portion_summary"),
+            "valuation_portion_summary": candidate.get("valuation_portion_summary"),
+            "universe_market": candidate.get("universe_market"),
+            "universe_region": candidate.get("universe_region"),
+            "universe_asset_class": candidate.get("universe_asset_class"),
+            "universe_frequency": candidate.get("universe_frequency"),
+            "universe_mismatch_risk": bool(candidate.get("universe_mismatch_risk", True)),
+            "transfer_assumption_required": bool(candidate.get("transfer_assumption_required", False)),
             "formula_clarity": candidate.get("formula_clarity", "not_specified"),
             "implementation_readiness": candidate.get("implementation_readiness", 0),
             "blocked_by_data": branch in {"valuation", "hybrid"} or paper.get("is_retracted") is True,
@@ -98,13 +135,33 @@ def generate_evidence_card(
             "point_in_time_data_risk_flag": branch in {"valuation", "hybrid"},
             "publication_bias_risk_flag": True,
             "redundancy_risk_flag": False,
+            "lookahead_risk": branch in {"valuation", "hybrid"},
+            "data_snooping_risk": True,
+            "transaction_cost_risk": True,
+            "survivorship_bias_risk": True,
+            "publication_bias_risk": True,
+            "redundancy_risk": False,
+            "universe_mismatch_risk": bool(candidate.get("universe_mismatch_risk", True)),
             "notes_ko": "논문 claim은 아직 검증된 alpha가 아니며, score adoption 전 별도 검토가 필요합니다.",
+        },
+        "backtest_context": {
+            "paper_reported_backtest_present": bool(classification.get("paper_reported_backtest_present", _contains(paper, "backtest"))),
+            "paper_reported_backtest_treatment": "diagnostic_note_only",
+            "reported_metrics": [],
+            "reported_universe": candidate.get("universe_market"),
+            "reported_period": None,
+            "transaction_costs_discussed": _contains(paper, "transaction cost"),
+            "survivorship_bias_discussed": _contains(paper, "survivorship"),
+            "lookahead_bias_discussed": _contains(paper, "lookahead"),
+            "reproducibility_level": "not_reported",
+            "limitations_ko": "Paper-reported backtest is diagnostic metadata only; repository backtest 또는 alpha 검증을 수행하지 않았습니다.",
         },
         "guardrails": {
             "paper_claim_not_verified": True,
             "no_score_adopted": True,
             "no_backtest_performed": True,
             "valuation_not_inferred_from_price": True,
+            "citation_count_metadata_only": True,
             "notes_ko": "EvidenceCard만 생성했고 score 채택, backtest, valuation review는 수행하지 않았습니다.",
         },
     }
@@ -142,8 +199,19 @@ def validate_evidence_card(card: dict[str, Any]) -> None:
             raise ValueError(f"EvidenceCard hard guardrail must be true: {field}")
     if card["extraction"].get("fulltext_used") or card["extraction"].get("pdf_downloaded"):
         raise ValueError("MVP EvidenceCards must not use fulltext/PDF by default.")
+    if card["source"].get("seed_origin_is_evidence") is not False:
+        raise ValueError("Discovery seeds must remain non-evidence until canonical metadata resolution.")
+    if card["source"].get("citation_count_metadata_only") is not True or card["guardrails"].get("citation_count_metadata_only") is not True:
+        raise ValueError("Citation counts must remain metadata only.")
+    if card["backtest_context"].get("paper_reported_backtest_treatment") != "diagnostic_note_only":
+        raise ValueError("Paper-reported backtest is diagnostic metadata only.")
     if card["classification"]["research_branch"] == "technical" and card["candidate_idea"].get("point_in_time_fundamentals_required"):
         raise ValueError("Technical EvidenceCard cannot require point-in-time fundamentals.")
+    if (
+        card["classification"]["research_branch"] == "technical"
+        and card["candidate_idea"].get("valuation_content_present")
+    ):
+        raise ValueError("Technical EvidenceCard cannot carry valuation content directly.")
 
 
 def _evidence_id(run_id: str, canonical_paper_id: str, parent: str | None) -> str:

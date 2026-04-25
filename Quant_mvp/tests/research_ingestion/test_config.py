@@ -23,6 +23,47 @@ def test_config_loading_from_project_root():
     assert config["policy"]["guardrails"]["pdf_download_default"] is False
 
 
+def test_expanded_query_sets_have_routing_metadata():
+    config = load_research_config(Path(__file__).resolve().parents[2])
+    expected_routes = {
+        "technical_trend_efficiency": ("technical", "technical_score_architect"),
+        "technical_time_series_momentum": ("technical", "technical_score_architect"),
+        "technical_cross_sectional_momentum": ("technical", "technical_score_architect"),
+        "technical_mean_reversion_extended": ("technical", "technical_score_architect"),
+        "technical_oscillator_divergence": ("technical", "technical_score_architect"),
+        "technical_breakout_confirmation": ("technical", "technical_score_architect"),
+        "technical_volatility_regime": ("diagnostic", "diagnostic_backlog"),
+        "technical_range_position": ("technical", "technical_score_architect"),
+        "technical_liquidity_proxy_daily": ("diagnostic", "diagnostic_backlog"),
+        "technical_volume_price_confirmation": ("technical", "technical_score_architect"),
+        "technical_correlation_redundancy": ("diagnostic", "diagnostic_backlog"),
+        "technical_rank_stability_diagnostics": ("diagnostic", "diagnostic_backlog"),
+        "technical_turnover_cost_diagnostics": ("diagnostic", "diagnostic_backlog"),
+        "methodology_multiple_testing": ("diagnostic", "diagnostic_backlog"),
+        "methodology_survivorship_lookahead": ("diagnostic", "diagnostic_backlog"),
+        "methodology_publication_bias": ("diagnostic", "diagnostic_backlog"),
+        "korea_kospi_expanded": ("technical", "technical_score_architect"),
+        "asia_pacific_equity_context": ("diagnostic", "diagnostic_backlog"),
+        "emerging_market_equity_anomalies": ("diagnostic", "diagnostic_backlog"),
+        "hybrid_technical_valuation_split": ("hybrid", "hybrid_split_required"),
+    }
+
+    for query_set_name, (branch, route) in expected_routes.items():
+        query_set = get_query_set(config, query_set_name)
+        assert query_set["name"] == query_set_name
+        assert query_set["branch_hint"] == branch
+        assert query_set["downstream_route"] == route
+        assert query_set["allowed_sources"] == ["arxiv", "openalex", "crossref", "semantic_scholar"]
+        assert query_set["region_scope"]
+        assert query_set["required_input_policy"]
+        assert query_set["refresh_cadence_days"] >= 14
+        assert query_set["precision_mode"] in {"balanced", "high_precision"}
+        assert query_set["notes"]
+
+    assert "technical_cross_sectional_momentum" in config["policy"]["refresh_policy"]["default_query_sets"]
+    assert "hybrid_technical_valuation_split" not in config["policy"]["refresh_policy"]["default_query_sets"]
+
+
 def test_find_project_root_from_master_workspace():
     master_root = Path(__file__).resolve().parents[3]
     quant_root = Path(__file__).resolve().parents[2]

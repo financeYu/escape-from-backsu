@@ -29,6 +29,8 @@ def resolve_seed(seed: dict[str, Any], candidates_by_source: dict[str, list[dict
         resolved.update(
             {
                 "canonical_lookup_status": "unresolved",
+                "lifecycle_status": "unresolved",
+                "canonical_resolution_status": "unresolved",
                 "matched_source": None,
                 "canonical_paper_id": None,
                 "resolution_confidence": "unresolved",
@@ -43,6 +45,8 @@ def resolve_seed(seed: dict[str, Any], candidates_by_source: dict[str, list[dict
         resolved.update(
             {
                 "canonical_lookup_status": "ambiguous",
+                "lifecycle_status": "resolved_ambiguous",
+                "canonical_resolution_status": "ambiguous",
                 "matched_source": ",".join(sorted({source for source, _, _ in matches})),
                 "canonical_paper_id": None,
                 "resolution_confidence": "low",
@@ -56,6 +60,8 @@ def resolve_seed(seed: dict[str, Any], candidates_by_source: dict[str, list[dict
     resolved.update(
         {
             "canonical_lookup_status": f"matched_{source}",
+            "lifecycle_status": "resolved_unique",
+            "canonical_resolution_status": f"matched_{source}",
             "matched_source": source,
             "canonical_paper_id": paper["canonical_paper_id"],
             "resolution_confidence": confidence,

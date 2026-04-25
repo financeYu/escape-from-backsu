@@ -108,3 +108,19 @@ Quant_mvp/agents/valuation/AGENTS.md
 ```
 
 메인 technical workflow는 valuation이 unavailable, deferred, blocked by data라고 기록할 수 있다. 하지만 valuation opinion을 만들어내면 안 된다.
+
+## Research Ingestion Evidence Boundary
+
+Research ingestion은 paper metadata, abstract, local discovery seed를 EvidenceCard로 정리하는 upstream 단계다.
+
+- EvidenceCard is not a score definition.
+- EvidenceCard is not an adoption decision.
+- Paper-reported backtest is diagnostic metadata only.
+- Citation count is metadata only, not evidence strength.
+- Scholar seeds are discovery inputs only.
+- PDF fulltext download is disabled by default.
+- Financial/fundamental data must not enter technical_composite_score or final_composite_score.
+
+PER, PBR, ROE, earnings, book value, analyst estimate, profitability, cash flow, enterprise value가 required input으로 감지되면 valuation 또는 hybrid route로 분리한다.
+
+price-only oversold, reversal, range-position, momentum 문헌은 technical condition으로만 기록할 수 있으며 cheap, value, undervalued, bargain 같은 valuation language를 쓰면 reject 또는 language guardrail violation으로 처리한다.

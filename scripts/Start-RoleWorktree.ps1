@@ -1,7 +1,7 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("codex", "quant", "research", "chart", "review", "audit", "docs", "hotfix")]
+    [ValidateSet("codex", "quant", "research", "chart", "review", "audit", "docs", "minor", "hotfix")]
     [string]$Role,
 
     [Parameter(Mandatory = $true)]

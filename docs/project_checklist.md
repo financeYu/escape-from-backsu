@@ -156,6 +156,9 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
 - Chart runtime, scanner, ranking, chart, CLI, GUI 변경은 minor/support branch인 `chart/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
 - Review는 minor/support branch인 `review/stepXX-<scope>` branch와 전용 worktree에서 수행하고, 명시적으로 배정된 최소 수리 외에는 구현 branch를 수정하지 않는다.
 - Audit/scope watchdog은 minor/support branch인 `audit/stepXX-<scope>` branch와 전용 worktree에서 수행한다.
+- 리뷰, 차트, 리서치, 문서 지원의 낮은 위험 마이너 패치는 사용자 또는 root/master가 명시적으로 묶어도 된다고 지정한 경우 Step별 단일 minor/support branch인 `minor/stepXX-<scope>` branch와 전용 worktree에서 관리할 수 있다.
+- 단일 minor branch는 `WORKSPACE_MANIFEST.md`에 모든 allowed write path를 명시해야 하며, 런타임 동작, contract/schema, generated-output boundary, roadmap verdict, Level 3 gate-critical risk를 건드리면 역할별 minor branch로 다시 분리한다.
+- 모든 minor/support branch는 병합 완료 후 local/remote branch 삭제 대상이며, 감사나 재현을 위해 보존해야 할 때만 root/master가 보존 사유를 기록한다.
 - Master workspace는 merge, validation, Cross-Step Conflict Checkpoint, status-control, context refresh에만 사용한다.
 - 모든 하위 에이전트와 non-master worktree는 편집 전 role branch를 먼저 만들거나 선택하고, 루트 `WORKSPACE_MANIFEST.md`를 작성한 뒤 작업한다.
 - Minor/support branch는 final Step status, roadmap verdict, master integration policy를 수정하지 않는다. 필요한 변경은 handoff/TODO/risk note로 master에 올린다.

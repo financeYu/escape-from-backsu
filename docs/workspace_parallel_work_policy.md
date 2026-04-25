@@ -170,6 +170,13 @@ Requirements:
 - git status/diff review before handoff
 - branch-local commit after focused validation passes
 
+When the user or root/master explicitly assigns a bundled minor-patch scope,
+low-risk review, chart, research, and docs-only support patches for the same
+Step may share one `minor/stepXX-<scope>` branch and worktree. The manifest must
+list every allowed write path, and the work must split back into role-specific
+branches if it touches runtime behavior, contracts, generated-output
+boundaries, roadmap verdicts, or any Level 3 risk.
+
 Do not pre-create review or audit worktrees for Level 1 work unless the master
 explicitly assigns them or the change reveals a boundary risk.
 
@@ -221,6 +228,7 @@ Branch classes:
 
 - Major Step branch: the roadmap Step implementation branch that carries the bounded Step deliverable, normally `codex/stepXX-<scope>`.
 - Minor/support branch: a role-specific branch for Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, or docs-only support. Minor/support branches feed master integration but do not own final Step status.
+- Unified minor patch branch: a Step-scoped minor/support branch, normally `minor/stepXX-<scope>`, for explicitly assigned low-risk review, chart, research, or docs-only support patches that are small enough to share one manifest and one handoff.
 
 Required role separation:
 
@@ -232,12 +240,13 @@ Required role separation:
 | Chart runtime | Minor/support | scanner, cache, ranking, chart, CLI, GUI implementation | `chart/stepXX-<scope>` | `chart_mvp/` runtime code/tests/config |
 | Review | Minor/support | code review findings or explicitly assigned minimal repair | `review/stepXX-<scope>` | `review_mvp/` or review notes |
 | Audit / scope watchdog | Minor/support | scope, roadmap, terminology, and boundary checks | `audit/stepXX-<scope>` | audit reports or compact packets |
+| Minor patch bundle | Minor/support | explicitly assigned low-risk review, chart, research, or docs-only support patches for one Step | `minor/stepXX-<scope>` | manifest-listed support paths only |
 | Master integration | Integration only | merge/validation/status-control only | existing master workspace or `docs/stepXX-integration` when a docs-only branch is assigned | root governance/status docs |
 
 Process:
 
 1. Read `docs/project_checklist.md`, `docs/roadmap_status.md`, and this policy.
-2. Classify the task as major Step implementation or minor/support work: Quant score/governance, research, chart runtime, review, audit, or master integration.
+2. Classify the task as major Step implementation or minor/support work: Quant score/governance, research, chart runtime, review, audit, bundled minor patch, or master integration.
 3. Create or select a worktree whose branch matches exactly one role.
 4. Add a root-level `WORKSPACE_MANIFEST.md` before editing project files.
 5. Keep each worktree's writes inside its manifest and role boundary.
@@ -250,7 +259,8 @@ still allowed, but the branch name and manifest must match this policy.
 
 Do not reuse a Step implementation branch for chart runtime fixes unless the
 manifest already declares chart runtime ownership for that exact Step slice. Do
-not reuse quant, chart, research, review, or audit branches for roadmap status updates.
+not reuse quant, chart, research, review, audit, or unified minor patch branches
+for roadmap status updates.
 If review finds a required fix, route the fix back to the narrowest responsible
 implementation or chart worktree, or create a new `codex/stepXX-fix-...` /
 `chart/stepXX-fix-...` branch with its own manifest.
@@ -576,6 +586,7 @@ Recommended branch prefixes:
 - `chart/stepXX-...`
 - `audit/stepXX-...`
 - `docs/...`
+- `minor/stepXX-...`
 - `hotfix/...`
 
 Good examples:
@@ -587,6 +598,7 @@ Good examples:
 - `research/step15-handoff`
 - `audit/step15-scope`
 - `docs/step15-worktree-speed`
+- `minor/step16-support-patches`
 - `hotfix/step13-report-guardrail`
 
 Bad examples to avoid:
@@ -618,6 +630,9 @@ active work, but new Step 15+ branches should use the role/step/scope pattern.
 12. Required fixes go back to the narrowest responsible implementation, chart, review, or support worktree unless master/root explicitly approves a direct integration repair.
 13. Before moving to the next roadmap Step, master runs the Step-end review/check sequence: integration validation, Cross-Step Conflict Checkpoint, required review/audit, required fixes, affected reruns, final Step verdict, and context refresh.
 14. Master commits final integrated Step state after the Step-end gate passes.
+15. After a minor/support branch is successfully merged and no unresolved handoff
+    depends on the branch tip, delete the merged local and remote branch unless
+    root/master records a specific retention reason.
 
 Do not merge a second worker branch until the current branch's integration risk and conflicts are understood.
 

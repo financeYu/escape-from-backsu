@@ -19,6 +19,9 @@ from src.scanner.latest_ranking import (  # noqa: E402
     validate_step15_latest_ranking_output,
 )
 from src.selection.adoption_synthesis_contracts import Step14AdoptionState  # noqa: E402
+from src.validation.step15_latest_ranking_guardrails import (  # noqa: E402
+    validate_step15_latest_ranking_output as validate_step15_guardrail_output,
+)
 
 
 def normalized_score_frame() -> pd.DataFrame:
@@ -152,6 +155,15 @@ def test_latest_ranking_uses_latest_date_and_direct_adopted_scores_only() -> Non
     assert output["ticker"].tolist() == ["005930", "000660", "035420"]
     assert output["rank"].tolist() == [1, 2, 3]
     assert output["date"].tolist() == ["2026-01-03", "2026-01-03", "2026-01-03"]
+    assert output.columns[:7].tolist() == [
+        "ticker",
+        "date",
+        "rank",
+        "technical_composite_score",
+        "final_composite_score",
+        "coverage_metric",
+        "data_quality_flag",
+    ]
     assert "atr_adjusted_oversold_distance_cross_sectional_robust_z" not in output.columns
     assert output.loc[0, "mean_reversion_family_score"] == pytest.approx(3.0)
     assert output.loc[0, "trend_breakout_family_score"] == pytest.approx(0.5)
@@ -227,3 +239,25 @@ def test_output_validator_rejects_non_step15_boundary_columns() -> None:
 
     with pytest.raises(ValueError, match="forbidden Step 15 columns"):
         validate_step15_latest_ranking_output(bad)
+
+
+def test_latest_ranking_output_satisfies_step15_guardrail_validator() -> None:
+    output = build_latest_ranking_output(normalized_score_frame(), adoption_synthesis_table())
+
+    validate_step15_guardrail_output(output, as_of_date="2026-01-03")
+
+
+def test_future_dates_and_unsafe_tickers_are_rejected() -> None:
+    future = normalized_score_frame()
+    future.loc[future["date"] == "2026-01-03", "date"] = "2026-01-04"
+    with pytest.raises(ValueError, match="future dates"):
+        build_latest_ranking_output(
+            future,
+            adoption_synthesis_table(),
+            max_allowed_date="2026-01-03",
+        )
+
+    unsafe_ticker = normalized_score_frame()
+    unsafe_ticker.loc[unsafe_ticker["ticker"] == "005930", "ticker"] = "5930"
+    with pytest.raises(ValueError, match="six-digit string"):
+        build_latest_ranking_output(unsafe_ticker, adoption_synthesis_table())

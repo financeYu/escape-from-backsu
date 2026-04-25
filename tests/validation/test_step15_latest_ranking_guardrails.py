@@ -230,6 +230,20 @@ def test_direct_input_plan_allows_known_technical_candidate_signal_normalized_co
     validate_step15_input_plan(frame)
 
 
+def test_conditional_adopted_rows_are_not_direct_step15_inputs() -> None:
+    frame = input_plan(
+        [
+            input_plan_row(
+                adoption_state="conditional_adopted",
+                step15_usage=Step15Usage.DIRECT_SCORE_INPUT.value,
+            )
+        ]
+    )
+
+    with pytest.raises(ValueError, match="adoption_state cannot be direct"):
+        validate_step15_input_plan(frame)
+
+
 def test_direct_input_plan_rejects_context_diagnostic_or_manual_review_rows() -> None:
     diagnostic_direct = input_plan(
         [

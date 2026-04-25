@@ -45,12 +45,12 @@ STEP15_DIRECT_ADOPTION_STATES = frozenset(
     {
         "core_adopted",
         "technical_only",
-        "conditional_adopted",
     }
 )
 
 STEP15_REVIEW_OR_EXCLUDED_STATES = frozenset(
     {
+        "conditional_adopted",
         "regime_only",
         "diagnostic_only",
         "research_only",

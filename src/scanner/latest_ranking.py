@@ -43,10 +43,11 @@ STEP15_DIRECT_RANKING_STATES = frozenset(
 STEP15_BASE_OUTPUT_COLUMNS: tuple[str, ...] = (
     "ticker",
     "date",
+    "rank",
     "technical_composite_score",
     "final_composite_score",
-    "rank",
     "coverage_metric",
+    "data_quality_flag",
     "coverage_status",
     "ranking_validity_flag",
     "valid_score_count",
@@ -163,6 +164,7 @@ def build_latest_ranking_output(
     adoption_synthesis: pd.DataFrame,
     *,
     as_of_date: object | None = None,
+    max_allowed_date: object | None = None,
     top_n: int | None = None,
     registry: Sequence[CompositeInputSpec] = DEFAULT_COMPOSITE_INPUT_REGISTRY,
     policy: Step15RankingPolicy = DEFAULT_STEP15_RANKING_POLICY,
@@ -184,7 +186,11 @@ def build_latest_ranking_output(
         policy=policy,
     )
 
-    latest_frame = _latest_date_frame(normalized_frame, as_of_date=as_of_date)
+    latest_frame = _latest_date_frame(
+        normalized_frame,
+        as_of_date=as_of_date,
+        max_allowed_date=max_allowed_date,
+    )
     ranking_specs, review_routed_score_count = _direct_ranking_specs(
         adoption_frame,
         registry=registry,
@@ -226,6 +232,7 @@ def build_latest_ranking_output(
         expected_score_count=expected_score_count,
     )
     working["ranking_validity_flag"] = _validity_flag(working["coverage_status"])
+    working["data_quality_flag"] = working["ranking_validity_flag"]
     working["valid_score_count"] = valid_score_count.astype("int64")
     working["expected_score_count"] = expected_score_count
     working["review_routed_score_count"] = review_routed_score_count
@@ -285,6 +292,7 @@ def validate_step15_latest_ranking_output(frame: pd.DataFrame) -> None:
     require_columns(frame, STEP15_BASE_OUTPUT_COLUMNS, context="Step 15 latest ranking output")
     assert_no_forbidden_step15_columns(frame.columns, context="Step 15 latest ranking output")
     _assert_single_latest_date(frame)
+    _assert_tickers_are_safe_strings(frame)
     _assert_unique_ticker_date(frame)
     _assert_allowed_output_status_values(frame)
     _assert_rank_order(frame)
@@ -319,13 +327,30 @@ def assert_no_forbidden_step15_columns(
         raise ValueError(f"{context} contains forbidden Step 15 columns: {', '.join(forbidden)}")
 
 
-def _latest_date_frame(frame: pd.DataFrame, *, as_of_date: object | None) -> pd.DataFrame:
+def _latest_date_frame(
+    frame: pd.DataFrame,
+    *,
+    as_of_date: object | None,
+    max_allowed_date: object | None,
+) -> pd.DataFrame:
     date_key = pd.to_datetime(frame["date"], errors="raise")
+    max_allowed = (
+        pd.Timestamp.today().normalize()
+        if max_allowed_date is None
+        else pd.to_datetime(max_allowed_date, errors="raise").normalize()
+    )
+    future_dates = date_key.dt.normalize().gt(max_allowed)
+    if future_dates.any():
+        raise ValueError(
+            "Step 15 normalized input contains future dates beyond max_allowed_date."
+        )
     selected_date = (
         pd.to_datetime(as_of_date, errors="raise")
         if as_of_date is not None
         else date_key.max()
     )
+    if selected_date.normalize() > max_allowed:
+        raise ValueError("Step 15 as_of_date cannot be in the future.")
     mask = date_key.eq(selected_date)
     if not mask.any():
         raise ValueError(
@@ -459,12 +484,13 @@ def _ordered_output_columns(
     return (
         "ticker",
         "date",
-        *score_columns,
-        *family_columns,
+        "rank",
         "technical_composite_score",
         "final_composite_score",
-        "rank",
         "coverage_metric",
+        "data_quality_flag",
+        *score_columns,
+        *family_columns,
         "coverage_status",
         "ranking_validity_flag",
         "valid_score_count",
@@ -484,6 +510,15 @@ def _assert_unique_ticker_date(frame: pd.DataFrame) -> None:
     duplicate_keys = frame.duplicated(list(IDENTITY_COLUMNS))
     if duplicate_keys.any():
         raise ValueError("Step 15 latest ranking output contains duplicate ticker/date rows.")
+
+
+def _assert_tickers_are_safe_strings(frame: pd.DataFrame) -> None:
+    invalid = frame["ticker"].map(lambda value: not isinstance(value, str) or value.strip() == "")
+    if invalid.any():
+        raise ValueError("Step 15 ticker values must be non-empty strings.")
+    unsafe = frame["ticker"].map(lambda value: len(value) != 6 or not value.isdigit())
+    if unsafe.any():
+        raise ValueError("Step 15 ticker values must preserve six-digit string format.")
 
 
 def _assert_allowed_output_status_values(frame: pd.DataFrame) -> None:

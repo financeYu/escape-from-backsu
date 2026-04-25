@@ -235,7 +235,15 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
   - Focused Step 17 validation: `tests/backtest` = 18 passed; `tests/validation/test_step17_backtest_guardrails.py` = 39 passed; `tests/reports` = 68 passed; related scanner/reports/validation = 188 passed.
   - `review_mvp` specialist review found no high findings; the only Step 17 medium static warning was a false positive around guarded `start_positions[0]`; remaining Step 17 findings are non-blocking style/length warnings.
   - Cross-Step Conflict Checkpoint passed with no blocking roadmap/order, Step 18 valuation/fundamental leakage, future-return leakage, trading-signal leakage, Step 15 ranking rewrite, Step 16 report rewrite, generated-output boundary break, return-feedback loop, or dirty-worktree issue.
-- Step 18 valuation/fundamental expansion = DEFERRED
+- Step 18 = COMPLETE
+  - Candidate-only valuation/fundamental contracts, allowed metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
+  - Candidate records require valid `available_date` or `as_of_date`; missing availability dates, future availability relative to evaluation date, unknown metrics, non-numeric or infinite values, unsafe imputation, and registry/category/unit mismatches are rejected.
+  - `config/valuation_fundamental_metrics.toml` keeps all metrics candidate-only and disables technical composite integration, final composite integration, backtest integration, alpha validation, and external network calls.
+  - Step 18 does not create a valuation score, fundamental score, valuation-aware composite, ranking output, backtest input path, alpha validation, trading signal, or later-Step behavior.
+  - Latest local validation: `python -m pytest -q` = 638 passed, 4 skipped, 25 subtests passed.
+  - Focused Step 18 validation: 31 passed.
+  - Related technical scoring / normalization / Step 17 validation: 149 passed.
+  - `review_mvp` specialist static review found no high or medium findings; remaining low style findings are non-blocking.
 - Research ingestion scope expansion note:
   - `docs/research_ingestion_expansion.md` documents expanded paper query-set coverage, source expansion candidates, seed lifecycle, new-only run artifacts, and the separated `reserch_mvp` ownership boundary.
   - EvidenceCard is not a score definition.
@@ -321,5 +329,5 @@ Step 20: ...
 - financial data를 `technical_composite_score`에 넣지 않는다.
 - financial data를 `final_composite_score`에 넣지 않는다.
 - price-only evidence에 valuation language를 쓰지 않는다.
-- valuation status가 deferred인 동안 valuation/fundamental scoring을 하지 않는다.
+- valuation status가 candidate-only인 동안 active valuation/fundamental scoring을 하지 않는다.
 - active Step이 명시적으로 허용하기 전에는 ranking generation을 하지 않는다.

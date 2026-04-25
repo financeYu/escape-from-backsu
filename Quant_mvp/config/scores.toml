@@ -181,4 +181,6 @@ minimum_history = 60
 score_direction = "higher_is_cleaner_positive_signed_trend_if_signed_variant_selected"
 blocked_by_data = false
 definition_doc_anchor = "efficiency_ratio_trend"
-notes = "Signed versus unsigned role must be fixed before implementation."
+step9_formula_variant = "signed_return_direction_times_efficiency_ratio"
+step9_formula_window_source = "Quant_mvp/config/windows.toml [statistics].efficiency_ratio"
+notes = "Signed trend-efficiency role is locked for Step 9 raw testing; later review may adopt, defer, downgrade, or reject it."

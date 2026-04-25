@@ -16,6 +16,7 @@ from src.scores.trend_vol_flow_scores import (
     PART_B_RAW_SCORE_COLUMNS,
     TrendVolFlowScoreWindows,
     calculate_trend_vol_flow_raw_scores,
+    load_part_b_score_windows,
 )
 
 
@@ -42,6 +43,25 @@ def part_b_frame(*, ticker: str = "005930") -> pd.DataFrame:
             "cmf_3": [math.nan, math.nan, 0.20, -0.25],
             "efficiency_ratio_3": [math.nan, math.nan, math.nan, 0.75],
             "return_3d": [math.nan, math.nan, math.nan, 0.40],
+        }
+    )
+
+
+def default_config_part_b_frame(*, rows: int = 60) -> pd.DataFrame:
+    dates = pd.date_range("2026-01-01", periods=rows, freq="D")
+    close = [100.0 + idx for idx in range(rows)]
+    return pd.DataFrame(
+        {
+            "ticker": ["005930"] * rows,
+            "date": dates,
+            "close": close,
+            "history_count": list(range(1, rows + 1)),
+            "warmup_state": ["ready"] * rows,
+            "donchian_high_prior_20": [math.nan] * (rows - 1) + [158.0],
+            "bollinger_width_20": [0.10] * rows,
+            "cmf_20": [0.20] * rows,
+            "efficiency_ratio_20": [0.80] * rows,
+            "return_20d": [math.nan] * (rows - 1) + [0.20],
         }
     )
 
@@ -116,6 +136,25 @@ def test_part_b_preserves_ticker_leading_zero_string() -> None:
 
     assert result["ticker"].iloc[0] == "005930"
     assert str(result["ticker"].dtype) == "string"
+
+
+def test_part_b_rejects_invalid_or_leading_zero_lost_ticker() -> None:
+    with pytest.raises(ValueError, match="ticker must be six-character"):
+        calculate_trend_vol_flow_raw_scores(
+            part_b_frame(ticker="5930"), windows=part_b_windows()
+        )
+
+
+def test_part_b_rejects_future_dates_when_as_of_date_is_supplied() -> None:
+    frame = part_b_frame()
+    frame.loc[3, "date"] = "2026-02-01"
+
+    with pytest.raises(ValueError, match="future dates"):
+        calculate_trend_vol_flow_raw_scores(
+            frame,
+            windows=part_b_windows(),
+            as_of_date="2026-01-31",
+        )
 
 
 def test_part_b_marks_insufficient_history_without_optimistic_fill() -> None:
@@ -238,3 +277,28 @@ def test_part_b_blocks_missing_indicator_dependency_without_part_a_requirements(
     assert last["cmf_confirmation_missing_reason"] == "missing_dependency"
     assert "cmf_confirmation_raw" in result.columns
     assert "rsi_price_divergence_raw" not in result.columns
+
+
+def test_default_part_b_config_loads_quant_registry_values() -> None:
+    config = load_part_b_score_windows(
+        windows_config_path=PROJECT_ROOT / "Quant_mvp" / "config" / "windows.toml",
+        scores_config_path=PROJECT_ROOT / "Quant_mvp" / "config" / "scores.toml",
+    )
+
+    assert config.donchian == 20
+    assert config.bollinger == 20
+    assert config.cmf == 20
+    assert config.efficiency_ratio == 20
+    assert config.minimum_history_required == 60
+
+
+def test_part_b_default_call_uses_quant_config_windows() -> None:
+    result = calculate_trend_vol_flow_raw_scores(default_config_part_b_frame())
+
+    last = result.iloc[-1]
+    assert last["minimum_history_required"] == 60
+    assert last["donchian_breakout_distance_raw"] == pytest.approx((159.0 / 158.0) - 1.0)
+    assert last["bollinger_width_squeeze_raw"] == pytest.approx(-0.10)
+    assert last["cmf_confirmation_raw"] == pytest.approx(0.20)
+    assert last["efficiency_ratio_trend_raw"] == pytest.approx(0.80)
+    assert last["score_coverage_status"] == "adequate"

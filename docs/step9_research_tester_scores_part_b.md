@@ -27,7 +27,10 @@ Score별 dependency:
 - `cmf_confirmation`: `cmf_N`
 - `efficiency_ratio_trend`: `efficiency_ratio_N`, `return_Nd` 또는 `close`
 
-기본 window는 현재 Step 7 root config와 맞춘다.
+기본 window는 `Quant_mvp/config/windows.toml`에서 로드하며 현재 Step 7
+indicator dependency window와 맞춘다. `minimum_history_required`는
+`Quant_mvp/config/scores.toml`의 Part B score 후보 minimum history에서
+보수적으로 산출한다.
 
 - `donchian = 20`
 - `bollinger = 20`

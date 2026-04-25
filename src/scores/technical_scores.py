@@ -58,7 +58,11 @@ def calculate_all_raw_scores(
         config=part_a_config,
         as_of_date=as_of_date,
     )
-    part_b = calculate_trend_vol_flow_raw_scores(frame, windows=part_b_windows)
+    part_b = calculate_trend_vol_flow_raw_scores(
+        frame,
+        windows=part_b_windows,
+        as_of_date=as_of_date,
+    )
     _assert_same_identity(part_a, part_b)
 
     output = part_a.loc[:, list(IDENTITY_COLUMNS)].copy()

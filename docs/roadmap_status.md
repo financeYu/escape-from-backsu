@@ -2,9 +2,10 @@
 
 ## 현재 활성 단계
 
-Step 10 = normalization policy implementation, NEXT / not started
-Recently completed: Step 9 = Research Tester MVP raw score implementation, COMPLETE
-Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10 technical scoring.
+Step 11 = Composite Score structure design, COMPLETE
+Next gated stage: Step 12 = redundancy / correlation diagnostics, WAITING / not started
+Recently completed: Step 11 = Composite Score structure design, COMPLETE
+Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11 technical scoring.
 
 ## 현재 판정
 
@@ -17,7 +18,78 @@ Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 1
 - Step 7 verdict: COMPLETE
 - Step 8 verdict: COMPLETE
 - Step 9 status: COMPLETE
-- Step 10 status: NEXT / not started
+- Step 10 status: COMPLETE
+- Step 11 status: COMPLETE
+- Step 12 status: WAITING / not started
+- Step 13 status: WAITING / not started
+- Step 15 status: WAITING / not started
+- Step 17 status: WAITING / not started
+- Step 18 status: DEFERRED / waiting for valuation expansion
+
+## Step 11 통합 상태
+
+완료:
+
+- `docs/step11_composite_score_design.md` 작성
+- `src/composite/contracts.py`에 Step 11 composite input registry skeleton 추가
+- `src/composite/schema.py`에 Step 11 schema/guardrail validation helper 추가
+- `tests/test_step11_composite_schema.py` 추가
+- Step 9 raw score와 Step 10 normalized score를 composite input 후보로만 분류
+- eight MVP score를 `mean_reversion`, `trend_breakout`, `volatility_context`, `volume_flow` composite family로 매핑
+- `candidate_signal`, `confirmation`, `setup_context`, `diagnostic_context` role semantics 명시
+- `eligible`, `conditional`, `diagnostic_only`, `blocked` composite eligibility semantics 명시
+- composite calculation readiness가 현재 `design_only`이며 Step 12/13 review 이전 계산 불가임을 명시
+- `realized_vol_percentile`은 diagnostic/context-only, `bollinger_width_squeeze`는 setup/regime context, `cmf_confirmation`은 confirmation candidate로 제한
+- mean reversion, trend/breakout, volatility context cluster 중복 위험 문서화
+- normalized score 방향성, missing/warmup/coverage, Step 12/13/15/17/18 경계 문서화
+- config-first `weights.toml` 설계안은 문서 예시로만 제시하고 production enable flag는 변경하지 않음
+
+유지되는 제한:
+
+- composite score implementation 없음
+- `technical_composite_score` / `final_composite_score` 생성 없음
+- ranking generation 없음
+- latest ranking 없음
+- backtest 없음
+- forward/future return 계산 없음
+- valuation/fundamental scoring 없음
+- production runtime 연결 없음
+
+검증:
+
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/test_step11_composite_schema.py`: 9 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/test_step10_normalization_timeseries.py tests/test_step10_normalization_cross_sectional.py tests/test_step10_normalization_diagnostics.py`: 26 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest`: 225 passed, 4 skipped
+- Step 11 통합 점검에서 A 설계 문서와 B schema registry의 family/role/eligibility 용어를 설계 문서 기준으로 정렬
+
+## Step 10 통합 상태
+
+완료:
+
+- `src/scores/normalization_timeseries.py`에 ticker-local time-series robust z-score normalization primitive 추가
+- `src/scores/normalization_cross_sectional.py`에 same-date cross-sectional robust z-score primitive 추가
+- `src/scores/normalization_diagnostics.py`에 Step 10B diagnostic summary helpers 추가
+- `src/scores/__init__.py`에 Step 10 public API export 정리
+- `src/scores/schema.py`에 forbidden output guardrail 키워드 보강
+- `tests/test_step10_normalization_timeseries.py` 추가
+- `tests/test_step10_normalization_cross_sectional.py` 추가
+- `tests/test_step10_normalization_diagnostics.py` 추가
+- `docs/step10_normalization_policy.md` 작성 및 Part A/B 통합 schema 반영
+
+유지되는 제한:
+
+- ranking generation 없음
+- composite scoring 없음
+- backtest 없음
+- forward/future return 계산 없음
+- valuation/fundamental scoring 없음
+- production scanner/ranking 연결 없음
+
+검증:
+
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/test_step10_normalization_timeseries.py tests/test_step10_normalization_cross_sectional.py tests/test_step10_normalization_diagnostics.py`: 26 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest tests/test_step9_scores_part_a.py tests/test_step9_scores_part_b.py tests/test_step9_scores_integration.py tests/data_validation/test_step8_protocol_guardrails.py tests/indicators/test_step7_indicators.py tests/preprocess/test_step6_preprocess.py`: 57 passed
+- 2026-04-25 기준 `$env:PYTHONPATH="src"; python -m pytest`: 216 passed, 4 skipped
 
 ## Step 9 Part A/B 통합 상태
 
@@ -90,7 +162,7 @@ Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 1
 - valuation/fundamental scoring 없음
 - Step 8 자체 산출물에는 score implementation 없음
 - Step 9 raw score implementation 상태는 위 Step 9 section에 별도 기록
-- Step 10 normalization implementation은 아직 시작하지 않음
+- Step 10 normalization implementation은 위 Step 10 통합 상태에 COMPLETE로 기록
 
 검증:
 

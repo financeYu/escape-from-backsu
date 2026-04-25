@@ -9,8 +9,11 @@ backtest fields.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, datetime
+from pathlib import Path
 import re
-from typing import Iterable
+import tomllib
+from typing import Iterable, Mapping
 
 import pandas as pd
 
@@ -29,7 +32,14 @@ PART_B_RAW_SCORE_COLUMNS = (
 PART_B_MISSING_REASON_COLUMNS = tuple(
     column.removesuffix("_raw") + "_missing_reason" for column in PART_B_RAW_SCORE_COLUMNS
 )
+PART_B_SCORE_NAMES = (
+    "donchian_breakout_distance",
+    "bollinger_width_squeeze",
+    "cmf_confirmation",
+    "efficiency_ratio_trend",
+)
 IDENTITY_COLUMNS = ("ticker", "date")
+TICKER_PATTERN = re.compile(r"^[0-9A-Z]{6}$")
 METADATA_COLUMNS = (
     "score_warmup_state",
     "score_coverage_status",
@@ -58,17 +68,53 @@ FORBIDDEN_OUTPUT_COLUMNS = {
 class TrendVolFlowScoreWindows:
     """Config-selected windows for Step 9 Part B raw scores."""
 
-    donchian: int = 20
-    bollinger: int = 20
-    cmf: int = 20
-    efficiency_ratio: int = 20
-    minimum_history_required: int = 60
+    donchian: int
+    bollinger: int
+    cmf: int
+    efficiency_ratio: int
+    minimum_history_required: int
+
+
+def load_part_b_score_windows(
+    *,
+    windows_config_path: str | Path = "Quant_mvp/config/windows.toml",
+    scores_config_path: str | Path = "Quant_mvp/config/scores.toml",
+) -> TrendVolFlowScoreWindows:
+    """Load Step 9 Part B score windows and minimum history from config."""
+
+    windows_config = _load_toml(Path(windows_config_path))
+    scores_config = _load_toml(Path(scores_config_path))
+    minimum_history_by_score = _part_b_minimum_history_by_score(scores_config)
+    return TrendVolFlowScoreWindows(
+        donchian=_positive_int(
+            windows_config.get("indicators", {}).get("donchian"),
+            "indicators.donchian",
+            "Quant_mvp/config/windows.toml",
+        ),
+        bollinger=_positive_int(
+            windows_config.get("indicators", {}).get("bollinger"),
+            "indicators.bollinger",
+            "Quant_mvp/config/windows.toml",
+        ),
+        cmf=_positive_int(
+            windows_config.get("indicators", {}).get("cmf"),
+            "indicators.cmf",
+            "Quant_mvp/config/windows.toml",
+        ),
+        efficiency_ratio=_positive_int(
+            windows_config.get("statistics", {}).get("efficiency_ratio"),
+            "statistics.efficiency_ratio",
+            "Quant_mvp/config/windows.toml",
+        ),
+        minimum_history_required=max(minimum_history_by_score.values()),
+    )
 
 
 def calculate_trend_vol_flow_raw_scores(
     frame: pd.DataFrame,
     *,
     windows: TrendVolFlowScoreWindows | None = None,
+    as_of_date: date | datetime | pd.Timestamp | str | None = None,
 ) -> pd.DataFrame:
     """Calculate Step 9 Part B raw scores from Step 7 indicator output.
 
@@ -76,8 +122,8 @@ def calculate_trend_vol_flow_raw_scores(
     score-level metadata, and score-specific missing reason columns.
     """
 
-    config = windows or TrendVolFlowScoreWindows()
-    data = _prepare_input(frame)
+    config = windows or load_part_b_score_windows()
+    data = _prepare_input(frame, as_of_date=as_of_date)
     history_count = _score_history_count(data)
     group_size = data.groupby("ticker", sort=False)["date"].transform("size")
     enough_history = history_count.ge(config.minimum_history_required) & group_size.ge(
@@ -131,7 +177,11 @@ def calculate_trend_vol_flow_raw_scores(
     return output.reset_index(drop=True)
 
 
-def _prepare_input(frame: pd.DataFrame) -> pd.DataFrame:
+def _prepare_input(
+    frame: pd.DataFrame,
+    *,
+    as_of_date: date | datetime | pd.Timestamp | str | None,
+) -> pd.DataFrame:
     assert_no_forbidden_output_columns(frame, context="Step 9 Part B input")
     assert_no_valuation_fundamental_columns(frame, context="Step 9 Part B input")
 
@@ -141,7 +191,15 @@ def _prepare_input(frame: pd.DataFrame) -> pd.DataFrame:
 
     data = frame.copy()
     data["ticker"] = data["ticker"].astype("string").str.strip()
+    valid_ticker = data["ticker"].map(
+        lambda value: isinstance(value, str) and bool(TICKER_PATTERN.fullmatch(value)),
+        na_action="ignore",
+    ).fillna(False)
+    if (~valid_ticker).any():
+        raise ValueError("Step 9 Part B input ticker must be six-character string values.")
+
     data["date"] = pd.to_datetime(data["date"], errors="raise")
+    _assert_no_future_dates(data["date"], as_of_date=as_of_date)
     if data.duplicated(list(IDENTITY_COLUMNS)).any():
         duplicates = data.loc[data.duplicated(list(IDENTITY_COLUMNS), keep=False), list(IDENTITY_COLUMNS)]
         first = duplicates.sort_values(list(IDENTITY_COLUMNS)).iloc[0]
@@ -289,6 +347,70 @@ def _numeric(series: pd.Series) -> pd.Series:
     return pd.to_numeric(series, errors="coerce")
 
 
+def _load_toml(path: Path) -> dict[str, object]:
+    with path.open("rb") as handle:
+        return tomllib.load(handle)
+
+
+def _positive_int(value: object, name: str, source: str) -> int:
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{source} {name} must be a positive integer.") from exc
+    if isinstance(value, bool) or parsed <= 0:
+        raise ValueError(f"{source} {name} must be a positive integer.")
+    return parsed
+
+
+def _part_b_minimum_history_by_score(scores_config: Mapping[str, object]) -> dict[str, int]:
+    score_entries = scores_config.get("scores", [])
+    values: dict[str, int] = {}
+    if isinstance(score_entries, list):
+        for entry in score_entries:
+            if not isinstance(entry, dict):
+                continue
+            name = entry.get("score_id") or entry.get("name")
+            if isinstance(name, str) and name in PART_B_SCORE_NAMES:
+                values[name] = _positive_int(
+                    entry.get("minimum_history"),
+                    f"{name}.minimum_history",
+                    "Quant_mvp/config/scores.toml",
+                )
+
+    missing = [score_name for score_name in PART_B_SCORE_NAMES if score_name not in values]
+    if missing:
+        raise ValueError(
+            "Quant_mvp/config/scores.toml missing Part B minimum_history for: "
+            f"{', '.join(missing)}"
+        )
+    return values
+
+
+def _assert_no_future_dates(
+    dates: pd.Series,
+    *,
+    as_of_date: date | datetime | pd.Timestamp | str | None,
+) -> None:
+    if as_of_date is None:
+        return
+    cutoff = _as_timestamp(as_of_date)
+    future_mask = dates.dt.normalize() > cutoff
+    if future_mask.any():
+        first_future = dates.loc[future_mask].min().date()
+        raise ValueError(
+            "Step 9 Part B input contains future dates after "
+            f"{cutoff.date()}: first={first_future}"
+        )
+
+
+def _as_timestamp(value: date | datetime | pd.Timestamp | str) -> pd.Timestamp:
+    if isinstance(value, pd.Timestamp):
+        return pd.Timestamp(value.date())
+    if isinstance(value, datetime):
+        return pd.Timestamp(value.date())
+    return pd.Timestamp(value)
+
+
 def _blocked_score(index: pd.Index) -> pd.Series:
     return pd.Series(float("nan"), index=index, dtype="float64")
 
@@ -344,7 +466,7 @@ def _data_quality_flags(
     for row_index, row in row_reasons.iterrows():
         row_flags: set[str] = set()
         ticker = data.loc[row_index, "ticker"]
-        if pd.isna(ticker) or not re.fullmatch(r"\d{6}", str(ticker)):
+        if pd.isna(ticker) or not TICKER_PATTERN.fullmatch(str(ticker)):
             if re.fullmatch(r"\d{1,5}", str(ticker)):
                 row_flags.add("leading_zero_lost")
             else:

@@ -152,7 +152,19 @@ Step 18 시작 시 필수로 진행할 항목:
 - Step 9 = COMPLETE
   - Part A/B raw score integration exists for the eight MVP candidates.
   - `short_term_overreaction`, `atr_adjusted_oversold_distance`, and `rsi_price_divergence` now use explicit Step 9 MVP locked formula variants.
-  - Step 10 normalization, Step 11 composite, Step 15 ranking, Step 17 backtest, and valuation/fundamental scoring remain WAITING / deferred.
+  - Step 15 ranking, Step 17 backtest, and valuation/fundamental scoring remain WAITING / deferred.
+- Step 10 = COMPLETE
+  - Step 10A ticker-local time-series normalization is implemented and tested.
+  - Step 10B cross-sectional normalization, diagnostics, and policy documentation are implemented and tested.
+  - Step 10 integration review found no ranking, composite, backtest, or valuation/fundamental boundary violation.
+- Step 11 = COMPLETE
+  - `docs/step11_composite_score_design.md` defines technical composite family structure and policy.
+  - `src/composite/contracts.py`, `src/composite/schema.py`, and `tests/test_step11_composite_schema.py` define and test schema/guardrail skeletons only.
+  - Step 11 is design-only; no `technical_composite_score`, `final_composite_score`, ranking, backtest, or valuation/fundamental scoring is implemented.
+- Step 12 = WAITING / not started
+- Step 15 = WAITING / not started
+- Step 17 = WAITING / not started
+- Step 18 valuation/fundamental expansion = DEFERRED
 
 ## 6. Step 종료 보고 형식
 

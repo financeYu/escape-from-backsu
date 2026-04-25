@@ -132,6 +132,20 @@ def build_context(config: ContextConfig) -> str:
         "",
         _compact_section(checklist, "## 7. Hard Stop Rules", next_heading=None, max_lines=18),
         "",
+        "## Git Snapshot",
+        "",
+        _git_snapshot(config.project_root),
+        "",
+        "## Step-End Context Policy",
+        "",
+        "- Refresh this file after Step-end validation, review, required fixes, rerun, and commit.",
+        "- Keep latest-only local retention: remove obsolete local context files listed in config.",
+        "- Do not include `.env`, API keys, local runtime caches, chart images, generated data caches, or secrets.",
+        "",
+        "## Next Allowed Work",
+        "",
+        _infer_next_allowed_work(roadmap),
+        "",
         "## Quant Agent Scope",
         "",
         _compact_section(quant_agents, "## Purpose", next_heading="## Multi-agent operating model", max_lines=28),
@@ -147,20 +161,6 @@ def build_context(config: ContextConfig) -> str:
         "## Family Map Snapshot",
         "",
         _compact_lines(family_map, include_markers=("| `", "| Volatility", "| Trend", "| Mean"), max_lines=20),
-        "",
-        "## Git Snapshot",
-        "",
-        _git_snapshot(config.project_root),
-        "",
-        "## Step-End Context Policy",
-        "",
-        "- Refresh this file after Step-end validation, review, required fixes, rerun, and commit.",
-        "- Keep latest-only local retention: remove obsolete local context files listed in config.",
-        "- Do not include `.env`, API keys, local runtime caches, chart images, generated data caches, or secrets.",
-        "",
-        "## Next Allowed Work",
-        "",
-        _infer_next_allowed_work(roadmap),
         "",
     ]
     text = "\n".join(part for part in sections if part is not None)
@@ -274,13 +274,32 @@ def _run_git(project_root: Path, *args: str) -> str:
 
 
 def _infer_next_allowed_work(roadmap: str) -> str:
-    if "Step 15 = 최신 랭킹 출력 구현" in roadmap or "| Step 15 | WAITING / branch setup required |" in roadmap:
+    active_section = _compact_first_section(
+        roadmap,
+        (
+            ("## 현재 활성 단계", "## 전체 Step 판정", 12),
+            ("## 현재 활성 단계", "## 현재 판정", 12),
+        ),
+    )
+    if "Step 17 = 보수적 백테스트" in active_section or "| Step 17 | WAITING / not started |" in roadmap:
+        return (
+            "- Step 17 conservative backtest is the next roadmap step.\n"
+            "- Start Step 17 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.\n"
+            "- Step 18 valuation/fundamental scoring remains gated."
+        )
+    if "Step 16 = 종목별 상세 리포트 구현" in active_section or "| Step 16 | WAITING / branch setup required |" in roadmap:
+        return (
+            "- Step 16 per-security technical detail report is the next roadmap step.\n"
+            "- Start Step 16 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.\n"
+            "- Step 17 backtest and Step 18 valuation/fundamental scoring remain gated."
+        )
+    if "Step 15 = 최신 랭킹 출력 구현" in active_section or "| Step 15 | WAITING / branch setup required |" in roadmap:
         return (
             "- Step 15 latest ranking output is the next roadmap step.\n"
             "- Start Step 15 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.\n"
             "- Step 17 backtest and Step 18 valuation/fundamental scoring remain gated."
         )
-    if "Step 14 = Adoption Synthesis" in roadmap:
+    if "Step 14 = Adoption Synthesis" in active_section:
         return (
             "- Step 14 Adoption Synthesis is the next active roadmap step.\n"
             "- Step 15 ranking, Step 17 backtest, and Step 18 valuation/fundamental scoring remain gated."
@@ -294,7 +313,11 @@ def _truncate_context(text: str, *, max_chars: int) -> str:
     marker = "\n\n[Context truncated by `max_chars`; consult repository docs for full detail.]\n"
     if max_chars <= len(marker):
         return marker[-max_chars:]
-    return text[: max_chars - len(marker)].rstrip() + marker
+    cutoff = text[: max_chars - len(marker)].rstrip()
+    last_newline = cutoff.rfind("\n")
+    if last_newline > max_chars // 2:
+        cutoff = cutoff[:last_newline].rstrip()
+    return cutoff + marker
 
 
 def _now() -> str:

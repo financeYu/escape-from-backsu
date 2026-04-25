@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-25T20:30:39+09:00
+Generated at: 2026-04-25T20:55:59+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -130,7 +130,7 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 ## Git Snapshot
 
 - branch: `integration/step16-detail-report-merge`
-- commit: `61e21d5`
+- commit: `564db56`
 - status:
 ```text
 M quant_project_reference_for_chatgpt_project_current.md

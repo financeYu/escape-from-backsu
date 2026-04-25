@@ -43,11 +43,24 @@ def test_write_review_packet_writes_output() -> None:
     assert "`docs/roadmap_status.md`" in output_path.read_text(encoding="utf-8")
 
 
+def test_build_review_packet_respects_max_chars() -> None:
+    root = _new_tmp_dir("truncate")
+    _write_minimal_project(root)
+    config = _config(root, output_path=root / "packet.md", max_chars=1200)
+
+    text = module.build_review_packet(config)
+
+    assert len(text) <= 1200
+    assert "Keep review output findings-first" in text
+    assert "Review packet truncated" in text
+
+
 def _config(
     root: Path,
     *,
     output_path: Path,
     changed_files: tuple[str, ...] = (),
+    max_chars: int = module.DEFAULT_MAX_CHARS,
 ) -> module.ReviewPacketConfig:
     return module.ReviewPacketConfig(
         project_root=root,
@@ -57,6 +70,7 @@ def _config(
         owner="test owner",
         reason="unit test",
         changed_files=changed_files,
+        max_chars=max_chars,
     )
 
 

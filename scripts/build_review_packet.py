@@ -11,6 +11,7 @@ from zoneinfo import ZoneInfo
 
 
 DEFAULT_OUTPUT_PATH = Path("docs/current_review_packet.md")
+DEFAULT_MAX_CHARS = 12000
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,7 @@ class ReviewPacketConfig:
     reason: str
     changed_files: tuple[str, ...]
     max_status_lines: int = 60
+    max_chars: int = DEFAULT_MAX_CHARS
 
 
 @dataclass(frozen=True)
@@ -38,7 +40,7 @@ def build_review_packet(config: ReviewPacketConfig) -> str:
     checklist = _read_optional(root / "docs/project_checklist.md")
     changed_files = config.changed_files or tuple(_git_status_lines(root, max_lines=config.max_status_lines))
 
-    sections = [
+    protected_sections = [
         "# Current Review Packet",
         "",
         f"Generated at: {_now()}",
@@ -51,6 +53,17 @@ def build_review_packet(config: ReviewPacketConfig) -> str:
         f"- Owner: {config.owner}",
         f"- Reason: {config.reason}",
         "",
+        "## Review Input Policy",
+        "",
+        "- Keep review output findings-first: concrete findings, missing evidence, and required follow-up only.",
+        "- For normal reviews, report at most 5 findings ordered by blocking risk.",
+        "- Do not restate passed checklist items unless a full gate record is explicitly required.",
+        "- Use this packet plus the diff as the default review input.",
+        "- Do not re-open completed Step implementation history unless the current diff touches it, consumes it downstream, or appears to violate a hard stop.",
+        "- Consult `docs/roadmap_archive/` only for historical Step-end evidence.",
+        "",
+    ]
+    variable_sections = [
         "## Current Roadmap Snapshot",
         "",
         _compact_first_section(
@@ -108,14 +121,12 @@ def build_review_packet(config: ReviewPacketConfig) -> str:
         "- Required follow-up:",
         "  - complete this checkpoint before Step-end code review or downstream handoff consumption",
         "",
-        "## Review Input Policy",
-        "",
-        "- Use this packet plus the diff as the default review input.",
-        "- Do not re-open completed Step implementation history unless the current diff touches it, consumes it downstream, or appears to violate a hard stop.",
-        "- Consult `docs/roadmap_archive/` only for historical Step-end evidence.",
-        "",
     ]
-    return "\n".join(sections)
+    return _truncate_text(
+        "\n".join(variable_sections),
+        max_chars=config.max_chars,
+        protected_prefix="\n".join(protected_sections),
+    )
 
 
 def write_review_packet(config: ReviewPacketConfig) -> ReviewPacketResult:
@@ -140,6 +151,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--owner", default="root master agent", help="Owner of this review packet.")
     parser.add_argument("--reason", default="cross-step conflict checkpoint", help="Reason for packet generation.")
     parser.add_argument("--changed-file", action="append", default=[], help="Changed file to include. May be repeated.")
+    parser.add_argument(
+        "--max-chars",
+        type=int,
+        default=DEFAULT_MAX_CHARS,
+        help="Maximum packet length in characters. Defaults to 12000.",
+    )
     args = parser.parse_args(argv)
 
     config = ReviewPacketConfig(
@@ -150,6 +167,7 @@ def main(argv: list[str] | None = None) -> int:
         owner=args.owner,
         reason=args.reason,
         changed_files=tuple(args.changed_file),
+        max_chars=args.max_chars,
     )
     result = write_review_packet(config)
     print(
@@ -236,6 +254,27 @@ def _root_path(project_root: Path, path: Path) -> Path:
     if path.is_absolute():
         return path
     return project_root / path
+
+
+def _truncate_text(text: str, *, max_chars: int, protected_prefix: str = "") -> str:
+    protected_prefix = protected_prefix.rstrip()
+    text = text.lstrip() if protected_prefix else text
+    combined = "\n\n".join(part for part in (protected_prefix, text) if part)
+    if max_chars <= 0 or len(combined) <= max_chars:
+        return combined
+    marker = "\n\n[Review packet truncated by `max_chars`; use the diff for exact changed lines.]\n"
+    if max_chars <= len(marker):
+        return marker[-max_chars:]
+    available = max_chars - len(marker)
+    if not protected_prefix:
+        return text[:available].rstrip() + marker
+    if len(protected_prefix) >= available:
+        return protected_prefix[:available].rstrip() + marker
+    separator = "\n\n"
+    variable_budget = available - len(protected_prefix) - len(separator)
+    if variable_budget <= 0:
+        return protected_prefix[:available].rstrip() + marker
+    return protected_prefix + separator + text[:variable_budget].rstrip() + marker
 
 
 def _now() -> str:

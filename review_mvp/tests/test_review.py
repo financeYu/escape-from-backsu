@@ -95,6 +95,21 @@ class ReviewTests(unittest.TestCase):
         self.assertTrue(review.should_fail(result, "medium"))
         self.assertTrue(review.should_fail(result, "low"))
 
+    def test_filter_findings_applies_severity_and_count_budget(self) -> None:
+        result = review.ReviewResult(
+            findings=[
+                review.build_finding(self.target, 1, "hardcoded-secret", target="token"),
+                review.build_finding(self.target, 2, "mutable-default-argument", name="run"),
+                review.build_finding(self.target, 3, "debug-log"),
+            ],
+            scanned_files=[str(self.target)],
+        )
+
+        filtered = review.filter_findings(result, min_severity="medium", max_findings=1)
+
+        self.assertEqual(["hardcoded-secret"], [finding.rule for finding in filtered.findings])
+        self.assertEqual([str(self.target)], filtered.scanned_files)
+
     def test_detects_sensitive_attribute_and_subscript_logging(self) -> None:
         target = self._write_temp_file(
             """

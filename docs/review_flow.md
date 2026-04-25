@@ -43,6 +43,17 @@ Use `scripts/build_review_packet.py` before checkpoint review so the reviewer re
 
 `review_mvp` is required at Step-end when the change touches code, tests, config, schemas, generated-output boundaries, cross-project handoffs, roadmap-gated behavior, or any other `review_mvp` trigger. Narrow docs-only governance changes may use master code review unless `review_mvp` is explicitly requested.
 
+## Review output budget
+
+Default reviews should stay findings-first and compact:
+
+- use `quick` mode for narrow local changes and report at most 3 findings
+- use `normal` mode for ordinary master/subproject review and report at most 5 findings
+- use `step-end` mode only for Step closure or required Cross-Step Conflict Checkpoint records
+- use `specialist` mode only when `review_mvp` is explicitly triggered or high-risk findings remain unresolved
+
+Passed guardrails should not be restated in detail. Record `PASS` with a short reason when a gate record is required, and otherwise omit checks with no issue.
+
 ## Cross-Step Conflict Checkpoint
 
 This checkpoint runs when an important in-Step stage ends, including contract lock, implementation ready for master-up, cross-project handoff consumption, Step-end validation, or post-fix validation rerun.

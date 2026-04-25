@@ -69,6 +69,9 @@ FAIL_ON_SEVERITY = {
     "medium": SEVERITY_MEDIUM,
     "high": SEVERITY_HIGH,
 }
+MIN_SEVERITY_CHOICES = ("low", "medium", "high")
+DEFAULT_MIN_SEVERITY = "low"
+DEFAULT_MAX_FINDINGS = 0
 
 
 @dataclass(frozen=True)
@@ -577,6 +580,23 @@ def render_json(result: ReviewResult) -> str:
     return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
+def filter_findings(
+    result: ReviewResult,
+    *,
+    min_severity: str = DEFAULT_MIN_SEVERITY,
+    max_findings: int = DEFAULT_MAX_FINDINGS,
+) -> ReviewResult:
+    threshold = SEVERITY_ORDER[FAIL_ON_SEVERITY[min_severity]]
+    findings = [
+        finding
+        for finding in result.findings
+        if SEVERITY_ORDER[finding.severity] <= threshold
+    ]
+    if max_findings > 0:
+        findings = findings[:max_findings]
+    return ReviewResult(findings=findings, scanned_files=result.scanned_files)
+
+
 def render_summary_lines(result: ReviewResult) -> list[str]:
     category_counts = Counter(finding.category for finding in result.findings)
     category_text = ", ".join(
@@ -615,6 +635,18 @@ def build_parser() -> argparse.ArgumentParser:
         help="지정한 심각도 이상의 이슈가 있으면 종료 코드를 1로 반환합니다.",
     )
     parser.add_argument(
+        "--min-severity",
+        choices=MIN_SEVERITY_CHOICES,
+        default=DEFAULT_MIN_SEVERITY,
+        help="출력과 실패 판정에 포함할 최소 심각도입니다.",
+    )
+    parser.add_argument(
+        "--max-findings",
+        type=int,
+        default=DEFAULT_MAX_FINDINGS,
+        help="출력할 최대 finding 수입니다. 0이면 제한하지 않습니다.",
+    )
+    parser.add_argument(
         "--exclude-dir",
         action="append",
         default=[],
@@ -637,6 +669,11 @@ def main() -> int:
     targets = [Path(raw).resolve() for raw in args.paths]
     exclude_dirs = DEFAULT_EXCLUDE_DIRS | set(args.exclude_dir)
     result = run_review(targets, exclude_dirs)
+    result = filter_findings(
+        result,
+        min_severity=args.min_severity,
+        max_findings=max(0, args.max_findings),
+    )
 
     if args.format == "json":
         output = render_json(result)

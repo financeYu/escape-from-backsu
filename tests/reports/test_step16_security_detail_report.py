@@ -35,11 +35,16 @@ FORBIDDEN_EXACT_TERMS = (
     "expected_return",
     "forward_return",
     "future_return",
+    "backtest",
     "backtest_return",
+    "valuation",
     "valuation_score",
+    "fundamental",
     "undervalued",
     "cheap",
     "bargain",
+    "hold",
+    "position_size",
     "per",
     "pbr",
     "roe",
@@ -264,6 +269,31 @@ def test_forbidden_input_fields_are_rejected_before_report_generation() -> None:
                 "005930",
                 adoption_synthesis=adoption_synthesis_table(),
             )
+
+
+@pytest.mark.parametrize(
+    ("column", "text"),
+    (
+        ("limitations", "A backtest supports this report."),
+        ("adoption_reason", "The valuation case is strong."),
+        ("limitations", "Fundamental evidence is supportive."),
+        ("adoption_reason", "This looks cheap."),
+        ("limitations", "forward_return supports the view."),
+    ),
+)
+def test_forbidden_metadata_language_is_rejected_before_report_generation(
+    column: str,
+    text: str,
+) -> None:
+    metadata = adoption_synthesis_table()
+    metadata.loc[0, column] = text
+
+    with pytest.raises(ValueError, match="forbidden Step 16 report language"):
+        build_security_detail_report(
+            latest_ranking_frame(),
+            "005930",
+            adoption_synthesis=metadata,
+        )
 
 
 def test_deterministic_repeated_output() -> None:

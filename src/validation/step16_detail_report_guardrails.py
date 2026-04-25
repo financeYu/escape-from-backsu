@@ -251,23 +251,6 @@ STEP16_RANK_MUTATION_COLUMNS = frozenset(
     }
 )
 
-STEP16_REPORT_TEXT_FIELDS = frozenset(
-    {
-        "report_notice",
-        "boundary_notice",
-        "report_boundary",
-        "summary",
-        "narrative",
-        "explanation",
-        "technical_context",
-        "diagnostic_note",
-        "context_note",
-        "limitations",
-        "reason",
-        "commentary",
-    }
-)
-
 STEP16_FORBIDDEN_REPORT_LANGUAGE = frozenset(
     {
         "alpha",
@@ -668,22 +651,23 @@ def _extract_report_text(frame: pd.DataFrame) -> str:
     if frame.empty:
         return ""
     parts: list[str] = []
-    for column in frame.columns:
-        normalized = str(column).lower()
-        if normalized not in STEP16_REPORT_TEXT_FIELDS and not any(
-            token in normalized
-            for token in ("summary", "narrative", "explanation", "notice", "reason", "note")
-        ):
-            continue
-        values = frame[column].dropna().tolist()
-        parts.extend(_stringify_text_value(value) for value in values)
+    for record in frame.to_dict(orient="records"):
+        _collect_report_text(record, parts)
     return "\n".join(parts)
 
 
-def _stringify_text_value(value: object) -> str:
+def _collect_report_text(value: object, parts: list[str]) -> None:
+    if isinstance(value, Mapping):
+        for key, child in value.items():
+            parts.append(str(key))
+            _collect_report_text(child, parts)
+        return
     if isinstance(value, (list, tuple, set, frozenset)):
-        return " ".join(str(item) for item in value)
-    return str(value)
+        for child in value:
+            _collect_report_text(child, parts)
+        return
+    if isinstance(value, str):
+        parts.append(value)
 
 
 def _is_status_or_flag_column(normalized: str) -> bool:

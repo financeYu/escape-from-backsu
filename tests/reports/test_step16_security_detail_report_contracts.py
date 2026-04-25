@@ -89,11 +89,17 @@ def test_forbidden_input_columns_are_rejected(column: str) -> None:
         "expected_return",
         "forward_return",
         "future_return",
+        "A backtest supports this report.",
         "backtest_return",
+        "The valuation case is strong.",
+        "Fundamental evidence is supportive.",
         "valuation_score",
         "undervalued",
         "cheap",
         "bargain",
+        "This is a hold setup.",
+        "position_size can increase.",
+        "Sharpe is high.",
         "PER",
         "PBR",
         "ROE",
@@ -105,13 +111,22 @@ def test_forbidden_report_text_is_rejected(text: str) -> None:
         validate_security_detail_report_content({"note": text})
 
 
-def test_metadata_text_is_screened_before_it_can_enter_report() -> None:
+@pytest.mark.parametrize(
+    "text",
+    (
+        "target_price is unavailable",
+        "A backtest supports this report.",
+        "The valuation case is strong.",
+        "Fundamental evidence is supportive.",
+    ),
+)
+def test_metadata_text_is_screened_before_it_can_enter_report(text: str) -> None:
     metadata = pd.DataFrame(
         [
             {
                 "score_name": "short_term_overreaction",
                 "adoption_state": "core_adopted",
-                "limitations": "target_price is unavailable",
+                "limitations": text,
             }
         ]
     )

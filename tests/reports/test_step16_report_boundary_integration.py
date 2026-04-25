@@ -110,6 +110,19 @@ def test_worker_b_guardrails_reject_forbidden_text_in_worker_a_shape(text: str) 
         validate_step16_detail_report_output(record)
 
 
+def test_worker_b_guardrails_reject_nested_forbidden_text_in_worker_a_shape() -> None:
+    record = worker_a_report_record()
+    record["score_breakdown"] = (
+        {
+            **record["score_breakdown"][0],
+            "explanation": "A backtest supports this report.",
+        },
+    )
+
+    with pytest.raises(ValueError, match="forbidden report language"):
+        validate_step16_detail_report_output(record)
+
+
 def test_worker_b_guardrails_reject_changed_worker_a_readonly_rank() -> None:
     record = worker_a_report_record()
     record["readonly_rank_fields"] = {**record["readonly_rank_fields"], "rank": 2}

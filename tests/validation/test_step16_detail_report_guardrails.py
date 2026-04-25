@@ -186,3 +186,28 @@ def test_rank_field_is_accepted_only_as_read_only_display_context() -> None:
 def test_output_text_with_valuation_trading_or_backtest_language_fails(text: str) -> None:
     with pytest.raises(ValueError, match="forbidden report language"):
         validate_step16_detail_report_output(text)
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "This looks cheap.",
+        "The security is undervalued.",
+        "This is a buy setup.",
+        "This is a sell setup.",
+        "A backtest supports this report.",
+        "forward_return supports the view.",
+    ),
+)
+def test_nested_structured_output_text_is_screened_recursively(text: str) -> None:
+    payload = report_output(
+        score_breakdown=(
+            {
+                "score_name": "short_term_overreaction",
+                "explanation": text,
+            },
+        )
+    )
+
+    with pytest.raises(ValueError, match="forbidden report language"):
+        validate_step16_detail_report_output(payload)

@@ -83,6 +83,7 @@ Branch class rule for Step 15+:
 - Low-risk review, chart, research, and docs-only support patches may be collected on one Step-scoped minor branch, normally `minor/stepXX-<scope>`, only when the user or root/master explicitly assigns that bundled minor-patch scope and the manifest lists every allowed write path. If the patch touches runtime behavior, contracts, generated-output boundaries, roadmap verdicts, or any Level 3 risk, split it back into the narrowest role branch.
 - Minor/support branches must not update roadmap status, final Step verdicts, or master integration policy unless the root/master explicitly assigns that task.
 - Minor/support branches are disposable after integration: delete the local and remote branch after a successful merge unless root/master explicitly records a reason to keep it.
+- Major Step branches are also disposable after their Step work is merged into the accepted integration target and no unresolved handoff depends on the branch tip. Keep only core branches: `main`, the active root/master integration branch, active unmerged role branches or worktrees, and branches with a root/master-recorded retention reason.
 
 The master workspace is for integration, verification, and status-control only. Do not use it for experimental implementation, research exploration, review edits mixed with implementation, direct Step work, or generated report experiments.
 

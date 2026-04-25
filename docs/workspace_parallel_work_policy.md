@@ -238,6 +238,7 @@ Branch classes:
 - Major Step branch: the roadmap Step implementation branch that carries the bounded Step deliverable, normally `codex/stepXX-<scope>`.
 - Minor/support branch: a role-specific branch for Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, or docs-only support. Minor/support branches feed master integration but do not own final Step status.
 - Unified minor patch branch: a Step-scoped minor/support branch, normally `minor/stepXX-<scope>`, for explicitly assigned low-risk review, chart, research, or docs-only support patches that are small enough to share one manifest and one handoff.
+- Core branch: a branch retained after integration because it is `main`, the active root/master integration branch, an active unmerged role branch/worktree, or a branch with a root/master-recorded audit or reproduction retention reason.
 
 Required role separation:
 
@@ -639,11 +640,18 @@ active work, but new Step 15+ branches should use the role/step/scope pattern.
 12. Required fixes go back to the narrowest responsible implementation, chart, review, or support worktree unless master/root explicitly approves a direct integration repair.
 13. Before moving to the next roadmap Step, master runs the Step-end review/check sequence: integration validation, Cross-Step Conflict Checkpoint, required review/audit, required fixes, affected reruns, final Step verdict, and context refresh.
 14. Master commits final integrated Step state after the Step-end gate passes.
-15. After a minor/support branch is successfully merged and no unresolved handoff
-    depends on the branch tip, delete the merged local and remote branch unless
-    root/master records a specific retention reason.
+15. After a major Step branch or minor/support branch is successfully merged and
+    no unresolved handoff depends on the branch tip, delete the merged local and
+    remote branch unless it is a core branch or root/master records a specific
+    retention reason.
 
 Do not merge a second worker branch until the current branch's integration risk and conflicts are understood.
+
+After integration is complete, the repository should retain only core branches.
+Merged `codex/stepXX-<scope>` major branches, role-specific minor/support
+branches, and unified `minor/stepXX-<scope>` branches are cleanup targets once
+their accepted target contains the work and their handoff, audit, or
+reproduction value no longer depends on the branch tip.
 
 ## Master Integration Queue
 

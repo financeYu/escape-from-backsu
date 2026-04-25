@@ -1,61 +1,71 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: step15_a_b_integration_verifier
-branch: integration/step15-a-b-merge
+workspace_id: step16_detail_report_integration
+branch: integration/step16-detail-report-merge
 task_type: master_integration
-active_step: Step 15 latest ranking output implementation
-owner_or_worker: Step 15 A/B Integration Verifier
-created_from_commit: 8de10055e4989da603cd143f0b744114024aaeda
+active_step: Step 16 security detail report implementation
+owner_or_worker: Step 16 Recovery / Integration Owner
+created_from_commit: 8479159d487642713ff22ea2828597b1bfcf9c51
 
 ## Purpose
 
-Integrate and verify Worker A core latest-ranking output and Worker B validation guardrail outputs without weakening repository, roadmap, valuation, backtest, or future-return guardrails.
+Recover and verify the Step 16 per-security detail report integration by
+merging the Worker A report core and Worker B guardrail/documentation branches
+without broadening the roadmap scope.
 
 ## Source branches
 
-- step15-worker-a-core
-- step15-worker-b-validation
+- codex/step16-detail-report-core
+- codex/step16-detail-report-guardrails
 
 ## Consumed worker manifests
 
-- Worker A: step15_worker_a_core / step15-worker-a-core / Step 15 latest ranking output implementation
-- Worker B: step15_worker_b_validation / step15-worker-b-validation / Step 15 Latest Ranking Output validation support
+- Worker A: step16_detail_report_core / codex/step16-detail-report-core / Step 16 security detail report core
+- Worker B: codex_step16-detail-report-guardrails / codex/step16-detail-report-guardrails / Step 16 detail report guardrails
 
 ## Allowed work
 
-- merge Worker A and Worker B branches
-- resolve merge conflicts minimally
-- validate Step 15 contracts and guardrails
-- run focused and broad tests
-- produce final integration report
-- commit source-controlled integration state if validation allows
+- merge Worker A and Worker B Step 16 branches
+- resolve merge conflicts conservatively
+- integrate Step 16 detail report core, guardrails, docs, and tests
+- add minimal integration glue only when required by validation
+- run focused Step 16 tests, related compatibility tests, broad tests, and forbidden-term inspection
+- run the Cross-Step Conflict Checkpoint
+- report Step 16 readiness for status-control closure
 
 ## Forbidden work
 
-- new feature invention
-- Step 16 detailed stock report implementation
-- Step 17 backtest, realized-return validation, Sharpe, MDD, win-rate, or alpha validation
+- Step 17 backtest implementation
+- forward, future, realized, portfolio, benchmark, CAGR, MDD, Sharpe, Sortino, hit-rate, win-rate, turnover, slippage, fee, or performance logic
 - Step 18 valuation/fundamental scoring
+- PER, PBR, ROE, EPS, BPS, or financial-statement inputs in Step 16 report logic
 - financial/fundamental data in technical_composite_score or final_composite_score
-- buy, sell, trading signal, or investment advice language
-- roadmap bypass or Step completion status update without passing the required gates
+- buy, sell, hold, entry, exit, target price, expected return, position sizing, trading signal, or investment advice language
+- new ranking, re-ranking, or Step 15 ranking behavior changes unless strictly required for compatibility and validated
+- roadmap status or final Step verdict changes unless explicitly instructed
+- generated market-data report commits unless explicitly promoted as review fixtures
+- unrelated cleanup, refactoring, staging, reset, or branch history rewrites
 
 ## Expected output
 
-- integrated Step 15 source and validation files
-- focused and broad validation summary
+- integrated Step 16 source-controlled files
+- validation summary for focused, related, broad, and static checks
 - Cross-Step Conflict Checkpoint result
-- Korean integration report
+- Korean recovery integration report
 
 ## Required validation
 
-- Worker A focused tests after merge
-- Worker B focused tests after merge
-- Step 15 integration compatibility checks
-- changed-file forbidden-term search
-- broad pytest run when feasible
-- Cross-Step Conflict Checkpoint
+- git status / branch / recent log
+- python -m pytest tests/reports -q
+- python -m pytest tests/validation/test_step16_detail_report_guardrails.py -q
+- python -m pytest tests/scanner tests/reports tests/validation -q
+- python -m pytest -q when feasible
+- forbidden-term grep review
+- python scripts/build_review_packet.py --step "Step 16" --stage "recovery integration validation"
 
 ## Handoff notes
 
-This integration branch is ready for master-up review only if A/B merges are clean, focused validation passes, broad validation passes or any limitation is justified, generated-output boundaries are clean, and no unresolved Step 15 contract conflict remains.
+Do not mark Step 16 COMPLETE in roadmap docs unless explicitly instructed.
+This integration branch is ready for status-control closure only if Worker A/B
+merges are clean, validation passes, generated-output boundaries are clean, and
+no unresolved Step 16 boundary violation remains.

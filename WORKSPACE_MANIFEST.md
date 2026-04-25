@@ -1,71 +1,84 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: step16_detail_report_integration
-branch: integration/step16-detail-report-merge
+workspace_id: integration_step17_conservative_backtest_merge
+branch: integration/step17-conservative-backtest-merge
 task_type: master_integration
-active_step: Step 16 security detail report implementation
-owner_or_worker: Step 16 Recovery / Integration Owner
-created_from_commit: 8479159d487642713ff22ea2828597b1bfcf9c51
+active_step: Step 17 conservative backtest
+owner_or_worker: Step 17 Integration Agent
+created_from_commit: 564db56
 
 ## Purpose
 
-Recover and verify the Step 16 per-security detail report integration by
-merging the Worker A report core and Worker B guardrail/documentation branches
-without broadening the roadmap scope.
+Merge Worker A and Worker B Step 17 branches, resolve integration conflicts,
+run validation, perform the Cross-Step Conflict Checkpoint, and update Step 17
+status only if the merged result passes the required gates.
 
 ## Source branches
 
-- codex/step16-detail-report-core
-- codex/step16-detail-report-guardrails
+- codex/step17-backtest-core
+- codex/step17-backtest-guardrails
 
-## Consumed worker manifests
+## Scope
 
-- Worker A: step16_detail_report_core / codex/step16-detail-report-core / Step 16 security detail report core
-- Worker B: codex_step16-detail-report-guardrails / codex/step16-detail-report-guardrails / Step 16 detail report guardrails
+Merge Worker A and Worker B, resolve integration conflicts, run validation, and
+update Step 17 status only if complete.
 
 ## Allowed work
 
-- merge Worker A and Worker B Step 16 branches
-- resolve merge conflicts conservatively
-- integrate Step 16 detail report core, guardrails, docs, and tests
-- add minimal integration glue only when required by validation
-- run focused Step 16 tests, related compatibility tests, broad tests, and forbidden-term inspection
+- merge Worker A first, then Worker B
+- preserve Worker A ownership for backtest core paths
+- preserve Worker B ownership for Step 17 guardrail, report-boundary, and
+  backtest generated-output boundary paths
+- apply minimal deterministic compatibility fixes when validation requires them
+- run focused backtest and guardrail tests
+- run related scanner, report, validation, and full test suites
 - run the Cross-Step Conflict Checkpoint
-- report Step 16 readiness for status-control closure
+- update Step 17 roadmap/status docs only after all required validation passes
+- refresh the local project context after Step-end validation and commit
 
-## Forbidden work
+## Forbidden actions
 
-- Step 17 backtest implementation
-- forward, future, realized, portfolio, benchmark, CAGR, MDD, Sharpe, Sortino, hit-rate, win-rate, turnover, slippage, fee, or performance logic
-- Step 18 valuation/fundamental scoring
-- PER, PBR, ROE, EPS, BPS, or financial-statement inputs in Step 16 report logic
-- financial/fundamental data in technical_composite_score or final_composite_score
-- buy, sell, hold, entry, exit, target price, expected return, position sizing, trading signal, or investment advice language
-- new ranking, re-ranking, or Step 15 ranking behavior changes unless strictly required for compatibility and validated
-- roadmap status or final Step verdict changes unless explicitly instructed
-- generated market-data report commits unless explicitly promoted as review fixtures
-- unrelated cleanup, refactoring, staging, reset, or branch history rewrites
+- new feature implementation
+- score formula changes
+- normalized score formula changes
+- ranking formula changes
+- composite score changes
+- valuation/fundamental scoring
+- PER, PBR, ROE, EPS, BPS, financial statement, or market-cap fundamental inputs
+- trading recommendation language
+- buy, sell, hold-as-recommendation, target price, expected return, or signal output
+- silent upstream schema rewrites
+- Step 15 ranking rewrite
+- Step 16 report rewrite beyond read-only compatibility
+- return feedback into scoring, adoption, ranking, or report logic
+- strategy optimization or parameter tuning from results
+- generated runtime report/cache commits unless explicitly promoted as fixtures
+- unrelated cleanup, reset, stash, or branch history rewrites
 
 ## Expected output
 
-- integrated Step 16 source-controlled files
-- validation summary for focused, related, broad, and static checks
+- integrated Step 17 source-controlled files
+- conservative conflict-resolution summary
+- focused and broad validation summary
 - Cross-Step Conflict Checkpoint result
-- Korean recovery integration report
+- roadmap status update only if Step 17 passes
+- commit SHA when the final integrated Step state is committed
 
 ## Required validation
 
 - git status / branch / recent log
-- python -m pytest tests/reports -q
-- python -m pytest tests/validation/test_step16_detail_report_guardrails.py -q
-- python -m pytest tests/scanner tests/reports tests/validation -q
-- python -m pytest -q when feasible
-- forbidden-term grep review
-- python scripts/build_review_packet.py --step "Step 16" --stage "recovery integration validation"
+- python -m pytest -q tests/backtest
+- python -m pytest -q tests/validation/test_step17_backtest_guardrails.py
+- python -m pytest -q tests/reports if report tests exist
+- python -m pytest -q tests/scanner tests/reports tests/validation
+- python -m pytest -q
+- python scripts/build_review_packet.py --step "Step 17" --stage "post-merge integration validation"
+- Cross-Step Conflict Checkpoint using docs/cross_step_conflict_check.md and
+  the generated review packet
 
 ## Handoff notes
 
-Do not mark Step 16 COMPLETE in roadmap docs unless explicitly instructed.
-This integration branch is ready for status-control closure only if Worker A/B
-merges are clean, validation passes, generated-output boundaries are clean, and
-no unresolved Step 16 boundary violation remains.
+The master workspace at `C:\Users\jjaew\Project\master_mvp` contains Step 16
+completion-related dirty files that are intentionally excluded from this Step
+17 integration worktree. Do not copy, restore, stage, or absorb those changes
+into this branch.

@@ -4,12 +4,12 @@
 
 ## 현재 활성 단계
 
-Step 17 = 보수적 백테스트, WAITING / not started
+Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expansion
 
-- Recently completed: Step 16 = 종목별 상세 리포트 구현, COMPLETE
-- Recently completed before that: Step 15 = 최신 랭킹 출력 구현, COMPLETE
+- Recently completed: Step 17 = 보수적 백테스트, COMPLETE
+- Recently completed before that: Step 16 = 종목별 상세 리포트 구현, COMPLETE
 - Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16/17 technical or backtest work.
-- Current gate: Step 17 is not started. It must begin from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits, and must not introduce valuation/fundamental scoring.
+- Current gate: Step 18 valuation/fundamental expansion remains deferred and must not start without explicit user/root assignment and PIT financial-data boundary validation.
 
 ## 병렬 Workspace 운영 메모
 
@@ -41,7 +41,7 @@ Step 17 = 보수적 백테스트, WAITING / not started
 | Step 14 | COMPLETE |
 | Step 15 | COMPLETE |
 | Step 16 | COMPLETE |
-| Step 17 | WAITING / not started |
+| Step 17 | COMPLETE |
 | Step 18 | DEFERRED / waiting for valuation expansion |
 | Step 19 | WAITING / not started |
 | Step 20 | WAITING / not started |
@@ -63,6 +63,18 @@ Step 17 = 보수적 백테스트, WAITING / not started
 - ranking, latest ranking, composite score, backtest, valuation/fundamental scoring은 여전히 생성하지 않는다.
 
 ## 최근 완료 Step 요약
+
+### Step 17 = Conservative Backtest
+
+- Step 17 Worker A/B conservative backtest core and guardrail branches are integrated through `integration/step17-conservative-backtest-merge`.
+- `src/backtest/` implements deterministic evaluation-only backtest contracts and runner logic using frozen Step 15/16-compatible technical ranking context as read-only input.
+- Step 17 output permits realized/evaluation return fields only in Step 17 result/output context and rejects those fields as upstream inputs.
+- `src/validation/step17_backtest_guardrails.py` rejects valuation/fundamental, future/forward/expected return, trading recommendation, forbidden report language, and return-feedback leakage.
+- `reports/backtest/README.md`, `docs/step17_conservative_backtest_core.md`, `docs/step17_backtest_guardrails.md`, and `docs/architecture/step17_backtest_boundary.md` document the evaluation-only, generated-output, no-feedback, and Step 18 valuation boundary.
+- Latest local validation: `python -m pytest -q` = 607 passed, 4 skipped, 25 subtests passed.
+- Focused Step 17 validation: `tests/backtest` = 18 passed; `tests/validation/test_step17_backtest_guardrails.py` = 39 passed; `tests/reports` = 68 passed; `tests/scanner tests/reports tests/validation` = 188 passed.
+- `review_mvp` specialist review found no high findings; the only Step 17 medium static warning was a false positive around guarded `start_positions[0]`; remaining Step 17 findings are non-blocking style/length warnings.
+- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, Step 18 valuation/fundamental leakage, trading-signal leakage, Step 15 ranking rewrite, Step 16 report rewrite, generated-output boundary break, return-feedback loop, or dirty-worktree blocker found.
 
 ### Step 16 = Security Detail Report
 

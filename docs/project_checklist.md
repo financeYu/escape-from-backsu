@@ -177,7 +177,7 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
 - Step 9 = COMPLETE
   - Part A/B raw score integration exists for the eight MVP candidates.
   - `short_term_overreaction`, `atr_adjusted_oversold_distance`, and `rsi_price_divergence` now use explicit Step 9 MVP locked formula variants.
-  - Step 15 latest ranking output is now complete downstream; Step 17 backtest and valuation/fundamental scoring remain WAITING / deferred.
+  - Step 15 latest ranking output and Step 17 conservative backtest are now complete downstream; valuation/fundamental scoring remains deferred.
 - Step 10 = COMPLETE
   - Step 10A ticker-local time-series normalization is implemented and tested.
   - Step 10B cross-sectional normalization, diagnostics, and policy documentation are implemented and tested.
@@ -198,7 +198,7 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
   - Step 13 output is a technical review recommendation table for Step 14 material only.
   - `review_status` values remain technical recommendations, not final adoption states.
   - Generated Step 13 reports are constrained to `reports/selection/` and must include `technical selection review material only`.
-  - Step 15 latest ranking output is now complete downstream; Step 17 backtest and Step 18 valuation/fundamental scoring remain not implemented.
+  - Step 15 latest ranking output and Step 17 conservative backtest are now complete downstream; Step 18 valuation/fundamental scoring remains not implemented.
 - Step 14 = COMPLETE
   - Adoption synthesis docs, contracts, engine, report guardrails, and tests are complete.
   - Step 14 output remains adoption synthesis material only and preserves Step 13 `review_status` separately as `source_review_status`.
@@ -225,7 +225,16 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
   - Focused Step 16 validation: `tests/reports` = 66 passed; `tests/validation/test_step16_detail_report_guardrails.py` = 37 passed; related scanner/reports/validation = 147 passed.
   - `review_mvp` specialist review found no high or medium findings after required Step 16 review fixes; remaining low style/length warnings are non-blocking.
   - Cross-Step Conflict Checkpoint passed with no blocking roadmap/order, Step 17 backtest leakage, Step 18 valuation/fundamental leakage, future-return leakage, trading-signal leakage, Step 15 read-only boundary, generated-output boundary, or dirty-worktree issue.
-- Step 17 = WAITING / not started
+- Step 17 = COMPLETE
+  - Worker A/B conservative backtest core and guardrail branches are integrated through `integration/step17-conservative-backtest-merge`.
+  - `src/backtest/` implements deterministic evaluation-only backtest contracts and runner logic using frozen Step 15/16-compatible technical ranking context as read-only input.
+  - Step 17 output permits realized/evaluation return fields only in Step 17 result/output context and rejects those fields as upstream inputs.
+  - `src/validation/step17_backtest_guardrails.py` rejects valuation/fundamental, future/forward/expected return, trading recommendation, forbidden report language, and return-feedback leakage.
+  - `reports/backtest/README.md`, `docs/step17_conservative_backtest_core.md`, `docs/step17_backtest_guardrails.md`, and `docs/architecture/step17_backtest_boundary.md` document the evaluation-only, generated-output, no-feedback, and Step 18 valuation boundary.
+  - Latest local validation: `python -m pytest -q` = 607 passed, 4 skipped, 25 subtests passed.
+  - Focused Step 17 validation: `tests/backtest` = 18 passed; `tests/validation/test_step17_backtest_guardrails.py` = 39 passed; `tests/reports` = 68 passed; related scanner/reports/validation = 188 passed.
+  - `review_mvp` specialist review found no high findings; the only Step 17 medium static warning was a false positive around guarded `start_positions[0]`; remaining Step 17 findings are non-blocking style/length warnings.
+  - Cross-Step Conflict Checkpoint passed with no blocking roadmap/order, Step 18 valuation/fundamental leakage, future-return leakage, trading-signal leakage, Step 15 ranking rewrite, Step 16 report rewrite, generated-output boundary break, return-feedback loop, or dirty-worktree issue.
 - Step 18 valuation/fundamental expansion = DEFERRED
 - Research ingestion scope expansion note:
   - `docs/research_ingestion_expansion.md` documents expanded paper query-set coverage, source expansion candidates, seed lifecycle, new-only run artifacts, and the separated `reserch_mvp` ownership boundary.

@@ -14,11 +14,27 @@ Master-up summary must prioritize:
 8. whether Root-Agent Conflict Stop was triggered and the resume decision
 9. whether `review_mvp` is requested or not
 10. whether the change is ready for the Step-end code review / fix / commit gate
+11. whether the master-up preflight passed or returned a missing-evidence error
+12. which risk-based operating level applies: Level 1, Level 2, or Level 3
+13. which branch integration queue state applies
+14. which validation layer was run: branch-focused or Step-end
+15. where required review/audit fixes must be routed
+
+Before requesting detailed master integration review, run the preflight gate:
+
+```powershell
+python scripts/check_master_up_preflight.py --summary <path-to-this-master-up-summary.md>
+```
+
+If the preflight fails, the request is `HOLD` until the missing field, missing evidence, or unresolved gate is fixed. Do not ask master to reconstruct missing evidence from the diff or local working tree during active master-up.
+
+Use the operating levels from `docs/workspace_parallel_work_policy.md`. Level 3 master-up must keep the Scope watchdog audit and Cross-Step Conflict Checkpoint marked `required`; it may not mark `review_mvp` as `not needed`.
 
 ```text
 [Subproject]
 - name:
 - responsible scope:
+- operating level:
 
 [Change summary]
 - changed files:
@@ -30,6 +46,24 @@ Master-up summary must prioritize:
 - unrelated dirty files:
 - generated outputs excluded:
 - mixed-change files requiring hunk-level staging:
+
+[Branch integration queue]
+- queue state:
+- branch under review:
+- previous branch gate:
+- next branch blocked:
+
+[Validation layering]
+- branch integration validation:
+- step-end validation:
+- full validation repeated per branch:
+- escalation condition:
+
+[Required fix routing]
+- required findings owner:
+- fix target worktree/branch:
+- master direct fixes:
+- rerun scope:
 
 [Root-Agent Conflict Stop]
 - triggered / not triggered:
@@ -91,10 +125,11 @@ Master-up summary must prioritize:
 - blocking findings:
 
 [review_mvp request]
-- required / optional / not needed
+- required / optional / not needed:
 - reason:
 
 [Step-end gate readiness]
+- master-up preflight result:
 - integration validation evidence ready:
 - cross-step conflict checkpoint ready:
 - code review owner:

@@ -608,14 +608,42 @@ active work, but new Step 15+ branches should use the role/step/scope pattern.
 2. Worker runs branch-local focused validation and scope checks.
 3. Worker commits source-controlled branch changes by default, excluding local manifests and generated/runtime outputs unless explicitly promoted.
 4. Worker reports changed files, tests run, risks, handoff notes, and commit SHA.
-5. Master workspace merges one branch at a time.
-6. Master runs focused integration checks for the merged branch.
-7. Review workspace checks diff and guardrails when required by the operating level, Step gate, or master instruction.
-8. Audit / scope watchdog checks for roadmap bypass, scope creep, forbidden outputs, and terminology laundering when required by the operating level, Step gate, or master instruction.
-9. Before moving to the next roadmap Step, master runs the Step-end review/check sequence: integration validation, Cross-Step Conflict Checkpoint, required review/audit, required fixes, affected reruns, final Step verdict, and context refresh.
-10. Master commits final integrated Step state after the Step-end gate passes.
+5. Master workspace accepts one branch into the integration queue.
+6. Master runs master-up preflight before detailed review.
+7. Master merges one branch at a time.
+8. Master runs focused integration checks for the merged branch.
+9. Master records the Cross-Step Conflict Checkpoint result before accepting the next branch.
+10. Review workspace checks diff and guardrails when required by the operating level, Step gate, or master instruction.
+11. Audit / scope watchdog checks for roadmap bypass, scope creep, forbidden outputs, and terminology laundering when required by the operating level, Step gate, or master instruction.
+12. Required fixes go back to the narrowest responsible implementation, chart, review, or support worktree unless master/root explicitly approves a direct integration repair.
+13. Before moving to the next roadmap Step, master runs the Step-end review/check sequence: integration validation, Cross-Step Conflict Checkpoint, required review/audit, required fixes, affected reruns, final Step verdict, and context refresh.
+14. Master commits final integrated Step state after the Step-end gate passes.
 
 Do not merge a second worker branch until the current branch's integration risk and conflicts are understood.
+
+## Master Integration Queue
+
+Master tracks each branch through a short queue state so bottlenecks are visible:
+
+```text
+handoff-ready
+-> preflight passed
+-> merged
+-> focused validation passed
+-> checkpoint passed
+-> queued for step-end
+```
+
+Each branch should move through this queue independently. If a branch stops, record the exact state and blocking reason in the master-up summary or integration notes before taking another branch.
+
+Use two validation layers:
+
+- Branch integration validation: focused tests/checks for the branch just merged, plus any forbidden-scope search or generated-output check triggered by that branch.
+- Step-end validation: broad Step validation after all queued branches for the Step are integrated and required fixes have been rerun.
+
+Do not repeat full Step-end validation after every small branch by default. Escalate a branch to broader validation only when it changes a shared contract, creates a merge conflict, touches gate-critical behavior, or reveals a blocking review/audit finding.
+
+Master stays in the integration role. Required review/audit findings should be sent back to the narrowest responsible worktree or branch for repair. Master may apply a direct fix only when the user or root/master explicitly approves that minimal repair scope and the change remains isolated from unrelated dirty files.
 
 ## Cross-Step Conflict Checkpoint
 

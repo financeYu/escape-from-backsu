@@ -10,6 +10,7 @@ worker scope declaration
 -> subproject local first review
 -> pre-master-up scope watchdog audit when required
 -> master-up summary
+-> master-up preflight
 -> master integration review
 -> cross-step conflict checkpoint at important stage boundaries
 -> Step-end code review
@@ -44,6 +45,20 @@ Do not commit Step work before this gate is complete. If required review finding
 Use `scripts/build_review_packet.py` before checkpoint review so the reviewer reads the compact packet plus the diff, not the full archived roadmap history.
 
 `review_mvp` is required at Step-end when the change touches code, tests, config, schemas, generated-output boundaries, cross-project handoffs, roadmap-gated behavior, or any other `review_mvp` trigger. Narrow docs-only governance changes may use master code review unless `review_mvp` is explicitly requested.
+
+## Master-up preflight
+
+Run a fast master-up preflight before master spends time on detailed integration review:
+
+```powershell
+python scripts/check_master_up_preflight.py --summary <path-to-master-up-summary.md>
+```
+
+The preflight is a completeness gate, not a substitute for master review. It checks that the master-up summary has enough evidence for review: owned files, unrelated dirty files, branch integration queue state, validation layer, required fix routing, generated-output exclusion, local validation, watchdog status, Cross-Step Conflict Checkpoint status, `review_mvp` request status, Step-end readiness, and requested master decision.
+
+If the preflight fails, master returns `HOLD` without doing full review. The responsible worker fixes the summary or missing evidence first. This keeps master from rebuilding evidence during active master-up and avoids mixing unrelated dirty files into the integration decision.
+
+The preflight may pass with warnings only when the warning is explicitly copied into the master-up risk notes. A required watchdog audit or required Cross-Step Conflict Checkpoint with `not run`, `pending`, `NEEDS_CLARIFICATION`, or `BLOCKING_ISSUE` remains blocking.
 
 ## Review output budget
 
@@ -119,6 +134,17 @@ The summary must make clear:
 7. whether Cross-Step Conflict Checkpoint was required and the final verdict
 8. whether Root-Agent Conflict Stop was triggered and the final resume decision
 9. whether `review_mvp` is requested or not
+10. which risk-based operating level applies: Level 1, Level 2, or Level 3
+11. which branch integration queue state applies
+12. whether branch integration validation was focused and Step-end validation is deferred until all queued branches are integrated
+13. where required review/audit fixes must be routed
+14. whether the master-up preflight passed or returned a missing-evidence error
+
+The operating level comes from `docs/workspace_parallel_work_policy.md`. Master treats a Level 3 master-up as gate-critical: Scope watchdog audit and Cross-Step Conflict Checkpoint must be marked `required`, and `review_mvp` must not be marked `not needed`.
+
+Master integration review handles one branch at a time. The expected queue states are `handoff-ready`, `preflight passed`, `merged`, `focused validation passed`, `checkpoint passed`, and `queued for step-end`. Branch integration validation should run only the focused checks for that branch unless a conflict, shared contract change, or blocking finding requires escalation. Full Step-end validation runs after the queued branches for the Step are integrated.
+
+Required review or audit fixes are routed back to the narrowest responsible worktree or branch. Master should not make direct fixes during integration unless the user or root/master explicitly approves that repair scope.
 
 ## Scope watchdog audit
 
@@ -152,6 +178,7 @@ ACCEPT:
 HOLD:
 
 - direction is acceptable but evidence, handoff, docs, or local check is incomplete
+- master-up preflight failed or was not run for a detailed master review request
 - required watchdog audit is missing or unresolved
 - required cross-step conflict checkpoint is missing or unresolved
 - root-agent conflict stop is unresolved or lacks a resume decision

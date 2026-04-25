@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-25T21:09:01+09:00
+Generated at: 2026-04-25T21:34:29+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -19,11 +19,11 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expansion
-- Recently completed: Step 17 = 보수적 백테스트, COMPLETE
-- Recently completed before that: Step 16 = 종목별 상세 리포트 구현, COMPLETE
-- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16/17 technical or backtest work.
-- Current gate: Step 18 valuation/fundamental expansion remains deferred and must not start without explicit user/root assignment and PIT financial-data boundary validation.
+Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fundamental expansion implemented
+- Recently completed: Step 18 = 밸류에이션 확장 준비, COMPLETE
+- Recently completed before that: Step 17 = 보수적 백테스트, COMPLETE
+- Carry-forward resolved for this Step: Step 18 now defines candidate-only financial metadata schema, availability-date validation, metric registry, and leakage guardrails.
+- Current gate: Step 19 remains WAITING / not started. Step 18 candidate data is not activated in technical scoring, final ranking, or Step 17 backtest inputs.
 ## 병렬 Workspace 운영 메모
 - Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
 - Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
@@ -54,7 +54,7 @@ Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expans
 | Step 15 | COMPLETE |
 | Step 16 | COMPLETE |
 | Step 17 | COMPLETE |
-| Step 18 | DEFERRED / waiting for valuation expansion |
+| Step 18 | COMPLETE |
 | Step 19 | WAITING / not started |
 | Step 20 | WAITING / not started |
 ## Research ingestion 범위 확장 상태
@@ -67,6 +67,17 @@ Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expans
 
 ## Most Recent Completed Step
 
+### Step 18 = Valuation / Fundamental Expansion
+- Step 18 candidate-only valuation/fundamental contracts, metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
+- `src/valuation/` defines candidate records and report helpers only; it does not create a valuation score, fundamental score, valuation-aware composite, trading signal, or ranking output.
+- `config/valuation_fundamental_metrics.toml` lists allowed candidate-only metric names and keeps `technical_composite_score`, `final_composite_score`, backtest integration, alpha validation, and external network calls disabled.
+- `src/validation/step18_valuation_fundamental_guardrails.py` validates candidate records, availability-date usage, candidate report notices, production-output leakage, and backtest availability boundaries.
+- `docs/architecture/step18_valuation_fundamental_boundary.md` documents the separation between technical scores, candidate valuation/fundamental data, final ranking scores, and Step 17 backtest inputs.
+- Latest local validation: `python -m pytest -q` = 638 passed, 4 skipped, 25 subtests passed.
+- Focused Step 18 validation: `tests/valuation`, `tests/validation/test_step18_valuation_fundamental_guardrails.py`, `tests/scanner/test_step18_valuation_boundary.py`, and `tests/backtest/test_step18_backtest_boundary.py` = 31 passed.
+- Related technical scoring / normalization / Step 17 validation: 149 passed.
+- `review_mvp` specialist static review found no high or medium findings on Step 18 production code; remaining low style findings are non-blocking.
+- Cross-Step Conflict Checkpoint passed with no blocking roadmap/order, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, or trading-signal issue found.
 ### Step 17 = Conservative Backtest
 - Step 17 Worker A/B conservative backtest core and guardrail branches are integrated through `integration/step17-conservative-backtest-merge`.
 - `src/backtest/` implements deterministic evaluation-only backtest contracts and runner logic using frozen Step 15/16-compatible technical ranking context as read-only input.
@@ -88,18 +99,7 @@ Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expans
 - Focused Step 16 validation: `tests/reports` = 66 passed; `tests/validation/test_step16_detail_report_guardrails.py` = 37 passed; `tests/scanner tests/reports tests/validation` = 147 passed.
 - `review_mvp` specialist review found no high or medium findings after required Step 16 review fixes; remaining low style/length warnings are non-blocking.
 - Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, Step 17 backtest leakage, Step 18 valuation/fundamental leakage, trading-signal leakage, Step 15 read-only boundary, generated-output boundary, or dirty-worktree blocker found.
-### Step 15 = Latest Ranking Output
-- Step 15 Worker A/B implementation and validation branches are integrated into the master integration branch.
-- `src/scanner/latest_ranking.py` builds a deterministic latest-date technical ranking snapshot from Step 14 adoption synthesis material and Step 10 normalized technical score inputs.
-- Step 15 output keeps `technical_composite_score` and `final_composite_score` technical-only and rejects future/performance, trading, valuation, and financial/fundamental columns.
-- `src/validation/step15_latest_ranking_guardrails.py` validates Step 15 output and input-plan guardrails, including blocked-row handling.
-- `docs/architecture/research_backtest_boundary_design.md` documents the one-way Step 15/16 output -> Step 17 backtest input boundary without implementing backtests.
-- `scripts/Start-RoleWorktree.ps1` and `docs/workspace_parallel_work_policy.md` add lightweight role-worktree setup support without weakening Step 15+ branch separation.
-- Latest local validation: `python -m pytest -q` = 434 passed, 4 skipped, 25 subtests passed.
-- Focused Step 15 validation: 44 passed.
-- Research ingestion focused validation: 96 passed, 4 skipped.
-- `review_mvp` specialist review found no high findings; remaining medium/low findings are pre-existing static-review items or non-blocking style/length warnings after required Step 15 guardrail fix.
-- omitted 21 additional lines for compact context
+- omitted 32 additional lines for compact context
 
 ## Cross-Step Conflict Checkpoint
 
@@ -124,16 +124,16 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 - financial data를 `technical_composite_score`에 넣지 않는다.
 - financial data를 `final_composite_score`에 넣지 않는다.
 - price-only evidence에 valuation language를 쓰지 않는다.
-- valuation status가 deferred인 동안 valuation/fundamental scoring을 하지 않는다.
+- valuation status가 candidate-only인 동안 active valuation/fundamental scoring을 하지 않는다.
 - active Step이 명시적으로 허용하기 전에는 ranking generation을 하지 않는다.
 
 ## Git Snapshot
 
-- branch: `integration/step16-detail-report-merge`
-- commit: `f3fa3dc`
+- branch: `codex/step18-valuation-fundamental-expansion`
+- commit: `d0751d8`
 - status:
 ```text
-clean
+M WORKSPACE_MANIFEST.md
 ```
 
 ## Step-End Context Policy
@@ -197,8 +197,5 @@ A candidate score or score family should be assigned one of the following final 
 | `efficiency_ratio_trend` | `trend_efficiency` | `technical` | distinctness candidate | define for MVP testing | smooth-trend versus noisy-trend proxy |
 | `medium_term_relative_strength` | folded into trend/breakout review queue | Korea evidence is mixed and overlap with breakout, 52-week high, and trend return is high |
 | `moving_average_trend_structure` | folded into `efficiency_ratio_trend` or later trend review | high overlap with breakout and relative strength |
-| `price_near_52w_high` | folded into `donchian_breakout_distance` as longer-window alternative | concept is useful but redundant in first MVP set |
-| `time_series_trend_return` | folded into `efficiency_ratio_trend` review | too close to relative strength unless separate use is proven later |
-| `volume_participation_momentum_filter` | future conditional filter / diagnostic backlog | strict turnover may require shares outstanding; OHLCV proxy needs review |
 
 [Context truncated by `max_chars`; consult repository docs for full detail.]

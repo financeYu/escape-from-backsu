@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-25T17:53:28+09:00
+Generated at: 2026-04-25T20:30:39+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -19,11 +19,11 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
-- Recently completed: Step 15 = 최신 랭킹 출력 구현, COMPLETE
-- Recently completed before that: Step 14 = Adoption Synthesis, COMPLETE
-- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16 technical work.
-- Current gate: Step 16 must start from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
+Step 17 = 보수적 백테스트, WAITING / not started
+- Recently completed: Step 16 = 종목별 상세 리포트 구현, COMPLETE
+- Recently completed before that: Step 15 = 최신 랭킹 출력 구현, COMPLETE
+- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16/17 technical or backtest work.
+- Current gate: Step 17 is not started. It must begin from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits, and must not introduce valuation/fundamental scoring.
 ## 병렬 Workspace 운영 메모
 - Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
 - Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
@@ -52,7 +52,7 @@ Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
 | Step 13 | COMPLETE |
 | Step 14 | COMPLETE |
 | Step 15 | COMPLETE |
-| Step 16 | WAITING / branch setup required |
+| Step 16 | COMPLETE |
 | Step 17 | WAITING / not started |
 | Step 18 | DEFERRED / waiting for valuation expansion |
 | Step 19 | WAITING / not started |
@@ -67,6 +67,17 @@ Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
 
 ## Most Recent Completed Step
 
+### Step 16 = Security Detail Report
+- Step 16 Worker A/B implementation and guardrail branches are integrated into the master integration branch.
+- `src/reports/security_detail_report.py` builds deterministic per-security technical-only detail reports from the Step 15 latest ranking snapshot as read-only context.
+- Step 16 output displays ticker/date, source latest ranking date, read-only rank fields, technical-only composite score context, score/component breakdowns, source/adoption metadata, diagnostics, quality flags, explanations, and an explicit `technical-only detail report` boundary notice.
+- `src/validation/step16_detail_report_guardrails.py` validates Step 16 report inputs and outputs, including recursive structured-output language checks after code-review fixes.
+- Step 16 does not create a new ranking, re-rank securities, run backtests, compute future/forward/realized returns, create trading recommendations, or use valuation/fundamental scoring.
+- `docs/step16_security_detail_report.md`, `docs/architecture/step16_report_backtest_boundary.md`, and `reports/security/README.md` document the generated-output and Step 15 read-only boundaries.
+- Latest local validation: `python -m pytest -q` = 548 passed, 4 skipped, 25 subtests passed.
+- Focused Step 16 validation: `tests/reports` = 66 passed; `tests/validation/test_step16_detail_report_guardrails.py` = 37 passed; `tests/scanner tests/reports tests/validation` = 147 passed.
+- `review_mvp` specialist review found no high or medium findings after required Step 16 review fixes; remaining low style/length warnings are non-blocking.
+- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, Step 17 backtest leakage, Step 18 valuation/fundamental leakage, trading-signal leakage, Step 15 read-only boundary, generated-output boundary, or dirty-worktree blocker found.
 ### Step 15 = Latest Ranking Output
 - Step 15 Worker A/B implementation and validation branches are integrated into the master integration branch.
 - `src/scanner/latest_ranking.py` builds a deterministic latest-date technical ranking snapshot from Step 14 adoption synthesis material and Step 10 normalized technical score inputs.
@@ -88,17 +99,7 @@ Step 16 = 종목별 상세 리포트 구현, WAITING / branch setup required
 - `review_mvp` specialist review: no high or medium findings on changed production code; low style findings are non-blocking.
 - Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, hard-stop, composite, valuation, diagnostics, or generated-output blocking issue found.
 ### Step 13 = Technical Selection Reviewer
-- Step 13 review contract, status vocabulary, validation guardrail, reviewer engine, report builder, and generated report path/language guardrails are implemented.
-- Step 13 output remains technical review recommendation material for Step 14 only.
-- `review_status` values are technical recommendations, not final adoption states.
-- `diagnostic_only` and context roles remain constrained to diagnostic/context recommendation paths.
-- Severe redundancy or blocked candidate diagnostics cannot auto-promote to adoption.
-- Generated Step 13 reports are constrained to `reports/selection/` and must include `technical selection review material only`.
-- Latest recorded validation: `$env:PYTHONPATH="src"; python -m pytest` = 277 passed, 4 skipped.
-### Step 12 = Redundancy / Correlation Diagnostics
-- Same-date cross-sectional Spearman redundancy/correlation diagnostics are implemented for review material.
-- Normalized score columns are required; raw score fallback is not allowed.
-- Diagnostics remain non-alpha, non-adoption, non-ranking, non-backtest, and non-valuation material.
+- omitted 11 additional lines for compact context
 
 ## Cross-Step Conflict Checkpoint
 
@@ -111,7 +112,7 @@ Required trigger examples:
 - required review fixes are complete and validation is about to be rerun
 Use `docs/cross_step_conflict_check.md` and generate a compact review packet with:
 ```powershell
-python scripts/build_review_packet.py --step "Step 14" --stage "<stage name>"
+python scripts/build_review_packet.py --step "<current step>" --stage "<stage name>"
 ```
 Completed Step artifacts are trusted by default. The checkpoint checks only whether the current stage conflicts with roadmap order, hard stops, cross-project handoffs, generated-output boundaries, or unresolved carry-forward risks.
 
@@ -125,6 +126,28 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 - price-only evidence에 valuation language를 쓰지 않는다.
 - valuation status가 deferred인 동안 valuation/fundamental scoring을 하지 않는다.
 - active Step이 명시적으로 허용하기 전에는 ranking generation을 하지 않는다.
+
+## Git Snapshot
+
+- branch: `integration/step16-detail-report-merge`
+- commit: `61e21d5`
+- status:
+```text
+M quant_project_reference_for_chatgpt_project_current.md
+ M scripts/refresh_quant_project_context.py
+```
+
+## Step-End Context Policy
+
+- Refresh this file after Step-end validation, review, required fixes, rerun, and commit.
+- Keep latest-only local retention: remove obsolete local context files listed in config.
+- Do not include `.env`, API keys, local runtime caches, chart images, generated data caches, or secrets.
+
+## Next Allowed Work
+
+- Step 17 conservative backtest is the next roadmap step.
+- Start Step 17 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
+- Step 18 valuation/fundamental scoring remains gated.
 
 ## Quant Agent Scope
 
@@ -184,23 +207,5 @@ A candidate score or score family should be assigned one of the following final 
 
 | `mean_reversion` | `short_term_overreaction`, `atr_adjusted_oversold_distance` | `technical` | reversal candidates | high within family | implement both only if diagnostics compare distinctness |
 | `breakout` | `donchian_breakout_distance` | `technical` | continuation candidate | high with trend ideas | keep one simple breakout definition first |
-| `squeeze_expansion` | `bollinger_width_squeeze` | `technical` | setup/regime candidate | medium with volatility diagnostics | report as conditional context unless review supports ranking use |
-| `flow` | `cmf_confirmation` | `technical` | volume confirmation | medium with liquidity diagnostics | define whether standalone or interaction before coding |
-| `oscillator_divergence` | `rsi_price_divergence` | `technical` | cautious reversal proxy | medium-high with mean reversion | use deterministic proxy only |
-| `volatility_regime` | `realized_vol_percentile` | `diagnostic` | risk/regime context | medium with squeeze and ATR scores | keep out of direct alpha ranking until reviewed |
-| `trend_efficiency` | `efficiency_ratio_trend` | `technical` | cleaner trend candidate | medium with breakout | signed versus unsigned role must be fixed |
-| Short-term reversal cluster | `short_term_overreaction`, `atr_adjusted_oversold_distance`, `rsi_price_divergence` | compare correlation, rank overlap, warmup coverage, and trigger sparsity; downgrade duplicates |
-| Trend and breakout cluster | `donchian_breakout_distance`, `efficiency_ratio_trend`, folded relative-strength ideas | do not add 52-week high, moving-average trend, and medium-term return variants until distinctness is shown |
-| Volatility context cluster | `bollinger_width_squeeze`, `realized_vol_percentile`, ATR scaling | keep setup/regime diagnostics separate from direct ranking signals |
-| Volume and activity cluster | `cmf_confirmation`, folded volume participation ideas, folded trading activity variability | avoid strict turnover unless shares outstanding becomes point-in-time safe and explicitly allowed |
-
-## Git Snapshot
-
-- branch: `integration/step15-a-b-merge`
-- commit: `0a2e054`
-- status:
-```text
-clean
-```
 
 [Context truncated by `max_chars`; consult repository docs for full detail.]

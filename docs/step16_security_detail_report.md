@@ -9,7 +9,7 @@ The report explains one or more securities using already-built Step 15 latest
 ranking output and optional upstream metadata from Step 10, Step 14, and Step
 15. It is a structured explanation layer only:
 
-- technical detail report only
+- technical-only detail report
 - not a trading recommendation
 - not a backtest
 - not valuation/fundamental analysis
@@ -99,7 +99,7 @@ they already exist in the Step 15 input. Step 16 does not compute either field.
 The `final_composite_score` note is intentionally conservative:
 
 ```text
-final_composite_score is displayed as existing Step 15 technical-only context; it is not a separate valuation or fundamental result.
+final_composite_score is displayed as existing Step 15 technical-only context; it is not a separate non-technical result.
 ```
 
 The report can explain coverage, warmup, data quality, adoption state, source

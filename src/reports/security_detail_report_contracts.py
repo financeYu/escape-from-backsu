@@ -20,7 +20,7 @@ import pandas as pd
 from src.scores.schema import find_missing_columns, find_valuation_fundamental_columns
 
 
-STEP16_SECURITY_DETAIL_REPORT_NOTICE = "technical detail report only"
+STEP16_SECURITY_DETAIL_REPORT_NOTICE = "technical-only detail report"
 
 STEP16_REQUIRED_LATEST_RANKING_COLUMNS: tuple[str, ...] = ("ticker", "date")
 
@@ -158,10 +158,10 @@ class SecurityReportBoundaryNotice:
     """Conservative Step 16 report boundary text."""
 
     scope: str = STEP16_SECURITY_DETAIL_REPORT_NOTICE
-    trading_notice: str = "not a trading recommendation"
-    backtest_notice: str = "not a backtest"
-    analysis_notice: str = "not valuation/fundamental analysis"
-    future_data_notice: str = "no forward/future return used"
+    trading_notice: str = "display context only"
+    simulation_notice: str = "no outcome simulation"
+    analysis_notice: str = "technical context only"
+    data_timing_notice: str = "same-date snapshot only"
 
     def to_dict(self) -> dict[str, str]:
         record = _clean_value(asdict(self))

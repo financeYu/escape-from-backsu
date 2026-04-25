@@ -30,7 +30,7 @@ from src.reports.security_detail_report_contracts import (
 
 FINAL_COMPOSITE_TECHNICAL_ONLY_NOTE = (
     "final_composite_score is displayed as existing Step 15 technical-only "
-    "context; it is not a separate valuation or fundamental result."
+    "context; it is not a separate non-technical result."
 )
 
 DIRECT_ADOPTION_STATES = frozenset({"core_adopted", "technical_only"})

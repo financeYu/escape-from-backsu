@@ -289,8 +289,15 @@ STEP16_FORBIDDEN_REPORT_LANGUAGE = frozenset(
         "trading recommendation",
         "investment recommendation",
         "target price",
+        "target_price",
         "expected return",
+        "expected_return",
         "position size",
+        "position_size",
+        "forward_return",
+        "future_return",
+        "backtest_return",
+        "realized_return",
         "undervalued",
         "cheap",
         "bargain",
@@ -298,7 +305,9 @@ STEP16_FORBIDDEN_REPORT_LANGUAGE = frozenset(
         "valuation",
         "fundamental",
         "valuation score",
+        "valuation_score",
         "fundamental score",
+        "fundamental_score",
         "per ratio",
         "p/e",
         "pbr",
@@ -597,7 +606,12 @@ def _rank_read_only_errors(
     input_frame = _coerce_frame(input_data)
     output_frame = _coerce_frame(output_data)
     if "rank" not in output_frame.columns:
-        return []
+        if "readonly_rank_fields" not in output_frame.columns:
+            return []
+        output_frame = output_frame.copy()
+        output_frame["rank"] = output_frame["readonly_rank_fields"].map(
+            _rank_from_readonly_fields
+        )
     if "rank" not in input_frame.columns:
         return ["output rank requires input rank to verify read-only Step 15 context"]
 
@@ -622,6 +636,12 @@ def _rank_read_only_errors(
     if not input_ranks.equals(output_ranks):
         return ["output rank must match the read-only Step 15 input rank"]
     return []
+
+
+def _rank_from_readonly_fields(value: object) -> object:
+    if not isinstance(value, Mapping):
+        return pd.NA
+    return value.get("rank", pd.NA)
 
 
 def _read_only_fields(columns: Iterable[str]) -> list[str]:

@@ -45,10 +45,10 @@ def test_boundary_notice_contains_required_conservative_meaning() -> None:
     notice = SecurityReportBoundaryNotice().to_dict()
 
     assert notice["scope"] == STEP16_SECURITY_DETAIL_REPORT_NOTICE
-    assert notice["trading_notice"] == "not a trading recommendation"
-    assert notice["backtest_notice"] == "not a backtest"
-    assert notice["analysis_notice"] == "not valuation/fundamental analysis"
-    assert notice["future_data_notice"] == "no forward/future return used"
+    assert notice["trading_notice"] == "display context only"
+    assert notice["simulation_notice"] == "no outcome simulation"
+    assert notice["analysis_notice"] == "technical context only"
+    assert notice["data_timing_notice"] == "same-date snapshot only"
 
 
 @pytest.mark.parametrize(

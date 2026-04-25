@@ -44,11 +44,24 @@ def redact_url(
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 
-def redact_headers(headers: Mapping[str, object] | None, secret_headers: set[str] | None = None) -> dict[str, object]:
+def redact_headers(
+    headers: Mapping[str, object] | None,
+    secret_headers: set[str] | None = None,
+    env_var_names: list[str] | None = None,
+) -> dict[str, object]:
     if not headers:
         return {}
     secret = {name.lower() for name in (secret_headers or DEFAULT_SECRET_HEADERS)}
-    return {key: (REDACTED if key.lower() in secret else value) for key, value in headers.items()}
+    result: dict[str, object] = {}
+    for key, value in headers.items():
+        lowered = str(key).lower()
+        if lowered in secret:
+            result[str(key)] = REDACTED
+        elif isinstance(value, str):
+            result[str(key)] = redact_text(value, env_var_names)
+        else:
+            result[str(key)] = redact_mapping(value, secret_headers=secret, env_var_names=env_var_names)
+    return result
 
 
 def redact_mapping(
@@ -83,7 +96,7 @@ def redact_mapping(
         elif lowered in {"url", "request_url", "raw_link"}:
             result[str(key)] = redact_url(str(item), query_keys, env_var_names)
         elif lowered == "headers" and isinstance(item, Mapping):
-            result[str(key)] = redact_headers(item, header_keys)
+            result[str(key)] = redact_headers(item, header_keys, env_var_names=env_var_names)
         else:
             result[str(key)] = redact_mapping(
                 item,

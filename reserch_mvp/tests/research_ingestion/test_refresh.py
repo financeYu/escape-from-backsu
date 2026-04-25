@@ -212,6 +212,49 @@ def test_refresh_incremental_classifies_only_new_papers(sample_paper, workspace_
     assert summary["incremental_pipeline"]["existing_evidence_cards_reused"] == 1
 
 
+def test_write_new_only_outputs_keeps_valuation_and_backtest_boundaries(sample_paper, workspace_tmp_path):
+    paths = ProjectPaths(workspace_tmp_path)
+    technical = _minimal_card(
+        sample_paper(doi="10.1000/new-technical", title="New technical paper"),
+        {
+            "research_branch": "technical",
+            "downstream_route": "technical_score_architect",
+            "main_score_branch_candidate": "technical",
+            "management_lane": None,
+            "manual_review_required": False,
+        },
+    )
+    valuation = _minimal_card(
+        sample_paper(doi="10.1000/new-valuation", title="New valuation paper"),
+        {
+            "research_branch": "valuation",
+            "downstream_route": "valuation_agent_handoff",
+            "main_score_branch_candidate": "unavailable",
+            "management_lane": None,
+            "manual_review_required": True,
+        },
+    )
+    backtest = _minimal_card(
+        sample_paper(doi="10.1000/new-backtest", title="New backtest methodology paper"),
+        {
+            "research_branch": "diagnostic",
+            "downstream_route": "diagnostic_backlog",
+            "main_score_branch_candidate": "diagnostic",
+            "management_lane": "backtest_methodology",
+            "manual_review_required": False,
+        },
+    )
+
+    cli_module._write_new_only_outputs(paths, [], [technical, valuation, backtest], [])
+
+    evidence_dir = paths.data_dir / "evidence"
+    assert read_jsonl(evidence_dir / "evidence_cards_new.jsonl") == [technical, valuation]
+    assert read_jsonl(evidence_dir / "technical_candidates_new.jsonl") == [technical]
+    assert read_jsonl(evidence_dir / "valuation_candidates_new.jsonl") == [valuation]
+    assert read_jsonl(evidence_dir / "diagnostic_items_new.jsonl") == []
+    assert read_jsonl(evidence_dir / "backtest_methodology_items_new.jsonl") == [backtest]
+
+
 def _minimal_card(paper, classification=None):
     return {
         "paper": {

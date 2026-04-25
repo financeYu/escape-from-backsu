@@ -1,61 +1,73 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: step15_a_b_integration_verifier
-branch: integration/step15-a-b-merge
-task_type: master_integration
-active_step: Step 15 latest ranking output implementation
-owner_or_worker: Step 15 A/B Integration Verifier
-created_from_commit: 8de10055e4989da603cd143f0b744114024aaeda
+workspace_id: codex_step16-detail-report-guardrails
+branch: codex/step16-detail-report-guardrails
+task_type: step_implementation
+active_step: Step 16 Detail Report Guardrails
+owner_or_worker: Worker B
+created_from_commit: 8479159d487642713ff22ea2828597b1bfcf9c51
 
 ## Purpose
 
-Integrate and verify Worker A core latest-ranking output and Worker B validation guardrail outputs without weakening repository, roadmap, valuation, backtest, or future-return guardrails.
+Implement Step 16 detail report validation guardrails and boundary documentation without backtest, valuation, trading signal, or ranking generation.
 
-## Source branches
+## Allowed write paths
 
-- step15-worker-a-core
-- step15-worker-b-validation
+- WORKSPACE_MANIFEST.md
+- src/validation/step16_detail_report_guardrails.py
+- tests/validation/test_step16_detail_report_guardrails.py
+- tests/reports/test_step16_report_boundary_integration.py
+- reports/security/README.md
+- docs/architecture/step16_report_backtest_boundary.md
 
-## Consumed worker manifests
+## Read-only paths
 
-- Worker A: step15_worker_a_core / step15-worker-a-core / Step 15 latest ranking output implementation
-- Worker B: step15_worker_b_validation / step15-worker-b-validation / Step 15 Latest Ranking Output validation support
+- AGENTS.md
+- docs/project_checklist.md
+- docs/roadmap_status.md
+- docs/workspace_parallel_work_policy.md
+- docs/architecture/research_backtest_boundary_design.md
+- src/scanner/latest_ranking.py
+- src/validation/step15_latest_ranking_guardrails.py
+- docs/step14_adoption_synthesis.md
+- src/selection/adoption_synthesis_contracts.py
+- reports/selection/README.md
+- src/reports/security_detail_report_contracts.py
+- src/reports/security_detail_report.py
+- tests/reports/test_step16_security_detail_report_contracts.py
+- tests/reports/test_step16_security_detail_report.py
+- docs/step16_security_detail_report.md
 
-## Allowed work
+## Forbidden actions
 
-- merge Worker A and Worker B branches
-- resolve merge conflicts minimally
-- validate Step 15 contracts and guardrails
-- run focused and broad tests
-- produce final integration report
-- commit source-controlled integration state if validation allows
-
-## Forbidden work
-
-- new feature invention
-- Step 16 detailed stock report implementation
-- Step 17 backtest, realized-return validation, Sharpe, MDD, win-rate, or alpha validation
-- Step 18 valuation/fundamental scoring
+- roadmap status or final Step verdict changes unless explicitly assigned
+- ranking output, composite scoring, backtest, valuation/fundamental scoring, or trading signals unless explicitly assigned by the active Step
 - financial/fundamental data in technical_composite_score or final_composite_score
-- buy, sell, trading signal, or investment advice language
-- roadmap bypass or Step completion status update without passing the required gates
+- generated market-data output commits unless explicitly promoted as review fixtures
+- unrelated worktree cleanup, staging, committing, merging, or reset operations
+- editing Worker A owned Step 16 files
+- Step 17 backtest implementation
+- future return labels or performance metrics
+- valuation/fundamental scoring
+- buy/sell/hold or trading signal generation
+- new ranking or re-ranking generation
 
 ## Expected output
 
-- integrated Step 15 source and validation files
-- focused and broad validation summary
-- Cross-Step Conflict Checkpoint result
-- Korean integration report
+- Step 16 guardrail validator
+- focused toy-data tests
+- boundary documentation
+- worker handoff summary
 
 ## Required validation
 
-- Worker A focused tests after merge
-- Worker B focused tests after merge
-- Step 15 integration compatibility checks
-- changed-file forbidden-term search
-- broad pytest run when feasible
-- Cross-Step Conflict Checkpoint
+- python -m pytest tests/validation -q
+- python -m pytest tests/reports -q if integration test is added
+- forbidden-scope search
+- git status review
 
 ## Handoff notes
 
-This integration branch is ready for master-up review only if A/B merges are clean, focused validation passes, broad validation passes or any limitation is justified, generated-output boundaries are clean, and no unresolved Step 15 contract conflict remains.
+Update this manifest before editing outside the allowed write paths.
+After focused validation passes, commit source-controlled branch changes by default and report the commit SHA.
+Do not stage the local WORKSPACE_MANIFEST.md unless the master explicitly promotes it.

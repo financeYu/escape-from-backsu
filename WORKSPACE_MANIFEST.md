@@ -16,6 +16,11 @@ Integrate and verify Worker A core latest-ranking output and Worker B validation
 - step15-worker-a-core
 - step15-worker-b-validation
 
+## Consumed worker manifests
+
+- Worker A: step15_worker_a_core / step15-worker-a-core / Step 15 latest ranking output implementation
+- Worker B: step15_worker_b_validation / step15-worker-b-validation / Step 15 Latest Ranking Output validation support
+
 ## Allowed work
 
 - merge Worker A and Worker B branches

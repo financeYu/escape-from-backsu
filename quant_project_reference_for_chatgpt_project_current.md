@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-25T21:04:33+09:00
+Generated at: 2026-04-25T21:09:01+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -129,8 +129,8 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 
 ## Git Snapshot
 
-- branch: `integration/step17-conservative-backtest-merge`
-- commit: `d6b94bc`
+- branch: `integration/step16-detail-report-merge`
+- commit: `f3fa3dc`
 - status:
 ```text
 clean

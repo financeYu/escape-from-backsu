@@ -64,11 +64,31 @@ def test_expanded_query_sets_have_routing_metadata():
     assert "hybrid_technical_valuation_split" not in config["policy"]["refresh_policy"]["default_query_sets"]
 
 
+def test_refresh_profiles_split_operational_modes_and_keep_valuation_opt_in():
+    config = load_research_config(Path(__file__).resolve().parents[2])
+    profiles = config["policy"]["refresh_profiles"]
+
+    assert config["policy"]["refresh_policy"]["default_profile"] == "fast_refresh"
+    assert profiles["fast_refresh"]["sources"] == ["openalex"]
+    assert 5 <= len(profiles["fast_refresh"]["query_sets"]) <= 6
+    assert len(profiles["full_refresh"]["query_sets"]) == 26
+    assert "fundamental_valuation" not in profiles["full_refresh"]["query_sets"]
+    assert "technical_correlation_redundancy" in profiles["diagnostic_refresh"]["query_sets"]
+    assert "methodology_publication_bias" in profiles["diagnostic_refresh"]["query_sets"]
+    assert profiles["regional_refresh"]["query_sets"] == [
+        "korea_kospi_context",
+        "korea_kospi_expanded",
+        "asia_pacific_equity_context",
+        "emerging_market_equity_anomalies",
+    ]
+    assert profiles["valuation_fundamental_opt_in"]["valuation_fundamental"] == "requires_cli_include_valuation"
+
+
 def test_find_project_root_from_master_workspace():
     master_root = Path(__file__).resolve().parents[3]
-    quant_root = Path(__file__).resolve().parents[2]
+    research_root = Path(__file__).resolve().parents[2]
 
-    assert find_project_root(master_root) == quant_root
+    assert find_project_root(master_root) == research_root
 
 
 def test_missing_config_handling(workspace_tmp_path):

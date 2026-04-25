@@ -51,8 +51,8 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 | `config/` | root-level config 초안 |
 | `src/` | Step 3에서 만든 target module boundary |
 | `chart_mvp/` | 현재 실행 가능한 스캐너/차트/캐시 하위 프로젝트 |
-| `Quant_mvp/` | 점수 설계, 기술 검토, 밸류에이션 경계 문서 |
-| `reserch_mvp/` | 리서치 수집/증거 준비 reference project |
+| `Quant_mvp/` | 점수 설계, 기술 검토, research intake contract, 밸류에이션 경계 문서 |
+| `reserch_mvp/` | 리서치 수집/증거 준비 canonical project |
 | `review_mvp/` | 전문 코드 리뷰와 선택적 최종 검증 보조 도구 |
 
 ## 로드맵

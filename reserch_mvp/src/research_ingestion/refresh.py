@@ -4,7 +4,7 @@ from collections import Counter
 from datetime import UTC, datetime
 from typing import Any
 
-from .dedupe import deduplicate_papers, is_duplicate_paper
+from .dedupe import PaperDedupeIndex, deduplicate_papers
 
 
 def refresh_timestamp_utc() -> str:
@@ -15,11 +15,13 @@ def select_unseen_papers(existing_papers: list[dict[str, Any]], candidate_papers
     """Return candidate papers that are not already represented in the corpus."""
     unseen: list[dict[str, Any]] = []
     comparison_pool = list(existing_papers)
+    dedupe_index = PaperDedupeIndex(comparison_pool)
     for paper in candidate_papers:
-        if any(is_duplicate_paper(existing, paper) for existing in comparison_pool):
+        if dedupe_index.find_duplicate_index(comparison_pool, paper) is not None:
             continue
         unseen.append(paper)
         comparison_pool.append(paper)
+        dedupe_index.add(len(comparison_pool) - 1, paper)
     return deduplicate_papers(unseen)
 
 
@@ -37,11 +39,15 @@ def build_refresh_summary(
     relevance_rejected_count: int = 0,
     relevance_manual_review_count: int = 0,
     plan: dict[str, Any] | None = None,
+    selected_profile: str | None = None,
+    pipeline_telemetry: dict[str, Any] | None = None,
+    incremental_pipeline: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "run_id": run_id,
         "timestamp_utc": refresh_timestamp_utc(),
         "mode": "periodic_refresh",
+        "selected_profile": selected_profile,
         "selected_sources": selected_sources,
         "selected_query_set": ",".join(selected_query_sets),
         "selected_query_sets": selected_query_sets,
@@ -55,5 +61,7 @@ def build_refresh_summary(
         "refresh_refreshed_paper_count": refreshed_count,
         "refresh_child_runs": child_runs,
         "pdf_fulltext_used": False,
+        "pipeline_telemetry": pipeline_telemetry or {},
+        "incremental_pipeline": incremental_pipeline or {},
         "plan": plan or {},
     }

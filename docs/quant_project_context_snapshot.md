@@ -23,4 +23,3 @@ The command:
 The context is intentionally compact and source-controlled as the latest project
 reference. Do not include secrets, `.env`, runtime caches, generated chart
 images, or raw data caches in the snapshot.
-

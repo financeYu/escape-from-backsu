@@ -4,11 +4,22 @@
 
 ## 현재 활성 단계
 
-Step 14 = Adoption Synthesis, NEXT / not started
+Step 15 = 최신 랭킹 출력 구현, WAITING / branch setup required
 
-- Recently completed: Step 13 = Technical Selection Reviewer, COMPLETE
-- Recently completed before that: Step 12 = redundancy / correlation diagnostics, COMPLETE
+- Recently completed: Step 14 = Adoption Synthesis, COMPLETE
+- Recently completed before that: Step 13 = Technical Selection Reviewer, COMPLETE
 - Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14 technical work.
+- Current gate: Step 15 must start from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
+
+## 병렬 Workspace 운영 메모
+
+- Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
+- Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
+- Step implementation은 major Step branch(`codex/stepXX-<scope>`)에서만 진행하고, Quant/research/review/audit/chart 작업은 minor/support branch(`quant/`, `research/`, `review/`, `audit/`, `chart/`)에서 분리한다.
+- 모든 하위 에이전트는 파일 편집 전에 role branch/worktree를 만들거나 선택하고 루트 `WORKSPACE_MANIFEST.md`를 작성해야 한다.
+- `C:\Users\jjaew\Project\master_mvp`는 integration / verification / status-control 전용 workspace로 유지한다.
+- 모든 non-master worktree는 루트의 `WORKSPACE_MANIFEST.md`를 포함해야 한다.
+- 이 운영 메모는 Step 상태를 변경하지 않는다.
 
 ## 전체 Step 판정
 
@@ -27,8 +38,8 @@ Step 14 = Adoption Synthesis, NEXT / not started
 | Step 11 | COMPLETE |
 | Step 12 | COMPLETE |
 | Step 13 | COMPLETE |
-| Step 14 | NEXT / not started |
-| Step 15 | WAITING / not started |
+| Step 14 | COMPLETE |
+| Step 15 | WAITING / branch setup required |
 | Step 16 | WAITING / not started |
 | Step 17 | WAITING / not started |
 | Step 18 | DEFERRED / waiting for valuation expansion |
@@ -37,9 +48,10 @@ Step 14 = Adoption Synthesis, NEXT / not started
 
 ## Research ingestion 범위 확장 상태
 
-- `Quant_mvp/config/research_queries.toml`에 technical, diagnostic, Korea/APAC/EM context, hybrid split query-set 확장 metadata를 추가했다.
-- `Quant_mvp/config/research_classification.toml`에 required input boundary, forbidden valuation language, 명시적 classification rule name을 추가했다.
-- `Quant_mvp/config/research_scholar_discovery.toml`에 user-provided DOI seed와 seed lifecycle을 문서화했다.
+- `reserch_mvp/config/research_queries.toml`에 technical, diagnostic, Korea/APAC/EM context, hybrid split query-set 확장 metadata를 추가했다.
+- `reserch_mvp/config/research_classification.toml`에 required input boundary, forbidden valuation language, 명시적 classification rule name을 추가했다.
+- `reserch_mvp/config/research_scholar_discovery.toml`에 user-provided DOI seed와 seed lifecycle을 문서화했다.
+- `Quant_mvp/config/research_intake.toml`은 downstream EvidenceCard intake contract만 소유한다.
 - `docs/research_ingestion_expansion.md`에 source 확장 후보와 정책 검토 조건을 문서화했다.
 - EvidenceCard is not a score definition.
 - EvidenceCard is not an adoption decision.
@@ -51,6 +63,16 @@ Step 14 = Adoption Synthesis, NEXT / not started
 - ranking, latest ranking, composite score, backtest, valuation/fundamental scoring은 여전히 생성하지 않는다.
 
 ## 최근 완료 Step 요약
+
+### Step 14 = Adoption Synthesis
+
+- Step 14 adoption synthesis docs, contracts, engine, report guardrails, and tests are complete.
+- Step 14 output remains adoption synthesis material only and preserves Step 13 `review_status` as `source_review_status`.
+- Step 14 does not generate ranking output, latest ranking output, `technical_composite_score`, `final_composite_score`, backtest, trading signals, or valuation/fundamental scoring.
+- Latest recorded local validation: `python -m pytest` = 387 passed, 4 skipped.
+- Focused Step 14 / research-ingestion validation: 180 passed, 4 skipped.
+- `review_mvp` specialist review: no high or medium findings on changed production code; low style findings are non-blocking.
+- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, hard-stop, composite, valuation, diagnostics, or generated-output blocking issue found.
 
 ### Step 13 = Technical Selection Reviewer
 
@@ -81,7 +103,7 @@ Step 14 = Adoption Synthesis, NEXT / not started
   - `docs/step7_indicator_layer.md`
   - `docs/step2_financial_validation_summary.md`
 
-## Step 14 진입 기준
+## Step 14 진행 / 종료 기준
 
 - Use Step 13 technical review recommendations as Step 14 input material.
 - Convert technical review recommendations into an explicit adoption synthesis plan only.

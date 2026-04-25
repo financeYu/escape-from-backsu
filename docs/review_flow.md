@@ -4,6 +4,7 @@
 
 ```text
 worker scope declaration
+-> root-agent conflict stop check
 -> scope watchdog audit when required
 -> subproject local change
 -> subproject local first review
@@ -22,6 +23,7 @@ worker scope declaration
 
 See `docs/scope_audit_process.md` for watchdog triggers, verdict handling, and worker handoff requirements.
 See `docs/cross_step_conflict_check.md` for the all-Step conflict checkpoint used at important in-Step milestones and Step-end.
+See `docs/root_agent_conflict_process.md` for stop/report handling when worker scope conflicts with root-owned policy, root/master active work, protected concurrent work, or dirty worktree ownership.
 
 ## Step-end gate
 
@@ -77,6 +79,22 @@ Required output is:
 - required follow-up:
 ```
 
+## Root-Agent Conflict Stop
+
+Before editing, a worker checks whether its scope overlaps root-owned policy, root/master active work, protected concurrent work, or unrelated dirty files that cannot be separated.
+
+If a stop trigger exists, the worker must stop, avoid cleanup/staging/commit/reset actions, and report with `docs/root_agent_conflict_process.md`.
+
+Accepted resume decisions are:
+
+- `RESUME_WITH_SCOPE`
+- `ROOT_TAKES_OVER`
+- `SPLIT_HANDOFF`
+- `ABANDON_LOCAL_CHANGE`
+- `NEEDS_USER_CLARIFICATION`
+
+Master treats an unresolved conflict stop as HOLD.
+
 ## Non-default flow
 
 `review_mvp` can be called before master only when:
@@ -99,7 +117,8 @@ The summary must make clear:
 5. which files are owned by this change and which dirty files are unrelated
 6. whether watchdog audit was required and the final watchdog verdict
 7. whether Cross-Step Conflict Checkpoint was required and the final verdict
-8. whether `review_mvp` is requested or not
+8. whether Root-Agent Conflict Stop was triggered and the final resume decision
+9. whether `review_mvp` is requested or not
 
 ## Scope watchdog audit
 
@@ -135,6 +154,7 @@ HOLD:
 - direction is acceptable but evidence, handoff, docs, or local check is incomplete
 - required watchdog audit is missing or unresolved
 - required cross-step conflict checkpoint is missing or unresolved
+- root-agent conflict stop is unresolved or lacks a resume decision
 
 REJECT:
 

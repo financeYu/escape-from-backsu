@@ -6,14 +6,59 @@ from typing import Any
 from .normalize import canonical_id, first_author, normalize_arxiv_id, normalize_doi, normalize_title, utc_now_iso, validate_normalized_paper
 
 
+class PaperDedupeIndex:
+    """Identifier-first duplicate lookup with narrow fuzzy title buckets."""
+
+    def __init__(self, papers: list[dict[str, Any]] | None = None):
+        self.doi: dict[str, int] = {}
+        self.arxiv_id: dict[str, int] = {}
+        self.openalex_id: dict[str, int] = {}
+        self.semantic_scholar_id: dict[str, int] = {}
+        self.title_buckets: dict[tuple[int | None, str], list[int]] = {}
+        for index, paper in enumerate(papers or []):
+            self.add(index, paper)
+
+    def add(self, index: int, paper: dict[str, Any]) -> None:
+        for key, value in _identifier_keys(paper):
+            getattr(self, key)[value] = index
+        bucket = _fuzzy_bucket(paper)
+        if bucket is not None:
+            self.title_buckets.setdefault(bucket, []).append(index)
+
+    def rebuild(self, papers: list[dict[str, Any]]) -> None:
+        self.doi.clear()
+        self.arxiv_id.clear()
+        self.openalex_id.clear()
+        self.semantic_scholar_id.clear()
+        self.title_buckets.clear()
+        for index, paper in enumerate(papers):
+            self.add(index, paper)
+
+    def find_duplicate_index(self, papers: list[dict[str, Any]], paper: dict[str, Any]) -> int | None:
+        for key, value in _identifier_keys(paper):
+            match = getattr(self, key).get(value)
+            if match is not None:
+                return match
+        bucket = _fuzzy_bucket(paper)
+        if bucket is None:
+            return None
+        for index in self.title_buckets.get(bucket, []):
+            if _fuzzy_title_year_author(papers[index], paper):
+                return index
+        return None
+
+
 def deduplicate_papers(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
     merged: list[dict[str, Any]] = []
+    index = PaperDedupeIndex()
     for paper in papers:
-        match_index = _find_duplicate_index(merged, paper)
+        match_index = index.find_duplicate_index(merged, paper)
         if match_index is None:
             merged.append(dict(paper))
+            index.add(len(merged) - 1, merged[-1])
         else:
             merged[match_index] = merge_papers(merged[match_index], paper)
+            index.rebuild(merged)
     for paper in merged:
         validate_normalized_paper(paper)
     return merged
@@ -102,10 +147,7 @@ def is_duplicate_paper(left: dict[str, Any], right: dict[str, Any]) -> bool:
 
 
 def _find_duplicate_index(existing: list[dict[str, Any]], paper: dict[str, Any]) -> int | None:
-    for index, candidate in enumerate(existing):
-        if _is_duplicate(candidate, paper):
-            return index
-    return None
+    return PaperDedupeIndex(existing).find_duplicate_index(existing, paper)
 
 
 def _is_duplicate(left: dict[str, Any], right: dict[str, Any]) -> bool:
@@ -125,19 +167,45 @@ def _same_nonempty(left: str | None, right: str | None) -> bool:
 
 
 def _fuzzy_title_year_author(left: dict[str, Any], right: dict[str, Any]) -> bool:
-    if left.get("publication_year") and right.get("publication_year") and left["publication_year"] != right["publication_year"]:
+    if left.get("publication_year") != right.get("publication_year"):
+        return False
+    left_author = normalize_title(left.get("first_author"))
+    right_author = normalize_title(right.get("first_author"))
+    if not left_author or not right_author:
+        return False
+    if left_author != right_author and SequenceMatcher(None, left_author, right_author).ratio() < 0.80:
         return False
     left_title = normalize_title(left.get("title"))
     right_title = normalize_title(right.get("title"))
     if not left_title or not right_title:
         return False
-    if SequenceMatcher(None, left_title, right_title).ratio() < 0.93:
-        return False
-    left_author = normalize_title(left.get("first_author"))
-    right_author = normalize_title(right.get("first_author"))
-    if left_author and right_author:
-        return SequenceMatcher(None, left_author, right_author).ratio() >= 0.80
-    return True
+    return SequenceMatcher(None, left_title, right_title).ratio() >= 0.93
+
+
+def _identifier_keys(paper: dict[str, Any]) -> list[tuple[str, str]]:
+    source_ids = paper.get("source_ids", {}) or {}
+    keys: list[tuple[str, str]] = []
+    doi = normalize_doi(paper.get("doi") or source_ids.get("doi"))
+    arxiv_id = normalize_arxiv_id(paper.get("arxiv_id") or source_ids.get("arxiv_id"))
+    openalex_id = paper.get("openalex_id") or source_ids.get("openalex_id")
+    semantic_scholar_id = paper.get("semantic_scholar_id") or source_ids.get("semantic_scholar_id")
+    if doi:
+        keys.append(("doi", doi))
+    if arxiv_id:
+        keys.append(("arxiv_id", arxiv_id))
+    if openalex_id:
+        keys.append(("openalex_id", str(openalex_id)))
+    if semantic_scholar_id:
+        keys.append(("semantic_scholar_id", str(semantic_scholar_id)))
+    return keys
+
+
+def _fuzzy_bucket(paper: dict[str, Any]) -> tuple[int | None, str] | None:
+    year = paper.get("publication_year")
+    author = normalize_title(paper.get("first_author"))
+    if year is None or not author:
+        return None
+    return (year, author)
 
 
 def _merge_unique(left: list[Any], right: list[Any]) -> list[Any]:

@@ -7,4 +7,3 @@ obsolete_local_paths = [
 ]
 max_chars = 14000
 local_latest_only = true
-

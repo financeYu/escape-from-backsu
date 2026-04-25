@@ -7,6 +7,8 @@ The responsible subproject performs first-pass review for its own changes. It sh
 ## Local First Checklist
 
 - worker scope declaration recorded
+- root-agent conflict stop trigger decision recorded
+- root-agent conflict stop report and resume decision recorded when triggered
 - watchdog audit trigger decision recorded
 - watchdog audit verdict and unresolved warnings recorded when required
 - local scope compliance
@@ -31,6 +33,8 @@ For generated outputs, confirm whether they were intentionally excluded from sou
 For watchdog-triggered changes, include the watchdog audit request package and final verdict from `Quant_mvp/agents/audit/AGENTS.md`.
 
 If watchdog audit is marked not needed, state why the change did not touch any required trigger in `docs/scope_audit_process.md`.
+
+If root-agent conflict stop is triggered, stop work and report with `docs/root_agent_conflict_process.md` before any further edits, staging, commit, cleanup, reset, or broad repair action.
 
 When an important in-Step stage ends, include the Cross-Step Conflict Checkpoint from `docs/cross_step_conflict_check.md`. Generate `docs/current_review_packet.md` with `scripts/build_review_packet.py` and attach the packet path in the master-up summary.
 

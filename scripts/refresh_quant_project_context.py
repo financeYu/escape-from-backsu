@@ -274,6 +274,12 @@ def _run_git(project_root: Path, *args: str) -> str:
 
 
 def _infer_next_allowed_work(roadmap: str) -> str:
+    if "Step 15 = 최신 랭킹 출력 구현" in roadmap or "| Step 15 | WAITING / branch setup required |" in roadmap:
+        return (
+            "- Step 15 latest ranking output is the next roadmap step.\n"
+            "- Start Step 15 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.\n"
+            "- Step 17 backtest and Step 18 valuation/fundamental scoring remain gated."
+        )
     if "Step 14 = Adoption Synthesis" in roadmap:
         return (
             "- Step 14 Adoption Synthesis is the next active roadmap step.\n"

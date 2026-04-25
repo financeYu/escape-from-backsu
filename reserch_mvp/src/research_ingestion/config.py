@@ -14,6 +14,7 @@ CONFIG_FILES = {
     "scholar_discovery": "research_scholar_discovery.toml",
 }
 ROOT_MARKER_CONFIG = "research_sources.toml"
+RESEARCH_PROJECT_DIR = "reserch_mvp"
 
 
 @dataclass(frozen=True)
@@ -35,15 +36,15 @@ class ProjectPaths:
 
 def find_project_root(start: Path | None = None) -> Path:
     current = (start or Path.cwd()).resolve()
-    candidates = [current, current / "Quant_mvp", *current.parents]
-    candidates.extend(parent / "Quant_mvp" for parent in current.parents)
+    candidates = [current, current / RESEARCH_PROJECT_DIR, *current.parents]
+    candidates.extend(parent / RESEARCH_PROJECT_DIR for parent in current.parents)
     for candidate in candidates:
         if (
             (candidate / "AGENTS.md").exists()
             and (candidate / "config" / ROOT_MARKER_CONFIG).exists()
         ):
             return candidate
-    raise FileNotFoundError("Could not locate Quant_mvp project root with AGENTS.md and config/.")
+    raise FileNotFoundError("Could not locate reserch_mvp project root with AGENTS.md and config/.")
 
 
 def load_toml(path: Path) -> dict[str, Any]:

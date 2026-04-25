@@ -58,15 +58,15 @@ Prefer explicit downgrades, deferrals, or narrower implementations.
 
 ## Multi-agent operating model
 
-This repository uses one separated upstream research agent, one strict scope watchdog, and **three distinct technical agents** with different responsibilities.
+This repository consumes one separated upstream research agent, uses one strict scope watchdog, and has **three distinct technical agents** with different responsibilities.
 
 Upstream evidence agent:
 
 0. **Research Ingestion Agent**
-   - lives in `agents/research/AGENTS.md`
-   - collects approved paper metadata and local discovery seeds
-   - normalizes research sources and creates conservative EvidenceCards
+   - lives in `../reserch_mvp/AGENTS.md`
+   - owns approved paper metadata collection, local discovery seeds, metadata-source adapters, research query config, and conservative EvidenceCards
    - routes candidates without adopting scores, running backtests, claiming alpha, or performing valuation review
+   - hands Quant only explicit intake material governed by `config/research_intake.toml`
 
 Scope watchdog:
 
@@ -98,8 +98,8 @@ Each agent should challenge different failure modes.
 
 Workers must use the root `docs/scope_audit_process.md` when watchdog audit is required before master-up.
 
-Research ingestion is intentionally separated into `agents/research/AGENTS.md`.
-The research agent may collect approved paper metadata, normalize sources, classify paper-derived ideas, and prepare EvidenceCards, but it must not adopt scores, run backtests, claim alpha, or perform valuation review.
+Research ingestion is intentionally separated into `../reserch_mvp`.
+The Quant-side `agents/research/AGENTS.md` is only a compatibility pointer and intake note. Quant may consume EvidenceCards and handoff files through `config/research_intake.toml`, but it must not collect sources, expand research query sets, own metadata adapters, generate EvidenceCards, adopt scores from EvidenceCards, run paper-derived backtests, claim alpha, or perform valuation review.
 
 Valuation / fundamental analysis is intentionally separated into `agents/valuation/AGENTS.md`.
 The main technical agent may reference valuation examples for teaching or handoff, but must not perform valuation review itself.
@@ -681,6 +681,7 @@ Valuation review lives in a separated agent document and should be invoked only 
   - `thresholds.toml`
   - `weights.toml`
   - `scores.toml`
+  - `research_intake.toml`
 
 - `docs/`
   - `score_catalog.md`
@@ -692,7 +693,7 @@ Valuation review lives in a separated agent document and should be invoked only 
 
 - `agents/`
   - `research/`
-    - `AGENTS.md`
+    - `AGENTS.md` as a compatibility pointer to `../reserch_mvp`
   - `audit/`
     - `AGENTS.md`
   - `valuation/`

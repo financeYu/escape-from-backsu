@@ -49,6 +49,19 @@ Quant_mvp/data/research/indexes/*.json
 Quant_mvp/data/research/discovery/google_scholar/*_seeds.jsonl
 Quant_mvp/data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl
 
+# reserch_mvp research ingestion runtime artifacts
+reserch_mvp/data/research/raw/
+reserch_mvp/data/research/request_cache/
+reserch_mvp/data/research/normalized/*.jsonl
+reserch_mvp/data/research/evidence/*.jsonl
+reserch_mvp/data/research/indexes/*.jsonl
+reserch_mvp/data/research/indexes/*.json
+reserch_mvp/data/research/discovery/google_scholar/*_seeds.jsonl
+reserch_mvp/data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl
+reserch_mvp/reports/research_ingestion/*
+!reserch_mvp/reports/research_ingestion/*.md
+!reserch_mvp/reports/research_ingestion/*.csv
+
 # review_mvp runtime artifacts
 review_mvp/tests/workspace/
 

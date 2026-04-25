@@ -21,8 +21,8 @@ No contrary repository evidence was found during Step 3 inspection.
 Child projects under the canonical root:
 
 - `chart_mvp`: current runnable scanner/runtime project
-- `Quant_mvp`: quant score governance and config-policy project
-- `reserch_mvp`: research-ingestion reference project
+- `Quant_mvp`: quant score governance, research intake, and config-policy project
+- `reserch_mvp`: canonical research-ingestion project
 - `review_mvp`: specialist code-review and optional final-validation support project
 
 External sibling projects near the root:

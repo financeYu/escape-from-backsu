@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime
 import re
-import time
 from typing import Any
 from urllib.parse import urlencode
 import xml.etree.ElementTree as ET
 
 from ..normalize import clean_text, make_normalized_paper, normalize_arxiv_id
 from ..redaction import redact_mapping
-from .http import SourceResponse, fetch_text_with_retries
+from .http import SourceRateLimiter, SourceResponse, fetch_text_with_retries
 
 
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom", "arxiv": "http://arxiv.org/schemas/atom"}
@@ -25,8 +24,12 @@ class ArxivAdapter:
         self.max_concurrency = int(config.get("max_concurrency", 1))
         self.default_max_results = int(config.get("default_max_results", 25))
         self.pdf_download_enabled = bool(config.get("pdf_download_enabled", False))
-        self._last_request_ts = 0.0
         self.validate_rate_limit_settings()
+        self._rate_limiter = SourceRateLimiter(
+            min_interval_seconds=self.min_interval_seconds,
+            max_concurrency=self.max_concurrency,
+            source_name=self.source_name,
+        )
 
     def validate_rate_limit_settings(self) -> None:
         if self.min_interval_seconds < 3.0:
@@ -51,19 +54,18 @@ class ArxivAdapter:
         return redact_mapping({"request_url": url, "headers": headers or self.request_headers()})
 
     def fetch_search_response(self, query: str, start: int = 0, max_results: int | None = None) -> SourceResponse:
-        elapsed = time.monotonic() - self._last_request_ts
-        if elapsed < self.min_interval_seconds:
-            time.sleep(self.min_interval_seconds - elapsed)
         url = self.build_search_url(query, start=start, max_results=max_results)
-        response = fetch_text_with_retries(
-            url=url,
-            headers=self.request_headers(),
-            timeout_seconds=float(self.config.get("timeout_seconds", 20)),
-            max_retries=int(self.config.get("max_retries", 0)),
-            retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
-        )
-        self._last_request_ts = time.monotonic()
-        return response
+        self._rate_limiter.wait_before_request()
+        try:
+            return fetch_text_with_retries(
+                url=url,
+                headers=self.request_headers(),
+                timeout_seconds=float(self.config.get("timeout_seconds", 20)),
+                max_retries=int(self.config.get("max_retries", 0)),
+                retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
+            )
+        finally:
+            self._rate_limiter.mark_request_complete()
 
     def fetch_search(self, query: str, start: int = 0, max_results: int | None = None) -> str:
         return self.fetch_search_response(query, start=start, max_results=max_results).body

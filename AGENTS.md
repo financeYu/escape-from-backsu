@@ -11,6 +11,19 @@ Reference authority:
 - `docs/roadmap_status.md` controls current step status.
 - The user's latest explicit instruction wins if there is a conflict.
 
+## Prompt Constraint Guard
+
+Before acting on a user prompt, check whether the requested action conflicts with this repository's hard stops, roadmap order, root boundary rules, protected concurrent work, Git hygiene, generated-output policy, valuation/financial-data boundary, or safety/security constraints.
+
+If the prompt violates those constraints, do not perform the violating work. Instead:
+
+1. warn the user that the request is blocked or needs rerouting
+2. name the specific rule or project boundary involved
+3. explain the narrow safe alternative or prerequisite step
+4. offer to perform only the allowed subset when one exists
+
+Do not bypass this guard by reframing prohibited work as exploration, prototype work, cleanup, validation, or convenience automation. If the violation is ambiguous, pause long enough to clarify the safe route before editing files or running side-effecting commands.
+
 At the end of every Step, report one of:
 
 - `COMPLETE`
@@ -52,6 +65,32 @@ During an active Step, inspect only the files and interfaces directly needed for
 Minor issues found in completed Steps should be recorded as TODOs or risk notes and must not block the active Step unless they break the active Step interface or create a hard-stop violation.
 
 `Step 2` may remain `PARTIALLY COMPLETE` because financial samples or point-in-time validation are incomplete. That status does not block technical Steps while PER/PBR/ROE or other valuation/fundamental data remain outside `technical_composite_score`, `final_composite_score`, and technical scoring.
+
+## Concurrent Work Guard
+
+When the user reports that another project area or roadmap Step is actively being worked on, treat that area as protected concurrent work. Inspect `git status` before editing, avoid touching those files unless the user's latest request explicitly requires it, and keep the change to the narrowest non-conflicting scope.
+
+## Multi-Workspace Parallel Work Policy
+
+Parallel Step implementation, review, research ingestion, audit/scope watchdog, and master integration work must use separate git worktrees and branches as defined in `docs/workspace_parallel_work_policy.md`.
+
+Starting immediately before Step 15, every sub-agent or subproject worker must create or select the correct role branch and worktree before editing files. Do not begin work on an inherited, shared, or master workspace branch.
+
+Branch class rule for Step 15+:
+
+- Roadmap Step implementation is the major Step branch: `codex/stepXX-<scope>` unless the master assigns a narrower pattern.
+- Quant score/governance work, research ingestion, review, audit/scope watchdog, and chart runtime work are minor/support branches: `quant/stepXX-<scope>`, `research/stepXX-<scope>`, `review/stepXX-<scope>`, `audit/stepXX-<scope>`, or `chart/stepXX-<scope>`.
+- Minor/support branches must not update roadmap status, final Step verdicts, or master integration policy unless the root/master explicitly assigns that task.
+
+The master workspace is for integration, verification, and status-control only. Do not use it for experimental implementation, research exploration, review edits mixed with implementation, direct Step work, or generated report experiments.
+
+Every non-master worktree must include a root-level `WORKSPACE_MANIFEST.md` before editing project files and must produce the required handoff output before master integration.
+
+## Root Agent Conflict Stop
+
+When a subproject worker or delegated agent detects a conflict with root-owned policy, root/master active work, protected concurrent work, or unrelated dirty files that cannot be safely separated, it must stop immediately and report instead of continuing.
+
+Use `docs/root_agent_conflict_process.md` for stop triggers, the report template, and resume decisions. Do not stage, commit, reset, cleanup, or broaden the repair after a stop trigger unless the user or root/master explicitly approves the next action.
 
 ## Purpose
 
@@ -179,6 +218,8 @@ Master-up summary must prioritize:
 Canonical supporting documents:
 
 - review flow: `docs/review_flow.md`
+- parallel workspace policy: `docs/workspace_parallel_work_policy.md`
+- root conflict stop process: `docs/root_agent_conflict_process.md`
 - scope watchdog process: `docs/scope_audit_process.md`
 - subproject local checklist: `docs/subproject_review_template.md`
 - required master-up template: `docs/master_up_template.md`
@@ -215,6 +256,7 @@ Master must HOLD or REJECT when:
 - required watchdog audit is missing, unresolved, or blocking
 - hard stop checks are absent
 - required cross-step conflict checkpoint is missing, unresolved, or blocking
+- a root-agent conflict stop is unresolved or lacks a documented resume decision
 - evidence is missing
 - generated output may have been committed incorrectly
 - score/backtest/valuation work appears before allowed roadmap step
@@ -244,6 +286,7 @@ Master output format:
 
 [Master 통합 점검]
 - cross-project consistency:
+- root-agent conflict stop:
 - cross-step conflict checkpoint:
 - roadmap/order:
 - Git hygiene:
@@ -284,7 +327,8 @@ ACCEPT / HOLD / REJECT
 | Request type | Primary project | Required references |
 | --- | --- | --- |
 | Git layout, ignore rules, CI, release process | root workspace | `AGENTS.md`, `docs/project_registry.md` |
-| Research source collection or paper evidence | `reserch_mvp`, `Quant_mvp/agents/research` | `reserch_mvp/AGENTS.md`, `Quant_mvp/agents/research/AGENTS.md` |
+| Research source collection or paper evidence | `reserch_mvp` | `reserch_mvp/AGENTS.md`, `reserch_mvp/config/research_*.toml` |
+| Research EvidenceCard intake for score governance | `Quant_mvp` | `Quant_mvp/AGENTS.md`, `Quant_mvp/config/research_intake.toml`, `Quant_mvp/agents/research/AGENTS.md` |
 | Technical score definition or adoption review | `Quant_mvp` | `Quant_mvp/AGENTS.md`, `Quant_mvp/config/*.toml` |
 | Scope compliance audit / worker scope creep check | `Quant_mvp/agents/audit` | `Quant_mvp/agents/audit/AGENTS.md`, `docs/scope_audit_process.md` |
 | Valuation or fundamental score review | `Quant_mvp/agents/valuation` | `Quant_mvp/agents/valuation/AGENTS.md` |
@@ -381,6 +425,7 @@ If a generated output is needed for review, prefer a small fixture under a test 
 - Do not hardcode personal machine paths.
 - Prefer config changes before code changes when altering windows, weights, thresholds, paths, or score toggles.
 - Preserve Korean user-facing progress and status messages unless the user asks otherwise.
+- User-facing thought summaries, decision rationale, progress notes, review notes, and final reports should be written in Korean by default. Do not expose private chain-of-thought; provide concise Korean reasoning summaries instead.
 - Keep code identifiers, config keys, file paths, and exported column names in English where implementation clarity benefits from it.
 - Treat unknowns as unknown.
 - Avoid optimistic claims about alpha, robustness, or valuation support without evidence.

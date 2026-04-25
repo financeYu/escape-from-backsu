@@ -24,6 +24,7 @@ Run this checkpoint whenever an important in-Step stage ends, including:
 - current diff or changed-file manifest
 - affected subproject `AGENTS.md`
 - master-up summary or local review summary
+- root-agent conflict stop report or resume decision, when triggered
 - generated review packet from `scripts/build_review_packet.py`
 
 ## Checks
@@ -38,6 +39,7 @@ Run this checkpoint whenever an important in-Step stage ends, including:
 | Handoff consistency | Does the downstream consumer match the upstream contract? | Step 14 consuming Step 13 statuses as final adoption states |
 | Generated-output boundary | Are runtime reports, caches, charts, or scan outputs excluded unless promoted as fixtures? | committing generated reports outside documented fixture paths |
 | Dirty worktree isolation | Are owned files separated from unrelated dirty files? | mixed unrelated edits in the planned commit |
+| Root-agent conflict stop | Was any root/master or protected-work conflict stopped and resolved before continuing? | continuing edits after a stop trigger without a resume decision |
 
 ## Output
 
@@ -54,6 +56,7 @@ Record the checkpoint in the review packet or master-up summary:
 - handoff consistency:
 - generated-output boundary:
 - dirty worktree isolation:
+- root-agent conflict stop:
 - verdict: PASS / WARNING / BLOCKING_ISSUE / NEEDS_CLARIFICATION
 - required follow-up:
 ```

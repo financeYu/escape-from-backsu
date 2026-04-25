@@ -1,0 +1,160 @@
+[policy_metadata]
+policy_version = "research_policy.v2"
+evidence_schema_version = "evidence_card.v1"
+
+[guardrails]
+no_score_adoption = true
+no_backtest = true
+no_alpha_claim = true
+pdf_download_default = false
+require_manual_review_for_hybrid = true
+require_point_in_time_warning_for_fundamentals = true
+do_not_infer_valuation_from_price = true
+scholar_snippets_are_not_evidence = true
+citation_count_does_not_upgrade_confidence = true
+
+[pdf_policy]
+allow_pdf = false
+explicit_confirmation_required = true
+confirmation_phrase = "I confirm OA/license/source policy for PDF use"
+
+[outputs]
+normalized_jsonl = "data/research/normalized/papers.jsonl"
+evidence_jsonl = "data/research/evidence/evidence_cards.jsonl"
+unresolved_scholar_seeds_jsonl = "data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl"
+
+[refresh_policy]
+enabled = true
+interval_days = 14
+stale_after_days = 21
+default_profile = "fast_refresh"
+source_parallelism_enabled = true
+source_parallelism = 4
+default_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+default_query_sets = [
+  "technical_momentum",
+  "technical_mean_reversion",
+  "technical_breakout",
+  "technical_volatility_liquidity",
+  "technical_trend_efficiency",
+  "technical_time_series_momentum",
+  "technical_cross_sectional_momentum",
+  "technical_mean_reversion_extended",
+  "technical_oscillator_divergence",
+  "technical_breakout_confirmation",
+  "technical_volatility_regime",
+  "technical_range_position",
+  "technical_liquidity_proxy_daily",
+  "technical_volume_price_confirmation",
+  "technical_correlation_redundancy",
+  "technical_rank_stability_diagnostics",
+  "technical_turnover_cost_diagnostics",
+  "methodology_diagnostics",
+  "backtest_methodology",
+  "methodology_multiple_testing",
+  "methodology_survivorship_lookahead",
+  "methodology_publication_bias",
+  "korea_kospi_context",
+  "korea_kospi_expanded",
+  "asia_pacific_equity_context",
+  "emerging_market_equity_anomalies",
+]
+preserve_existing_papers = true
+write_new_only_artifact = true
+regenerate_evidence_cards = "policy_or_schema_version_change_only"
+recheck_unresolved_scholar_seeds = true
+fundamental_valuation_refresh = "opt_in_only"
+
+[request_cache]
+enabled = true
+policy_version = "research_policy.v2"
+default_ttl_days = 14
+key_fields = ["source", "query", "page_or_offset", "page_size", "policy_version"]
+
+[refresh_profiles.fast_refresh]
+description_ko = "OpenAlex 중심 빠른 freshness 확인. 핵심 technical query-set만 실행한다."
+cadence = "daily_or_manual"
+sources = ["openalex"]
+query_sets = [
+  "technical_momentum",
+  "technical_mean_reversion",
+  "technical_breakout",
+  "technical_volatility_liquidity",
+  "technical_trend_efficiency",
+  "technical_volume_price_confirmation",
+]
+request_cache_ttl_days = 7
+valuation_fundamental = "excluded"
+
+[refresh_profiles.full_refresh]
+description_ko = "주 1회 또는 수동 실행용 전체 research-ingestion refresh."
+cadence = "weekly_or_manual"
+sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+query_sets = [
+  "technical_momentum",
+  "technical_mean_reversion",
+  "technical_breakout",
+  "technical_volatility_liquidity",
+  "technical_trend_efficiency",
+  "technical_time_series_momentum",
+  "technical_cross_sectional_momentum",
+  "technical_mean_reversion_extended",
+  "technical_oscillator_divergence",
+  "technical_breakout_confirmation",
+  "technical_volatility_regime",
+  "technical_range_position",
+  "technical_liquidity_proxy_daily",
+  "technical_volume_price_confirmation",
+  "technical_correlation_redundancy",
+  "technical_rank_stability_diagnostics",
+  "technical_turnover_cost_diagnostics",
+  "methodology_diagnostics",
+  "backtest_methodology",
+  "methodology_multiple_testing",
+  "methodology_survivorship_lookahead",
+  "methodology_publication_bias",
+  "korea_kospi_context",
+  "korea_kospi_expanded",
+  "asia_pacific_equity_context",
+  "emerging_market_equity_anomalies",
+]
+request_cache_ttl_days = 14
+valuation_fundamental = "excluded"
+
+[refresh_profiles.diagnostic_refresh]
+description_ko = "methodology, bias, cost, redundancy 전용 refresh."
+cadence = "weekly_or_manual"
+sources = ["openalex", "crossref", "semantic_scholar"]
+query_sets = [
+  "technical_correlation_redundancy",
+  "technical_rank_stability_diagnostics",
+  "technical_turnover_cost_diagnostics",
+  "methodology_diagnostics",
+  "backtest_methodology",
+  "methodology_multiple_testing",
+  "methodology_survivorship_lookahead",
+  "methodology_publication_bias",
+]
+request_cache_ttl_days = 14
+valuation_fundamental = "excluded"
+
+[refresh_profiles.regional_refresh]
+description_ko = "Korea/APAC/EM context 전용 refresh."
+cadence = "weekly_or_manual"
+sources = ["openalex", "crossref", "semantic_scholar"]
+query_sets = [
+  "korea_kospi_context",
+  "korea_kospi_expanded",
+  "asia_pacific_equity_context",
+  "emerging_market_equity_anomalies",
+]
+request_cache_ttl_days = 14
+valuation_fundamental = "excluded"
+
+[refresh_profiles.valuation_fundamental_opt_in]
+description_ko = "valuation/fundamental 문헌 수집은 명시 opt-in 전용이다. scoring이나 valuation verdict를 만들지 않는다."
+cadence = "manual_only"
+sources = ["openalex", "crossref", "semantic_scholar"]
+query_sets = ["fundamental_valuation"]
+request_cache_ttl_days = 28
+valuation_fundamental = "requires_cli_include_valuation"

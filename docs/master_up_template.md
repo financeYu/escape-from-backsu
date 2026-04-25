@@ -11,8 +11,9 @@ Master-up summary must prioritize:
 5. which files are owned by this change and which dirty files are unrelated
 6. whether watchdog audit was required and the final watchdog verdict
 7. whether Cross-Step Conflict Checkpoint was required and the final verdict
-8. whether `review_mvp` is requested or not
-9. whether the change is ready for the Step-end code review / fix / commit gate
+8. whether Root-Agent Conflict Stop was triggered and the resume decision
+9. whether `review_mvp` is requested or not
+10. whether the change is ready for the Step-end code review / fix / commit gate
 
 ```text
 [Subproject]
@@ -29,6 +30,14 @@ Master-up summary must prioritize:
 - unrelated dirty files:
 - generated outputs excluded:
 - mixed-change files requiring hunk-level staging:
+
+[Root-Agent Conflict Stop]
+- triggered / not triggered:
+- stop trigger:
+- conflicting root area or protected work:
+- report location or summary:
+- resume decision:
+- unresolved risk:
 
 [Local review completed]
 - worker scope declaration:

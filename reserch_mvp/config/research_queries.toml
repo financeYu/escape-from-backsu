@@ -123,6 +123,14 @@ queries = [
   "contrarian stock returns mean reversion daily",
 ]
 
+[[query_sets.technical_mean_reversion.required_keyword_groups]]
+name = "signal"
+keywords = ["mean reversion", "reversal", "short term reversal", "contrarian", "RSI"]
+
+[[query_sets.technical_mean_reversion.required_keyword_groups]]
+name = "market_context"
+keywords = ["stock", "stocks", "equity", "equities", "returns", "daily returns", "technical analysis"]
+
 [query_sets.technical_breakout]
 description_ko = "breakout, channel, trend-following 후보 문헌"
 keywords = ["breakout", "channel", "trend following", "moving average", "daily data"]
@@ -154,6 +162,14 @@ queries = [
   "channel breakout equity technical analysis",
 ]
 
+[[query_sets.technical_breakout.required_keyword_groups]]
+name = "signal"
+keywords = ["breakout", "channel breakout", "moving average", "trend following", "trading rules"]
+
+[[query_sets.technical_breakout.required_keyword_groups]]
+name = "market_context"
+keywords = ["stock", "equity", "returns", "daily data", "technical analysis"]
+
 [query_sets.technical_volatility_liquidity]
 description_ko = "일간 변동성, 유동성, 거래량 기반 후보 문헌"
 keywords = ["volatility", "liquidity", "volume", "price-volume", "daily"]
@@ -184,6 +200,14 @@ queries = [
   "stock volatility liquidity volume returns",
   "volume price relationship stock returns daily",
 ]
+
+[[query_sets.technical_volatility_liquidity.required_keyword_groups]]
+name = "signal"
+keywords = ["volatility", "liquidity", "volume", "price volume", "price-volume"]
+
+[[query_sets.technical_volatility_liquidity.required_keyword_groups]]
+name = "market_context"
+keywords = ["stock", "equity", "returns", "daily", "technical"]
 
 [query_sets.methodology_diagnostics]
 description_ko = "데이터 누수, 과최적화, 거래비용, 생존편향 진단 문헌"
@@ -389,6 +413,32 @@ queries = [
   "efficiency ratio trend quality stock market daily data",
 ]
 
+[query_sets.technical_trend_efficiency.source_overrides.openalex]
+queries = [
+  "trend efficiency stock returns daily technical analysis",
+  "efficiency ratio equity returns daily trend quality",
+]
+
+[query_sets.technical_trend_efficiency.source_overrides.crossref]
+queries = [
+  "trend efficiency stock returns daily",
+  "efficiency ratio equity technical analysis",
+]
+
+[query_sets.technical_trend_efficiency.source_overrides.semantic_scholar]
+queries = [
+  "trend efficiency stock returns daily technical analysis",
+  "efficiency ratio equity trend quality",
+]
+
+[[query_sets.technical_trend_efficiency.required_keyword_groups]]
+name = "signal"
+keywords = ["trend efficiency", "efficiency ratio", "directional persistence", "trend quality"]
+
+[[query_sets.technical_trend_efficiency.required_keyword_groups]]
+name = "market_context"
+keywords = ["stock", "equity", "returns", "daily returns", "technical analysis", "daily data"]
+
 [query_sets.technical_time_series_momentum]
 name = "technical_time_series_momentum"
 description_ko = "time-series momentum과 return continuation 후보 문헌"
@@ -577,6 +627,32 @@ queries = [
   "price volume relationship equity returns daily technical",
   "on balance volume stock technical analysis daily data",
 ]
+
+[query_sets.technical_volume_price_confirmation.source_overrides.openalex]
+queries = [
+  "price volume relationship stock returns daily",
+  "volume confirmation equity returns technical analysis",
+]
+
+[query_sets.technical_volume_price_confirmation.source_overrides.crossref]
+queries = [
+  "price volume relationship stock returns daily",
+  "volume confirmation equity technical analysis",
+]
+
+[query_sets.technical_volume_price_confirmation.source_overrides.semantic_scholar]
+queries = [
+  "price volume relationship stock returns daily",
+  "on balance volume stock technical analysis daily",
+]
+
+[[query_sets.technical_volume_price_confirmation.required_keyword_groups]]
+name = "signal"
+keywords = ["volume price", "price volume", "price-volume", "volume confirmation", "on balance volume"]
+
+[[query_sets.technical_volume_price_confirmation.required_keyword_groups]]
+name = "market_context"
+keywords = ["stock", "equity", "returns", "daily", "technical analysis"]
 
 [query_sets.technical_correlation_redundancy]
 name = "technical_correlation_redundancy"

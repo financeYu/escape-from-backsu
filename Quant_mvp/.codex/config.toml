@@ -11,14 +11,14 @@ score_implementation_allowed = false
 backtest_allowed = false
 data_loader_changes_allowed = false
 
-[agents]
+[project_agents]
 active = [
   "score-architect",
   "research-tester",
   "technical-selection-reviewer",
 ]
 
-[agent_files]
+[project_agent_files]
 score_architect = ".codex/agents/score-architect.toml"
 research_tester = ".codex/agents/research-tester.toml"
 technical_selection_reviewer = ".codex/agents/technical-selection-reviewer.toml"

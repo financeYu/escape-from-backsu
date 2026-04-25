@@ -1,0 +1,44 @@
+[metadata]
+contract_version = "research_intake.v1"
+owner = "Quant_mvp"
+upstream_owner = "reserch_mvp"
+
+[allowed_inputs]
+evidence_cards_jsonl = "../reserch_mvp/data/research/evidence/evidence_cards.jsonl"
+technical_candidates_jsonl = "../reserch_mvp/data/research/evidence/technical_candidates.jsonl"
+diagnostic_items_jsonl = "../reserch_mvp/data/research/evidence/diagnostic_items.jsonl"
+hybrid_review_required_jsonl = "../reserch_mvp/data/research/evidence/hybrid_review_required.jsonl"
+
+[compatibility_inputs]
+# Temporary compatibility paths for EvidenceCards generated before the
+# research-ingestion split. Consumers should prefer [allowed_inputs] and fall
+# back here only when the upstream handoff files are not present locally.
+evidence_cards_jsonl = "data/research/evidence/evidence_cards.jsonl"
+technical_candidates_jsonl = "data/research/evidence/technical_candidates.jsonl"
+diagnostic_items_jsonl = "data/research/evidence/diagnostic_items.jsonl"
+hybrid_review_required_jsonl = "data/research/evidence/hybrid_review_required.jsonl"
+
+[guardrails]
+evidence_card_is_not_score_definition = true
+evidence_card_is_not_adoption_decision = true
+paper_reported_backtest_is_diagnostic_metadata_only = true
+citation_count_is_metadata_only = true
+scholar_seed_is_discovery_input_only = true
+reject_if_requires_fundamentals_for_technical_score = true
+reject_if_hybrid_unsplit_for_score_architect = true
+financial_data_in_technical_composite_score = false
+financial_data_in_final_composite_score = false
+
+[allowed_downstream_routes]
+technical_score_architect = true
+diagnostic_backlog = true
+valuation_agent_handoff = false
+hybrid_split_required = false
+reject_log = false
+
+[quant_consumer_policy]
+may_collect_sources = false
+may_modify_research_queries = false
+may_generate_evidence_cards = false
+may_adopt_scores_from_evidence_cards = false
+may_use_research_material_for_step14 = "future_intake_backlog_only_unless_explicitly_promoted"

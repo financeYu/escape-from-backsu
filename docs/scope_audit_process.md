@@ -57,6 +57,8 @@ Watchdog audit is required before master-up when a worker change touches any of 
 - root-boundary handoffs requested by a subproject
 - any task where the worker had to expand the originally declared file list or behavior
 
+If the root-boundary handoff is also an active root/master conflict or protected concurrent-work conflict, stop first using `docs/root_agent_conflict_process.md`. Watchdog audit can resume only after the root/master resume decision is documented.
+
 Watchdog audit is optional for narrow documentation-only or typo-only changes when all of the following are true:
 
 - no roadmap-gated behavior is changed
@@ -176,4 +178,3 @@ Master must return `HOLD` or `REJECT` when:
 - watchdog verdict is `BLOCKING_ISSUE`
 - the master-up summary omits watchdog status for a change that touches required-trigger areas
 - a worker claims `watchdog audit: not needed` but changed roadmap-gated behavior, config, schema, generated outputs, scoring, ranking, composite, backtest, valuation, or cross-project handoff files
-

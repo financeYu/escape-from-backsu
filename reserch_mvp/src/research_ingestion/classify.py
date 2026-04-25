@@ -85,7 +85,11 @@ def classify_paper(
         branch = fallback.get("research_branch", "out_of_scope")
         rule_names.append("classify_fallback_low_information")
 
-    language_guardrail_violation = bool(forbidden_language_hits and branch == "technical" and required_input_boundary is None)
+    language_guardrail_violation = _language_guardrail_violation(
+        forbidden_language_hits=forbidden_language_hits,
+        required_input_boundary=required_input_boundary,
+        branch_hits=branch_hits,
+    )
     if language_guardrail_violation:
         branch = "out_of_scope"
         rule_names.append("classify_forbidden_valuation_language")
@@ -365,6 +369,15 @@ def _required_input_boundary(paper: dict[str, Any], text: str, config: dict[str,
 
 def _forbidden_valuation_language_hits(text: str, config: dict[str, Any]) -> list[str]:
     return _keyword_hits(text, config.get("rules", {}).get("forbidden_price_only_valuation_language", []))
+
+
+def _language_guardrail_violation(
+    *,
+    forbidden_language_hits: list[str],
+    required_input_boundary: str | None,
+    branch_hits: dict[str, list[str]],
+) -> bool:
+    return bool(forbidden_language_hits and required_input_boundary is None and branch_hits.get("technical"))
 
 
 def _market_context_without_formula(paper: dict[str, Any], formula_clarity: str) -> bool:

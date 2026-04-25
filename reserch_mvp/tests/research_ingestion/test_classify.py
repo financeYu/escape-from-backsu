@@ -122,6 +122,26 @@ def test_forbidden_valuation_language_on_price_only_technical_is_rejected(sample
     assert "classify_forbidden_valuation_language" in result["rule_names"]
 
 
+def test_forbidden_valuation_language_rejected_even_with_diagnostic_hint(sample_paper):
+    paper = sample_paper(
+        title="Cheap RSI reversal diagnostics",
+        abstract="We define a daily RSI reversal signal from daily OHLCV and call the oversold stock cheap.",
+        research_query_set="technical_rank_stability_diagnostics",
+        research_query_sets=["technical_rank_stability_diagnostics"],
+        research_branch_hint="diagnostic",
+        research_branch_hints=["diagnostic"],
+        research_management_lane="technical_diagnostics",
+        research_management_lanes=["technical_diagnostics"],
+        topics=[],
+        fields_of_study=[],
+    )
+    result = classify_paper(paper, *_config())
+    assert result["research_branch"] == "out_of_scope"
+    assert result["downstream_route"] == "reject_log"
+    assert result["guardrail_violations"] == ["language_guardrail_violation"]
+    assert "classify_forbidden_valuation_language" in result["rule_names"]
+
+
 def test_backtest_methodology_lane_overrides_algorithm_terms(sample_paper):
     paper = sample_paper(
         title="Backtesting momentum trading strategies",

@@ -54,7 +54,7 @@ Disallowed use:
 
 ## Excluded From This Inventory
 
-- `Quant_mvp/reports/research_ingestion/*`: research-ingestion and Step 5 handoff materials, not legacy ranking outputs.
+- `reserch_mvp/reports/research_ingestion/*`: research-ingestion and handoff materials, not legacy ranking outputs.
 - `Quant_mvp/reports/technical_review/*`: governance/review material, not scanner runtime output.
 - `Quant_mvp/reports/valuation_review/*`: valuation-boundary material; valuation remains deferred.
 - Source files under `src/`, `chart_mvp/src/`, `Quant_mvp/src/`, and tests: source-controlled project state, not legacy output.

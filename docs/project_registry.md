@@ -13,8 +13,8 @@ The goal is not to create more bureaucracy. The goal is to keep research, quant 
 | ID | Project | Path | Primary responsibility | Reason |
 | --- | --- | --- | --- | --- |
 | P0 | Master Governance | `.` | Repository policy, Git hygiene, project routing, cross-project handoffs | Keeps the workspace coherent and prevents every subproject from inventing its own process |
-| P1 | Research Evidence | `reserch_mvp`, `Quant_mvp/agents/research` | Source policy, paper metadata, discovery imports, EvidenceCards | Prevents paper claims from becoming adopted scores without review |
-| P2 | Quant Score Governance | `Quant_mvp` | Score taxonomy, technical review, config-first scoring policy | Ensures formulas, windows, thresholds, and adoption decisions are explicit before implementation |
+| P1 | Research Evidence | `reserch_mvp` | Source policy, paper metadata, discovery imports, metadata adapters, EvidenceCards, source-health reports | Prevents paper claims from becoming adopted scores without review |
+| P2 | Quant Score Governance | `Quant_mvp` | Score taxonomy, technical review, research intake contract, config-first scoring policy | Ensures formulas, windows, thresholds, and adoption decisions are explicit before implementation |
 | P3 | Scanner Runtime | `chart_mvp` | KOSPI200 data fetching, caching, indicators, ranking output, charts, CLI/GUI | Keeps runnable code and generated runtime artifacts separate from research/design documents |
 | P4 | Valuation Review | `Quant_mvp/agents/valuation` | Point-in-time fundamental availability and valuation verdicts | Prevents price-only signals from being mislabeled as valuation evidence |
 | P5 | Ops and Reproducibility | root plus affected project | Ignore rules, dependency setup, CI, data/output path policy | Makes the repo cloneable, testable, and reviewable on machines other than the original local PC |
@@ -28,8 +28,10 @@ The goal is not to create more bureaucracy. The goal is to keep research, quant 
 Research to quant:
 
 - Input: paper metadata, abstracts, local discovery seeds, EvidenceCards
-- Owner: `reserch_mvp` and `Quant_mvp/agents/research`
+- Owner: `reserch_mvp`
+- Quant consumer contract: `Quant_mvp/config/research_intake.toml`
 - Output: candidate cards routed to `technical_score_architect`, `valuation_agent_handoff`, `hybrid_split_required`, `diagnostic_backlog`, or `reject_log`
+- Boundary: `Quant_mvp/agents/research/AGENTS.md` is a compatibility pointer / intake note, not a source-policy owner
 
 Quant to scanner:
 
@@ -48,6 +50,13 @@ Subproject to master:
 - Input: project-local change after local first review
 - Owner: responsible subproject
 - Output: master-up summary using `docs/master_up_template.md`, local evidence, unresolved risk summary, and `review_mvp` request status
+
+Root-agent conflict stop:
+
+- Input: detected overlap with root-owned policy, root/master active work, protected concurrent work, or dirty files that cannot be separated
+- Owner: responsible worker stops and reports; root/master decides resume ownership
+- Output: `NEEDS_ROOT_DECISION` report using `docs/root_agent_conflict_process.md`, followed by a documented resume decision before further edits
+- Invocation: required before continuing when a stop trigger is found
 
 Worker to scope watchdog:
 
@@ -89,10 +98,11 @@ Cross-step conflict checkpoint:
 1. `reserch_mvp` keeps its current misspelled directory name until a dedicated rename migration is requested.
 2. `chart_mvp/data` and `chart_mvp/outputs` are runtime artifacts, not source-controlled project state.
 3. Research ingestion does not adopt scores.
-4. Quant score review does not fetch live chart data.
-5. Chart runtime does not decide valuation status.
-6. The master agent coordinates ownership but does not overrule specialized agent boundaries.
-7. `review_mvp` handles specialist code-level review, not ordinary local first review, quant score adoption, or valuation verdicts.
+4. Quant consumes research via `research_intake.toml`; it does not own source collection, query expansion, metadata adapters, or EvidenceCard generation.
+5. Quant score review does not fetch live chart data.
+6. Chart runtime does not decide valuation status.
+7. The master agent coordinates ownership but does not overrule specialized agent boundaries.
+8. `review_mvp` handles specialist code-level review, not ordinary local first review, quant score adoption, or valuation verdicts.
 
 ---
 
@@ -114,6 +124,7 @@ Each change should answer:
 - Are generated outputs excluded from Git?
 - What verification was run?
 - Was a complete master-up summary supplied?
+- Was Root-Agent Conflict Stop triggered, and if so what resume decision was recorded?
 - Was watchdog audit required, and if so what was the verdict?
 - Are unrelated dirty files separated from the owned change set?
 - Is `review_mvp` required, optional, or not needed?

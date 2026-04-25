@@ -34,13 +34,23 @@ class SourceRateLimiter:
         self.max_concurrency = int(max_concurrency)
         self.source_name = source_name
         self._last_request_ts = 0.0
+        self.last_wait_seconds = 0.0
+        self.total_wait_seconds = 0.0
+        self.wait_count = 0
         if self.max_concurrency != 1:
             raise ValueError(f"{source_name} max_concurrency must be 1 for synchronous collection.")
 
-    def wait_before_request(self) -> None:
+    def wait_before_request(self) -> float:
         elapsed = time.monotonic() - self._last_request_ts
+        wait_seconds = 0.0
         if elapsed < self.min_interval_seconds:
-            time.sleep(self.min_interval_seconds - elapsed)
+            wait_seconds = self.min_interval_seconds - elapsed
+            time.sleep(wait_seconds)
+        self.last_wait_seconds = wait_seconds
+        if wait_seconds > 0:
+            self.total_wait_seconds += wait_seconds
+            self.wait_count += 1
+        return wait_seconds
 
     def mark_request_complete(self) -> None:
         self._last_request_ts = time.monotonic()

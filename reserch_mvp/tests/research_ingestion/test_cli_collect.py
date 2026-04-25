@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from research_ingestion.cli import cmd_classify, cmd_normalize, main
+from research_ingestion.cli import _update_source_health_from_collection, cmd_classify, cmd_normalize, main
 from research_ingestion.config import ProjectPaths, load_research_config
 from research_ingestion.persistence import read_jsonl, write_json, write_jsonl
 
@@ -88,6 +88,37 @@ def test_collect_rejects_path_traversal_run_id():
                 "..\\escape",
             ]
         )
+
+
+def test_collect_source_health_counts_accepted_and_rejected_items(sample_paper):
+    accepted = sample_paper(
+        doi="10.1000/accepted-health",
+        source_adapter="arxiv",
+        collection_relevance={"status": "accepted", "manual_review_required": False},
+    )
+    rejected = sample_paper(
+        doi="10.1000/rejected-health",
+        source_adapter="arxiv",
+        collection_relevance={
+            "status": "rejected",
+            "manual_review_required": True,
+            "exclude_keyword_hits": ["intraday"],
+            "required_keyword_group_hits": {},
+        },
+    )
+    health = {
+        "arxiv": {
+            "new_item_count": 0,
+            "manual_review_required_count": 0,
+            "reject_reason_counts": {},
+        }
+    }
+
+    _update_source_health_from_collection(health, [accepted], [rejected])
+
+    assert health["arxiv"]["new_item_count"] == 1
+    assert health["arxiv"]["manual_review_required_count"] == 0
+    assert health["arxiv"]["reject_reason_counts"] == {"collection_exclude_keyword": 1}
 
 
 def test_backtest_normalize_uses_run_and_lane_files_without_overwriting_global(sample_paper, workspace_tmp_path):

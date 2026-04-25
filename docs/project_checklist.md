@@ -32,6 +32,7 @@ valuation/fundamental analysis는 기술 스캐너가 완성된 뒤로 미룬다
 - inference는 inference라고 표시한다.
 - paths, config keys, column names, function names는 English를 유지한다.
 - 사용자에게 보여주는 요약과 상태 보고는 한국어를 기본으로 한다.
+- 병렬 Step 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`의 worktree/branch 분리 정책을 따른다.
 
 ## 3. 에이전트 워크플로우
 
@@ -57,6 +58,13 @@ Stage 4: Adoption Synthesis
 - Technical Selection Reviewer의 결정을 명시적인 adoption plan으로 변환한다.
 - composite design은 투명하고 문서화되어야 한다.
 - financial data를 technical 또는 final composite scoring에 병합하지 않는다.
+
+Parallel workspace rule:
+
+- master workspace는 integration / verification / status-control 전용으로 유지한다.
+- 모든 non-master worktree는 루트의 `WORKSPACE_MANIFEST.md`로 작업 범위, 허용 write path, 금지 actions, handoff output을 선언한 뒤 작업한다.
+- implementation, review, research ingestion, audit/scope watchdog 작업은 서로 다른 branch와 worktree에서 수행한다.
+- Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration 역할을 `docs/workspace_parallel_work_policy.md`의 Step 15+ Branch Separation Process에 따라 각각 별도 branch/worktree로 분리한다.
 
 ## 4. 전체 로드맵
 
@@ -138,6 +146,20 @@ Step 18 시작 시 필수로 진행할 항목:
 - financial/fundamental data가 `technical_composite_score`, `final_composite_score`, technical scoring에 들어가지 않는다는 guardrail을 재확인한다.
 - Step 18 전에는 valuation/fundamental score, valuation-aware composite, valuation verdict를 구현하지 않는다.
 
+## 4.5 Step 15 이후 Branch / Worktree 분리 기준
+
+Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 handoff, audit, master integration이 한 워크트리에서 섞이지 않도록 아래 기준을 적용한다.
+
+- Step implementation은 major Step branch인 `codex/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
+- Quant score/governance/config-policy 지원 작업은 minor/support branch인 `quant/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
+- Research ingestion 또는 EvidenceCard/handoff 작업은 minor/support branch인 `research/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
+- Chart runtime, scanner, ranking, chart, CLI, GUI 변경은 minor/support branch인 `chart/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
+- Review는 minor/support branch인 `review/stepXX-<scope>` branch와 전용 worktree에서 수행하고, 명시적으로 배정된 최소 수리 외에는 구현 branch를 수정하지 않는다.
+- Audit/scope watchdog은 minor/support branch인 `audit/stepXX-<scope>` branch와 전용 worktree에서 수행한다.
+- Master workspace는 merge, validation, Cross-Step Conflict Checkpoint, status-control, context refresh에만 사용한다.
+- 모든 하위 에이전트와 non-master worktree는 편집 전 role branch를 먼저 만들거나 선택하고, 루트 `WORKSPACE_MANIFEST.md`를 작성한 뒤 작업한다.
+- Minor/support branch는 final Step status, roadmap verdict, master integration policy를 수정하지 않는다. 필요한 변경은 handoff/TODO/risk note로 master에 올린다.
+
 ## 5. 현재 상태
 
 - Step 1 = COMPLETE or mostly complete
@@ -173,13 +195,20 @@ Step 18 시작 시 필수로 진행할 항목:
   - Step 13 output is a technical review recommendation table for Step 14 material only.
   - `review_status` values remain technical recommendations, not final adoption states.
   - Generated Step 13 reports are constrained to `reports/selection/` and must include `technical selection review material only`.
-  - Step 14 final adoption synthesis, Step 15 ranking, Step 17 backtest, and Step 18 valuation/fundamental scoring remain not implemented.
-- Step 14 = NEXT / not started
-- Step 15 = WAITING / not started
+  - Step 15 ranking, Step 17 backtest, and Step 18 valuation/fundamental scoring remain not implemented.
+- Step 14 = COMPLETE
+  - Adoption synthesis docs, contracts, engine, report guardrails, and tests are complete.
+  - Step 14 output remains adoption synthesis material only and preserves Step 13 `review_status` separately as `source_review_status`.
+  - Step 14 does not generate ranking output, latest ranking output, `technical_composite_score`, `final_composite_score`, backtest, trading signals, or valuation/fundamental scoring.
+  - Latest recorded local validation: `python -m pytest` = 387 passed, 4 skipped.
+  - Focused Step 14 / research-ingestion validation: 180 passed, 4 skipped.
+  - `review_mvp` specialist review found no high or medium findings on changed production code; low style findings are non-blocking.
+  - Cross-Step Conflict Checkpoint passed with no blocking issue.
+- Step 15 = WAITING / branch setup required
 - Step 17 = WAITING / not started
 - Step 18 valuation/fundamental expansion = DEFERRED
 - Research ingestion scope expansion note:
-  - `docs/research_ingestion_expansion.md` documents expanded paper query-set coverage, source expansion candidates, seed lifecycle, and new-only run artifacts.
+  - `docs/research_ingestion_expansion.md` documents expanded paper query-set coverage, source expansion candidates, seed lifecycle, new-only run artifacts, and the separated `reserch_mvp` ownership boundary.
   - EvidenceCard is not a score definition.
   - EvidenceCard is not an adoption decision.
   - Paper-reported backtest is diagnostic metadata only.

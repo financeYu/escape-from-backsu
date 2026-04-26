@@ -151,6 +151,9 @@ Step 18 시작 시 필수로 진행할 항목:
 
 Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 handoff, audit, master integration이 한 워크트리에서 섞이지 않도록 아래 기준을 적용한다.
 
+- 읽기, 조사, 상태 보고, 정책 제안만 수행하고 파일을 편집하지 않는 작업은 새 branch/worktree를 만들지 않는다.
+- 같은 Step, role, scope에 맞는 active branch/worktree가 이미 있으면 `WORKSPACE_MANIFEST.md`를 확인하거나 갱신한 뒤 재사용한다. prompt나 작은 후속 task마다 새 branch를 만들지 않는다.
+- 새 branch/worktree는 역할이 바뀌거나 write scope 또는 risk level이 active manifest 밖으로 확장될 때 만든다.
 - Step implementation은 major Step branch인 `codex/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
 - Quant score/governance/config-policy 지원 작업은 minor/support branch인 `quant/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
 - Research ingestion 또는 EvidenceCard/handoff 작업은 minor/support branch인 `research/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.

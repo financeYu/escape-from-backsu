@@ -6,14 +6,27 @@ It applies whenever more than one agent, worker, or task stream may run in paral
 
 ## Core Rule
 
-Use one git worktree and one branch per parallel task.
+Use one git worktree and one branch per active parallel role/scope, not per
+prompt, status check, read-only review, or small follow-up that fits an already
+declared role scope.
+
+Read-only inspection, planning, status reporting, and policy recommendations do
+not require a new branch. The Branch Start Gate begins before file edits,
+generated outputs, staging/committing, or other side-effecting work.
 
 Before a sub-agent or subproject worker edits files, it must pass the Branch Start Gate:
 
 1. Identify whether the task is a major Step task or a minor/support task.
-2. Create or select the matching branch and worktree.
+2. Create, select, or reuse the matching branch and worktree.
 3. Add or update the worktree's root `WORKSPACE_MANIFEST.md`.
 4. Confirm the write scope matches the branch role.
+
+Before creating a new branch, check whether an active branch/worktree already
+matches the current Step, role, scope, and risk level. Reuse that worktree when
+the manifest can be updated without crossing protected concurrent work. Create a
+new branch only when the role changes, the write scope no longer fits the
+manifest, the risk level escalates, or root/master explicitly asks for a new
+isolation boundary.
 
 Use the lightest operating path that still preserves the branch/worktree boundary.
 The isolation rule is mandatory; duplicating every review, audit, and full
@@ -50,12 +63,18 @@ If the master workspace contains unrelated dirty files, do not broaden the task 
 
 ## Worktree Isolation Rule
 
-Each parallel task must use a separate git worktree and branch.
+Each active parallel task stream that writes files must use a separate git
+worktree and branch.
 
 Starting with Step 15, this is required even when the task streams are
 sequentially coordinated by the same master agent. Research ingestion, chart
 runtime work, Step implementation, review, audit/scope watchdog, and master
 integration must not share a writable worktree or branch.
+
+Do not materialize idle branches for work that has no diff, packet, handoff, or
+specific write scope yet. A planned review or audit branch may be named in the
+integration plan, but create the worktree only when there is concrete material
+to inspect.
 
 Recommended structure:
 
@@ -231,7 +250,9 @@ worktree.
 Step 15 is the first roadmap stage allowed to produce latest ranking output.
 Because Step 15 and later stages can mix upstream evidence, runnable chart
 runtime code, review findings, and integration status updates, every Step 15+
-task must start by assigning one role per branch before file edits begin.
+write task must start by assigning one role per branch before file edits begin.
+That branch may be an existing active branch/worktree when the Step, role,
+scope, manifest, and risk level still match.
 
 Branch classes:
 
@@ -239,6 +260,13 @@ Branch classes:
 - Minor/support branch: a role-specific branch for Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, or docs-only support. Minor/support branches feed master integration but do not own final Step status.
 - Unified minor patch branch: a Step-scoped minor/support branch, normally `minor/stepXX-<scope>`, for explicitly assigned low-risk review, chart, research, or docs-only support patches that are small enough to share one manifest and one handoff.
 - Core branch: a branch retained after integration because it is `main`, the active root/master integration branch, an active unmerged role branch/worktree, or a branch with a root/master-recorded audit or reproduction retention reason.
+
+Branch creation discipline:
+
+- Do not create a branch for read-only planning, status checks, or policy advice.
+- Reuse the major Step branch for related implementation follow-ups that stay inside the same bounded Step deliverable and manifest.
+- Reuse a unified `minor/stepXX-<scope>` branch for explicitly assigned low-risk support follow-ups when the manifest lists every allowed write path.
+- Create a new branch when the role changes, a protected concurrent work area would be touched, the manifest cannot safely cover the new write path, or the work escalates into Level 3 risk.
 
 Required role separation:
 
@@ -257,7 +285,7 @@ Process:
 
 1. Read `docs/project_checklist.md`, `docs/roadmap_status.md`, and this policy.
 2. Classify the task as major Step implementation or minor/support work: Quant score/governance, research, chart runtime, review, audit, bundled minor patch, or master integration.
-3. Create or select a worktree whose branch matches exactly one role.
+3. Create, select, or reuse a worktree whose branch matches exactly one role.
 4. Add a root-level `WORKSPACE_MANIFEST.md` before editing project files.
 5. Keep each worktree's writes inside its manifest and role boundary.
 6. Produce the role-specific handoff before master integration consumes the branch.

@@ -76,6 +76,8 @@ Parallel Step implementation, review, research ingestion, audit/scope watchdog, 
 
 Starting immediately before Step 15, every sub-agent or subproject worker must create or select the correct role branch and worktree before editing files. Do not begin work on an inherited, shared, or master workspace branch.
 
+Read-only inspection, planning, status reporting, and policy recommendations do not require a new branch. If a compatible active role branch/worktree already exists, check or update its `WORKSPACE_MANIFEST.md` and reuse it instead of creating another branch. Create a new branch only when the role, write scope, or risk level no longer fits the active manifest.
+
 Branch class rule for Step 15+:
 
 - Roadmap Step implementation is the major Step branch: `codex/stepXX-<scope>` unless the master assigns a narrower pattern.

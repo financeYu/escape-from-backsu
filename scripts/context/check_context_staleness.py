@@ -30,15 +30,12 @@ class StalenessWarning:
 
 def check_staleness(project_root: Path) -> tuple[StalenessWarning, ...]:
     root = project_root.resolve()
-    roadmap_path = root / "docs/roadmap_status.md"
-    checklist_path = root / "docs/project_checklist.md"
-    roadmap = _read_optional(roadmap_path)
-    checklist = _read_optional(checklist_path)
-    warnings: list[StalenessWarning] = []
-
+    roadmap = _read_optional(root / "docs/roadmap_status.md")
+    checklist = _read_optional(root / "docs/project_checklist.md")
     roadmap_statuses = _extract_step_statuses(roadmap)
     checklist_statuses = _extract_step_statuses(checklist)
-    warnings.extend(
+
+    warnings = list(
         _compare_statuses(
             roadmap_statuses,
             checklist_statuses,
@@ -46,33 +43,51 @@ def check_staleness(project_root: Path) -> tuple[StalenessWarning, ...]:
             right_name="docs/project_checklist.md",
         )
     )
+    warnings.extend(_current_context_warnings(root, roadmap_statuses))
+    warnings.extend(_packet_warnings(root, roadmap_statuses))
+    return tuple(warnings)
 
+
+def _current_context_warnings(
+    root: Path,
+    roadmap_statuses: dict[str, str],
+) -> list[StalenessWarning]:
     current_context_path = root / "docs/context/current_context.md"
-    if current_context_path.exists():
-        current_text = _read_optional(current_context_path)
-        if len(current_text) > MAX_CURRENT_CONTEXT_CHARS:
-            warnings.append(
-                StalenessWarning(
-                    code="current_context_too_large",
-                    source="docs/context/current_context.md",
-                    message=(
-                        f"current context is {len(current_text)} characters; "
-                        f"limit is {MAX_CURRENT_CONTEXT_CHARS}."
-                    ),
-                )
-            )
-        current_statuses = _extract_step_statuses(current_text)
-        warnings.extend(
-            _compare_statuses(
-                roadmap_statuses,
-                current_statuses,
-                left_name="docs/roadmap_status.md",
-                right_name="docs/context/current_context.md",
-            )
-        )
+    if not current_context_path.exists():
+        return []
 
-    generated_dir = root / "docs/context/generated"
+    current_text = _read_optional(current_context_path)
+    warnings = _context_size_warnings(current_text)
+    current_statuses = _extract_step_statuses(current_text)
+    warnings.extend(
+        _compare_statuses(
+            roadmap_statuses,
+            current_statuses,
+            left_name="docs/roadmap_status.md",
+            right_name="docs/context/current_context.md",
+        )
+    )
+    return warnings
+
+
+def _context_size_warnings(text: str) -> list[StalenessWarning]:
+    if len(text) <= MAX_CURRENT_CONTEXT_CHARS:
+        return []
+    return [
+        StalenessWarning(
+            code="current_context_too_large",
+            source="docs/context/current_context.md",
+            message=(
+                f"current context is {len(text)} characters; "
+                f"limit is {MAX_CURRENT_CONTEXT_CHARS}."
+            ),
+        )
+    ]
+
+
+def _context_packet_paths(root: Path) -> list[Path]:
     packet_paths: list[Path] = []
+    generated_dir = root / "docs/context/generated"
     if generated_dir.exists():
         packet_paths.extend(sorted(generated_dir.glob("*.md")))
 
@@ -83,22 +98,34 @@ def check_staleness(project_root: Path) -> tuple[StalenessWarning, ...]:
     for active_packet in active_packets:
         if active_packet.exists():
             packet_paths.append(active_packet)
+    return packet_paths
 
-    for packet_path in packet_paths:
-        packet_text = _read_optional(packet_path)
-        packet_statuses = _extract_step_statuses(packet_text)
-        warnings.extend(
-            _compare_statuses(
-                roadmap_statuses,
-                packet_statuses,
-                left_name="docs/roadmap_status.md",
-                right_name=_display_path(root, packet_path),
-            )
+
+def _packet_warnings(root: Path, roadmap_statuses: dict[str, str]) -> list[StalenessWarning]:
+    warnings: list[StalenessWarning] = []
+    for packet_path in _context_packet_paths(root):
+        warnings.extend(_single_packet_warnings(root, packet_path, roadmap_statuses))
+    return warnings
+
+
+def _single_packet_warnings(
+    root: Path,
+    packet_path: Path,
+    roadmap_statuses: dict[str, str],
+) -> list[StalenessWarning]:
+    packet_text = _read_optional(packet_path)
+    packet_statuses = _extract_step_statuses(packet_text)
+    warnings = list(
+        _compare_statuses(
+            roadmap_statuses,
+            packet_statuses,
+            left_name="docs/roadmap_status.md",
+            right_name=_display_path(root, packet_path),
         )
-        warnings.extend(_check_packet_stage(root, packet_path, roadmap_statuses))
-        warnings.extend(_check_packet_authority_notice(root, packet_path, packet_text))
-
-    return tuple(warnings)
+    )
+    warnings.extend(_check_packet_stage(root, packet_path, roadmap_statuses))
+    warnings.extend(_check_packet_authority_notice(root, packet_path, packet_text))
+    return warnings
 
 
 def main(argv: list[str] | None = None) -> int:

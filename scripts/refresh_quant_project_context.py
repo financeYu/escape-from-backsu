@@ -64,8 +64,18 @@ def refresh_context(config: ContextConfig) -> ExportResult:
 def build_context(config: ContextConfig) -> str:
     hard_stops = _read_optional(config.project_root / "docs/root_hard_stops.md")
     roadmap = _read_optional(config.project_root / "docs/roadmap_status.md")
-
     sections = [
+        *_context_header_sections(config),
+        *_roadmap_context_sections(roadmap),
+        *_guardrail_context_sections(hard_stops),
+        *_route_reference_sections(),
+    ]
+    text = "\n".join(part for part in sections if part is not None)
+    return _truncate_context(text, max_chars=config.max_chars)
+
+
+def _context_header_sections(config: ContextConfig) -> list[str]:
+    return [
         "# Quant Project Current Context",
         "",
         f"Generated at: {_now()}",
@@ -86,6 +96,11 @@ def build_context(config: ContextConfig) -> str:
         "5. `docs/project_checklist.md` for targeted root authority lookup",
         "6. Related source, tests, docs, and config",
         "",
+    ]
+
+
+def _roadmap_context_sections(roadmap: str) -> list[str]:
+    return [
         "## Current Roadmap Position",
         "",
         _compact_first_section(
@@ -107,6 +122,11 @@ def build_context(config: ContextConfig) -> str:
             ),
         ),
         "",
+    ]
+
+
+def _guardrail_context_sections(hard_stops: str) -> list[str]:
+    return [
         "## Cross-Step Conflict Checkpoint",
         "",
         "- Run `docs/cross_step_conflict_check.md` when a gate-critical stage ends or a Step closes.",
@@ -126,6 +146,11 @@ def build_context(config: ContextConfig) -> str:
         "- Refresh only when the user explicitly requests this ChatGPT reference update.",
         "- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.",
         "",
+    ]
+
+
+def _route_reference_sections() -> list[str]:
+    return [
         "## Route-Only References",
         "",
         "- Root compact hard stops: `docs/root_hard_stops.md`.",
@@ -138,8 +163,6 @@ def build_context(config: ContextConfig) -> str:
         "- Archive lookup: `docs/context/ARCHIVE_INDEX.md`.",
         "",
     ]
-    text = "\n".join(part for part in sections if part is not None)
-    return _truncate_context(text, max_chars=config.max_chars)
 
 
 def main(argv: list[str] | None = None) -> int:

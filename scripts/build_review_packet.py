@@ -40,7 +40,15 @@ def build_review_packet(config: ReviewPacketConfig) -> str:
     checklist = _read_optional(root / "docs/project_checklist.md")
     changed_files = config.changed_files or tuple(_git_status_lines(root, max_lines=config.max_status_lines))
 
-    protected_sections = [
+    return _truncate_text(
+        "\n".join(_review_packet_body(config, roadmap, checklist, changed_files)),
+        max_chars=config.max_chars,
+        protected_prefix="\n".join(_review_packet_header(config)),
+    )
+
+
+def _review_packet_header(config: ReviewPacketConfig) -> list[str]:
+    return [
         "# Current Review Packet",
         "",
         f"Generated at: {_now()}",
@@ -63,7 +71,23 @@ def build_review_packet(config: ReviewPacketConfig) -> str:
         "- Consult `docs/roadmap_archive/` only for historical Step-end evidence.",
         "",
     ]
-    variable_sections = [
+
+
+def _review_packet_body(
+    config: ReviewPacketConfig,
+    roadmap: str,
+    checklist: str,
+    changed_files: tuple[str, ...],
+) -> list[str]:
+    return [
+        *_roadmap_review_sections(roadmap, checklist),
+        *_changed_files_section(changed_files),
+        *_cross_step_checkpoint_section(config),
+    ]
+
+
+def _roadmap_review_sections(roadmap: str, checklist: str) -> list[str]:
+    return [
         "## Current Roadmap Snapshot",
         "",
         _compact_first_section(
@@ -93,10 +117,20 @@ def build_review_packet(config: ReviewPacketConfig) -> str:
             ),
         ),
         "",
+    ]
+
+
+def _changed_files_section(changed_files: tuple[str, ...]) -> list[str]:
+    return [
         "## Changed Files",
         "",
         _format_list(changed_files),
         "",
+    ]
+
+
+def _cross_step_checkpoint_section(config: ReviewPacketConfig) -> list[str]:
+    return [
         "## Cross-Step Conflict Checkpoint",
         "",
         "- Trigger:",
@@ -122,11 +156,6 @@ def build_review_packet(config: ReviewPacketConfig) -> str:
         "  - complete this checkpoint before Step-end code review or downstream handoff consumption",
         "",
     ]
-    return _truncate_text(
-        "\n".join(variable_sections),
-        max_chars=config.max_chars,
-        protected_prefix="\n".join(protected_sections),
-    )
 
 
 def write_review_packet(config: ReviewPacketConfig) -> ReviewPacketResult:

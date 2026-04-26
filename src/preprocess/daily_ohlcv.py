@@ -67,6 +67,21 @@ class PreprocessResult:
     invalid_rows_report_path: Path
 
 
+@dataclass(frozen=True)
+class _ValidatedOhlcvFrame:
+    ticker_text: pd.Series
+    parsed_dates: pd.Series
+    converted_numeric: dict[str, pd.Series]
+    reasons: pd.Series
+    invalid_ticker: pd.Series
+    invalid_dates: pd.Series
+    future_dates: pd.Series
+    duplicate_keys: pd.Series
+    missing_required_values: pd.DataFrame
+    negative_volume: pd.Series
+    invalid_numeric_masks: tuple[pd.Series, ...]
+
+
 def load_preprocess_config(config_path: str | Path = "config/data.toml") -> PreprocessConfig:
     """Load Step 6 preprocessing settings from ``config/data.toml``."""
 
@@ -146,101 +161,52 @@ def preprocess_ohlcv_frame(
     missing_columns = [column for column in CANONICAL_OHLCV_COLUMNS if column not in normalized.columns]
 
     if missing_columns:
-        invalid_rows = normalized.copy()
-        invalid_rows["validation_status"] = "invalid"
-        invalid_rows["invalid_reason"] = "missing_required_columns:" + ",".join(missing_columns)
-        processed = _empty_processed_frame()
-        summary = _build_summary(
+        return _missing_columns_result(
+            normalized,
+            missing_columns=missing_columns,
+            row_count_before=row_count_before,
             input_path=input_path,
             output_path=output_path,
-            row_count_before=row_count_before,
-            processed=processed,
-            duplicate_count=0,
-            invalid_numeric_count=0,
-            invalid_date_count=0,
-            missing_required_value_count=row_count_before * len(missing_columns),
-            future_date_count=0,
-            negative_volume_count=0,
-            invalid_ticker_count=row_count_before,
-            input_file_count=_input_file_count(normalized),
             financial_data_status=financial_data_status,
         )
-        validation_summary = _validation_summary_frame(summary)
-        return processed, invalid_rows, validation_summary, summary
 
-    reasons = pd.Series([""] * len(normalized), index=normalized.index, dtype="string")
-
-    ticker_values = normalized["ticker"]
-    ticker_text = ticker_values.astype("string").str.strip().str.upper()
-    ticker_numeric_dtype = pd.api.types.is_numeric_dtype(ticker_values)
-    invalid_ticker = (
-        ticker_values.isna() | ticker_text.eq("").fillna(True) | ~ticker_text.map(is_valid_ticker)
-    ).fillna(True)
-    leading_zero_loss = (ticker_text.str.isdigit() & ticker_text.str.len().lt(6)).fillna(False)
-    if ticker_numeric_dtype:
-        invalid_ticker = invalid_ticker | ticker_values.notna()
-        leading_zero_loss = leading_zero_loss | ticker_values.notna()
-    _add_reason(reasons, invalid_ticker, "invalid_ticker")
-    _add_reason(reasons, leading_zero_loss, "ticker_leading_zero_loss_candidate")
-
-    missing_required_values = _missing_required_values(normalized)
-    missing_required_rows = missing_required_values.any(axis=1)
-    _add_reason(reasons, missing_required_rows, "missing_required_value")
-
-    parsed_dates = pd.to_datetime(normalized["date"], errors="coerce")
-    date_text = normalized["date"].astype("string").str.strip()
-    invalid_dates = (normalized["date"].notna() & date_text.ne("").fillna(False) & parsed_dates.isna()).fillna(False)
-    _add_reason(reasons, invalid_dates, "invalid_date")
-
-    future_dates = (parsed_dates.notna() & (parsed_dates > cutoff)).fillna(False)
-    _add_reason(reasons, future_dates, "future_date")
-
-    converted_numeric: dict[str, pd.Series] = {}
-    invalid_numeric_masks: list[pd.Series] = []
-    for column in NUMERIC_PRICE_COLUMNS:
-        converted, invalid_numeric = to_safe_numeric(normalized[column])
-        converted_numeric[column] = converted
-        invalid_numeric_masks.append(invalid_numeric)
-        _add_reason(reasons, invalid_numeric, f"invalid_numeric:{column}")
-
-    negative_volume = (converted_numeric["volume"].notna() & (converted_numeric["volume"] < 0)).fillna(False)
-    _add_reason(reasons, negative_volume, "negative_volume")
-
-    duplicate_keys = _duplicate_ticker_date_mask(ticker_text, parsed_dates, invalid_ticker, invalid_dates)
-    _add_reason(reasons, duplicate_keys, "duplicate_ticker_date")
-
-    valid_rows = reasons.str.len().eq(0)
-    processed = pd.DataFrame(
-        {
-            "ticker": ticker_text[valid_rows].astype("string"),
-            "date": parsed_dates[valid_rows].dt.strftime("%Y-%m-%d"),
-            "open": converted_numeric["open"][valid_rows],
-            "high": converted_numeric["high"][valid_rows],
-            "low": converted_numeric["low"][valid_rows],
-            "close": converted_numeric["close"][valid_rows],
-            "volume": converted_numeric["volume"][valid_rows],
-        }
+    validation = _validate_normalized_ohlcv(normalized, cutoff)
+    return _valid_frame_result(
+        normalized,
+        validation,
+        input_path=input_path,
+        output_path=output_path,
+        row_count_before=row_count_before,
+        financial_data_status=financial_data_status,
     )
-    processed = processed.sort_values(["ticker", "date"], kind="mergesort").reset_index(drop=True)
 
-    invalid_rows = normalized.loc[~valid_rows, [column for column in normalized.columns if column in CANONICAL_OHLCV_COLUMNS or column == "_input_file"]].copy()
-    invalid_rows["validation_status"] = "invalid"
-    invalid_rows["invalid_reason"] = reasons.loc[~valid_rows].str.strip(";")
-    invalid_rows = invalid_rows.reset_index(drop=True)
 
-    invalid_numeric_count = int(sum(mask.sum() for mask in invalid_numeric_masks))
+def _valid_frame_result(
+    normalized: pd.DataFrame,
+    validation: _ValidatedOhlcvFrame,
+    *,
+    input_path: str,
+    output_path: str,
+    row_count_before: int,
+    financial_data_status: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, object]]:
+    valid_rows = validation.reasons.str.len().eq(0)
+    processed = _processed_ohlcv_frame(validation, valid_rows)
+    invalid_rows = _invalid_ohlcv_rows(normalized, validation.reasons, valid_rows)
+
+    invalid_numeric_count = int(sum(mask.sum() for mask in validation.invalid_numeric_masks))
     summary = _build_summary(
         input_path=input_path,
         output_path=output_path,
         row_count_before=row_count_before,
         processed=processed,
-        duplicate_count=int(duplicate_keys.sum()),
+        duplicate_count=int(validation.duplicate_keys.sum()),
         invalid_numeric_count=invalid_numeric_count,
-        invalid_date_count=int(invalid_dates.sum()),
-        missing_required_value_count=int(missing_required_values.sum().sum()),
-        future_date_count=int(future_dates.sum()),
-        negative_volume_count=int(negative_volume.sum()),
-        invalid_ticker_count=int(invalid_ticker.sum()),
+        invalid_date_count=int(validation.invalid_dates.sum()),
+        missing_required_value_count=int(validation.missing_required_values.sum().sum()),
+        future_date_count=int(validation.future_dates.sum()),
+        negative_volume_count=int(validation.negative_volume.sum()),
+        invalid_ticker_count=int(validation.invalid_ticker.sum()),
         input_file_count=_input_file_count(normalized),
         financial_data_status=financial_data_status,
     )
@@ -377,6 +343,140 @@ def _empty_processed_frame() -> pd.DataFrame:
     return pd.DataFrame(columns=CANONICAL_OHLCV_COLUMNS)
 
 
+def _missing_columns_result(
+    normalized: pd.DataFrame,
+    *,
+    missing_columns: list[str],
+    row_count_before: int,
+    input_path: str,
+    output_path: str,
+    financial_data_status: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, object]]:
+    invalid_rows = normalized.copy()
+    invalid_rows["validation_status"] = "invalid"
+    invalid_rows["invalid_reason"] = "missing_required_columns:" + ",".join(missing_columns)
+    processed = _empty_processed_frame()
+    summary = _build_summary(
+        input_path=input_path,
+        output_path=output_path,
+        row_count_before=row_count_before,
+        processed=processed,
+        duplicate_count=0,
+        invalid_numeric_count=0,
+        invalid_date_count=0,
+        missing_required_value_count=row_count_before * len(missing_columns),
+        future_date_count=0,
+        negative_volume_count=0,
+        invalid_ticker_count=row_count_before,
+        input_file_count=_input_file_count(normalized),
+        financial_data_status=financial_data_status,
+    )
+    return processed, invalid_rows, _validation_summary_frame(summary), summary
+
+
+def _validate_normalized_ohlcv(normalized: pd.DataFrame, cutoff: pd.Timestamp) -> _ValidatedOhlcvFrame:
+    reasons = pd.Series([""] * len(normalized), index=normalized.index, dtype="string")
+    ticker_text, invalid_ticker, leading_zero_loss = _ticker_validation_masks(normalized)
+    _add_reason(reasons, invalid_ticker, "invalid_ticker")
+    _add_reason(reasons, leading_zero_loss, "ticker_leading_zero_loss_candidate")
+
+    missing_required_values = _missing_required_values(normalized)
+    _add_reason(reasons, missing_required_values.any(axis=1), "missing_required_value")
+
+    parsed_dates, invalid_dates, future_dates = _date_validation_masks(normalized, cutoff)
+    _add_reason(reasons, invalid_dates, "invalid_date")
+    _add_reason(reasons, future_dates, "future_date")
+
+    converted_numeric, invalid_numeric_masks = _numeric_validation_masks(normalized, reasons)
+    negative_volume = (converted_numeric["volume"].notna() & (converted_numeric["volume"] < 0)).fillna(False)
+    _add_reason(reasons, negative_volume, "negative_volume")
+
+    duplicate_keys = _duplicate_ticker_date_mask(ticker_text, parsed_dates, invalid_ticker, invalid_dates)
+    _add_reason(reasons, duplicate_keys, "duplicate_ticker_date")
+    return _ValidatedOhlcvFrame(
+        ticker_text=ticker_text,
+        parsed_dates=parsed_dates,
+        converted_numeric=converted_numeric,
+        reasons=reasons,
+        invalid_ticker=invalid_ticker,
+        invalid_dates=invalid_dates,
+        future_dates=future_dates,
+        duplicate_keys=duplicate_keys,
+        missing_required_values=missing_required_values,
+        negative_volume=negative_volume,
+        invalid_numeric_masks=tuple(invalid_numeric_masks),
+    )
+
+
+def _ticker_validation_masks(normalized: pd.DataFrame) -> tuple[pd.Series, pd.Series, pd.Series]:
+    ticker_values = normalized["ticker"]
+    ticker_text = ticker_values.astype("string").str.strip().str.upper()
+    invalid_ticker = (
+        ticker_values.isna() | ticker_text.eq("").fillna(True) | ~ticker_text.map(is_valid_ticker)
+    ).fillna(True)
+    leading_zero_loss = (ticker_text.str.isdigit() & ticker_text.str.len().lt(6)).fillna(False)
+    if pd.api.types.is_numeric_dtype(ticker_values):
+        invalid_ticker = invalid_ticker | ticker_values.notna()
+        leading_zero_loss = leading_zero_loss | ticker_values.notna()
+    return ticker_text, invalid_ticker, leading_zero_loss
+
+
+def _date_validation_masks(
+    normalized: pd.DataFrame,
+    cutoff: pd.Timestamp,
+) -> tuple[pd.Series, pd.Series, pd.Series]:
+    parsed_dates = pd.to_datetime(normalized["date"], errors="coerce")
+    date_text = normalized["date"].astype("string").str.strip()
+    invalid_dates = (normalized["date"].notna() & date_text.ne("").fillna(False) & parsed_dates.isna()).fillna(False)
+    future_dates = (parsed_dates.notna() & (parsed_dates > cutoff)).fillna(False)
+    return parsed_dates, invalid_dates, future_dates
+
+
+def _numeric_validation_masks(
+    normalized: pd.DataFrame,
+    reasons: pd.Series,
+) -> tuple[dict[str, pd.Series], tuple[pd.Series, ...]]:
+    converted_numeric: dict[str, pd.Series] = {}
+    invalid_numeric_masks: list[pd.Series] = []
+    for column in NUMERIC_PRICE_COLUMNS:
+        converted, invalid_numeric = to_safe_numeric(normalized[column])
+        converted_numeric[column] = converted
+        invalid_numeric_masks.append(invalid_numeric)
+        _add_reason(reasons, invalid_numeric, f"invalid_numeric:{column}")
+    return converted_numeric, tuple(invalid_numeric_masks)
+
+
+def _processed_ohlcv_frame(validation: _ValidatedOhlcvFrame, valid_rows: pd.Series) -> pd.DataFrame:
+    processed = pd.DataFrame(
+        {
+            "ticker": validation.ticker_text[valid_rows].astype("string"),
+            "date": validation.parsed_dates[valid_rows].dt.strftime("%Y-%m-%d"),
+            "open": validation.converted_numeric["open"][valid_rows],
+            "high": validation.converted_numeric["high"][valid_rows],
+            "low": validation.converted_numeric["low"][valid_rows],
+            "close": validation.converted_numeric["close"][valid_rows],
+            "volume": validation.converted_numeric["volume"][valid_rows],
+        }
+    )
+    return processed.sort_values(["ticker", "date"], kind="mergesort").reset_index(drop=True)
+
+
+def _invalid_ohlcv_rows(
+    normalized: pd.DataFrame,
+    reasons: pd.Series,
+    valid_rows: pd.Series,
+) -> pd.DataFrame:
+    columns = [
+        column
+        for column in normalized.columns
+        if column in CANONICAL_OHLCV_COLUMNS or column == "_input_file"
+    ]
+    invalid_rows = normalized.loc[~valid_rows, columns].copy()
+    invalid_rows["validation_status"] = "invalid"
+    invalid_rows["invalid_reason"] = reasons.loc[~valid_rows].str.strip(";")
+    return invalid_rows.reset_index(drop=True)
+
+
 def _add_reason(reasons: pd.Series, mask: pd.Series, reason: str) -> None:
     if not mask.any():
         return
@@ -474,14 +574,21 @@ def _validation_summary_frame(summary: dict[str, object]) -> pd.DataFrame:
         "negative_volume_count",
         "invalid_ticker_count",
     }
-    rows = []
-    for metric, value in summary.items():
-        if metric in error_metrics:
-            status = "pass" if int(value) == 0 else "fail"
-        else:
-            status = "info"
-        rows.append({"metric": metric, "value": value, "status": status})
+    rows = [
+        {
+            "metric": metric,
+            "value": value,
+            "status": _validation_metric_status(metric, value, error_metrics),
+        }
+        for metric, value in summary.items()
+    ]
     return pd.DataFrame(rows, columns=["metric", "value", "status"])
+
+
+def _validation_metric_status(metric: str, value: object, error_metrics: set[str]) -> str:
+    if metric not in error_metrics:
+        return "info"
+    return "pass" if int(value) == 0 else "fail"
 
 
 def _write_csv(frame: pd.DataFrame, path: Path) -> None:
@@ -499,8 +606,7 @@ def _write_summary_report(summary: dict[str, object], path: Path, *, validation_
         "## Summary",
         "",
     ]
-    for key, value in summary.items():
-        lines.append(f"- {key}: {value}")
+    lines.extend(f"- {key}: {value}" for key, value in summary.items())
     lines.extend(
         [
             "",
@@ -510,8 +616,10 @@ def _write_summary_report(summary: dict[str, object], path: Path, *, validation_
             "| --- | --- | --- | --- |",
         ]
     )
-    for row in validation_checks.to_dict("records"):
-        lines.append(f"| {row['dataset']} | {row['check']} | {row['status']} | {row['details']} |")
+    lines.extend(
+        f"| {row['dataset']} | {row['check']} | {row['status']} | {row['details']} |"
+        for row in validation_checks.to_dict("records")
+    )
     lines.append("")
     path.write_text("\n".join(lines), encoding="utf-8")
 

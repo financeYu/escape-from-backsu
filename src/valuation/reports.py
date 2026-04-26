@@ -57,8 +57,7 @@ def build_step18_candidate_report(
         f"- candidate_records: {len(validated)}",
         f"- metrics: {', '.join(metric_names) if metric_names else 'none'}",
     ]
-    for category, count in sorted(category_counts.items()):
-        lines.append(f"- {category}: {count}")
+    lines.extend(f"- {category}: {count}" for category, count in sorted(category_counts.items()))
     return "\n".join(lines) + "\n"
 
 

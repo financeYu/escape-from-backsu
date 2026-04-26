@@ -380,63 +380,97 @@ def _validate_step15_input_plan_row(
     registry_by_name: dict[str, CompositeInputSpec],
     context: str,
 ) -> None:
-    score_name = str(row["score_name"])
-    branch = str(row["branch"])
-    role = str(row["role"])
-    eligibility = str(row["eligibility"])
-    adoption_state = str(row["adoption_state"])
-    input_column = str(row["input_column"])
-    usage = str(row["step15_usage"])
-    manual_review_required = bool(row["manual_review_required"])
+    plan_row = _coerce_input_plan_row(row)
+    if _is_future_or_performance_column(plan_row.input_column.lower()):
+        raise ValueError(f"{context} contains future/performance leakage: {plan_row.input_column}")
 
-    if _is_future_or_performance_column(input_column.lower()):
-        raise ValueError(f"{context} contains future/performance leakage: {input_column}")
-
-    financial = _is_financial_or_fundamental_column(input_column.lower()) or bool(
-        find_valuation_fundamental_columns((input_column,))
-    )
-    if financial and usage not in {Step15Usage.REVIEW_REQUIRED.value, Step15Usage.EXCLUDED.value}:
-        raise ValueError(
-            f"{context} financial/fundamental input must be review_required or excluded: "
-            f"{score_name}"
-        )
-    if financial:
+    if _is_financial_input_column(plan_row.input_column):
+        _validate_financial_input_plan_row(plan_row, context=context)
         return
 
-    known_spec = registry_by_name.get(score_name)
+    known_spec = registry_by_name.get(plan_row.score_name)
     if known_spec is None:
-        if usage in {Step15Usage.REVIEW_REQUIRED.value, Step15Usage.EXCLUDED.value}:
-            if usage == Step15Usage.REVIEW_REQUIRED.value and not manual_review_required:
-                raise ValueError(f"{context} review_required rows must set manual_review_required.")
-            return
-        raise ValueError(f"{context} unknown score cannot be direct Step 15 input: {score_name}")
+        _validate_unknown_input_plan_row(plan_row, context=context)
+    else:
+        _validate_known_input_plan_row(plan_row, spec=known_spec, context=context)
 
-    if usage == Step15Usage.DIRECT_SCORE_INPUT.value:
+
+def _coerce_input_plan_row(row: pd.Series) -> Step15InputPlanRow:
+    return Step15InputPlanRow(
+        score_name=str(row["score_name"]),
+        branch=str(row["branch"]),
+        role=str(row["role"]),
+        eligibility=str(row["eligibility"]),
+        adoption_state=str(row["adoption_state"]),
+        input_column=str(row["input_column"]),
+        step15_usage=str(row["step15_usage"]),
+        manual_review_required=bool(row["manual_review_required"]),
+    )
+
+
+def _is_financial_input_column(input_column: str) -> bool:
+    normalized = input_column.lower()
+    return _is_financial_or_fundamental_column(normalized) or bool(
+        find_valuation_fundamental_columns((input_column,))
+    )
+
+
+def _validate_financial_input_plan_row(plan_row: Step15InputPlanRow, *, context: str) -> None:
+    allowed_usages = {Step15Usage.REVIEW_REQUIRED.value, Step15Usage.EXCLUDED.value}
+    if plan_row.step15_usage not in allowed_usages:
+        raise ValueError(
+            f"{context} financial/fundamental input must be review_required or excluded: "
+            f"{plan_row.score_name}"
+        )
+
+
+def _validate_unknown_input_plan_row(plan_row: Step15InputPlanRow, *, context: str) -> None:
+    allowed_usages = {Step15Usage.REVIEW_REQUIRED.value, Step15Usage.EXCLUDED.value}
+    if plan_row.step15_usage not in allowed_usages:
+        raise ValueError(f"{context} unknown score cannot be direct Step 15 input: {plan_row.score_name}")
+    if plan_row.step15_usage == Step15Usage.REVIEW_REQUIRED.value and not plan_row.manual_review_required:
+        raise ValueError(f"{context} review_required rows must set manual_review_required.")
+
+
+def _validate_known_input_plan_row(
+    plan_row: Step15InputPlanRow,
+    *,
+    spec: CompositeInputSpec,
+    context: str,
+) -> None:
+    if plan_row.step15_usage == Step15Usage.DIRECT_SCORE_INPUT.value:
         _assert_direct_score_input_row(
-            score_name=score_name,
-            branch=branch,
-            role=role,
-            eligibility=eligibility,
-            adoption_state=adoption_state,
-            input_column=input_column,
-            manual_review_required=manual_review_required,
-            spec=known_spec,
+            score_name=plan_row.score_name,
+            branch=plan_row.branch,
+            role=plan_row.role,
+            eligibility=plan_row.eligibility,
+            adoption_state=plan_row.adoption_state,
+            input_column=plan_row.input_column,
+            manual_review_required=plan_row.manual_review_required,
+            spec=spec,
             context=context,
         )
         return
-
-    if usage == Step15Usage.CONTEXT_DIAGNOSTIC.value:
-        if role not in STEP15_ALLOWED_CONTEXT_ROLES:
-            raise ValueError(f"{context} context_diagnostic row has unsupported role: {score_name}")
-        if input_column != known_spec.normalized_column:
-            raise ValueError(
-                f"{context} context_diagnostic rows must use known normalized columns: "
-                f"{score_name}"
-            )
+    if plan_row.step15_usage == Step15Usage.CONTEXT_DIAGNOSTIC.value:
+        _assert_context_diagnostic_row(plan_row, spec=spec, context=context)
         return
-
-    if usage == Step15Usage.REVIEW_REQUIRED.value and not manual_review_required:
+    if plan_row.step15_usage == Step15Usage.REVIEW_REQUIRED.value and not plan_row.manual_review_required:
         raise ValueError(f"{context} review_required rows must set manual_review_required.")
+
+
+def _assert_context_diagnostic_row(
+    plan_row: Step15InputPlanRow,
+    *,
+    spec: CompositeInputSpec,
+    context: str,
+) -> None:
+    if plan_row.role not in STEP15_ALLOWED_CONTEXT_ROLES:
+        raise ValueError(f"{context} context_diagnostic row has unsupported role: {plan_row.score_name}")
+    if plan_row.input_column != spec.normalized_column:
+        raise ValueError(
+            f"{context} context_diagnostic rows must use known normalized columns: "
+            f"{plan_row.score_name}"
+        )
 
 
 def _assert_direct_score_input_row(

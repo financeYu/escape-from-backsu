@@ -4,12 +4,12 @@
 
 ## 현재 활성 단계
 
-Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fundamental expansion implemented
+Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local orchestration pipeline implemented
 
-- Recently completed: Step 18 = 밸류에이션 확장 준비, COMPLETE
-- Recently completed before that: Step 17 = 보수적 백테스트, COMPLETE
-- Carry-forward resolved for this Step: Step 18 now defines candidate-only financial metadata schema, availability-date validation, metric registry, and leakage guardrails.
-- Current gate: Step 19 remains WAITING / not started. Step 18 candidate data is not activated in technical scoring, final ranking, or Step 17 backtest inputs.
+- Recently completed: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
+- Recently completed before that: Step 18 = 밸류에이션 확장 준비, COMPLETE
+- Carry-forward preserved for this Step: Step 19 orchestrates existing approved stage contracts only; Step 15 ranking, Step 16 reports, Step 17 backtest, and Step 18 candidate-only valuation/fundamental boundaries remain unchanged.
+- Current gate: Step 20 remains WAITING / not started. Step 19 does not implement or complete final Done validation.
 
 ## 병렬 Workspace 운영 메모
 
@@ -24,10 +24,10 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 
 ## Pre-Step19 Context Routing 준비 메모
 
-- Status: PLANNED / docs-only support, Step 19 not started.
-- Purpose: future Step 19+ workers should start from routed context instead of reading the full repository history.
+- Status: COMPLETE / docs-only support consumed by Step 19.
+- Purpose: Step 19+ workers should start from routed context instead of reading the full repository history.
 - Allowed now: context hierarchy/routing/budget docs and checkpoint policy notes that do not alter Step 18 verdicts.
-- Forbidden now: Step 19 automatic pipeline implementation, scoring/ranking/backtest/valuation scoring/report semantics changes, new market data sources, KOSDAQ150, futures, or options expansion.
+- Forbidden now: scoring/ranking/backtest/valuation scoring/report semantics changes, new market data sources, KOSDAQ150, futures, options expansion, or Step 20 final Done validation before explicit Step 20 start.
 - Step 18 note: if Step 18 completion evidence is not yet reflected on the integration branch being edited, do not invent evidence; preserve the mismatch as an integration risk until the Step 18 branch is accepted.
 
 ## 전체 Step 판정
@@ -52,7 +52,7 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 | Step 16 | COMPLETE |
 | Step 17 | COMPLETE |
 | Step 18 | COMPLETE |
-| Step 19 | WAITING / not started |
+| Step 19 | COMPLETE |
 | Step 20 | WAITING / not started |
 
 ## Research ingestion 범위 확장 상태
@@ -72,6 +72,21 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 - ranking, latest ranking, composite score, backtest, valuation/fundamental scoring은 여전히 생성하지 않는다.
 
 ## 최근 완료 Step 요약
+
+### Step 19 = Automatic Execution Pipeline
+
+- Step 19 automatic execution pipeline contracts, config, CLI, guardrails, docs, generated-output boundary docs, and tests are implemented.
+- `src/pipeline/` builds deterministic local pipeline summaries from declarative stage contracts without executing or redefining domain scoring, ranking, report, backtest, or valuation/fundamental semantics.
+- `config/step19_pipeline.toml` keeps the default mode as `dry_run`, disables network, secrets, local cache requirements, KOSDAQ150/futures/options expansion, external data ingestion, Step 20 final validation, technical/final composite activation, and valuation/fundamental scoring activation.
+- `src/validation/step19_pipeline_guardrails.py` rejects forbidden valuation/fundamental scoring activation, protected score/output fields, Step 17 return feedback into upstream stages, Step 16 report feedback into scoring/ranking, generated-output path pollution, network/secret requirements, Step 20 completion claims, and trading/performance language.
+- `scripts/run_step19_pipeline.py` prints a structured summary and now returns nonzero when the pipeline is blocked or failed.
+- Runtime Step 19 summaries belong under `reports/pipeline/generated/` and are ignored by `.gitignore`; generated security, backtest, and valuation report roots are also ignored.
+- Step 19 does not create new score formulas, re-rank securities, redesign reports, redesign backtests, activate valuation/fundamental scoring, add market data sources, or perform Step 20 final Done validation.
+- Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 679 passed, 4 skipped, 25 subtests passed.
+- Focused Step 19 validation: `python -m pytest -q -p no:cacheprovider tests/pipeline tests/validation/test_step19_pipeline_guardrails.py` = 19 passed.
+- Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 239 passed.
+- `review_mvp` specialist static review on Step 19 changed Python paths returned no medium-or-higher findings; `python -m unittest discover -s review_mvp/tests -v` = 8 passed.
+- Cross-Step Conflict Checkpoint after post-review-fix validation: PASS; no blocking roadmap/order, hard-stop, score/composite, valuation, diagnostics, handoff, generated-output, dirty-worktree, root-conflict, or context-routing issue found.
 
 ### Step 18 = Valuation / Fundamental Expansion
 

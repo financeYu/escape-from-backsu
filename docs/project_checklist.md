@@ -270,6 +270,19 @@ Step 19를 시작하려면 별도 명시 지시, 전용 Step 19 branch/worktree,
   - Manual forbidden-language reproduction now rejects `buy recommendation and proven alpha` with `alpha proven, buy recommendation`.
   - `review_mvp` specialist static review command on Step 18 production/test paths returned 0 high and 0 medium findings; 3 low style/quality findings are non-blocking.
   - Cross-Step Conflict Checkpoint after post-fix validation: PASS; no blocking roadmap/order, hard-stop, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, trading-signal, or unrelated dirty-worktree issue found.
+- Step 19 = COMPLETE
+  - Deterministic local automatic execution pipeline contracts, config, CLI, guardrails, docs, generated-output boundary docs, and tests are implemented.
+  - `src/pipeline/` builds structured orchestration summaries from Step 19 stage contracts without redefining score formulas, ranking semantics, report semantics, backtest semantics, or valuation/fundamental scoring.
+  - `config/step19_pipeline.toml` defaults to `dry_run` and keeps network calls, secrets, local cache requirements, KOSDAQ150/futures/options expansion, external data ingestion, Step 20 final validation, technical/final composite activation, and valuation/fundamental scoring activation disabled.
+  - `src/validation/step19_pipeline_guardrails.py` blocks valuation/fundamental activation, protected score/output fields, Step 17 return feedback into upstream stages, Step 16 report feedback into scoring/ranking, generated-output path pollution, network/secret requirements, Step 20 completion claims, and trading/performance language.
+  - `scripts/run_step19_pipeline.py` prints a structured summary and returns nonzero when the pipeline is blocked or failed.
+  - Runtime Step 19 summaries belong under `reports/pipeline/generated/` and are ignored by `.gitignore`; generated security, backtest, and valuation report roots are also ignored.
+  - Step 19 does not create new score formulas, re-rank securities, redesign reports, redesign backtests, activate valuation/fundamental scoring, add market data sources, or perform Step 20 final Done validation.
+  - Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 679 passed, 4 skipped, 25 subtests passed.
+  - Focused Step 19 validation: 19 passed.
+  - Related scanner/report/backtest/validation master integration validation: 239 passed.
+  - `review_mvp` specialist static review found no medium-or-higher findings on Step 19 changed Python paths; `review_mvp` tests passed.
+  - Cross-Step Conflict Checkpoint after post-review-fix validation: PASS; no blocking roadmap/order, hard-stop, score/composite, valuation, diagnostics, handoff, generated-output, dirty-worktree, root-conflict, or context-routing issue found.
 - Research ingestion scope expansion note:
   - `docs/research_ingestion_expansion.md` documents expanded paper query-set coverage, source expansion candidates, seed lifecycle, new-only run artifacts, and the separated `reserch_mvp` ownership boundary.
   - EvidenceCard is not a score definition.

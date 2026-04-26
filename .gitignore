@@ -39,6 +39,10 @@ reports/diagnostics/*
 !reports/diagnostics/README.md
 reports/selection/*
 !reports/selection/README.md
+reports/security/generated/
+reports/backtest/generated/
+reports/valuation/generated/
+reports/pipeline/generated/
 
 # Quant_mvp research ingestion runtime artifacts
 Quant_mvp/data/research/raw/

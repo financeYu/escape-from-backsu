@@ -100,9 +100,22 @@ class Top5App:
         container = ttk.Frame(self.root, padding=12)
         container.pack(fill=tk.BOTH, expand=True)
 
+        self._build_control_section(container)
+        self._build_action_section(container)
+        self._build_notice_section(container)
+        self._build_table_section(container)
+        self._build_status_section(container)
+        self._build_progress_section(container)
+
+    def _build_control_section(self, container: ttk.Frame) -> None:
         control_frame = ttk.LabelFrame(container, text="실행 설정", padding=10)
         control_frame.pack(fill=tk.X)
 
+        self._build_page_controls(control_frame)
+        self._build_refresh_controls(control_frame)
+        self._build_auto_refresh_controls(control_frame)
+
+    def _build_page_controls(self, control_frame: ttk.LabelFrame) -> None:
         ttk.Label(control_frame, text="페이지 수").grid(row=0, column=0, sticky="w")
         ttk.Spinbox(control_frame, from_=1, to=50, textvariable=self.pages_var, width=6).grid(
             row=0,
@@ -118,6 +131,7 @@ class Top5App:
             padx=(8, 18),
         )
 
+    def _build_refresh_controls(self, control_frame: ttk.LabelFrame) -> None:
         ttk.Checkbutton(control_frame, text="캐시 사용", variable=self.use_cache_var).grid(
             row=1,
             column=0,
@@ -146,6 +160,8 @@ class Top5App:
             text="시총 고정 우선",
             variable=self.market_cap_override_var,
         ).grid(row=1, column=4, sticky="w", padx=(14, 0), pady=(10, 0))
+
+    def _build_auto_refresh_controls(self, control_frame: ttk.LabelFrame) -> None:
         ttk.Checkbutton(
             control_frame,
             text="자동 새로고침",
@@ -161,6 +177,7 @@ class Top5App:
             width=6,
         ).grid(row=2, column=2, sticky="w", padx=(8, 18), pady=(10, 0))
 
+    def _build_action_section(self, container: ttk.Frame) -> None:
         action_frame = ttk.Frame(container, padding=(0, 10, 0, 10))
         action_frame.pack(fill=tk.X)
         self.run_button = ttk.Button(action_frame, text="Top N 갱신 실행", command=self.run_update)
@@ -170,6 +187,7 @@ class Top5App:
             padx=(8, 0),
         )
 
+    def _build_notice_section(self, container: ttk.Frame) -> None:
         notice = ttk.Label(
             container,
             text=f"옵션 안내: {MARKET_CAP_OVERRIDE_MESSAGE}",
@@ -183,6 +201,7 @@ class Top5App:
             pady=(0, 8),
         )
 
+    def _build_table_section(self, container: ttk.Frame) -> None:
         table_frame = ttk.LabelFrame(container, text="Top N 기술지표 표시", padding=8)
         table_frame.pack(fill=tk.BOTH, expand=True)
 
@@ -218,11 +237,13 @@ class Top5App:
         y_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.tree.bind("<Double-1>", lambda _event: self.open_selected_chart())
 
+    def _build_status_section(self, container: ttk.Frame) -> None:
         status_frame = ttk.Frame(container)
         status_frame.pack(fill=tk.X, pady=(8, 0))
         ttk.Label(status_frame, textvariable=self.status_var).pack(side=tk.LEFT)
         ttk.Label(status_frame, textvariable=self.last_updated_var).pack(side=tk.RIGHT)
 
+    def _build_progress_section(self, container: ttk.Frame) -> None:
         progress_frame = ttk.Frame(container)
         progress_frame.pack(fill=tk.X, pady=(8, 0))
         self.progress = ttk.Progressbar(
@@ -232,6 +253,7 @@ class Top5App:
             variable=self.progress_var,
         )
         self.progress.pack(fill=tk.X)
+
 
     def _load_latest_results(self) -> None:
         latest_df = load_latest_top5_snapshot()

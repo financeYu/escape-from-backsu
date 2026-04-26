@@ -143,6 +143,12 @@ class BacktestEvaluationApp:
         container = ttk.Frame(self.root, padding=12)
         container.pack(fill=tk.BOTH, expand=True)
 
+        self._build_input_section(container)
+        self._build_config_section(container)
+        self._build_action_section(container)
+        self._build_result_tabs(container)
+
+    def _build_input_section(self, container: ttk.Frame) -> None:
         input_frame = ttk.LabelFrame(container, text="입력 CSV", padding=10)
         input_frame.pack(fill=tk.X)
         input_frame.columnconfigure(1, weight=1)
@@ -166,6 +172,7 @@ class BacktestEvaluationApp:
         )
         ttk.Button(input_frame, text="찾기", command=self._browse_price_csv).grid(row=1, column=2, pady=(8, 0))
 
+    def _build_config_section(self, container: ttk.Frame) -> None:
         config_frame = ttk.LabelFrame(container, text="평가 설정", padding=10)
         config_frame.pack(fill=tk.X, pady=(10, 0))
 
@@ -209,12 +216,14 @@ class BacktestEvaluationApp:
             width=8,
         ).grid(row=1, column=3, sticky="w", padx=(8, 18), pady=(8, 0))
 
+    def _build_action_section(self, container: ttk.Frame) -> None:
         action_frame = ttk.Frame(container, padding=(0, 10, 0, 10))
         action_frame.pack(fill=tk.X)
         self.run_button = ttk.Button(action_frame, text="백테스트 평가 실행", command=self.run_evaluation)
         self.run_button.pack(side=tk.LEFT)
         ttk.Label(action_frame, textvariable=self.status_var).pack(side=tk.LEFT, padx=(12, 0))
 
+    def _build_result_tabs(self, container: ttk.Frame) -> None:
         notebook = ttk.Notebook(container)
         notebook.pack(fill=tk.BOTH, expand=True)
 
@@ -228,8 +237,14 @@ class BacktestEvaluationApp:
         self._add_boundary_notice(summary_tab)
         self._add_boundary_notice(period_tab)
         self._add_boundary_notice(security_tab)
+        self._build_summary_tree(summary_tab)
+        self._build_period_tree(period_tab)
+        self._build_security_tree(security_tab)
 
+    def _build_summary_tree(self, summary_tab: ttk.Frame) -> None:
         self.summary_tree = self._build_tree(summary_tab, ("항목", "값"), {"항목": 260, "값": 760})
+
+    def _build_period_tree(self, period_tab: ttk.Frame) -> None:
         self.period_tree = self._build_tree(
             period_tab,
             (
@@ -249,6 +264,8 @@ class BacktestEvaluationApp:
                 "limitation_flags": 360,
             },
         )
+
+    def _build_security_tree(self, security_tab: ttk.Frame) -> None:
         self.security_tree = self._build_tree(
             security_tab,
             (
@@ -276,6 +293,7 @@ class BacktestEvaluationApp:
                 "limitation_flags": 300,
             },
         )
+
 
     def _build_tree(
         self,

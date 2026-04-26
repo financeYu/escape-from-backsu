@@ -239,6 +239,61 @@ def test_ticker_leading_zero_is_preserved() -> None:
         run_conservative_backtest(bad_ranking, price_rows(), config=one_period_config(top_n=1))
 
 
+def test_default_backtest_symbol_policy_accepts_korean_alphanumeric_code() -> None:
+    ranking = pd.DataFrame(
+        [
+            {
+                "ticker": "0126z0",
+                "ranking_date": "2026-01-02",
+                "rank": 1,
+                "ranking_validity_flag": "valid",
+            }
+        ]
+    )
+    prices = pd.DataFrame(
+        [
+            {
+                "ticker": "0126Z0",
+                "date": "2026-01-02",
+                "open": 1.0,
+                "high": 1.0,
+                "low": 1.0,
+                "close": 1.0,
+                "volume": 100,
+            },
+            {
+                "ticker": "0126Z0",
+                "date": "2026-01-05",
+                "open": 100.0,
+                "high": 100.0,
+                "low": 100.0,
+                "close": 100.0,
+                "volume": 100,
+            },
+            {
+                "ticker": "0126Z0",
+                "date": "2026-01-06",
+                "open": 110.0,
+                "high": 110.0,
+                "low": 110.0,
+                "close": 110.0,
+                "volume": 100,
+            },
+        ]
+    )
+
+    result = run_conservative_backtest(
+        ranking,
+        prices,
+        config=one_period_config(top_n=1),
+    )
+
+    row = result.to_security_frame().iloc[0]
+    assert row["ticker"] == "0126Z0"
+    assert bool(row["selected"]) is True
+    assert bool(row["skipped"]) is False
+
+
 def test_backtest_contract_can_use_generic_symbol_policy_for_extension_contracts() -> None:
     tickers = pd.Series(["AAPL", "MSFT"], dtype="string")
 
@@ -247,7 +302,7 @@ def test_backtest_contract_can_use_generic_symbol_policy_for_extension_contracts
         context="extension contract",
         symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
     )
-    with pytest.raises(ValueError, match="six-digit string format"):
+    with pytest.raises(ValueError, match="six-character uppercase alphanumeric string format"):
         assert_ticker_strings(tickers, context="default contract")
 
 
@@ -267,7 +322,7 @@ def test_backtest_runner_can_use_generic_symbol_policy_for_extension_contracts()
     )
 
     assert selected_tickers(result) == ["AAPL", "MSFT"]
-    with pytest.raises(ValueError, match="six-digit string format"):
+    with pytest.raises(ValueError, match="six-character uppercase alphanumeric string format"):
         run_conservative_backtest(ranking, prices, config=one_period_config())
 
 

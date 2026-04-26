@@ -171,7 +171,7 @@ def preprocess_ohlcv_frame(
     reasons = pd.Series([""] * len(normalized), index=normalized.index, dtype="string")
 
     ticker_values = normalized["ticker"]
-    ticker_text = ticker_values.astype("string").str.strip()
+    ticker_text = ticker_values.astype("string").str.strip().str.upper()
     ticker_numeric_dtype = pd.api.types.is_numeric_dtype(ticker_values)
     invalid_ticker = (
         ticker_values.isna() | ticker_text.eq("").fillna(True) | ~ticker_text.map(is_valid_ticker)

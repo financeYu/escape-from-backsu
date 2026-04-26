@@ -170,5 +170,5 @@ def test_latest_ranking_contract_can_use_generic_symbol_policy() -> None:
         frame,
         symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
     )
-    with pytest.raises(ValueError, match="six-digit string format"):
+    with pytest.raises(ValueError, match="six-character uppercase alphanumeric string format"):
         validate_step16_latest_ranking_input(frame)

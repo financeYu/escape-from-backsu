@@ -221,8 +221,15 @@ def test_output_rank_and_ticker_values_must_be_stable() -> None:
 
     lost_leading_zero = latest_ranking_frame()
     lost_leading_zero.loc[0, "ticker"] = "5930"
-    with pytest.raises(ValueError, match="six-digit string"):
+    with pytest.raises(ValueError, match="six-character uppercase alphanumeric string"):
         validate_step15_latest_ranking_output(lost_leading_zero)
+
+
+def test_output_accepts_kospi200_alphanumeric_ticker_by_default() -> None:
+    frame = latest_ranking_frame()
+    frame.loc[0, "ticker"] = "0126Z0"
+
+    validate_step15_latest_ranking_output(frame)
 
 
 def test_output_ticker_policy_can_be_supplied_for_future_extension_contracts() -> None:

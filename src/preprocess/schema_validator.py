@@ -41,18 +41,22 @@ PRICE_COLUMN_ALIASES = {
 class SymbolPolicy:
     """Validation policy for instrument identifiers.
 
-    The default remains the KOSPI200 six-character stock-code contract. Future
-    extension work can pass a different policy without weakening the MVP guard.
+    The default remains the KOSPI200/Naver six-character stock-code contract.
+    Future extension work can pass a different policy without weakening the MVP
+    guard.
     """
 
     policy_id: str
     valid_pattern: str
     normalize_numeric_width: int | None = 6
     leading_zero_check_enabled: bool = True
-    display_rule: str = "six-digit string format"
+    display_rule: str = "six-character uppercase alphanumeric string format"
 
     def is_valid(self, value: object) -> bool:
         return bool(re.fullmatch(self.valid_pattern, str(value).strip().upper()))
+
+    def normalize(self, value: object) -> str:
+        return str(value).strip().upper()
 
     def leading_zero_loss_candidates(self, values: pd.Series) -> int:
         if not self.leading_zero_check_enabled or self.normalize_numeric_width is None:
@@ -69,10 +73,10 @@ class SymbolPolicy:
 
 KOSPI200_SYMBOL_POLICY = SymbolPolicy(
     policy_id="kospi200_korean_equity_6",
-    valid_pattern=r"^[0-9]{6}$",
+    valid_pattern=r"^[0-9A-Z]{6}$",
     normalize_numeric_width=6,
     leading_zero_check_enabled=True,
-    display_rule="six-digit string format",
+    display_rule="six-character uppercase alphanumeric string format",
 )
 
 GENERIC_EXCHANGE_SYMBOL_POLICY = SymbolPolicy(

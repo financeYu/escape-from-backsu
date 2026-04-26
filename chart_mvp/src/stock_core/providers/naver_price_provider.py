@@ -8,7 +8,7 @@ from stock_core.cache.csv_cache import DEFAULT_PRICE_CACHE_POLICY, PriceCachePol
 from stock_core.providers.naver_finance import crawl_financial_statements, crawl_stock_data, fetch_stock_name
 from stock_core.utils.constants import DATE_COLUMN, PRICE_COLUMNS
 from stock_core.utils.logging_utils import get_logger
-from stock_core.utils.market_specs import NAVER_PRICE_PROVIDER_SPEC, PriceProviderSpec
+from stock_core.utils.market_specs import KOREAN_EQUITY_SYMBOL_POLICY, NAVER_PRICE_PROVIDER_SPEC, PriceProviderSpec
 from stock_core.utils.normalization import clean_stock_data
 
 
@@ -38,27 +38,28 @@ def get_price_df(
     normalized to the base Korean price columns only.
     """
 
-    logger.info("Loading price data for %s (pages=%s, use_cache=%s)", code, pages, use_cache)
+    normalized_code = KOREAN_EQUITY_SYMBOL_POLICY.normalize(code)
+    logger.info("Loading price data for %s (pages=%s, use_cache=%s)", normalized_code, pages, use_cache)
 
     if use_cache:
         df, source = refresh_stock_data(
-            code=code,
+            code=normalized_code,
             pages=pages,
             provider_spec=provider_spec,
             cache_policy=cache_policy,
             refresh_financials=refresh_financials,
         )
-        logger.info("Loaded %s from %s path", code, source)
+        logger.info("Loaded %s from %s path", normalized_code, source)
     else:
-        raw_df = crawl_stock_data(code=code, pages=pages, sleep_seconds=provider_spec.request_sleep_seconds)
+        raw_df = crawl_stock_data(code=normalized_code, pages=pages, sleep_seconds=provider_spec.request_sleep_seconds)
         df = clean_stock_data(raw_df)
         if refresh_financials:
             try:
-                financial_statements_df = crawl_financial_statements(code=code)
-                save_financial_statements(financial_statements_df, code, cache_policy=cache_policy)
+                financial_statements_df = crawl_financial_statements(code=normalized_code)
+                save_financial_statements(financial_statements_df, normalized_code, cache_policy=cache_policy)
             except Exception as exc:
-                logger.warning("Failed to save financial statements for %s during direct fetch: %s", code, exc)
-        logger.info("Loaded %s without cache", code)
+                logger.warning("Failed to save financial statements for %s during direct fetch: %s", normalized_code, exc)
+        logger.info("Loaded %s without cache", normalized_code)
 
     existing_columns = [column for column in BASE_PRICE_COLUMNS if column in df.columns]
     return df.loc[:, existing_columns].copy()
@@ -71,6 +72,7 @@ def get_cached_price_df(
 ) -> pd.DataFrame:
     """Return normalized base columns from cached data only."""
 
-    df = load_cached_data(code, cache_policy=cache_policy)
+    normalized_code = KOREAN_EQUITY_SYMBOL_POLICY.normalize(code)
+    df = load_cached_data(normalized_code, cache_policy=cache_policy)
     existing_columns = [column for column in BASE_PRICE_COLUMNS if column in df.columns]
     return df.loc[:, existing_columns].copy()

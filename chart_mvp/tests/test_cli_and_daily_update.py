@@ -15,6 +15,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from app.cli import main as cli_main
+from app.cli import run_single_stock
 from stock_core.pipeline.daily_update import DailyUpdateRow, _render_selected_charts
 
 
@@ -59,6 +60,27 @@ class CliTests(unittest.TestCase):
             top_n=5,
             use_market_cap_override=False,
         )
+
+    def test_single_stock_cli_normalizes_alphanumeric_code_before_fetch(self) -> None:
+        price_df = pd.DataFrame({"날짜": ["2026-04-24"], "종가": [574000]})
+
+        with (
+            patch("app.cli.fetch_stock_name", return_value="Samsung Epis") as mock_name,
+            patch(
+                "app.cli.refresh_stock_data",
+                return_value=(price_df, "fetched"),
+            ) as mock_refresh,
+            patch(
+                "app.cli.get_cache_path",
+                return_value=PROJECT_ROOT / "data" / "0126Z0_daily_prices.csv",
+            ),
+            patch("app.cli.plot_stock_data"),
+        ):
+            exit_code = run_single_stock("0126z0", pages=1, show_chart=False)
+
+        self.assertEqual(exit_code, 0)
+        mock_name.assert_called_once_with("0126Z0")
+        mock_refresh.assert_called_once_with(code="0126Z0", pages=1)
 
 
 class DailyUpdateTests(unittest.TestCase):

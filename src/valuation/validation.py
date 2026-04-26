@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 import math
-import re
 from typing import Any
 
 import pandas as pd
 
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY
 from src.scores.schema import find_missing_columns, find_valuation_fundamental_columns
 from src.valuation.contracts import (
     STEP18_CANDIDATE_SCHEMA_COLUMNS,
@@ -271,17 +271,43 @@ def _coerce_record(
     registry_by_name: Mapping[str, MetricSpec],
     evaluation_ts: pd.Timestamp | None,
 ) -> ValuationCandidateRecord:
-    if isinstance(record, ValuationCandidateRecord):
-        payload = record.to_dict()
-    else:
-        payload = dict(record)
-
+    payload = _payload_from_record(record)
     _assert_required_candidate_fields(payload)
     _assert_safe_imputation(payload)
 
-    ticker = _required_text_alias(payload, "ticker", aliases=("symbol",))
-    _assert_safe_ticker(ticker)
-    company_name = _resolve_company_name(payload)
+    metric, metric_category, metric_unit = _validated_metric_fields(payload, registry_by_name)
+    available_ts, filing_ts, collected_ts, report_ts, universe_ts = _validated_candidate_dates(
+        payload,
+        evaluation_ts=evaluation_ts,
+    )
+    source_report_id, disclosure_id = _source_identifiers(payload)
+
+    return _build_candidate_record(
+        payload,
+        ticker=_normalize_safe_ticker(_required_text_alias(payload, "ticker", aliases=("symbol",))),
+        metric=metric,
+        metric_category=metric_category,
+        metric_unit=metric_unit,
+        available_ts=available_ts,
+        filing_ts=filing_ts,
+        collected_ts=collected_ts,
+        report_ts=report_ts,
+        universe_ts=universe_ts,
+        source_report_id=source_report_id,
+        disclosure_id=disclosure_id,
+    )
+
+
+def _payload_from_record(record: Mapping[str, Any] | ValuationCandidateRecord) -> dict[str, Any]:
+    if isinstance(record, ValuationCandidateRecord):
+        return record.to_dict()
+    return dict(record)
+
+
+def _validated_metric_fields(
+    payload: Mapping[str, Any],
+    registry_by_name: Mapping[str, MetricSpec],
+) -> tuple[str, str, str]:
     metric = _required_text_alias(payload, "metric", aliases=("metric_name",)).lower()
     spec = registry_by_name.get(metric)
     if spec is None:
@@ -302,41 +328,87 @@ def _coerce_record(
             f"{metric}: {metric_unit} != {spec.metric_unit}"
         )
 
-    value = _required_numeric_alias(payload, "value", aliases=("metric_value",))
+    _required_numeric_alias(payload, "value", aliases=("metric_value",))
+    return metric, metric_category, metric_unit
+
+
+def _validated_candidate_dates(
+    payload: Mapping[str, Any],
+    *,
+    evaluation_ts: pd.Timestamp | None,
+) -> tuple[pd.Timestamp, pd.Timestamp, pd.Timestamp, pd.Timestamp | None, pd.Timestamp | None]:
     available_ts = _required_availability_date(payload)
     filing_ts = _required_date(payload.get("filing_date"), field_name="filing_date")
     collected_ts = _required_date(payload.get("collected_at"), field_name="collected_at")
     report_ts = _optional_date(payload.get("report_date"), field_name="report_date")
     universe_ts = _optional_date(payload.get("universe_date"), field_name="universe_date")
     _assert_reporting_lag_policy(filing_ts, available_ts)
+    _assert_available_for_evaluation(
+        available_ts=available_ts,
+        filing_ts=filing_ts,
+        report_ts=report_ts,
+        universe_ts=universe_ts,
+        evaluation_ts=evaluation_ts,
+    )
+    return available_ts, filing_ts, collected_ts, report_ts, universe_ts
 
-    if evaluation_ts is not None:
-        future_fields: list[str] = []
-        if available_ts > evaluation_ts:
-            future_fields.append("availability_date/available_date/as_of_date")
-        if filing_ts > evaluation_ts:
-            future_fields.append("filing_date")
-        if report_ts is not None and report_ts > evaluation_ts:
-            future_fields.append("report_date")
-        if universe_ts is not None and universe_ts > evaluation_ts:
-            future_fields.append("universe_date")
-        if future_fields:
-            raise ValueError(
-                "Step 18 candidate record is not available for evaluation_date "
-                f"{evaluation_ts.date().isoformat()}: {', '.join(future_fields)}"
-            )
-        _assert_stale_data_policy(available_ts, evaluation_ts)
 
+def _assert_available_for_evaluation(
+    *,
+    available_ts: pd.Timestamp,
+    filing_ts: pd.Timestamp,
+    report_ts: pd.Timestamp | None,
+    universe_ts: pd.Timestamp | None,
+    evaluation_ts: pd.Timestamp | None,
+) -> None:
+    if evaluation_ts is None:
+        return
+
+    future_fields: list[str] = []
+    if available_ts > evaluation_ts:
+        future_fields.append("availability_date/available_date/as_of_date")
+    if filing_ts > evaluation_ts:
+        future_fields.append("filing_date")
+    if report_ts is not None and report_ts > evaluation_ts:
+        future_fields.append("report_date")
+    if universe_ts is not None and universe_ts > evaluation_ts:
+        future_fields.append("universe_date")
+    if future_fields:
+        raise ValueError(
+            "Step 18 candidate record is not available for evaluation_date "
+            f"{evaluation_ts.date().isoformat()}: {', '.join(future_fields)}"
+        )
+    _assert_stale_data_policy(available_ts, evaluation_ts)
+
+
+def _source_identifiers(payload: Mapping[str, Any]) -> tuple[str | None, str | None]:
     source_report_id = _optional_text(payload.get("source_report_id"))
     disclosure_id = _optional_text(payload.get("disclosure_id"))
     if source_report_id is None and disclosure_id is None:
         raise ValueError("Step 18 candidate source_report_id or disclosure_id is required.")
+    return source_report_id, disclosure_id
 
+
+def _build_candidate_record(
+    payload: Mapping[str, Any],
+    *,
+    ticker: str,
+    metric: str,
+    metric_category: str,
+    metric_unit: str,
+    available_ts: pd.Timestamp,
+    filing_ts: pd.Timestamp,
+    collected_ts: pd.Timestamp,
+    report_ts: pd.Timestamp | None,
+    universe_ts: pd.Timestamp | None,
+    source_report_id: str | None,
+    disclosure_id: str | None,
+) -> ValuationCandidateRecord:
     return ValuationCandidateRecord(
         ticker=ticker,
-        company_name=company_name,
+        company_name=_resolve_company_name(payload),
         metric=metric,
-        value=value,
+        value=_required_numeric_alias(payload, "value", aliases=("metric_value",)),
         metric_unit=metric_unit,
         metric_category=metric_category,
         period=_required_text_alias(payload, "period", aliases=("fiscal_period",)),
@@ -387,9 +459,14 @@ def _assert_required_candidate_fields(payload: Mapping[str, Any]) -> None:
         raise ValueError(f"Step 18 candidate record missing required fields: {', '.join(missing)}")
 
 
-def _assert_safe_ticker(ticker: str) -> None:
-    if not re.fullmatch(r"\d{6}", ticker):
-        raise ValueError("Step 18 candidate ticker must preserve a six-digit KOSPI code string.")
+def _normalize_safe_ticker(ticker: str) -> str:
+    normalized = KOSPI200_SYMBOL_POLICY.normalize(ticker)
+    if not KOSPI200_SYMBOL_POLICY.is_valid(normalized):
+        raise ValueError(
+            "Step 18 candidate ticker must preserve "
+            f"{KOSPI200_SYMBOL_POLICY.display_rule}."
+        )
+    return normalized
 
 
 def _assert_safe_imputation(payload: Mapping[str, Any]) -> None:

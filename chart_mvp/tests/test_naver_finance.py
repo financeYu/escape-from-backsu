@@ -156,6 +156,28 @@ class NaverFinanceTests(unittest.TestCase):
         self.assertEqual(source, "fetched")
         mock_save_financials.assert_called_once_with(statement_df, "005930")
 
+    def test_naver_price_provider_normalizes_lowercase_alphanumeric_code(self) -> None:
+        from stock_core.providers import naver_price_provider
+
+        raw_df = pd.DataFrame(
+            {
+                "날짜": ["2026.04.24"],
+                "종가": [574000],
+                "전일비": [13000],
+                "시가": [598000],
+                "고가": [600000],
+                "저가": [573000],
+                "거래량": [74904],
+            }
+        )
+
+        with patch("stock_core.providers.naver_price_provider.crawl_stock_data", return_value=raw_df) as mock_fetch:
+            frame = naver_price_provider.get_price_df("0126z0", pages=1, use_cache=False)
+
+        mock_fetch.assert_called_once()
+        self.assertEqual(mock_fetch.call_args.kwargs["code"], "0126Z0")
+        self.assertEqual(frame["날짜"].iloc[0].strftime("%Y-%m-%d"), "2026-04-24")
+
 
 if __name__ == "__main__":
     unittest.main()

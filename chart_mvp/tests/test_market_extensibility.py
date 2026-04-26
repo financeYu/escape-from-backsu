@@ -121,6 +121,13 @@ class MarketExtensibilityTests(unittest.TestCase):
         self.assertEqual(price_path.parts[-5:], ("data", "market_cache", "example_provider", "nasdaq100", "AAPL_daily_prices.csv"))
         self.assertEqual(statement_path.name, "AAPL_financial_statements.csv")
 
+    def test_default_cache_policy_normalizes_kospi_alphanumeric_code(self) -> None:
+        price_path = get_cache_path("0126z0")
+        statement_path = get_financial_statement_cache_path("0126z0")
+
+        self.assertEqual(price_path.name, "0126Z0_daily_prices.csv")
+        self.assertEqual(statement_path.name, "0126Z0_financial_statements.csv")
+
     def test_schema_validator_accepts_configured_non_korean_symbol_policy(self) -> None:
         frame = pd.DataFrame(
             {

@@ -44,6 +44,16 @@ class Step6PreprocessTests(unittest.TestCase):
         self.assertTrue(invalid_rows.empty)
         self.assertEqual(summary["row_count_after"], 1)
 
+    def test_valid_alphanumeric_ticker_is_uppercased_and_preserved(self) -> None:
+        processed, invalid_rows, _, summary = preprocess_ohlcv_frame(
+            valid_frame(ticker="0126z0"),
+            as_of_date=AS_OF_DATE,
+        )
+
+        self.assertEqual(processed.loc[0, "ticker"], "0126Z0")
+        self.assertTrue(invalid_rows.empty)
+        self.assertEqual(summary["row_count_after"], 1)
+
     def test_invalid_integer_ticker_is_rejected(self) -> None:
         processed, invalid_rows, _, summary = preprocess_ohlcv_frame(
             valid_frame(ticker=5930),

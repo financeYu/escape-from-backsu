@@ -263,5 +263,14 @@ def test_future_dates_and_unsafe_tickers_are_rejected() -> None:
 
     unsafe_ticker = normalized_score_frame()
     unsafe_ticker.loc[unsafe_ticker["ticker"] == "005930", "ticker"] = "5930"
-    with pytest.raises(ValueError, match="six-digit string"):
+    with pytest.raises(ValueError, match="six-character uppercase alphanumeric string"):
         build_latest_ranking_output(unsafe_ticker, adoption_synthesis_table())
+
+
+def test_latest_ranking_accepts_kospi200_alphanumeric_ticker() -> None:
+    frame = normalized_score_frame()
+    frame.loc[frame["ticker"].eq("005930"), "ticker"] = "0126Z0"
+
+    output = build_latest_ranking_output(frame, adoption_synthesis_table())
+
+    assert "0126Z0" in output["ticker"].tolist()

@@ -65,6 +65,16 @@ def test_candidate_records_can_be_parsed_and_validated() -> None:
     assert record.availability_date == "2026-03-31"
 
 
+def test_candidate_records_accept_kospi200_alphanumeric_ticker() -> None:
+    records = validate_candidate_records(
+        [candidate_record(ticker="0126z0", source_report_id="SYN-2025Q4-0126Z0")],
+        evaluation_date="2026-04-01",
+    )
+
+    (record,) = records
+    assert record.ticker == "0126Z0"
+
+
 def test_legacy_aliases_are_allowed_but_stored_as_canonical_fields() -> None:
     record = candidate_record(
         ticker=None,

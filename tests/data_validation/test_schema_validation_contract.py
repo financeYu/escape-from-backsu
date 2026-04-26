@@ -44,6 +44,12 @@ class DataValidationContractTests(unittest.TestCase):
 
         self.assertEqual(statuses["schema_validation_summary"], "pass")
 
+    def test_kospi200_symbol_policy_accepts_six_character_alphanumeric(self) -> None:
+        statuses = self.statuses(frame(ticker="0126Z0"))
+
+        self.assertEqual(statuses["ticker_six_char_format"], "pass")
+        self.assertEqual(statuses["schema_validation_summary"], "pass")
+
     def test_ticker_leading_zero_loss_candidate_fails_contract(self) -> None:
         statuses = self.statuses(frame(ticker=5930))
 
@@ -74,7 +80,7 @@ class DataValidationContractTests(unittest.TestCase):
         self.assertEqual(statuses["ticker_leading_zero_preserved"], "pass")
         self.assertEqual(statuses["schema_validation_summary"], "pass")
 
-    def test_default_kospi200_symbol_policy_stays_six_digit_numeric(self) -> None:
+    def test_default_kospi200_symbol_policy_rejects_non_six_character_symbol(self) -> None:
         statuses = self.statuses(frame(ticker="AAPL"))
 
         self.assertEqual(statuses["ticker_six_char_format"], "fail")

@@ -8,31 +8,33 @@ import sys
 from stock_core.charts.matplotlib_renderer import plot_stock_data
 from stock_core.cache.csv_cache import get_cache_path, refresh_stock_data
 from stock_core.pipeline.daily_update import run_daily_top5_update, run_daily_top5_update_if_due
+from stock_core.providers.kospi200_universe_provider import normalize_stock_code
 from stock_core.providers.naver_finance import fetch_stock_name
 
 
 def run_single_stock(code: str, pages: int, show_chart: bool = True) -> int:
     """Run the legacy single-stock flow with the modular backend."""
 
-    stock_name = code
+    normalized_code = normalize_stock_code(code)
+    stock_name = normalized_code
     try:
-        stock_name = fetch_stock_name(code)
+        stock_name = fetch_stock_name(normalized_code)
     except Exception as exc:
-        print(f"[Warning] Failed to fetch stock name for {code}: {exc}")
+        print(f"[Warning] Failed to fetch stock name for {normalized_code}: {exc}")
 
-    print(f"[Info] Preparing chart for {stock_name} ({code}), pages={pages}")
+    print(f"[Info] Preparing chart for {stock_name} ({normalized_code}), pages={pages}")
 
     try:
-        final_df, source = refresh_stock_data(code=code, pages=pages)
+        final_df, source = refresh_stock_data(code=normalized_code, pages=pages)
     except Exception as exc:
         print(f"[Error] {exc}")
         return 1
 
     source_label = "평일 갱신" if source == "fetched" else "주말 캐시"
     print(final_df.tail())
-    print(f"[Info] Stock: {stock_name} ({code})")
+    print(f"[Info] Stock: {stock_name} ({normalized_code})")
     print(f"[Info] Data source: {source_label}")
-    print(f"[Info] Cache file: {get_cache_path(code)}")
+    print(f"[Info] Cache file: {get_cache_path(normalized_code)}")
     plot_stock_data(final_df, stock_label=stock_name, source_label=source_label, show=show_chart)
     return 0
 

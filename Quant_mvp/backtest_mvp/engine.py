@@ -62,8 +62,9 @@ def run_conservative_backtest(
         ranking_frame,
         date_column=date_column,
         rank_column=rank_column,
+        symbol_policy=symbol_policy,
     )
-    prepared_prices = _prepare_price_frame(price_frame)
+    prepared_prices = _prepare_price_frame(price_frame, symbol_policy=symbol_policy)
     price_by_ticker = {
         ticker: group.reset_index(drop=True)
         for ticker, group in prepared_prices.groupby("ticker", sort=True)
@@ -113,8 +114,10 @@ def _prepare_ranking_frame(
     *,
     date_column: str,
     rank_column: str,
+    symbol_policy: SymbolPolicy,
 ) -> pd.DataFrame:
     prepared = frame.copy(deep=True)
+    prepared["ticker"] = _normalize_tickers(prepared["ticker"], symbol_policy=symbol_policy)
     prepared["_decision_ts"] = pd.to_datetime(prepared[date_column], errors="raise").dt.normalize()
     prepared["_upstream_rank"] = pd.to_numeric(prepared[rank_column], errors="coerce")
     if prepared.duplicated(["ticker", "_decision_ts"]).any():
@@ -127,14 +130,19 @@ def _prepare_ranking_frame(
     ).reset_index(drop=True)
 
 
-def _prepare_price_frame(frame: pd.DataFrame) -> pd.DataFrame:
+def _prepare_price_frame(frame: pd.DataFrame, *, symbol_policy: SymbolPolicy) -> pd.DataFrame:
     prepared = frame.copy(deep=True)
+    prepared["ticker"] = _normalize_tickers(prepared["ticker"], symbol_policy=symbol_policy)
     prepared["date"] = pd.to_datetime(prepared["date"], errors="raise").dt.normalize()
     for column in ("open", "high", "low", "close", "volume"):
         prepared[column] = pd.to_numeric(prepared[column], errors="coerce")
     if prepared.duplicated(["ticker", "date"]).any():
         raise ValueError("Step 17 price input contains duplicate ticker/date rows.")
     return prepared.sort_values(["ticker", "date"], kind="mergesort").reset_index(drop=True)
+
+
+def _normalize_tickers(series: pd.Series, *, symbol_policy: SymbolPolicy) -> pd.Series:
+    return series.map(symbol_policy.normalize).astype("string")
 
 
 def _rebalance_dates(frame: pd.DataFrame, config: BacktestConfig) -> tuple[pd.Timestamp, ...]:

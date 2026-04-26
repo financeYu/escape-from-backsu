@@ -19,8 +19,8 @@ should import `Quant_mvp.backtest_mvp`.
 - maintain `BacktestConfig`, input contracts, result objects, and the
   conservative runner
 - validate ranking and price inputs for the evaluation-only boundary
-- preserve KOSPI200 six-digit ticker handling by default while allowing
-  explicit injected symbol policies for extension contracts
+- preserve KOSPI200/Naver six-character alphanumeric ticker handling by default
+  while allowing explicit injected symbol policies for extension contracts
 - expose generated evaluation artifacts only under generated-output paths
 
 ## Forbidden Work

@@ -137,8 +137,17 @@ def test_leading_zero_ticker_is_preserved_and_numeric_ticker_is_rejected() -> No
 
     bad = frame.astype({"ticker": object}).copy()
     bad.loc[0, "ticker"] = 5930
-    with pytest.raises(ValueError, match="six-digit string format"):
+    with pytest.raises(ValueError, match="six-character uppercase alphanumeric string format"):
         normalize_cross_sectional_score(bad, RAW, config=config())
+
+
+def test_kospi200_alphanumeric_ticker_is_allowed_by_default_policy() -> None:
+    frame = raw_frame({"2026-01-01": [1.0, 2.0, 3.0]})
+    frame.loc[frame["ticker"].eq("005930"), "ticker"] = "0126Z0"
+
+    result = normalize_cross_sectional_score(frame, RAW, config=config())
+
+    assert "0126Z0" in result["ticker"].tolist()
 
 
 def test_generic_symbol_policy_accepts_exchange_symbols() -> None:

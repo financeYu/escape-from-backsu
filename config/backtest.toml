@@ -27,7 +27,7 @@ limitation_flags = [
 ranking_date_aliases = ["ranking_date", "decision_date", "date"]
 rank_aliases = ["rank", "latest_rank"]
 minimum_price_columns = ["ticker", "date", "open", "high", "low", "close", "volume"]
-ticker_policy = "six_digit_string_required"
+ticker_policy = "six_character_uppercase_alphanumeric_string_required"
 selection_policy = "top_n_by_upstream_rank_only"
 
 [forbidden]

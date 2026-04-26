@@ -74,6 +74,7 @@ recommendations, or backtest feedback. It collects:
 - src/scanner/
 - src/scores/
 - src/validation/
+- src/valuation/
 - tests/backtest/
 - tests/context/
 - tests/data_validation/
@@ -81,6 +82,7 @@ recommendations, or backtest feedback. It collects:
 - tests/reports/
 - tests/scanner/
 - tests/validation/
+- tests/valuation/
 - tests/test_step9_scores_part_a.py
 - tests/test_step9_scores_part_b.py
 - tests/test_step10_normalization_cross_sectional.py

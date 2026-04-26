@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import sys
 import unittest
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -17,7 +17,7 @@ from stock_core.utils.daily_update_schedule import (
     find_latest_due_datetime,
     get_daily_update_due_status,
 )
-from stock_core.utils.trading_calendar import is_trading_day
+from stock_core.utils.trading_calendar import TradingCalendarPolicy, is_trading_day
 
 
 class TradingCalendarTests(unittest.TestCase):
@@ -26,6 +26,11 @@ class TradingCalendarTests(unittest.TestCase):
 
     def test_weekend_is_not_trading_day(self) -> None:
         self.assertFalse(is_trading_day(datetime(2026, 4, 19)))
+
+    def test_calendar_policy_can_override_holidays(self) -> None:
+        calendar_policy = TradingCalendarPolicy(holiday_dates=frozenset({date(2026, 4, 20)}))
+
+        self.assertFalse(is_trading_day(datetime(2026, 4, 20), calendar_policy=calendar_policy))
 
     def test_latest_due_datetime_uses_current_business_day_after_21(self) -> None:
         due_at = find_latest_due_datetime(datetime(2026, 4, 20, 21, 1))

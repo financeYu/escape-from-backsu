@@ -1,4 +1,4 @@
-"""CLI entry points for single-stock charts and daily KOSPI200 scans."""
+"""CLI entry points for single-stock charts and configured-universe scans."""
 
 from __future__ import annotations
 
@@ -78,11 +78,11 @@ def run_daily_scan(
 def build_parser() -> argparse.ArgumentParser:
     """Build a small CLI with a batch default and a single-stock mode."""
 
-    parser = argparse.ArgumentParser(description="Local stock analysis and KOSPI200 scan tool")
+    parser = argparse.ArgumentParser(description="Local stock analysis and configured-universe scan tool")
     subparsers = parser.add_subparsers(dest="command")
 
-    scan_parser = subparsers.add_parser("scan", help="Run the daily KOSPI200 batch scan")
-    scan_parser.add_argument("--pages", type=int, default=20, help="Number of Naver daily pages to fetch per stock")
+    scan_parser = subparsers.add_parser("scan", help="Run the daily configured-universe batch scan")
+    scan_parser.add_argument("--pages", type=int, default=20, help="Number of provider daily pages to fetch per stock")
     scan_parser.add_argument(
         "--workers",
         type=int,
@@ -123,7 +123,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     single_parser = subparsers.add_parser("single", help="Render a single-stock chart")
     single_parser.add_argument("--code", default="005930", help="Stock code")
-    single_parser.add_argument("--pages", type=int, default=20, help="Number of Naver daily pages to fetch")
+    single_parser.add_argument("--pages", type=int, default=20, help="Number of provider daily pages to fetch")
     single_parser.add_argument(
         "--no-show-charts",
         action="store_true",

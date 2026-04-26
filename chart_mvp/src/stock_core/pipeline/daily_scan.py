@@ -9,11 +9,12 @@ from typing import Iterable
 
 import pandas as pd
 
-from stock_core.cache.csv_cache import refresh_stock_data
+from stock_core.cache.csv_cache import DEFAULT_PRICE_CACHE_POLICY, PriceCachePolicy, refresh_stock_data
 from stock_core.charts.matplotlib_renderer import plot_stock_data
 from stock_core.providers.universe import UniverseEntry
 from stock_core.ranking.base import ScoreContext, StockScorer
 from stock_core.utils.constants import CLOSE_COLUMN, DATE_COLUMN
+from stock_core.utils.market_specs import NAVER_PRICE_PROVIDER_SPEC, PriceProviderSpec
 from stock_core.utils.paths import RESULTS_DIR
 
 
@@ -49,6 +50,8 @@ def scan_universe(
     scorer: StockScorer,
     pages: int = 20,
     top_n: int = 5,
+    provider_spec: PriceProviderSpec = NAVER_PRICE_PROVIDER_SPEC,
+    cache_policy: PriceCachePolicy = DEFAULT_PRICE_CACHE_POLICY,
 ) -> BatchScanResult:
     """Run a batch scan across a universe and return the top-ranked table."""
 
@@ -60,7 +63,12 @@ def scan_universe(
 
     for entry in universe:
         try:
-            df, source = refresh_stock_data(code=entry.code, pages=pages)
+            df, source = refresh_stock_data(
+                code=entry.code,
+                pages=pages,
+                provider_spec=provider_spec,
+                cache_policy=cache_policy,
+            )
             stock_name = resolve_stock_name(entry)
             score = scorer.score(
                 df,

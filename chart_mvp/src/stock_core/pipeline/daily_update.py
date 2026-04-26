@@ -11,28 +11,29 @@ from typing import Callable, Iterable, Optional
 
 import pandas as pd
 
+from stock_core.cache.csv_cache import DEFAULT_PRICE_CACHE_POLICY, PriceCachePolicy
 from stock_core.indicators.technicals import add_indicators
-from stock_core.providers.kospi200_universe_provider import UniverseEntry, get_kospi200_constituents
+from stock_core.providers.kospi200_universe_provider import UniverseEntry, get_universe_constituents
 from stock_core.providers.naver_price_provider import get_price_df
 from stock_core.ranking.scorer import score_stock
 from stock_core.ranking.selector import select_top_stocks
 from stock_core.utils.constants import CLOSE_COLUMN, DATE_COLUMN, VOLUME_COLUMN
 from stock_core.utils.daily_update_schedule import DailyUpdateDueStatus, get_daily_update_due_status
 from stock_core.utils.logging_utils import get_logger
+from stock_core.utils.market_specs import KOSPI200_UNIVERSE_SPEC, NAVER_PRICE_PROVIDER_SPEC, PriceProviderSpec, UniverseSpec
 from stock_core.utils.paths import DATA_DIR, OUTPUTS_CHARTS_DIR, OUTPUTS_DIR, RESULTS_DIR
 
 
 logger = get_logger(__name__)
 MIN_CHART_PAGES = 7
 CHART_WARMUP_PAGES = 3
-ROWS_PER_NAVER_PAGE = 10
-MARKET_CAP_LEADER_CODES = [
+KOSPI200_MARKET_CAP_LEADER_CODES = (
     "005930",
     "000660",
     "005380",
     "373220",
     "402340",
-]
+)
 MARKET_CAP_OVERRIDE_MESSAGE = (
     "시가총액 상위 고정 종목 우선 선택 옵션이 활성화되었습니다."
 )
@@ -42,6 +43,23 @@ LATEST_TOP_CSV_NAME = "latest_top.csv"
 LATEST_TOP_JSON_NAME = "latest_top.json"
 LEGACY_LATEST_TOP_CSV_NAME = "latest_top5.csv"
 LEGACY_LATEST_TOP_JSON_NAME = "latest_top5.json"
+
+
+@dataclass(frozen=True)
+class BatchRuntimePolicy:
+    """Runtime policy for a batch scan without changing scoring semantics."""
+
+    universe_spec: UniverseSpec = KOSPI200_UNIVERSE_SPEC
+    price_provider_spec: PriceProviderSpec = NAVER_PRICE_PROVIDER_SPEC
+    cache_policy: PriceCachePolicy = DEFAULT_PRICE_CACHE_POLICY
+    rows_per_page: int = NAVER_PRICE_PROVIDER_SPEC.rows_per_page
+    market_cap_leader_codes: tuple[str, ...] = KOSPI200_MARKET_CAP_LEADER_CODES
+    market_cap_override_message: str = MARKET_CAP_OVERRIDE_MESSAGE
+
+
+DEFAULT_BATCH_RUNTIME_POLICY = BatchRuntimePolicy()
+ROWS_PER_NAVER_PAGE = DEFAULT_BATCH_RUNTIME_POLICY.rows_per_page
+MARKET_CAP_LEADER_CODES = list(DEFAULT_BATCH_RUNTIME_POLICY.market_cap_leader_codes)
 
 
 @dataclass
@@ -102,8 +120,11 @@ def _build_rankings_frame(rows: Iterable[DailyUpdateRow]) -> pd.DataFrame:
     )
 
 
-def _build_universe_entries(refresh_universe: bool = False) -> list[UniverseEntry]:
-    constituents = get_kospi200_constituents(refresh=refresh_universe)
+def _build_universe_entries(
+    refresh_universe: bool = False,
+    universe_spec: UniverseSpec = KOSPI200_UNIVERSE_SPEC,
+) -> list[UniverseEntry]:
+    constituents = get_universe_constituents(universe_spec, refresh=refresh_universe)
     return [UniverseEntry(code=item["code"], name=item["name"]) for item in constituents]
 
 
@@ -160,10 +181,21 @@ def _calculate_latest_change(df: pd.DataFrame, summary_row: pd.Series) -> float:
     return current_close - previous_close
 
 
-def _process_universe_entry(entry: UniverseEntry, pages: int, use_cache: bool) -> DailyUpdateRow:
+def _process_universe_entry(
+    entry: UniverseEntry,
+    pages: int,
+    use_cache: bool,
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
+) -> DailyUpdateRow:
     """Fetch, enrich, and score a single universe member."""
 
-    base_df = get_price_df(entry.code, pages=pages, use_cache=use_cache)
+    base_df = get_price_df(
+        entry.code,
+        pages=pages,
+        use_cache=use_cache,
+        provider_spec=runtime_policy.price_provider_spec,
+        cache_policy=runtime_policy.cache_policy,
+    )
     indicator_df = add_indicators(base_df)
     latest = _select_latest_summary_row(indicator_df)
     latest_change = _calculate_latest_change(indicator_df, latest)
@@ -181,13 +213,17 @@ def _process_universe_entry(entry: UniverseEntry, pages: int, use_cache: bool) -
     )
 
 
-def _apply_market_cap_leader_override(results_df: pd.DataFrame, top_n: int) -> pd.DataFrame:
+def _apply_market_cap_leader_override(
+    results_df: pd.DataFrame,
+    top_n: int,
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
+) -> pd.DataFrame:
     """Prioritize the configured market-cap leaders, then fill any remaining slots."""
 
-    logger.info(MARKET_CAP_OVERRIDE_MESSAGE)
+    logger.info(runtime_policy.market_cap_override_message)
 
     selected_frames: list[pd.DataFrame] = []
-    for code in MARKET_CAP_LEADER_CODES:
+    for code in runtime_policy.market_cap_leader_codes:
         matched = results_df[results_df["종목코드"] == code]
         if not matched.empty:
             selected_frames.append(matched.head(1))
@@ -215,14 +251,25 @@ def get_minimum_chart_pages(requested_pages: int) -> int:
     return max(requested_pages, MIN_CHART_PAGES)
 
 
-def prepare_chart_dataframe(code: str, requested_pages: int, use_cache: bool = True) -> pd.DataFrame:
+def prepare_chart_dataframe(
+    code: str,
+    requested_pages: int,
+    use_cache: bool = True,
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
+) -> pd.DataFrame:
     """Fetch extra history for indicators, then trim to the display window."""
 
     display_pages = get_minimum_chart_pages(requested_pages)
     fetch_pages = display_pages + CHART_WARMUP_PAGES
-    display_rows = display_pages * ROWS_PER_NAVER_PAGE
+    display_rows = display_pages * runtime_policy.rows_per_page
 
-    base_df = get_price_df(code=code, pages=fetch_pages, use_cache=use_cache)
+    base_df = get_price_df(
+        code=code,
+        pages=fetch_pages,
+        use_cache=use_cache,
+        provider_spec=runtime_policy.price_provider_spec,
+        cache_policy=runtime_policy.cache_policy,
+    )
     indicator_df = add_indicators(base_df)
     return indicator_df.tail(display_rows).reset_index(drop=True)
 
@@ -245,6 +292,7 @@ def _render_selected_charts(
     use_cache: bool,
     output_dir: Path,
     file_name_builder: Callable[[DailyUpdateRow], str],
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
 ) -> tuple[list[str], list[str]]:
     """Render charts for selected rows while isolating per-stock failures."""
 
@@ -261,7 +309,12 @@ def _render_selected_charts(
 
         chart_path = output_dir / file_name_builder(row)
         try:
-            chart_df = prepare_chart_dataframe(row.code, requested_pages=pages, use_cache=use_cache)
+            chart_df = prepare_chart_dataframe(
+                row.code,
+                requested_pages=pages,
+                use_cache=use_cache,
+                runtime_policy=runtime_policy,
+            )
             render_stock_chart(chart_df, row.code, row.name, str(chart_path))
             chart_paths.append(str(chart_path))
         except Exception as exc:
@@ -277,11 +330,12 @@ def run_daily_update(
     chart_dir: Optional[str] = None,
     limit: Optional[int] = None,
     top_n: int = DEFAULT_TOP_N,
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
 ) -> DailyUpdateResult:
-    """Run the daily KOSPI200 update pipeline end-to-end."""
+    """Run the daily update pipeline end-to-end for the configured universe."""
 
     top_n = _resolve_top_n(top_n)
-    universe = _build_universe_entries(refresh_universe=False)
+    universe = _build_universe_entries(refresh_universe=False, universe_spec=runtime_policy.universe_spec)
     if limit is not None:
         universe = universe[:limit]
 
@@ -292,7 +346,13 @@ def run_daily_update(
 
     for entry in universe:
         try:
-            base_df = get_price_df(entry.code, pages=pages, use_cache=True)
+            base_df = get_price_df(
+                entry.code,
+                pages=pages,
+                use_cache=True,
+                provider_spec=runtime_policy.price_provider_spec,
+                cache_policy=runtime_policy.cache_policy,
+            )
             indicator_df = add_indicators(base_df)
             latest = _select_latest_summary_row(indicator_df)
             latest_change = _calculate_latest_change(indicator_df, latest)
@@ -335,6 +395,7 @@ def run_daily_update(
             use_cache=True,
             output_dir=chart_output_dir,
             file_name_builder=lambda row: f"{row.code}_{as_of}.png",
+            runtime_policy=runtime_policy,
         )
         chart_paths = [Path(path) for path in rendered_chart_paths]
 
@@ -356,11 +417,12 @@ def run_daily_top5_update(
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
     top_n: int = DEFAULT_TOP_N,
     use_market_cap_override: bool = False,
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
 ) -> tuple[pd.DataFrame, dict]:
-    """Run the full KOSPI200 batch and export the latest top-ranked artifacts."""
+    """Run the configured universe batch and export the latest top-ranked artifacts."""
 
     top_n = _resolve_top_n(top_n)
-    universe = _build_universe_entries(refresh_universe=refresh_universe)
+    universe = _build_universe_entries(refresh_universe=refresh_universe, universe_spec=runtime_policy.universe_spec)
     worker_count = _resolve_worker_count(max_workers)
     logger.info(
         "Running daily Top-N update for %s stocks (pages=%s, use_cache=%s, refresh_universe=%s, workers=%s, top_n=%s)",
@@ -379,7 +441,7 @@ def run_daily_top5_update(
     future_to_entry: dict = {}
     with ThreadPoolExecutor(max_workers=worker_count, thread_name_prefix="topn") as executor:
         for entry in universe:
-            future = executor.submit(_process_universe_entry, entry, pages, use_cache)
+            future = executor.submit(_process_universe_entry, entry, pages, use_cache, runtime_policy)
             future_to_entry[future] = entry
 
         for future in as_completed(future_to_entry):
@@ -403,7 +465,7 @@ def run_daily_top5_update(
         ascending=[False, False, True],
     ).reset_index(drop=True)
     if use_market_cap_override:
-        top_df = _apply_market_cap_leader_override(ordered_results, top_n=top_n)
+        top_df = _apply_market_cap_leader_override(ordered_results, top_n=top_n, runtime_policy=runtime_policy)
     else:
         top_df = select_top_stocks(ordered_results, top_n=top_n)
 
@@ -418,6 +480,7 @@ def run_daily_top5_update(
             use_cache=use_cache,
             output_dir=OUTPUTS_CHARTS_DIR,
             file_name_builder=lambda row: f"{row.code}.png",
+            runtime_policy=runtime_policy,
         )
 
     completed_at = datetime.now()
@@ -432,6 +495,9 @@ def run_daily_top5_update(
         "refresh_universe": refresh_universe,
         "render_charts": render_charts,
         "max_workers": worker_count,
+        "universe_id": runtime_policy.universe_spec.universe_id,
+        "universe_name": runtime_policy.universe_spec.display_name,
+        "price_provider_id": runtime_policy.price_provider_spec.provider_id,
         "universe_size": len(universe),
         "processed_count": len(rows),
         "failed_count": len(failed_codes),
@@ -442,10 +508,10 @@ def run_daily_top5_update(
         "chart_paths": chart_paths,
         "chart_failed_count": len(chart_failed_codes),
         "chart_failed_codes": chart_failed_codes,
-        "live_universe_enabled": False,
+        "live_universe_enabled": runtime_policy.universe_spec.live_refresh_supported,
         "market_cap_override": use_market_cap_override,
-        "market_cap_override_message": MARKET_CAP_OVERRIDE_MESSAGE if use_market_cap_override else "",
-        "market_cap_override_codes": MARKET_CAP_LEADER_CODES if use_market_cap_override else [],
+        "market_cap_override_message": runtime_policy.market_cap_override_message if use_market_cap_override else "",
+        "market_cap_override_codes": list(runtime_policy.market_cap_leader_codes) if use_market_cap_override else [],
     }
     _export_outputs(top_df, meta)
     logger.info("Exported latest top-ranked outputs to %s", OUTPUTS_DIR)
@@ -468,6 +534,7 @@ def run_daily_top5_update_if_due(
     progress_callback: Optional[Callable[[int, int, int], None]] = None,
     top_n: int = DEFAULT_TOP_N,
     use_market_cap_override: bool = False,
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
 ) -> tuple[Optional[pd.DataFrame], dict]:
     """Run the Top-N update only when the business-day 21:00 deadline is due."""
 
@@ -496,6 +563,7 @@ def run_daily_top5_update_if_due(
         progress_callback=progress_callback,
         top_n=top_n,
         use_market_cap_override=use_market_cap_override,
+        runtime_policy=runtime_policy,
     )
     meta.update(due_meta)
     return top_df, meta

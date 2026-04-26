@@ -34,6 +34,32 @@ from .cli_outputs import (
 )
 
 
+_REFRESH_SOURCE_INT_FIELDS = [
+    "request_count",
+    "rate_limit_wait_count",
+    "success_count",
+    "failure_count",
+    "http_429_count",
+    "parse_error_count",
+    "schema_error_count",
+    "new_item_count",
+    "manual_review_required_count",
+    "request_cache_hit_count",
+    "request_cache_miss_count",
+    "request_cache_stale_count",
+    "unresolved_seed_count",
+    "pdf_download_attempt_count",
+]
+
+_REFRESH_SOURCE_FLOAT_FIELDS = [
+    "rate_limit_wait_seconds",
+    "request_latency_ms",
+    "parse_ms",
+    "dedupe_ms",
+    "classification_ms",
+]
+
+
 def cmd_refresh(
     args: argparse.Namespace,
     config: dict[str, Any],
@@ -44,175 +70,365 @@ def cmd_refresh(
     generate_cards_func: Callable[[list[dict[str, Any]], list[dict[str, Any]], str], list[dict[str, Any]]] | None = None,
     current_policy_versions_func: Callable[[dict[str, Any]], dict[str, str]] | None = None,
 ) -> None:
-    if collect_command is None:
-        collect_command = cmd_collect
-    if classify_func is None:
-        classify_func = classify_paper
-    if generate_cards_func is None:
-        generate_cards_func = generate_evidence_cards
-    if current_policy_versions_func is None:
-        current_policy_versions_func = _current_policy_versions
-    sources = _refresh_sources(args, config)
-    _validate_sources(sources, config)
-    query_sets = _refresh_query_sets(args, config)
-    _validate_refresh_query_allowed_sources(sources, query_sets, config)
-    selected_profile = _refresh_profile_name(args, config)
-    setattr(args, "request_cache_ttl_days", _refresh_profile_config(args, config).get("request_cache_ttl_days"))
-    plan = _refresh_plan(args, config, paths, sources, query_sets)
+    collect_command, classify_func, generate_cards_func, current_policy_versions_func = _refresh_dependencies(
+        collect_command, classify_func, generate_cards_func, current_policy_versions_func
+    )
+    sources, query_sets, selected_profile, plan = _prepare_refresh_run(args, config, paths)
     if args.dry_run:
         print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
 
     existing_papers = read_jsonl(paths.data_dir / "normalized" / "papers.jsonl")
     if args.offline:
-        summary = build_refresh_summary(
-            run_id=args.run_id,
-            selected_sources=sources,
-            selected_query_sets=query_sets,
-            existing_count=len(existing_papers),
-            candidate_count=0,
-            new_count=0,
-            refreshed_count=len(existing_papers),
-            child_runs=[],
-            plan=plan,
-            selected_profile=selected_profile,
-        )
-        write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl", [])
-        _write_new_only_outputs(paths, [], [], [])
-        write_json(paths.data_dir / "indexes" / f"{args.run_id}_refresh_summary.json", summary)
-        write_json(paths.data_dir / "indexes" / f"{args.run_id}_collection_summary.json", summary)
-        offline_health = _offline_refresh_health()
-        write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health.json", offline_health)
-        write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health_report.json", offline_health)
-        write_json(paths.data_dir / "indexes" / "source_health_report.json", offline_health)
-        print("offline mode: refresh network call 없이 metadata artifact를 생성했습니다.")
+        _write_offline_refresh(args, paths, sources, query_sets, existing_papers, plan, selected_profile)
         return
 
-    child_runs: list[str] = []
-    candidate_papers: list[dict[str, Any]] = []
-    raw_counts: Counter[str] = Counter()
-    relevance_rejected_count = 0
-    relevance_manual_review_count = 0
-    adapter_registry = _source_adapter_registry(config, sources)
-
-    for index, query_set in enumerate(query_sets):
-        child_run_id = _refresh_child_run_id(args.run_id, query_set, index)
-        child_runs.append(child_run_id)
-        child_args = _refresh_collect_args(args, child_run_id, query_set, sources, adapter_registry)
-        collect_command(child_args, config, paths)
-        candidate_papers.extend(read_jsonl(paths.data_dir / "normalized" / f"{child_run_id}_collected_papers.jsonl"))
-        child_summary = read_json(paths.data_dir / "indexes" / f"{child_run_id}_collection_summary.json", default={}) or {}
-        raw_counts.update(child_summary.get("raw_records_collected_by_source", {}))
-        relevance_rejected_count += int(child_summary.get("records_rejected_by_relevance", 0) or 0)
-        relevance_manual_review_count += int(child_summary.get("records_manual_review_by_relevance", 0) or 0)
-
-    dedupe_started = perf_counter()
-    deduped_candidates = deduplicate_papers(candidate_papers)
-    new_papers = select_unseen_papers(existing_papers, deduped_candidates)
-    refreshed_papers = deduplicate_papers([*existing_papers, *new_papers])
-    dedupe_ms = _elapsed_ms(dedupe_started)
-    classification_started = perf_counter()
-    new_classifications = [classify_func(paper, config["classification"], config["policy"]) for paper in new_papers]
-    classification_ms = _elapsed_ms(classification_started)
-    new_cards = generate_cards_func(new_papers, new_classifications, args.run_id)
-    existing_cards = read_jsonl(paths.data_dir / "evidence" / "evidence_cards.jsonl")
-    existing_version_state = _existing_evidence_version_state(
-        paths,
-        config,
-        current_policy_versions_func=current_policy_versions_func,
+    collection = _collect_refresh_candidates(args, config, paths, sources, query_sets, collect_command)
+    papers = _dedupe_refresh_papers(existing_papers, collection["candidate_papers"])
+    new_outputs = _generate_new_refresh_cards(args, config, papers["new_papers"], classify_func, generate_cards_func)
+    card_outputs = _build_refresh_card_outputs(
+        args, config, paths, papers, new_outputs,
+        classify_func, generate_cards_func, current_policy_versions_func,
     )
-    if existing_version_state["regenerate_existing_cards"]:
-        classification_started = perf_counter()
-        classifications = [classify_func(paper, config["classification"], config["policy"]) for paper in refreshed_papers]
-        classification_ms += _elapsed_ms(classification_started)
-        cards = generate_cards_func(refreshed_papers, classifications, args.run_id)
-        classifications_output = classifications
-        classified_papers_output = [
-            {"paper": paper, "classification": classification}
-            for paper, classification in zip(refreshed_papers, classifications, strict=True)
-        ]
-    else:
-        cards = _merge_existing_and_new_cards(existing_cards, new_cards)
-        classifications_output = new_classifications
-        classified_papers_output = [
-            {"paper": paper, "classification": classification}
-            for paper, classification in zip(new_papers, new_classifications, strict=True)
-        ]
-    source_health = _aggregate_refresh_source_health(paths, child_runs)
-    _update_source_health_from_cards(source_health, new_cards, replace_new_item_count=True)
-    pipeline_telemetry = _pipeline_telemetry(
-        source_health=source_health,
-        dedupe_ms=dedupe_ms,
-        classification_ms=classification_ms,
-        relevance_rejected_count=relevance_rejected_count,
-    )
-    _attach_pipeline_telemetry(source_health, pipeline_telemetry)
+    source_health, pipeline_telemetry = _refresh_source_health(paths, collection, card_outputs, papers)
     current_versions = current_policy_versions_func(config)
-    if existing_version_state["missing_existing_cards"]:
-        classification_scope = "full_corpus_due_to_missing_existing_cards"
-    elif existing_version_state["regenerate_existing_cards"]:
-        classification_scope = "full_corpus_due_to_policy_or_schema_version_change"
-    else:
-        classification_scope = "new_papers_only"
-    incremental_pipeline = {
-        "classification_scope": classification_scope,
-        "new_papers_classified": len(new_classifications),
-        "new_evidence_cards_generated": len(new_cards),
-        "existing_evidence_cards_reused": 0 if existing_version_state["regenerate_existing_cards"] else len(existing_cards),
-        "existing_evidence_cards_regenerated": bool(existing_version_state["regenerate_existing_cards"]),
-        "missing_existing_cards": bool(existing_version_state["missing_existing_cards"]),
-        "policy_version": current_versions["policy_version"],
-        "evidence_schema_version": current_versions["evidence_schema_version"],
-        "previous_policy_version": existing_version_state["previous_versions"].get("policy_version"),
-        "previous_evidence_schema_version": existing_version_state["previous_versions"].get("evidence_schema_version"),
-    }
+    incremental_pipeline = _incremental_pipeline(card_outputs, new_outputs, current_versions)
+    summary = _refresh_summary(
+        args, sources, query_sets, selected_profile, existing_papers,
+        collection, papers, plan, pipeline_telemetry, incremental_pipeline,
+    )
+
+    _write_refresh_outputs(args, paths, papers, new_outputs, card_outputs, current_versions, source_health, summary)
+    print(
+        f"periodic refresh complete: new_papers={len(papers['new_papers'])}, "
+        f"refreshed_papers={len(papers['refreshed_papers'])}"
+    )
+
+
+def _refresh_dependencies(
+    collect_command: Callable[[argparse.Namespace, dict[str, Any], ProjectPaths], None] | None,
+    classify_func: Callable[[dict[str, Any], dict[str, Any], dict[str, Any]], dict[str, Any]] | None,
+    generate_cards_func: Callable[[list[dict[str, Any]], list[dict[str, Any]], str], list[dict[str, Any]]] | None,
+    current_policy_versions_func: Callable[[dict[str, Any]], dict[str, str]] | None,
+) -> tuple[
+    Callable[[argparse.Namespace, dict[str, Any], ProjectPaths], None],
+    Callable[[dict[str, Any], dict[str, Any], dict[str, Any]], dict[str, Any]],
+    Callable[[list[dict[str, Any]], list[dict[str, Any]], str], list[dict[str, Any]]],
+    Callable[[dict[str, Any]], dict[str, str]],
+]:
+    return (
+        collect_command or cmd_collect,
+        classify_func or classify_paper,
+        generate_cards_func or generate_evidence_cards,
+        current_policy_versions_func or _current_policy_versions,
+    )
+
+
+def _prepare_refresh_run(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+) -> tuple[list[str], list[str], str, dict[str, Any]]:
+    sources = _refresh_sources(args, config)
+    _validate_sources(sources, config)
+    query_sets = _refresh_query_sets(args, config)
+    _validate_refresh_query_allowed_sources(sources, query_sets, config)
+    selected_profile = _refresh_profile_name(args, config)
+    setattr(args, "request_cache_ttl_days", _refresh_profile_config(args, config).get("request_cache_ttl_days"))
+    return sources, query_sets, selected_profile, _refresh_plan(args, config, paths, sources, query_sets)
+
+
+def _write_offline_refresh(
+    args: argparse.Namespace,
+    paths: ProjectPaths,
+    sources: list[str],
+    query_sets: list[str],
+    existing_papers: list[dict[str, Any]],
+    plan: dict[str, Any],
+    selected_profile: str,
+) -> None:
     summary = build_refresh_summary(
         run_id=args.run_id,
         selected_sources=sources,
         selected_query_sets=query_sets,
         existing_count=len(existing_papers),
-        candidate_count=len(deduped_candidates),
-        new_count=len(new_papers),
-        refreshed_count=len(refreshed_papers),
-        child_runs=child_runs,
-        raw_counts=raw_counts,
-        relevance_rejected_count=relevance_rejected_count,
-        relevance_manual_review_count=relevance_manual_review_count,
+        candidate_count=0,
+        new_count=0,
+        refreshed_count=len(existing_papers),
+        child_runs=[],
+        plan=plan,
+        selected_profile=selected_profile,
+    )
+    write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl", [])
+    _write_new_only_outputs(paths, [], [], [])
+    write_json(paths.data_dir / "indexes" / f"{args.run_id}_refresh_summary.json", summary)
+    write_json(paths.data_dir / "indexes" / f"{args.run_id}_collection_summary.json", summary)
+    offline_health = _offline_refresh_health()
+    write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health.json", offline_health)
+    write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health_report.json", offline_health)
+    write_json(paths.data_dir / "indexes" / "source_health_report.json", offline_health)
+    print("offline mode: refresh network call 없이 metadata artifact를 생성했습니다.")
+
+
+def _collect_refresh_candidates(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    sources: list[str],
+    query_sets: list[str],
+    collect_command: Callable[[argparse.Namespace, dict[str, Any], ProjectPaths], None],
+) -> dict[str, Any]:
+    collection = _empty_refresh_collection()
+    adapter_registry = _source_adapter_registry(config, sources)
+    for index, query_set in enumerate(query_sets):
+        child_run_id = _refresh_child_run_id(args.run_id, query_set, index)
+        child_args = _refresh_collect_args(args, child_run_id, query_set, sources, adapter_registry)
+        collect_command(child_args, config, paths)
+        _add_refresh_child_run(collection, paths, child_run_id)
+    return collection
+
+
+def _empty_refresh_collection() -> dict[str, Any]:
+    return {
+        "child_runs": [],
+        "candidate_papers": [],
+        "raw_counts": Counter(),
+        "relevance_rejected_count": 0,
+        "relevance_manual_review_count": 0,
+    }
+
+
+def _add_refresh_child_run(collection: dict[str, Any], paths: ProjectPaths, child_run_id: str) -> None:
+    collection["child_runs"].append(child_run_id)
+    collection["candidate_papers"].extend(
+        read_jsonl(paths.data_dir / "normalized" / f"{child_run_id}_collected_papers.jsonl")
+    )
+    child_summary = read_json(paths.data_dir / "indexes" / f"{child_run_id}_collection_summary.json", default={}) or {}
+    collection["raw_counts"].update(child_summary.get("raw_records_collected_by_source", {}))
+    collection["relevance_rejected_count"] += int(child_summary.get("records_rejected_by_relevance", 0) or 0)
+    collection["relevance_manual_review_count"] += int(
+        child_summary.get("records_manual_review_by_relevance", 0) or 0
+    )
+
+
+def _dedupe_refresh_papers(
+    existing_papers: list[dict[str, Any]],
+    candidate_papers: list[dict[str, Any]],
+) -> dict[str, Any]:
+    dedupe_started = perf_counter()
+    deduped_candidates = deduplicate_papers(candidate_papers)
+    new_papers = select_unseen_papers(existing_papers, deduped_candidates)
+    refreshed_papers = deduplicate_papers([*existing_papers, *new_papers])
+    return {
+        "deduped_candidates": deduped_candidates,
+        "new_papers": new_papers,
+        "refreshed_papers": refreshed_papers,
+        "dedupe_ms": _elapsed_ms(dedupe_started),
+    }
+
+
+def _generate_new_refresh_cards(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    new_papers: list[dict[str, Any]],
+    classify_func: Callable[[dict[str, Any], dict[str, Any], dict[str, Any]], dict[str, Any]],
+    generate_cards_func: Callable[[list[dict[str, Any]], list[dict[str, Any]], str], list[dict[str, Any]]],
+) -> dict[str, Any]:
+    classification_started = perf_counter()
+    new_classifications = [classify_func(paper, config["classification"], config["policy"]) for paper in new_papers]
+    classification_ms = _elapsed_ms(classification_started)
+    return {
+        "new_classifications": new_classifications,
+        "new_cards": generate_cards_func(new_papers, new_classifications, args.run_id),
+        "classification_ms": classification_ms,
+    }
+
+
+def _build_refresh_card_outputs(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    papers: dict[str, Any],
+    new_outputs: dict[str, Any],
+    classify_func: Callable[[dict[str, Any], dict[str, Any], dict[str, Any]], dict[str, Any]],
+    generate_cards_func: Callable[[list[dict[str, Any]], list[dict[str, Any]], str], list[dict[str, Any]]],
+    current_policy_versions_func: Callable[[dict[str, Any]], dict[str, str]],
+) -> dict[str, Any]:
+    existing_cards = read_jsonl(paths.data_dir / "evidence" / "evidence_cards.jsonl")
+    version_state = _existing_evidence_version_state(
+        paths, config, current_policy_versions_func=current_policy_versions_func
+    )
+    if version_state["regenerate_existing_cards"]:
+        return _regenerated_refresh_card_outputs(
+            args, config, papers, new_outputs, classify_func, generate_cards_func, existing_cards, version_state
+        )
+    cards = _merge_existing_and_new_cards(existing_cards, new_outputs["new_cards"])
+    classified = _classified_paper_rows(papers["new_papers"], new_outputs["new_classifications"])
+    return {
+        "cards": cards,
+        "classifications_output": new_outputs["new_classifications"],
+        "classified_papers_output": classified,
+        "existing_cards": existing_cards,
+        "existing_version_state": version_state,
+        "classification_ms": new_outputs["classification_ms"],
+    }
+
+
+def _regenerated_refresh_card_outputs(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    papers: dict[str, Any],
+    new_outputs: dict[str, Any],
+    classify_func: Callable[[dict[str, Any], dict[str, Any], dict[str, Any]], dict[str, Any]],
+    generate_cards_func: Callable[[list[dict[str, Any]], list[dict[str, Any]], str], list[dict[str, Any]]],
+    existing_cards: list[dict[str, Any]],
+    version_state: dict[str, Any],
+) -> dict[str, Any]:
+    classification_started = perf_counter()
+    classifications = [
+        classify_func(paper, config["classification"], config["policy"])
+        for paper in papers["refreshed_papers"]
+    ]
+    classification_ms = new_outputs["classification_ms"] + _elapsed_ms(classification_started)
+    return {
+        "cards": generate_cards_func(papers["refreshed_papers"], classifications, args.run_id),
+        "classifications_output": classifications,
+        "classified_papers_output": _classified_paper_rows(papers["refreshed_papers"], classifications),
+        "existing_cards": existing_cards,
+        "existing_version_state": version_state,
+        "classification_ms": classification_ms,
+    }
+
+
+def _classified_paper_rows(
+    papers: list[dict[str, Any]],
+    classifications: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    return [
+        {"paper": paper, "classification": classification}
+        for paper, classification in zip(papers, classifications, strict=True)
+    ]
+
+
+def _refresh_source_health(
+    paths: ProjectPaths,
+    collection: dict[str, Any],
+    card_outputs: dict[str, Any],
+    papers: dict[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    source_health = _aggregate_refresh_source_health(paths, collection["child_runs"])
+    _update_source_health_from_cards(source_health, card_outputs["cards"], replace_new_item_count=True)
+    pipeline_telemetry = _pipeline_telemetry(
+        source_health=source_health,
+        dedupe_ms=papers["dedupe_ms"],
+        classification_ms=card_outputs["classification_ms"],
+        relevance_rejected_count=collection["relevance_rejected_count"],
+    )
+    _attach_pipeline_telemetry(source_health, pipeline_telemetry)
+    return source_health, pipeline_telemetry
+
+
+def _incremental_pipeline(
+    card_outputs: dict[str, Any],
+    new_outputs: dict[str, Any],
+    current_versions: dict[str, str],
+) -> dict[str, Any]:
+    version_state = card_outputs["existing_version_state"]
+    if version_state["missing_existing_cards"]:
+        classification_scope = "full_corpus_due_to_missing_existing_cards"
+    elif version_state["regenerate_existing_cards"]:
+        classification_scope = "full_corpus_due_to_policy_or_schema_version_change"
+    else:
+        classification_scope = "new_papers_only"
+    return {
+        "classification_scope": classification_scope,
+        "new_papers_classified": len(new_outputs["new_classifications"]),
+        "new_evidence_cards_generated": len(new_outputs["new_cards"]),
+        "existing_evidence_cards_reused": 0 if version_state["regenerate_existing_cards"] else len(card_outputs["existing_cards"]),
+        "existing_evidence_cards_regenerated": bool(version_state["regenerate_existing_cards"]),
+        "missing_existing_cards": bool(version_state["missing_existing_cards"]),
+        "policy_version": current_versions["policy_version"],
+        "evidence_schema_version": current_versions["evidence_schema_version"],
+        "previous_policy_version": version_state["previous_versions"].get("policy_version"),
+        "previous_evidence_schema_version": version_state["previous_versions"].get("evidence_schema_version"),
+    }
+
+
+def _refresh_summary(
+    args: argparse.Namespace,
+    sources: list[str],
+    query_sets: list[str],
+    selected_profile: str,
+    existing_papers: list[dict[str, Any]],
+    collection: dict[str, Any],
+    papers: dict[str, Any],
+    plan: dict[str, Any],
+    pipeline_telemetry: dict[str, Any],
+    incremental_pipeline: dict[str, Any],
+) -> dict[str, Any]:
+    return build_refresh_summary(
+        run_id=args.run_id,
+        selected_sources=sources,
+        selected_query_sets=query_sets,
+        existing_count=len(existing_papers),
+        candidate_count=len(papers["deduped_candidates"]),
+        new_count=len(papers["new_papers"]),
+        refreshed_count=len(papers["refreshed_papers"]),
+        child_runs=collection["child_runs"],
+        raw_counts=collection["raw_counts"],
+        relevance_rejected_count=collection["relevance_rejected_count"],
+        relevance_manual_review_count=collection["relevance_manual_review_count"],
         plan=plan,
         selected_profile=selected_profile,
         pipeline_telemetry=pipeline_telemetry,
         incremental_pipeline=incremental_pipeline,
     )
 
-    write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl", new_papers)
-    _write_new_only_outputs(paths, new_papers, new_cards, read_jsonl(_seeds_path(paths, args.run_id)))
-    write_jsonl(paths.data_dir / "normalized" / "papers.jsonl", refreshed_papers)
-    _write_lane_paper_outputs(paths, refreshed_papers)
-    write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_dedupe_index.jsonl", [_dedupe_index_row(paper) for paper in refreshed_papers])
-    write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_classifications.jsonl", classifications_output)
-    write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_new_classifications.jsonl", new_classifications)
-    write_jsonl(
-        paths.data_dir / "indexes" / f"{args.run_id}_classified_papers.jsonl",
-        classified_papers_output,
-    )
-    _write_evidence_outputs(paths, cards, run_id=args.run_id)
-    write_jsonl(paths.data_dir / "evidence" / f"{args.run_id}_evidence_cards.jsonl", cards)
+
+def _write_refresh_outputs(
+    args: argparse.Namespace,
+    paths: ProjectPaths,
+    papers: dict[str, Any],
+    new_outputs: dict[str, Any],
+    card_outputs: dict[str, Any],
+    current_versions: dict[str, str],
+    source_health: dict[str, Any],
+    summary: dict[str, Any],
+) -> None:
+    write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl", papers["new_papers"])
+    _write_new_only_outputs(paths, papers["new_papers"], new_outputs["new_cards"], read_jsonl(_seeds_path(paths, args.run_id)))
+    write_jsonl(paths.data_dir / "normalized" / "papers.jsonl", papers["refreshed_papers"])
+    _write_lane_paper_outputs(paths, papers["refreshed_papers"])
+    write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_dedupe_index.jsonl", [_dedupe_index_row(paper) for paper in papers["refreshed_papers"]])
+    write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_classifications.jsonl", card_outputs["classifications_output"])
+    write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_new_classifications.jsonl", new_outputs["new_classifications"])
+    write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_classified_papers.jsonl", card_outputs["classified_papers_output"])
+    _write_evidence_outputs(paths, card_outputs["cards"], run_id=args.run_id)
+    write_jsonl(paths.data_dir / "evidence" / f"{args.run_id}_evidence_cards.jsonl", card_outputs["cards"])
     write_json(paths.data_dir / "indexes" / "evidence_policy_version.json", current_versions)
+    _write_refresh_metadata(args, paths, source_health, summary)
+    generate_reports(
+        output_dir=paths.reports_dir,
+        run_id=args.run_id,
+        papers=papers["refreshed_papers"],
+        evidence_cards=card_outputs["cards"],
+        scholar_seeds=read_jsonl(_seeds_path(paths, args.run_id)),
+        source_health=source_health,
+        collection_summary=summary,
+    )
+
+
+def _write_refresh_metadata(
+    args: argparse.Namespace,
+    paths: ProjectPaths,
+    source_health: dict[str, Any],
+    summary: dict[str, Any],
+) -> None:
     write_json(paths.data_dir / "indexes" / f"{args.run_id}_refresh_summary.json", summary)
     write_json(paths.data_dir / "indexes" / f"{args.run_id}_collection_summary.json", summary)
     write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health.json", source_health)
     write_json(paths.data_dir / "indexes" / f"{args.run_id}_source_health_report.json", source_health)
     write_json(paths.data_dir / "indexes" / "source_health_report.json", source_health)
-    generate_reports(
-        output_dir=paths.reports_dir,
-        run_id=args.run_id,
-        papers=refreshed_papers,
-        evidence_cards=cards,
-        scholar_seeds=read_jsonl(_seeds_path(paths, args.run_id)),
-        source_health=source_health,
-        collection_summary=summary,
-    )
-    print(f"periodic refresh complete: new_papers={len(new_papers)}, refreshed_papers={len(refreshed_papers)}")
 
 
 def _refresh_profile_name(args: argparse.Namespace, config: dict[str, Any]) -> str:
@@ -279,18 +495,7 @@ def _refresh_plan(
     profile = _refresh_profile_config(args, config)
     existing_papers = read_jsonl(paths.data_dir / "normalized" / "papers.jsonl")
     child_run_ids = [_refresh_child_run_id(args.run_id, query_set, index) for index, query_set in enumerate(query_sets)]
-    child_budgets = [
-        {
-            "query_set": query_set,
-            **estimate_collection_request_budget(
-                args=_refresh_collect_args(args, child_run_ids[index], query_set, sources),
-                config=config,
-                sources=sources,
-                query_set=get_query_set(config, query_set),
-            ),
-        }
-        for index, query_set in enumerate(query_sets)
-    ]
+    child_budgets = _refresh_child_request_budgets(args, config, sources, query_sets, child_run_ids)
     return {
         "run_id": args.run_id,
         "mode": "periodic_refresh",
@@ -305,29 +510,58 @@ def _refresh_plan(
         "offline": bool(getattr(args, "offline", False)),
         "dry_run": bool(args.dry_run),
         "request_budget": _aggregate_refresh_request_budget(child_budgets),
-        "outputs": {
-            "new_papers_jsonl": str(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl"),
-            "normalized_papers_new_jsonl": str(paths.data_dir / "normalized" / "normalized_papers_new.jsonl"),
-            "normalized_papers_jsonl": str(paths.data_dir / "normalized" / "papers.jsonl"),
-            "refresh_summary_json": str(paths.data_dir / "indexes" / f"{args.run_id}_refresh_summary.json"),
-            "evidence_cards_jsonl": str(paths.data_dir / "evidence" / f"{args.run_id}_evidence_cards.jsonl"),
-            "evidence_cards_new_jsonl": str(paths.data_dir / "evidence" / "evidence_cards_new.jsonl"),
-            "technical_candidates_new_jsonl": str(paths.data_dir / "evidence" / "technical_candidates_new.jsonl"),
-            "diagnostic_items_new_jsonl": str(paths.data_dir / "evidence" / "diagnostic_items_new.jsonl"),
-            "hybrid_review_required_new_jsonl": str(paths.data_dir / "evidence" / "hybrid_review_required_new.jsonl"),
-            "unresolved_seeds_new_jsonl": str(paths.data_dir / "discovery" / "google_scholar" / "unresolved_seeds_new.jsonl"),
-            "reject_log_new_jsonl": str(paths.data_dir / "evidence" / "reject_log_new.jsonl"),
-            "source_health_report_json": str(paths.data_dir / "indexes" / "source_health_report.json"),
-            "reports_dir": str(paths.reports_dir),
-        },
-        "guardrails_ko": [
-            "refresh는 기존 papers.jsonl을 보존하고 새로 발견된 논문만 병합합니다.",
-            "PDF fulltext 수집은 기본 비활성화입니다.",
-            "Google Scholar live request는 수행하지 않습니다.",
-            "EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
-            "backtest, adoption decision, valuation scoring은 수행하지 않습니다.",
-        ],
+        "outputs": _refresh_output_paths(args, paths),
+        "guardrails_ko": _refresh_guardrails(),
     }
+
+
+def _refresh_child_request_budgets(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    sources: list[str],
+    query_sets: list[str],
+    child_run_ids: list[str],
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "query_set": query_set,
+            **estimate_collection_request_budget(
+                args=_refresh_collect_args(args, child_run_ids[index], query_set, sources),
+                config=config,
+                sources=sources,
+                query_set=get_query_set(config, query_set),
+            ),
+        }
+        for index, query_set in enumerate(query_sets)
+    ]
+
+
+def _refresh_output_paths(args: argparse.Namespace, paths: ProjectPaths) -> dict[str, str]:
+    return {
+        "new_papers_jsonl": str(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl"),
+        "normalized_papers_new_jsonl": str(paths.data_dir / "normalized" / "normalized_papers_new.jsonl"),
+        "normalized_papers_jsonl": str(paths.data_dir / "normalized" / "papers.jsonl"),
+        "refresh_summary_json": str(paths.data_dir / "indexes" / f"{args.run_id}_refresh_summary.json"),
+        "evidence_cards_jsonl": str(paths.data_dir / "evidence" / f"{args.run_id}_evidence_cards.jsonl"),
+        "evidence_cards_new_jsonl": str(paths.data_dir / "evidence" / "evidence_cards_new.jsonl"),
+        "technical_candidates_new_jsonl": str(paths.data_dir / "evidence" / "technical_candidates_new.jsonl"),
+        "diagnostic_items_new_jsonl": str(paths.data_dir / "evidence" / "diagnostic_items_new.jsonl"),
+        "hybrid_review_required_new_jsonl": str(paths.data_dir / "evidence" / "hybrid_review_required_new.jsonl"),
+        "unresolved_seeds_new_jsonl": str(paths.data_dir / "discovery" / "google_scholar" / "unresolved_seeds_new.jsonl"),
+        "reject_log_new_jsonl": str(paths.data_dir / "evidence" / "reject_log_new.jsonl"),
+        "source_health_report_json": str(paths.data_dir / "indexes" / "source_health_report.json"),
+        "reports_dir": str(paths.reports_dir),
+    }
+
+
+def _refresh_guardrails() -> list[str]:
+    return [
+        "refresh는 기존 papers.jsonl을 보존하고 새로 발견된 논문만 병합합니다.",
+        "PDF fulltext 수집은 기본 비활성화입니다.",
+        "Google Scholar live request는 수행하지 않습니다.",
+        "EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
+        "backtest, adoption decision, valuation scoring은 수행하지 않습니다.",
+    ]
 
 
 def _aggregate_refresh_request_budget(child_budgets: list[dict[str, Any]]) -> dict[str, Any]:
@@ -534,89 +768,83 @@ def _aggregate_refresh_source_health(paths: ProjectPaths, child_runs: list[str])
     for child_run in child_runs:
         child_health = read_json(paths.data_dir / "indexes" / f"{child_run}_source_health.json", default={}) or {}
         for source, payload in child_health.items():
-            target = aggregate.setdefault(
-                source,
-                {
-                    "source": source,
-                    "adapter_version": "research_ingestion.v1",
-                    "query_set": None,
-                    "status": "planned",
-                    "request_count": 0,
-                    "rate_limit_wait_count": 0,
-                    "rate_limit_wait_seconds": 0.0,
-                    "request_latency_ms": 0.0,
-                    "parse_ms": 0.0,
-                    "dedupe_ms": 0.0,
-                    "classification_ms": 0.0,
-                    "success_count": 0,
-                    "failure_count": 0,
-                    "http_status_summary": Counter(),
-                    "http_429_count": 0,
-                    "parse_error_count": 0,
-                    "schema_error_count": 0,
-                    "dedup_ratio": None,
-                    "new_item_count": 0,
-                    "candidate_route_counts": {},
-                    "reject_reason_counts": {},
-                    "relevance_reject_reason_counts": {},
-                    "manual_review_required_count": 0,
-                    "request_cache_hit_count": 0,
-                    "request_cache_miss_count": 0,
-                    "request_cache_stale_count": 0,
-                    "unresolved_seed_count": 0,
-                    "pdf_download_attempt_count": 0,
-                    "rate_limit_observations": [],
-                    "missing_api_key_note_ko": None,
-                    "skipped_source_reason": None,
-                    "child_runs": [],
-                },
-            )
-            target["child_runs"].append(child_run)
-            target["request_count"] += int(payload.get("request_count", 0) or 0)
-            target["rate_limit_wait_count"] += int(payload.get("rate_limit_wait_count", 0) or 0)
-            target["rate_limit_wait_seconds"] += float(payload.get("rate_limit_wait_seconds", 0.0) or 0.0)
-            target["request_latency_ms"] += float(payload.get("request_latency_ms", 0.0) or 0.0)
-            target["parse_ms"] += float(payload.get("parse_ms", 0.0) or 0.0)
-            target["dedupe_ms"] += float(payload.get("dedupe_ms", 0.0) or 0.0)
-            target["classification_ms"] += float(payload.get("classification_ms", 0.0) or 0.0)
-            target["success_count"] += int(payload.get("success_count", 0) or 0)
-            target["failure_count"] += int(payload.get("failure_count", 0) or 0)
-            target["http_429_count"] += int(payload.get("http_429_count", 0) or 0)
-            target["parse_error_count"] += int(payload.get("parse_error_count", 0) or 0)
-            target["schema_error_count"] += int(payload.get("schema_error_count", 0) or 0)
-            target["new_item_count"] += int(payload.get("new_item_count", 0) or 0)
-            target["manual_review_required_count"] += int(payload.get("manual_review_required_count", 0) or 0)
-            target["request_cache_hit_count"] += int(payload.get("request_cache_hit_count", 0) or 0)
-            target["request_cache_miss_count"] += int(payload.get("request_cache_miss_count", 0) or 0)
-            target["request_cache_stale_count"] += int(payload.get("request_cache_stale_count", 0) or 0)
-            target["unresolved_seed_count"] += int(payload.get("unresolved_seed_count", 0) or 0)
-            target["pdf_download_attempt_count"] += int(payload.get("pdf_download_attempt_count", 0) or 0)
-            target["http_status_summary"].update(payload.get("http_status_summary", {}))
-            target["relevance_reject_reason_counts"] = dict(
-                Counter(target.get("relevance_reject_reason_counts", {}))
-                + Counter(payload.get("relevance_reject_reason_counts", {}))
-            )
-            target["rate_limit_observations"].extend(payload.get("rate_limit_observations", []))
-            target["missing_api_key_note_ko"] = target["missing_api_key_note_ko"] or payload.get("missing_api_key_note_ko")
-            target["skipped_source_reason"] = target["skipped_source_reason"] or payload.get("skipped_source_reason")
-            if payload.get("last_error_ko"):
-                target["last_error_ko"] = payload["last_error_ko"]
-            if payload.get("last_raw_snapshot_ref"):
-                target["last_raw_snapshot_ref"] = payload["last_raw_snapshot_ref"]
+            target = aggregate.setdefault(source, _empty_aggregate_source_health(source))
+            _merge_refresh_source_payload(target, payload, child_run)
     for payload in aggregate.values():
-        payload["http_status_summary"] = dict(payload["http_status_summary"])
-        payload["child_runs"] = sorted(set(payload["child_runs"]))
-        for field in ["rate_limit_wait_seconds", "request_latency_ms", "parse_ms", "dedupe_ms", "classification_ms"]:
-            payload[field] = round(float(payload.get(field, 0.0) or 0.0), 3)
-        if payload["failure_count"] and not payload["success_count"]:
-            payload["status"] = "failed"
-        elif payload["failure_count"]:
-            payload["status"] = "partial"
-        elif payload["success_count"]:
-            payload["status"] = "ok"
-        elif payload["request_count"] == 0:
-            payload["status"] = "skipped"
+        _finalize_refresh_source_health(payload)
     return aggregate
+
+
+def _empty_aggregate_source_health(source: str) -> dict[str, Any]:
+    return {
+        "source": source,
+        "adapter_version": "research_ingestion.v1",
+        "query_set": None,
+        "status": "planned",
+        "request_count": 0,
+        "rate_limit_wait_count": 0,
+        "rate_limit_wait_seconds": 0.0,
+        "request_latency_ms": 0.0,
+        "parse_ms": 0.0,
+        "dedupe_ms": 0.0,
+        "classification_ms": 0.0,
+        "success_count": 0,
+        "failure_count": 0,
+        "http_status_summary": Counter(),
+        "http_429_count": 0,
+        "parse_error_count": 0,
+        "schema_error_count": 0,
+        "dedup_ratio": None,
+        "new_item_count": 0,
+        "candidate_route_counts": {},
+        "reject_reason_counts": {},
+        "relevance_reject_reason_counts": {},
+        "manual_review_required_count": 0,
+        "request_cache_hit_count": 0,
+        "request_cache_miss_count": 0,
+        "request_cache_stale_count": 0,
+        "unresolved_seed_count": 0,
+        "pdf_download_attempt_count": 0,
+        "rate_limit_observations": [],
+        "missing_api_key_note_ko": None,
+        "skipped_source_reason": None,
+        "child_runs": [],
+    }
+
+
+def _merge_refresh_source_payload(target: dict[str, Any], payload: dict[str, Any], child_run: str) -> None:
+    target["child_runs"].append(child_run)
+    for field in _REFRESH_SOURCE_INT_FIELDS:
+        target[field] += int(payload.get(field, 0) or 0)
+    for field in _REFRESH_SOURCE_FLOAT_FIELDS:
+        target[field] += float(payload.get(field, 0.0) or 0.0)
+    target["http_status_summary"].update(payload.get("http_status_summary", {}))
+    target["relevance_reject_reason_counts"] = dict(
+        Counter(target.get("relevance_reject_reason_counts", {}))
+        + Counter(payload.get("relevance_reject_reason_counts", {}))
+    )
+    target["rate_limit_observations"].extend(payload.get("rate_limit_observations", []))
+    target["missing_api_key_note_ko"] = target["missing_api_key_note_ko"] or payload.get("missing_api_key_note_ko")
+    target["skipped_source_reason"] = target["skipped_source_reason"] or payload.get("skipped_source_reason")
+    if payload.get("last_error_ko"):
+        target["last_error_ko"] = payload["last_error_ko"]
+    if payload.get("last_raw_snapshot_ref"):
+        target["last_raw_snapshot_ref"] = payload["last_raw_snapshot_ref"]
+
+
+def _finalize_refresh_source_health(payload: dict[str, Any]) -> None:
+    payload["http_status_summary"] = dict(payload["http_status_summary"])
+    payload["child_runs"] = sorted(set(payload["child_runs"]))
+    for field in _REFRESH_SOURCE_FLOAT_FIELDS:
+        payload[field] = round(float(payload.get(field, 0.0) or 0.0), 3)
+    if payload["failure_count"] and not payload["success_count"]:
+        payload["status"] = "failed"
+    elif payload["failure_count"]:
+        payload["status"] = "partial"
+    elif payload["success_count"]:
+        payload["status"] = "ok"
+    elif payload["request_count"] == 0:
+        payload["status"] = "skipped"
 
 
 def _update_source_health_from_collection(

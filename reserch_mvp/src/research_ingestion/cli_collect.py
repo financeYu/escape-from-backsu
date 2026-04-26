@@ -42,13 +42,7 @@ def cmd_collect(args: argparse.Namespace, config: dict[str, Any], paths: Project
         print(json.dumps(plan, ensure_ascii=False, indent=2))
         return
     if args.offline:
-        health = _empty_source_health(sources, skipped_reason="--offline 지정으로 network call을 수행하지 않았습니다.")
-        for source_health in health.values():
-            source_health["query_set"] = args.query_set
-        summary = _collection_summary(args, sources, query_set, raw_counts={}, normalized_count=0, plan=plan)
-        write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_collected_papers.jsonl", [])
-        _write_run_metadata(paths, args.run_id, health, summary)
-        print("offline mode: network call 없이 빈 collection artifact를 생성했습니다.")
+        _write_offline_collection(args, paths, sources, query_set, plan)
         return
 
     papers: list[dict[str, Any]] = []
@@ -63,20 +57,61 @@ def cmd_collect(args: argparse.Namespace, config: dict[str, Any], paths: Project
         health[source] = result["health"]
         raw_counts[source] += int(result["raw_count"])
         papers.extend(result["papers"])
-    for source_health in health.values():
-        source_health["http_status_summary"] = dict(source_health["http_status_summary"])
     papers = [_annotate_collection_lane(paper, args.query_set, query_set, args.run_id) for paper in papers]
     accepted_papers, rejected_papers = apply_collection_relevance_gate(
         papers,
         query_set,
         config.get("queries", {}).get("relevance_defaults", {}),
     )
+    _write_collection_result(
+        args,
+        paths,
+        sources,
+        query_set,
+        plan=plan,
+        health=health,
+        raw_counts=dict(raw_counts),
+        accepted_papers=accepted_papers,
+        rejected_papers=rejected_papers,
+    )
+
+
+def _write_offline_collection(
+    args: argparse.Namespace,
+    paths: ProjectPaths,
+    sources: list[str],
+    query_set: dict[str, Any],
+    plan: dict[str, Any],
+) -> None:
+    health = _empty_source_health(sources, skipped_reason="--offline 지정으로 network call을 수행하지 않았습니다.")
+    for source_health in health.values():
+        source_health["query_set"] = args.query_set
+    summary = _collection_summary(args, sources, query_set, raw_counts={}, normalized_count=0, plan=plan)
+    write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_collected_papers.jsonl", [])
+    _write_run_metadata(paths, args.run_id, health, summary)
+    print("offline mode: network call 없이 빈 collection artifact를 생성했습니다.")
+
+
+def _write_collection_result(
+    args: argparse.Namespace,
+    paths: ProjectPaths,
+    sources: list[str],
+    query_set: dict[str, Any],
+    *,
+    plan: dict[str, Any],
+    health: dict[str, Any],
+    raw_counts: dict[str, int],
+    accepted_papers: list[dict[str, Any]],
+    rejected_papers: list[dict[str, Any]],
+) -> None:
     _update_source_health_from_collection(health, accepted_papers, rejected_papers)
+    for source_health in health.values():
+        source_health["http_status_summary"] = dict(source_health["http_status_summary"])
     summary = _collection_summary(
         args,
         sources,
         query_set,
-        raw_counts=dict(raw_counts),
+        raw_counts=raw_counts,
         normalized_count=len(accepted_papers),
         plan=plan,
         relevance_rejected_count=len(rejected_papers),
@@ -84,7 +119,10 @@ def cmd_collect(args: argparse.Namespace, config: dict[str, Any], paths: Project
     )
     write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_collected_papers.jsonl", accepted_papers)
     write_jsonl(paths.data_dir / "normalized" / f"{args.run_id}_rejected_collected_papers.jsonl", rejected_papers)
-    write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_collection_relevance.jsonl", _collection_relevance_rows(accepted_papers, rejected_papers))
+    write_jsonl(
+        paths.data_dir / "indexes" / f"{args.run_id}_collection_relevance.jsonl",
+        _collection_relevance_rows(accepted_papers, rejected_papers),
+    )
     _write_run_metadata(paths, args.run_id, health, summary)
 
 
@@ -139,92 +177,221 @@ def _collect_source(
         health["status"] = "skipped"
         health["skipped_source_reason"] = skipped
         return {"source": source, "papers": papers, "raw_count": raw_count, "health": health}
+    papers, raw_count = _collect_source_pages(
+        args=args,
+        config=config,
+        paths=paths,
+        adapter=adapter,
+        source=source,
+        source_queries=source_queries,
+        source_limit=source_limit,
+        page_size=page_size,
+        cache=cache,
+        health=health,
+    )
+    health["http_status_summary"] = dict(health["http_status_summary"])
+    return {"source": source, "papers": papers, "raw_count": raw_count, "health": health}
 
+
+def _collect_source_pages(
+    *,
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    adapter: Any,
+    source: str,
+    source_queries: list[str],
+    source_limit: int,
+    page_size: int,
+    cache: RequestCache | None,
+    health: dict[str, Any],
+) -> tuple[list[dict[str, Any]], int]:
+    papers: list[dict[str, Any]] = []
+    raw_count = 0
+    source_total = 0
     for query_index, query in enumerate(source_queries):
         source_offset = 0
         page_number = 1
         while source_total < source_limit:
             current_page_size = min(page_size, source_limit - source_total)
-            query_id = f"{args.query_set}:{source}:{query_index}:page{page_number}"
-            try:
-                page_fetch = _fetch_source_page(
-                    adapter,
-                    source,
-                    query,
-                    current_page_size,
-                    source_offset,
-                    page_number,
-                    cache=cache,
-                )
-            except Exception as exc:
-                health["request_count"] += 1
-                health["failure_count"] += 1
-                health["status"] = "failed"
-                health["last_error_ko"] = f"요청 실패: {type(exc).__name__}: {_safe_error_message(exc, _redaction_env_vars(config, adapter))}"
-                break
-
-            response = page_fetch.response
-            _record_fetch_health(health, page_fetch, response)
-            if not response.ok:
-                snapshot = _store_source_response_snapshot(
-                    paths=paths,
-                    config=config,
-                    adapter=adapter,
-                    source=source,
-                    run_id=args.run_id,
-                    response=response,
-                    query_id=query_id,
-                    query_set=args.query_set,
-                    query=query,
-                    page_size=current_page_size,
-                    offset=source_offset,
-                    page_number=page_number,
-                    cache_status=page_fetch.cache_status,
-                    cache_key=page_fetch.cache_key,
-                )
-                health["failure_count"] += 1
-                health["status"] = "failed"
-                health["last_raw_snapshot_ref"] = snapshot["body_path"]
-                if response.status in {403, 429}:
-                    health["rate_limit_observations"].append(f"HTTP {response.status} observed for {query_id}")
-                if response.status == 429:
-                    health["http_429_count"] += 1
-                break
-
-            health["success_count"] += 1
-            health["status"] = "ok"
-            snapshot = _store_source_response_snapshot(
-                paths=paths,
+            parsed, should_continue = _collect_source_page(
+                args=args,
                 config=config,
+                paths=paths,
                 adapter=adapter,
                 source=source,
-                run_id=args.run_id,
-                response=response,
-                query_id=query_id,
-                query_set=args.query_set,
                 query=query,
+                query_index=query_index,
+                page_number=page_number,
                 page_size=current_page_size,
                 offset=source_offset,
-                page_number=page_number,
-                cache_status=page_fetch.cache_status,
-                cache_key=page_fetch.cache_key,
+                cache=cache,
+                health=health,
             )
-            parse_started = perf_counter()
-            parsed = _parse_source_response(adapter, source, response.body, snapshot["body_path"])
-            health["parse_ms"] += _elapsed_ms(parse_started)
             raw_count += len(parsed)
             papers.extend(parsed)
             source_total += len(parsed)
-            if len(parsed) < current_page_size:
+            if not should_continue:
                 break
             source_offset += current_page_size
             page_number += 1
-            if current_page_size <= 0:
-                break
         if source_total >= source_limit:
             break
-    health["http_status_summary"] = dict(health["http_status_summary"])
-    return {"source": source, "papers": papers, "raw_count": raw_count, "health": health}
+    return papers, raw_count
+
+
+def _collect_source_page(
+    *,
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    adapter: Any,
+    source: str,
+    query: str,
+    query_index: int,
+    page_number: int,
+    page_size: int,
+    offset: int,
+    cache: RequestCache | None,
+    health: dict[str, Any],
+) -> tuple[list[dict[str, Any]], bool]:
+    query_id = f"{args.query_set}:{source}:{query_index}:page{page_number}"
+    try:
+        page_fetch = _fetch_source_page(adapter, source, query, page_size, offset, page_number, cache=cache)
+    except Exception as exc:
+        _record_collect_request_exception(health, config, adapter, exc)
+        return [], False
+    response = page_fetch.response
+    _record_fetch_health(health, page_fetch, response)
+    if not response.ok:
+        _record_collect_http_failure(
+            args, config, paths, adapter, source, query, query_id,
+            page_size, offset, page_number, page_fetch, health,
+        )
+        return [], False
+    parsed = _parse_collect_success(
+        args, config, paths, adapter, source, query, query_id,
+        page_size, offset, page_number, page_fetch, health,
+    )
+    return parsed, bool(page_size > 0 and len(parsed) >= page_size)
+
+
+def _record_collect_request_exception(
+    health: dict[str, Any],
+    config: dict[str, Any],
+    adapter: Any,
+    exc: Exception,
+) -> None:
+    health["request_count"] += 1
+    health["failure_count"] += 1
+    health["status"] = "failed"
+    health["last_error_ko"] = (
+        f"요청 실패: {type(exc).__name__}: {_safe_error_message(exc, _redaction_env_vars(config, adapter))}"
+    )
+
+
+def _record_collect_http_failure(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    adapter: Any,
+    source: str,
+    query: str,
+    query_id: str,
+    page_size: int,
+    offset: int,
+    page_number: int,
+    page_fetch: SourcePageFetch,
+    health: dict[str, Any],
+) -> None:
+    snapshot = _store_collection_snapshot(
+        args=args,
+        config=config,
+        paths=paths,
+        adapter=adapter,
+        source=source,
+        query=query,
+        query_id=query_id,
+        page_size=page_size,
+        offset=offset,
+        page_number=page_number,
+        page_fetch=page_fetch,
+    )
+    response = page_fetch.response
+    health["failure_count"] += 1
+    health["status"] = "failed"
+    health["last_raw_snapshot_ref"] = snapshot["body_path"]
+    if response.status in {403, 429}:
+        health["rate_limit_observations"].append(f"HTTP {response.status} observed for {query_id}")
+    if response.status == 429:
+        health["http_429_count"] += 1
+
+
+def _parse_collect_success(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    adapter: Any,
+    source: str,
+    query: str,
+    query_id: str,
+    page_size: int,
+    offset: int,
+    page_number: int,
+    page_fetch: SourcePageFetch,
+    health: dict[str, Any],
+) -> list[dict[str, Any]]:
+    health["success_count"] += 1
+    health["status"] = "ok"
+    snapshot = _store_collection_snapshot(
+        args=args,
+        config=config,
+        paths=paths,
+        adapter=adapter,
+        source=source,
+        query=query,
+        query_id=query_id,
+        page_size=page_size,
+        offset=offset,
+        page_number=page_number,
+        page_fetch=page_fetch,
+    )
+    parse_started = perf_counter()
+    parsed = _parse_source_response(adapter, source, page_fetch.response.body, snapshot["body_path"])
+    health["parse_ms"] += _elapsed_ms(parse_started)
+    return parsed
+
+
+def _store_collection_snapshot(
+    *,
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    adapter: Any,
+    source: str,
+    query: str,
+    query_id: str,
+    page_size: int,
+    offset: int,
+    page_number: int,
+    page_fetch: SourcePageFetch,
+) -> dict[str, str]:
+    return _store_source_response_snapshot(
+        paths=paths,
+        config=config,
+        adapter=adapter,
+        source=source,
+        run_id=args.run_id,
+        response=page_fetch.response,
+        query_id=query_id,
+        query_set=args.query_set,
+        query=query,
+        page_size=page_size,
+        offset=offset,
+        page_number=page_number,
+        cache_status=page_fetch.cache_status,
+        cache_key=page_fetch.cache_key,
+    )
 
 
 def _query_set_with_runtime_cache_ttl(args: argparse.Namespace, query_set: dict[str, Any]) -> dict[str, Any]:
@@ -246,50 +413,91 @@ def _fetch_source_page(
     *,
     cache: RequestCache | None = None,
 ) -> SourcePageFetch:
-    cache_lookup = cache.get(
-        source=source,
-        query=query,
-        page_size=page_size,
-        offset=offset,
-        page_number=page_number,
-    ) if cache else None
+    cache_lookup = _request_cache_lookup(cache, source, query, page_size, offset, page_number)
     if cache_lookup and cache_lookup.response is not None:
-        return SourcePageFetch(
-            response=cache_lookup.response,
-            cache_status=cache_lookup.status,
-            cache_key=cache_lookup.cache_key,
-            request_latency_ms=0.0,
-            rate_limit_wait_seconds=0.0,
-        )
+        return _cached_source_page_fetch(cache_lookup)
     wait_before = _adapter_total_wait_seconds(adapter)
     started = perf_counter()
-    if source == "arxiv":
-        response = adapter.fetch_search_response(query, start=offset, max_results=page_size)
-    elif source == "openalex":
-        response = adapter.fetch_search_response(query, page=page_number, per_page=page_size)
-    elif source == "crossref":
-        response = adapter.fetch_search_response(query, rows=page_size, offset=offset)
-    elif source == "semantic_scholar":
-        response = adapter.fetch_search_response(query, limit=page_size, offset=offset)
-    else:
-        raise ValueError(f"지원하지 않는 source입니다: {source}")
+    response = _fetch_source_response(adapter, source, query, page_size, offset, page_number)
     cache_status = cache_lookup.status if cache_lookup else "disabled"
     cache_key = cache_lookup.cache_key if cache_lookup else None
-    if cache:
-        cache_key = cache.store(
-            source=source,
-            query=query,
-            page_size=page_size,
-            offset=offset,
-            page_number=page_number,
-            response=response,
-        )
+    cache_key = _store_request_cache_response(cache, source, query, page_size, offset, page_number, response, cache_key)
     return SourcePageFetch(
         response=response,
         cache_status=cache_status,
         cache_key=cache_key,
         request_latency_ms=_elapsed_ms(started),
         rate_limit_wait_seconds=max(0.0, _adapter_total_wait_seconds(adapter) - wait_before),
+    )
+
+
+def _request_cache_lookup(
+    cache: RequestCache | None,
+    source: str,
+    query: str,
+    page_size: int,
+    offset: int,
+    page_number: int,
+) -> Any:
+    if cache is None:
+        return None
+    return cache.get(
+        source=source,
+        query=query,
+        page_size=page_size,
+        offset=offset,
+        page_number=page_number,
+    )
+
+
+def _cached_source_page_fetch(cache_lookup: Any) -> SourcePageFetch:
+    return SourcePageFetch(
+        response=cache_lookup.response,
+        cache_status=cache_lookup.status,
+        cache_key=cache_lookup.cache_key,
+        request_latency_ms=0.0,
+        rate_limit_wait_seconds=0.0,
+    )
+
+
+def _fetch_source_response(
+    adapter: Any,
+    source: str,
+    query: str,
+    page_size: int,
+    offset: int,
+    page_number: int,
+) -> Any:
+    if source == "arxiv":
+        return adapter.fetch_search_response(query, start=offset, max_results=page_size)
+    if source == "openalex":
+        return adapter.fetch_search_response(query, page=page_number, per_page=page_size)
+    if source == "crossref":
+        return adapter.fetch_search_response(query, rows=page_size, offset=offset)
+    if source == "semantic_scholar":
+        return adapter.fetch_search_response(query, limit=page_size, offset=offset)
+    raise ValueError(f"지원하지 않는 source입니다: {source}")
+
+
+def _store_request_cache_response(
+    cache: RequestCache | None,
+    source: str,
+    query: str,
+    page_size: int,
+    offset: int,
+    page_number: int,
+    response: Any,
+    cache_key: str | None,
+) -> str | None:
+    if cache is None:
+        return cache_key
+    return cache.store(
+        source=source,
+        query=query,
+        page_size=page_size,
+        offset=offset,
+        page_number=page_number,
+        response=response,
     )
 
 
@@ -431,21 +639,7 @@ def _collection_plan(
     sources: list[str],
     query_set: dict[str, Any],
 ) -> dict[str, Any]:
-    planned_sources = []
     adapter_registry = getattr(args, "adapter_registry", None)
-    for source in sources:
-        adapter = _adapter_for_source(source, config, adapter_registry=adapter_registry)
-        planned_sources.append(
-            {
-                "source": source,
-                "queries": _queries_for_source(query_set, source),
-                "max_results": _source_max_results(args, query_set, source, adapter),
-                "page_size": _source_page_size(args, query_set, source, adapter),
-                "missing_key_note_ko": _missing_key_note(source, adapter),
-                "request_cache": _request_cache_plan(config, query_set),
-                "output_raw_dir": str(paths.data_dir / "raw" / source / args.run_id),
-            }
-        )
     return {
         "run_id": args.run_id,
         "query_set": args.query_set,
@@ -469,24 +663,58 @@ def _collection_plan(
         "exclude_keywords": query_set.get("exclude_keywords", []),
         "required_keyword_groups": query_set.get("required_keyword_groups", []),
         "relevance_defaults": config.get("queries", {}).get("relevance_defaults", {}),
-        "planned_sources": planned_sources,
+        "planned_sources": _planned_collection_sources(args, config, paths, sources, query_set, adapter_registry),
         "offline": bool(getattr(args, "offline", False)),
         "dry_run": bool(args.dry_run),
-        "outputs": {
-            "collected_papers_jsonl": str(paths.data_dir / "normalized" / f"{args.run_id}_collected_papers.jsonl"),
-            "normalized_papers_jsonl": str(paths.data_dir / "normalized" / f"{args.run_id}_papers.jsonl"),
-            "lane_papers_jsonl": str(paths.data_dir / "normalized" / f"{query_set.get('management_lane')}_papers.jsonl") if query_set.get("management_lane") else None,
-            "evidence_cards_jsonl": str(paths.data_dir / "evidence" / f"{args.run_id}_evidence_cards.jsonl"),
-            "lane_evidence_jsonl": str(paths.data_dir / "evidence" / f"{query_set.get('management_lane')}_items.jsonl") if query_set.get("management_lane") else None,
-            "reports_dir": str(paths.reports_dir),
-        },
-        "guardrails_ko": [
-            "PDF fulltext 수집은 기본 비활성화입니다.",
-            "Google Scholar live request는 수행하지 않습니다.",
-            "EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
-            "backtest, adoption decision, valuation scoring은 수행하지 않습니다.",
-        ],
+        "outputs": _collection_output_paths(args, paths, query_set),
+        "guardrails_ko": _collection_guardrails(),
     }
+
+
+def _planned_collection_sources(
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    sources: list[str],
+    query_set: dict[str, Any],
+    adapter_registry: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    planned_sources = []
+    for source in sources:
+        adapter = _adapter_for_source(source, config, adapter_registry=adapter_registry)
+        planned_sources.append(
+            {
+                "source": source,
+                "queries": _queries_for_source(query_set, source),
+                "max_results": _source_max_results(args, query_set, source, adapter),
+                "page_size": _source_page_size(args, query_set, source, adapter),
+                "missing_key_note_ko": _missing_key_note(source, adapter),
+                "request_cache": _request_cache_plan(config, query_set),
+                "output_raw_dir": str(paths.data_dir / "raw" / source / args.run_id),
+            }
+        )
+    return planned_sources
+
+
+def _collection_output_paths(args: argparse.Namespace, paths: ProjectPaths, query_set: dict[str, Any]) -> dict[str, str | None]:
+    management_lane = query_set.get("management_lane")
+    return {
+        "collected_papers_jsonl": str(paths.data_dir / "normalized" / f"{args.run_id}_collected_papers.jsonl"),
+        "normalized_papers_jsonl": str(paths.data_dir / "normalized" / f"{args.run_id}_papers.jsonl"),
+        "lane_papers_jsonl": str(paths.data_dir / "normalized" / f"{management_lane}_papers.jsonl") if management_lane else None,
+        "evidence_cards_jsonl": str(paths.data_dir / "evidence" / f"{args.run_id}_evidence_cards.jsonl"),
+        "lane_evidence_jsonl": str(paths.data_dir / "evidence" / f"{management_lane}_items.jsonl") if management_lane else None,
+        "reports_dir": str(paths.reports_dir),
+    }
+
+
+def _collection_guardrails() -> list[str]:
+    return [
+        "PDF fulltext 수집은 기본 비활성화입니다.",
+        "Google Scholar live request는 수행하지 않습니다.",
+        "EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
+        "backtest, adoption decision, valuation scoring은 수행하지 않습니다.",
+    ]
 
 
 def estimate_collection_request_budget(

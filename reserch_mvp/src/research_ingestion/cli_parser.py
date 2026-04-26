@@ -9,7 +9,17 @@ def build_parser(command_handlers: Mapping[str, Callable[..., Any]]) -> argparse
     parser = argparse.ArgumentParser(prog="python -m research_ingestion")
     _add_pdf_options(parser)
     subparsers = parser.add_subparsers(dest="command", required=True)
+    _add_collect_parser(subparsers, command_handlers)
+    _add_scholar_import_parsers(subparsers, command_handlers)
+    _add_pipeline_parsers(subparsers, command_handlers)
+    _add_refresh_parser(subparsers, command_handlers)
+    return parser
 
+
+def _add_collect_parser(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    command_handlers: Mapping[str, Callable[..., Any]],
+) -> None:
     collect = subparsers.add_parser("collect")
     _add_run_common(collect)
     _add_collect_common(collect)
@@ -17,36 +27,30 @@ def build_parser(command_handlers: Mapping[str, Callable[..., Any]]) -> argparse
     collect.add_argument("--query-set", required=True)
     collect.set_defaults(func=command_handlers["collect"])
 
-    alerts = subparsers.add_parser("import-scholar-alerts")
-    _add_run_common(alerts)
-    alerts.add_argument("--input-dir", required=True)
-    alerts.set_defaults(func=command_handlers["import_alerts"])
 
-    bibtex = subparsers.add_parser("import-scholar-bibtex")
-    _add_run_common(bibtex)
-    bibtex.add_argument("--input-dir", required=True)
-    bibtex.set_defaults(func=command_handlers["import_bibtex"])
+def _add_scholar_import_parsers(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    command_handlers: Mapping[str, Callable[..., Any]],
+) -> None:
+    import_commands = [
+        ("import-scholar-alerts", "import_alerts", "--input-dir"),
+        ("import-scholar-bibtex", "import_bibtex", "--input-dir"),
+        ("import-scholar-endnote", "import_endnote", "--input-dir"),
+        ("import-scholar-refman", "import_refman", "--input-dir"),
+        ("import-scholar-refworks", "import_refworks", "--input-dir"),
+        ("import-scholar-title-list", "import_title_list", "--input-path"),
+    ]
+    for command_name, handler_name, input_arg in import_commands:
+        command = subparsers.add_parser(command_name)
+        _add_run_common(command)
+        command.add_argument(input_arg, required=True)
+        command.set_defaults(func=command_handlers[handler_name])
 
-    endnote = subparsers.add_parser("import-scholar-endnote")
-    _add_run_common(endnote)
-    endnote.add_argument("--input-dir", required=True)
-    endnote.set_defaults(func=command_handlers["import_endnote"])
 
-    refman = subparsers.add_parser("import-scholar-refman")
-    _add_run_common(refman)
-    refman.add_argument("--input-dir", required=True)
-    refman.set_defaults(func=command_handlers["import_refman"])
-
-    refworks = subparsers.add_parser("import-scholar-refworks")
-    _add_run_common(refworks)
-    refworks.add_argument("--input-dir", required=True)
-    refworks.set_defaults(func=command_handlers["import_refworks"])
-
-    titles = subparsers.add_parser("import-scholar-title-list")
-    _add_run_common(titles)
-    titles.add_argument("--input-path", required=True)
-    titles.set_defaults(func=command_handlers["import_title_list"])
-
+def _add_pipeline_parsers(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    command_handlers: Mapping[str, Callable[..., Any]],
+) -> None:
     resolve = subparsers.add_parser("resolve-scholar-seeds")
     _add_run_common(resolve)
     resolve.add_argument("--sources", required=True)
@@ -86,6 +90,11 @@ def build_parser(command_handlers: Mapping[str, Callable[..., Any]]) -> argparse
     run_all.add_argument("--enrich-max-records", type=int, default=None)
     run_all.set_defaults(func=command_handlers["run_all"])
 
+
+def _add_refresh_parser(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    command_handlers: Mapping[str, Callable[..., Any]],
+) -> None:
     refresh = subparsers.add_parser("refresh")
     _add_run_common(refresh)
     _add_collect_common(refresh)
@@ -94,7 +103,6 @@ def build_parser(command_handlers: Mapping[str, Callable[..., Any]]) -> argparse
     refresh.add_argument("--query-sets", default=None, help="Comma-separated query sets. Defaults to the selected refresh profile.")
     refresh.add_argument("--include-valuation", action="store_true", help="Explicit opt-in for valuation/fundamental query sets.")
     refresh.set_defaults(func=command_handlers["refresh"])
-    return parser
 
 
 def _add_run_common(parser: argparse.ArgumentParser) -> None:

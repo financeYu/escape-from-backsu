@@ -10,6 +10,11 @@ This document does not implement model training, create runtime ranking output,
 change `technical_composite_score`, change `final_composite_score`, activate
 backtest feedback, or add valuation/fundamental inputs.
 
+The repository includes evaluation-only helpers for this candidate in
+`src/features/up_probability.py`. Those helpers create the 1-trading-day default
+label and map an already calibrated probability input to a 0-100 candidate
+score. They do not train a model or activate ranking.
+
 ## Candidate Score
 
 This design uses one parameterized score instead of hardcoded 1-day, 1-week, or
@@ -188,7 +193,7 @@ probability_model_version
 prediction_asof
 input_cutoff
 label_horizon_set
-ranking_validity_flag
+candidate_validity_flag
 evaluation_only_notice
 ```
 
@@ -229,10 +234,8 @@ current `점수` column.
 
 ## Required Next Steps Before Implementation
 
-1. Add a versioned config stub with `horizon_trading_days = 1` as the default
-   active main horizon and non-default horizons disabled.
-2. Add leakage guardrail tests for feature cutoff and label construction.
-3. Build an evaluation-only dataset generator.
-4. Run walk-forward validation for the default 1-trading-day horizon first.
-5. Submit technical review and adoption review before any ranking or GUI
+1. Add calibrated-probability model training outside the ranking path.
+2. Run walk-forward validation for the default 1-trading-day horizon first.
+3. Review calibration, class balance, and leakage diagnostics.
+4. Submit technical review and adoption review before any ranking or GUI
    integration.

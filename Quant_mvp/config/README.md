@@ -19,6 +19,9 @@ This directory is the single source of truth for runtime parameters that would o
   contract context. In this file, `enabled = true` means candidate review
   visibility only; `runtime_enabled = false` means this registry does not
   activate runtime scoring by itself.
+- `up_probability.toml`: post-MVP evaluation-only candidate settings for
+  `next_horizon_up_probability_score`; default `horizon_trading_days = 1`.
+  This does not activate production ranking or replace the GUI score.
 - `research_sources.toml`: approved research metadata sources, rate limits, retry settings, and secret-redaction settings
 - `research_queries.toml`: conservative research query packs for technical, diagnostic, valuation, and Korea/KOSPI context discovery
 - `research_policy.toml`: hard-stop policy for research ingestion, including no score adoption, no backtest, and PDF-disabled defaults

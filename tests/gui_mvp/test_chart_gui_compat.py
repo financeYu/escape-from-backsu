@@ -16,6 +16,7 @@ for path in (PROJECT_ROOT, CHART_MVP_ROOT, CHART_MVP_ROOT / "src"):
 
 from app.run_gui import Top5App as CompatTop5App  # noqa: E402
 from gui_mvp.chart_topn import Top5App  # noqa: E402
+from gui_mvp.unified_app import UnifiedGuiApp  # noqa: E402
 
 
 def test_chart_mvp_run_gui_remains_compatibility_wrapper() -> None:
@@ -51,3 +52,7 @@ def test_financial_statement_pivot_lives_in_gui_mvp() -> None:
 
     assert pivot.columns.tolist() == ["metric", "2023/12", "2024/12(E)"]
     assert pivot.iloc[0]["metric"] == "매출액"
+
+
+def test_unified_gui_app_is_exported() -> None:
+    assert UnifiedGuiApp.__module__ == "gui_mvp.unified_app"

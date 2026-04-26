@@ -12,6 +12,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from gui_mvp.backtest_viewer import (  # noqa: E402
     BacktestCsvSelection,
+    BacktestEvaluationApp,
+    BacktestEvaluationFrame,
     format_percent,
     run_backtest_from_csv,
     run_backtest_from_frames,
@@ -111,3 +113,7 @@ def test_backtest_csv_loader_preserves_ticker_leading_zero(tmp_path: Path) -> No
 def test_format_percent_handles_optional_values() -> None:
     assert format_percent(None) == ""
     assert format_percent(0.1234) == "12.34%"
+
+
+def test_backtest_app_alias_keeps_compatibility() -> None:
+    assert BacktestEvaluationApp is BacktestEvaluationFrame

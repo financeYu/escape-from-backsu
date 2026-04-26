@@ -100,14 +100,13 @@ def format_percent(value: object) -> str:
     return f"{numeric * 100:.2f}%"
 
 
-class BacktestEvaluationApp:
+class BacktestEvaluationFrame:
     """Tkinter viewer for Step 17 conservative backtest evaluation results."""
 
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: tk.Misc, *, configure_window: bool = True) -> None:
         self.root = root
-        self.root.title("Conservative Backtest Viewer")
-        self.root.geometry("1240x760")
-        self.root.minsize(1040, 680)
+        if configure_window:
+            self._configure_window()
 
         self.ranking_path_var = tk.StringVar(value="")
         self.price_path_var = tk.StringVar(value="")
@@ -120,6 +119,13 @@ class BacktestEvaluationApp:
 
         self._is_running = False
         self._build_ui()
+
+    def _configure_window(self) -> None:
+        if not isinstance(self.root, (tk.Tk, tk.Toplevel)):
+            return
+        self.root.title("Conservative Backtest Viewer")
+        self.root.geometry("1240x760")
+        self.root.minsize(1040, 680)
 
     def _build_ui(self) -> None:
         container = ttk.Frame(self.root, padding=12)
@@ -372,15 +378,18 @@ class BacktestEvaluationApp:
 
 def main() -> int:
     root = tk.Tk()
-    app = BacktestEvaluationApp(root)
+    app = BacktestEvaluationFrame(root)
     _ = app
     root.mainloop()
     return 0
 
 
+BacktestEvaluationApp = BacktestEvaluationFrame
+
 __all__ = (
     "BacktestCsvSelection",
     "BacktestEvaluationApp",
+    "BacktestEvaluationFrame",
     "format_percent",
     "main",
     "read_backtest_csv",

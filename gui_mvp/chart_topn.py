@@ -46,12 +46,16 @@ from stock_core.utils.logging_utils import configure_logging
 class Top5App:
     """Tkinter app for the local Top-N chart workflow."""
 
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(
+        self,
+        root: tk.Misc,
+        *,
+        configure_window: bool = True,
+        startup_due_check: bool = True,
+    ) -> None:
         self.root = root
-        self.root.title("Configured Universe Top-N Viewer")
-        self.root.geometry("1240x720")
-        self.root.minsize(1020, 640)
-        self.root.resizable(True, True)
+        if configure_window:
+            self._configure_window()
 
         self.pages_var = tk.IntVar(value=1)
         self.top_n_var = tk.IntVar(value=5)
@@ -73,7 +77,16 @@ class Top5App:
         self._build_ui()
         self._load_latest_results()
         self._load_latest_meta()
-        self._run_startup_due_check()
+        if startup_due_check:
+            self._run_startup_due_check()
+
+    def _configure_window(self) -> None:
+        if not isinstance(self.root, (tk.Tk, tk.Toplevel)):
+            return
+        self.root.title("Configured Universe Top-N Viewer")
+        self.root.geometry("1240x720")
+        self.root.minsize(1020, 640)
+        self.root.resizable(True, True)
 
     def _build_ui(self) -> None:
         container = ttk.Frame(self.root, padding=12)

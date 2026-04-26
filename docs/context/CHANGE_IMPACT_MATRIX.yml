@@ -17,6 +17,71 @@ archive_lookup:
     - release/freeze verification
     - resolving contradiction with MVP v0.1 baseline
 
+validation_profiles:
+  context_only:
+    applies_to:
+      - docs/context routing packets, sidecars, and domain stubs
+      - archive index updates that do not alter active contract semantics
+    validation:
+      - git diff --check
+      - parse changed toml/yml when local parsers are available
+      - targeted forbidden-claim grep
+      - confirm no source/config/runtime output files changed
+
+  source_logic:
+    applies_to:
+      - src/** runtime logic
+      - chart_mvp/src/** runtime logic
+      - reusable validators, scanners, scoring, ranking, or report builders
+    validation:
+      - affected unit tests for changed code paths
+      - focused integration check when ranking, reports, or pipeline outputs can change
+      - forbidden-scope search for new universe, valuation, or backtest-feedback activation
+      - git diff --check
+
+  data_ingestion:
+    applies_to:
+      - data provider code
+      - universe lists, symbol policy, cache path policy, and schema loaders
+      - research ingestion adapters or collection config
+    validation:
+      - targeted data validation or provider tests for changed paths
+      - confirm KOSPI200/Naver MVP defaults remain unchanged unless a later approved Step opens the scope
+      - confirm no live KOSDAQ150, futures/options, Nasdaq/overseas, or multi-universe ingestion is enabled
+      - generated-output/cache boundary check
+
+  backtest:
+    applies_to:
+      - Quant_mvp/backtest_mvp/**
+      - src/backtest/** compatibility facade
+      - Step 17 backtest guardrails and tests
+    validation:
+      - focused backtest boundary tests
+      - confirm backtest outputs remain evaluation-only
+      - confirm no backtest output updates score, ranking, adoption, or optimization inputs
+      - forbidden valuation/fundamental input-column check
+
+  reports:
+    applies_to:
+      - report builders, report templates, generated-output routing, and report boundary docs
+      - reports promoted as review fixtures
+    validation:
+      - focused report boundary tests
+      - forbidden investment-claim wording grep
+      - generated-output/cache boundary check
+      - confirm reports remain explanatory context and do not re-rank or recommend
+
+  validation:
+    applies_to:
+      - src/validation/**
+      - tests/validation/**
+      - contract, schema, and guardrail tests
+    validation:
+      - affected validation tests
+      - contract/schema parser checks when applicable
+      - confirm guardrails are strengthened or clarified, not weakened
+      - git diff --check
+
 impact_routes:
   docs_only_archive_routing:
     allowed_paths:
@@ -35,15 +100,14 @@ impact_routes:
       - dependency files
       - lockfiles
     validation:
-      - git diff --check
-      - parse changed toml/yml when local parsers are available
+      - profile: context_only
 
   runtime_or_contract_change:
     requires:
       - separately approved post-MVP step
       - correct role branch/worktree
       - conflict checkpoint
-      - targeted tests
+      - matching validation profile from validation_profiles
 
   extension_readiness_contract_refactor:
     status: MVP v0.1 pre-freeze readiness hardening only; not Step 21 entry
@@ -65,6 +129,8 @@ impact_routes:
       - score formula, normalization, ranking, report, backtest, or valuation semantics
       - generated runtime outputs
     validation:
-      - focused tests for changed code paths
+      - profile: source_logic when runtime code changes
+      - profile: validation when guardrails or tests change
+      - profile: context_only when only docs/context sidecars change
       - forbidden-scope search for activation language
       - git diff --check

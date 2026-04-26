@@ -42,3 +42,17 @@ context = "docs/context/domain/future_multi_universe_context.md"
 state = "candidate_only_not_activated"
 permission = "requires separately approved post-MVP step and point-in-time availability proof"
 context = "docs/context/domain/valuation_context.md"
+
+[extension.scoring_v0_2]
+state = "not_implemented"
+permission = "requires separately approved post-MVP step, score contract, validation profile, and conflict checkpoint"
+context = "docs/context/domain/technical_scoring_context.md"
+forbidden_during_mvp_v0_1 = [
+  "score formula changes",
+  "normalization changes",
+  "score weight changes",
+  "adoption state changes",
+  "ranking semantic changes",
+  "backtest feedback into scoring or ranking",
+  "valuation/fundamental data in technical_composite_score or final_composite_score",
+]

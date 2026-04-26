@@ -14,6 +14,8 @@ from typing import Any
 import pandas as pd
 
 from src.scores.schema import find_valuation_fundamental_columns
+from src.validation.common import coerce_frame, column_names, extract_text_from_frame
+from src.validation.field_guardrails import find_forbidden_columns_by_rules
 from src.validation.step15_latest_ranking_guardrails import find_step15_forbidden_columns
 from src.validation.step17_backtest_guardrails import (
     find_step17_evaluation_fields,
@@ -22,6 +24,7 @@ from src.validation.step17_backtest_guardrails import (
 from src.validation.step18_valuation_fundamental_guardrails import (
     find_step18_forbidden_report_language,
 )
+from src.validation.text_guardrails import find_forbidden_pattern_labels
 
 
 STEP20_MVP_SCOPE_NOTICE = "kospi200_mvp_technical_scanner_v0_1_scope"
@@ -119,17 +122,17 @@ STEP20_FORBIDDEN_SCOPE_PATTERNS: Mapping[str, str] = {
 def find_step20_forbidden_columns(columns: pd.DataFrame | Iterable[str]) -> list[str]:
     """Return columns that violate the Step 20 KOSPI200 MVP scope."""
 
-    column_names = _column_names(columns)
-    forbidden: set[str] = set(find_step15_forbidden_columns(column_names))
-    forbidden.update(find_valuation_fundamental_columns(column_names))
-    for column in column_names:
-        normalized = column.lower()
-        if (
-            normalized in STEP20_FORBIDDEN_COLUMN_EXACT
-            or normalized.startswith(STEP20_FORBIDDEN_COLUMN_PREFIXES)
-            or normalized.endswith(STEP20_FORBIDDEN_COLUMN_SUFFIXES)
-        ):
-            forbidden.add(column)
+    names = column_names(columns)
+    forbidden: set[str] = set(find_step15_forbidden_columns(names))
+    forbidden.update(find_valuation_fundamental_columns(names))
+    forbidden.update(
+        find_forbidden_columns_by_rules(
+            names,
+            exact=STEP20_FORBIDDEN_COLUMN_EXACT,
+            prefixes=STEP20_FORBIDDEN_COLUMN_PREFIXES,
+            suffixes=STEP20_FORBIDDEN_COLUMN_SUFFIXES,
+        )
+    )
     return sorted(forbidden)
 
 
@@ -154,9 +157,9 @@ def validate_step20_mvp_scope_frame(
 ) -> None:
     """Validate structured Step 20 material and text values."""
 
-    frame = _coerce_frame(data)
+    frame = coerce_frame(data)
     validate_step20_mvp_scope_columns(frame.columns, context=context)
-    report_text = _extract_text(frame)
+    report_text = extract_text_from_frame(frame)
     validate_step20_mvp_scope_text(report_text, context=context, require_notice=False)
     evaluation_fields = find_step17_evaluation_fields(frame.columns)
     if evaluation_fields:
@@ -169,14 +172,11 @@ def validate_step20_mvp_scope_frame(
 def find_step20_forbidden_scope_language(text: str) -> list[str]:
     """Return positive scope-creep phrases while allowing explicit negation."""
 
-    lowered = text.lower()
-    forbidden: list[str] = []
-    for label, pattern in STEP20_FORBIDDEN_SCOPE_PATTERNS.items():
-        for match in re.finditer(pattern, lowered, flags=re.IGNORECASE | re.DOTALL):
-            if _is_allowed_negated_scope_match(lowered, match):
-                continue
-            forbidden.append(label)
-            break
+    forbidden = find_forbidden_pattern_labels(
+        text,
+        STEP20_FORBIDDEN_SCOPE_PATTERNS,
+        is_allowed_match=_is_allowed_negated_scope_match,
+    )
     forbidden.extend(f"Step 17: {item}" for item in find_step17_forbidden_report_language(text))
     forbidden.extend(f"Step 18: {item}" for item in find_step18_forbidden_report_language(text))
     return sorted(set(forbidden))
@@ -221,7 +221,7 @@ def validate_step20_release_report_text(
         )
 
 
-def _is_allowed_negated_scope_match(lowered: str, match: re.Match[str]) -> bool:
+def _is_allowed_negated_scope_match(lowered: str, match: re.Match[str], _label: str) -> bool:
     window = lowered[max(0, match.start() - 32) : min(len(lowered), match.end() + 32)]
     allowed_phrases = (
         "not implemented",
@@ -240,43 +240,6 @@ def _is_allowed_negated_scope_match(lowered: str, match: re.Match[str]) -> bool:
         "no ",
     )
     return any(phrase in window for phrase in allowed_phrases)
-
-
-def _column_names(columns: pd.DataFrame | Iterable[str]) -> tuple[str, ...]:
-    if isinstance(columns, pd.DataFrame):
-        return tuple(str(column) for column in columns.columns)
-    return tuple(str(column) for column in columns)
-
-
-def _coerce_frame(
-    data: pd.DataFrame | Mapping[str, Any] | Sequence[Mapping[str, Any]],
-) -> pd.DataFrame:
-    if isinstance(data, pd.DataFrame):
-        return data.copy()
-    if isinstance(data, Mapping):
-        return pd.DataFrame([dict(data)])
-    return pd.DataFrame(list(data))
-
-
-def _extract_text(frame: pd.DataFrame) -> str:
-    parts: list[str] = []
-    for record in frame.to_dict(orient="records"):
-        _collect_text(record, parts)
-    return "\n".join(parts)
-
-
-def _collect_text(value: object, parts: list[str]) -> None:
-    if isinstance(value, Mapping):
-        for key, child in value.items():
-            parts.append(str(key))
-            _collect_text(child, parts)
-        return
-    if isinstance(value, (list, tuple, set, frozenset)):
-        for child in value:
-            _collect_text(child, parts)
-        return
-    if isinstance(value, str):
-        parts.append(value)
 
 
 __all__ = (

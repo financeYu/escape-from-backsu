@@ -15,6 +15,12 @@ from typing import Any
 import pandas as pd
 
 from src.scores.schema import find_valuation_fundamental_columns
+from src.validation.common import coerce_frame, column_names, extract_text_from_frame
+from src.validation.field_guardrails import (
+    find_forbidden_columns_by_rules,
+    identifier_tokens,
+)
+from src.validation.text_guardrails import find_forbidden_pattern_labels
 
 
 STEP17_EVALUATION_ONLY_NOTICE = "evaluation-only"
@@ -369,9 +375,9 @@ def validate_step17_backtest_report(
         report_text = report
         structured_result = Step17BacktestValidationResult(context=context)
     else:
-        frame = _coerce_frame(report)
-        columns = _column_names(frame)
-        report_text = _extract_report_text(frame)
+        frame = coerce_frame(report)
+        columns = column_names(frame)
+        report_text = extract_text_from_frame(frame)
         structured_result = _validate_structured_step17_data(
             frame,
             context=context,
@@ -474,9 +480,9 @@ def validate_step17_no_feedback_loop(
 ) -> Step17BacktestValidationResult:
     """Reject using Step 17 backtest results as upstream score/rank/adoption updates."""
 
-    frame = _coerce_frame(candidate_update)
-    columns = _column_names(frame)
-    report_text = _extract_report_text(frame)
+    frame = coerce_frame(candidate_update)
+    columns = column_names(frame)
+    report_text = extract_text_from_frame(frame)
     target = target_context.lower()
     target_is_upstream = any(token in target for token in STEP17_UPSTREAM_CONTEXT_KEYWORDS)
     evaluation_fields = find_step17_evaluation_fields(columns)
@@ -511,24 +517,28 @@ def find_step17_forbidden_fields(
 ) -> list[str]:
     """Return fields that cross Step 17 evaluation-only boundaries."""
 
-    column_names = _column_names(columns)
-    forbidden: set[str] = set(find_valuation_fundamental_columns(column_names))
-    for column in column_names:
+    names = column_names(columns)
+    forbidden: set[str] = set(find_valuation_fundamental_columns(names))
+    unchecked_columns: list[str] = []
+    for column in names:
         normalized = column.lower()
         if normalized in STEP17_ALLOWED_BACKTEST_EVALUATION_COLUMNS:
             if not allow_backtest_evaluation_columns:
                 forbidden.add(column)
             continue
+        unchecked_columns.append(column)
 
-        tokens = set(_split_tokens(normalized))
-        if (
-            normalized in STEP17_FORBIDDEN_EXACT_COLUMNS
-            or normalized.startswith(STEP17_FORBIDDEN_PREFIXES)
-            or normalized.endswith(STEP17_FORBIDDEN_SUFFIXES)
-            or any(term in normalized for term in STEP17_FORBIDDEN_COLUMN_SUBSTRINGS)
-            or bool(tokens.intersection(STEP17_FORBIDDEN_COLUMN_TOKENS))
-        ):
-            forbidden.add(column)
+    forbidden.update(
+        find_forbidden_columns_by_rules(
+            unchecked_columns,
+            exact=STEP17_FORBIDDEN_EXACT_COLUMNS,
+            prefixes=STEP17_FORBIDDEN_PREFIXES,
+            suffixes=STEP17_FORBIDDEN_SUFFIXES,
+            substrings=STEP17_FORBIDDEN_COLUMN_SUBSTRINGS,
+            tokens=STEP17_FORBIDDEN_COLUMN_TOKENS,
+            token_getter=identifier_tokens,
+        )
+    )
 
     return sorted(forbidden)
 
@@ -538,7 +548,7 @@ def find_step17_evaluation_fields(columns: pd.DataFrame | Iterable[str]) -> list
 
     return sorted(
         column
-        for column in _column_names(columns)
+        for column in column_names(columns)
         if column.lower() in STEP17_ALLOWED_BACKTEST_EVALUATION_COLUMNS
     )
 
@@ -548,7 +558,7 @@ def find_step17_upstream_mutation_fields(columns: pd.DataFrame | Iterable[str]) 
 
     return sorted(
         column
-        for column in _column_names(columns)
+        for column in column_names(columns)
         if column.lower() in STEP17_UPSTREAM_MUTATION_FIELDS
     )
 
@@ -556,12 +566,12 @@ def find_step17_upstream_mutation_fields(columns: pd.DataFrame | Iterable[str]) 
 def find_step17_forbidden_report_language(text: str) -> list[str]:
     """Return Step 17 report phrases that imply performance proof or adoption."""
 
-    lowered = text.lower()
-    forbidden: list[str] = []
-    for label, pattern in STEP17_FORBIDDEN_REPORT_LANGUAGE_PATTERNS.items():
-        if _contains_forbidden_report_pattern(lowered, pattern, label):
-            forbidden.append(label)
-    return sorted(forbidden)
+    return find_forbidden_pattern_labels(
+        text,
+        STEP17_FORBIDDEN_REPORT_LANGUAGE_PATTERNS,
+        flags=0,
+        is_allowed_match=_is_allowed_negated_report_match,
+    )
 
 
 def find_missing_step17_report_notices(text: str) -> list[str]:
@@ -582,8 +592,8 @@ def find_missing_step17_limitation_flags(
         report_text = report
         explicit_flags: set[str] = set()
     else:
-        frame = _coerce_frame(report)
-        report_text = _extract_report_text(frame)
+        frame = coerce_frame(report)
+        report_text = extract_text_from_frame(frame)
         explicit_flags = _extract_explicit_limitation_flags(frame)
 
     lowered = report_text.lower()
@@ -606,8 +616,8 @@ def _validate_structured_step17_data(
     require_limitation_flags: bool,
     raise_on_error: bool,
 ) -> Step17BacktestValidationResult:
-    frame = _coerce_frame(data)
-    columns = _column_names(frame)
+    frame = coerce_frame(data)
+    columns = column_names(frame)
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -651,45 +661,6 @@ def _validate_structured_step17_data(
     return result
 
 
-def _coerce_frame(
-    data: pd.DataFrame | Mapping[str, Any] | Sequence[Mapping[str, Any]],
-) -> pd.DataFrame:
-    if isinstance(data, pd.DataFrame):
-        return data.copy()
-    if isinstance(data, Mapping):
-        return pd.DataFrame([dict(data)])
-    return pd.DataFrame(list(data))
-
-
-def _column_names(columns: pd.DataFrame | Iterable[str]) -> tuple[str, ...]:
-    if isinstance(columns, pd.DataFrame):
-        return tuple(str(column) for column in columns.columns)
-    return tuple(str(column) for column in columns)
-
-
-def _extract_report_text(frame: pd.DataFrame) -> str:
-    if frame.empty:
-        return ""
-    parts: list[str] = []
-    for record in frame.to_dict(orient="records"):
-        _collect_report_text(record, parts)
-    return "\n".join(parts)
-
-
-def _collect_report_text(value: object, parts: list[str]) -> None:
-    if isinstance(value, Mapping):
-        for key, child in value.items():
-            parts.append(str(key))
-            _collect_report_text(child, parts)
-        return
-    if isinstance(value, (list, tuple, set, frozenset)):
-        for child in value:
-            _collect_report_text(child, parts)
-        return
-    if isinstance(value, str):
-        parts.append(value)
-
-
 def _extract_explicit_limitation_flags(frame: pd.DataFrame) -> set[str]:
     flags: set[str] = set()
     for record in frame.to_dict(orient="records"):
@@ -727,23 +698,11 @@ def _collect_limitation_flags(
         flags.add(value.lower())
 
 
-def _contains_forbidden_report_pattern(lowered: str, pattern: str, label: str) -> bool:
-    for match in re.finditer(pattern, lowered):
-        if _is_allowed_negated_report_match(lowered, match, label):
-            continue
-        return True
-    return False
-
-
 def _is_allowed_negated_report_match(lowered: str, match: re.Match[str], label: str) -> bool:
     if label not in {"trading recommendation", "investment recommendation"}:
         return False
     prefix = lowered[max(0, match.start() - 16) : match.start()]
     return "not a " in prefix or "not an " in prefix or "not " in prefix or "non-" in prefix
-
-
-def _split_tokens(value: str) -> tuple[str, ...]:
-    return tuple(token for token in re.split(r"[^a-z0-9]+", value) if token)
 
 
 __all__ = (

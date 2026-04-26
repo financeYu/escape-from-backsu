@@ -9,16 +9,18 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
-import re
 from typing import Any
 
 import pandas as pd
 
 from src.composite.contracts import DEFAULT_COMPOSITE_INPUT_REGISTRY, CompositeInputSpec
 from src.scores.schema import find_valuation_fundamental_columns
+from src.validation.common import coerce_frame, column_names, extract_text_from_frame
+from src.validation.field_guardrails import find_forbidden_columns_by_rules
 from src.validation.step15_latest_ranking_guardrails import (
     build_allowed_step15_score_like_columns,
 )
+from src.validation.text_guardrails import find_forbidden_terms
 
 
 STEP16_DETAIL_REPORT_NOTICE = "technical-only detail report"
@@ -347,8 +349,8 @@ def validate_step16_detail_report_input(
 ) -> Step16DetailReportValidationResult:
     """Validate Step 16 report input without mutating ranking state."""
 
-    frame = _coerce_frame(data)
-    columns = _column_names(frame)
+    frame = coerce_frame(data)
+    columns = column_names(frame)
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -400,9 +402,9 @@ def validate_step16_detail_report_output(
         columns: tuple[str, ...] = ()
         report_text = report
     else:
-        frame = _coerce_frame(report)
-        columns = _column_names(frame)
-        report_text = _extract_report_text(frame)
+        frame = coerce_frame(report)
+        columns = column_names(frame)
+        report_text = extract_text_from_frame(frame)
 
     base_result = validate_step16_detail_report_input(
         frame if columns else {},
@@ -503,19 +505,18 @@ def build_allowed_step16_technical_columns(
 def find_step16_forbidden_fields(columns: pd.DataFrame | Iterable[str]) -> list[str]:
     """Return Step 16 fields that cross future, trading, or valuation boundaries."""
 
-    column_names = _column_names(columns)
-    forbidden: set[str] = set(find_valuation_fundamental_columns(column_names))
-    for column in column_names:
-        normalized = column.lower()
-        tokens = set(normalized.split("_"))
-        if (
-            normalized in STEP16_FORBIDDEN_EXACT_COLUMNS
-            or normalized.startswith(STEP16_FORBIDDEN_PREFIXES)
-            or normalized.endswith(STEP16_FORBIDDEN_SUFFIXES)
-            or any(term in normalized for term in STEP16_FORBIDDEN_SUBSTRINGS)
-            or bool(tokens.intersection(STEP16_FORBIDDEN_COLUMN_TOKENS))
-        ):
-            forbidden.add(column)
+    names = column_names(columns)
+    forbidden: set[str] = set(find_valuation_fundamental_columns(names))
+    forbidden.update(
+        find_forbidden_columns_by_rules(
+            names,
+            exact=STEP16_FORBIDDEN_EXACT_COLUMNS,
+            prefixes=STEP16_FORBIDDEN_PREFIXES,
+            suffixes=STEP16_FORBIDDEN_SUFFIXES,
+            substrings=STEP16_FORBIDDEN_SUBSTRINGS,
+            tokens=STEP16_FORBIDDEN_COLUMN_TOKENS,
+        )
+    )
     return sorted(forbidden)
 
 
@@ -523,7 +524,7 @@ def find_step16_rank_mutation_fields(columns: pd.DataFrame | Iterable[str]) -> l
     """Return Step 16 fields that imply new ranking or re-ranking."""
 
     rank_fields: list[str] = []
-    for column in _column_names(columns):
+    for column in column_names(columns):
         normalized = column.lower()
         if normalized in STEP16_RANK_MUTATION_COLUMNS or normalized.startswith(
             ("rerank_", "re_rank_", "step16_rank_", "new_rank_")
@@ -536,7 +537,7 @@ def find_step16_context_only_fields(columns: pd.DataFrame | Iterable[str]) -> li
     """Return diagnostic/context fields that must stay explanatory only."""
 
     context_fields: list[str] = []
-    for column in _column_names(columns):
+    for column in column_names(columns):
         normalized = column.lower()
         if (
             normalized in STEP16_CONTEXT_ONLY_EXACT_COLUMNS
@@ -558,7 +559,7 @@ def find_unknown_step16_score_like_columns(
     forbidden = set(find_step16_forbidden_fields(columns))
     context_only = set(find_step16_context_only_fields(columns))
     unknown: list[str] = []
-    for column in _column_names(columns):
+    for column in column_names(columns):
         normalized = column.lower()
         if column in allowed or column in forbidden or column in context_only:
             continue
@@ -572,12 +573,7 @@ def find_unknown_step16_score_like_columns(
 def find_step16_forbidden_report_language(text: str) -> list[str]:
     """Return forbidden Step 16 generated-report phrases found in text."""
 
-    lowered = text.lower()
-    return [
-        term
-        for term in sorted(STEP16_FORBIDDEN_REPORT_LANGUAGE)
-        if _contains_forbidden_term(lowered, term)
-    ]
+    return find_forbidden_terms(text, STEP16_FORBIDDEN_REPORT_LANGUAGE)
 
 
 def _rank_read_only_errors(
@@ -586,8 +582,8 @@ def _rank_read_only_errors(
 ) -> list[str]:
     if isinstance(output_data, str):
         return []
-    input_frame = _coerce_frame(input_data)
-    output_frame = _coerce_frame(output_data)
+    input_frame = coerce_frame(input_data)
+    output_frame = coerce_frame(output_data)
     if "rank" not in output_frame.columns:
         if "readonly_rank_fields" not in output_frame.columns:
             return []
@@ -631,45 +627,6 @@ def _read_only_fields(columns: Iterable[str]) -> list[str]:
     return ["rank"] if "rank" in set(columns) else []
 
 
-def _coerce_frame(
-    data: pd.DataFrame | Mapping[str, Any] | Sequence[Mapping[str, Any]],
-) -> pd.DataFrame:
-    if isinstance(data, pd.DataFrame):
-        return data.copy()
-    if isinstance(data, Mapping):
-        return pd.DataFrame([dict(data)])
-    return pd.DataFrame(list(data))
-
-
-def _column_names(columns: pd.DataFrame | Iterable[str]) -> tuple[str, ...]:
-    if isinstance(columns, pd.DataFrame):
-        return tuple(str(column) for column in columns.columns)
-    return tuple(str(column) for column in columns)
-
-
-def _extract_report_text(frame: pd.DataFrame) -> str:
-    if frame.empty:
-        return ""
-    parts: list[str] = []
-    for record in frame.to_dict(orient="records"):
-        _collect_report_text(record, parts)
-    return "\n".join(parts)
-
-
-def _collect_report_text(value: object, parts: list[str]) -> None:
-    if isinstance(value, Mapping):
-        for key, child in value.items():
-            parts.append(str(key))
-            _collect_report_text(child, parts)
-        return
-    if isinstance(value, (list, tuple, set, frozenset)):
-        for child in value:
-            _collect_report_text(child, parts)
-        return
-    if isinstance(value, str):
-        parts.append(value)
-
-
 def _is_status_or_flag_column(normalized: str) -> bool:
     return normalized.endswith(STEP16_ALLOWED_STATUS_SUFFIXES)
 
@@ -682,13 +639,6 @@ def _is_score_like_column(normalized: str) -> bool:
         or normalized.endswith("_normalized")
         or "composite" in normalized
     )
-
-
-def _contains_forbidden_term(lowered: str, term: str) -> bool:
-    term = term.lower()
-    if " " in term or "-" in term or "_" in term:
-        return term in lowered
-    return re.search(rf"(?<![A-Za-z0-9_]){re.escape(term)}(?![A-Za-z0-9_])", lowered) is not None
 
 
 __all__ = (

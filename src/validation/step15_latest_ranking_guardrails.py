@@ -16,6 +16,8 @@ import pandas as pd
 
 from src.composite.contracts import DEFAULT_COMPOSITE_INPUT_REGISTRY, CompositeInputSpec
 from src.scores.schema import find_missing_columns, find_valuation_fundamental_columns
+from src.validation.common import column_names
+from src.validation.field_guardrails import find_forbidden_columns_by_rules
 
 
 STEP15_LATEST_RANKING_NOTICE = "latest ranking output technical/statistical only"
@@ -259,17 +261,17 @@ def validate_step15_output_columns(
 ) -> None:
     """Validate required Step 15 columns and forbidden boundary columns."""
 
-    column_names = _column_names(columns)
-    missing = find_missing_columns(column_names, STEP15_REQUIRED_LATEST_RANKING_COLUMNS)
+    names = column_names(columns)
+    missing = find_missing_columns(names, STEP15_REQUIRED_LATEST_RANKING_COLUMNS)
     if missing:
         raise ValueError(f"{context} missing required columns: {', '.join(missing)}")
-    forbidden = find_step15_forbidden_columns(column_names)
+    forbidden = find_step15_forbidden_columns(names)
     if forbidden:
         raise ValueError(
             f"{context} contains forbidden Step 15 columns: {', '.join(forbidden)}"
         )
     unknown_score_columns = find_unknown_step15_score_like_columns(
-        column_names,
+        names,
         registry=registry,
     )
     if unknown_score_columns:
@@ -304,21 +306,21 @@ def validate_step15_input_plan(
 def find_step15_forbidden_columns(columns: pd.DataFrame | Iterable[str]) -> list[str]:
     """Return Step 15 columns that violate valuation, future, or trading guardrails."""
 
-    column_names = _column_names(columns)
-    forbidden: set[str] = set()
-    for column in column_names:
-        normalized = column.lower()
-        tokens = set(normalized.split("_"))
-        if (
-            normalized in STEP15_FORBIDDEN_EXACT_COLUMNS
-            or normalized.startswith(STEP15_FORBIDDEN_PREFIXES)
-            or normalized.endswith(STEP15_FORBIDDEN_SUFFIXES)
-            or bool(tokens.intersection(STEP15_FORBIDDEN_TERMINOLOGY_TOKENS))
-            or _is_future_or_performance_column(normalized)
-            or _is_financial_or_fundamental_column(normalized)
-        ):
-            forbidden.add(column)
-    forbidden.update(find_valuation_fundamental_columns(column_names))
+    names = column_names(columns)
+    forbidden: set[str] = set(
+        find_forbidden_columns_by_rules(
+            names,
+            exact=STEP15_FORBIDDEN_EXACT_COLUMNS,
+            prefixes=STEP15_FORBIDDEN_PREFIXES,
+            suffixes=STEP15_FORBIDDEN_SUFFIXES,
+            tokens=STEP15_FORBIDDEN_TERMINOLOGY_TOKENS,
+            extra_predicates=(
+                _is_future_or_performance_column,
+                _is_financial_or_fundamental_column,
+            ),
+        )
+    )
+    forbidden.update(find_valuation_fundamental_columns(names))
     return sorted(forbidden)
 
 
@@ -331,7 +333,7 @@ def find_unknown_step15_score_like_columns(
 
     allowed = build_allowed_step15_score_like_columns(registry=registry)
     unknown: list[str] = []
-    for column in _column_names(columns):
+    for column in column_names(columns):
         if column in allowed:
             continue
         if column in STEP15_ALLOWED_BASE_OUTPUT_COLUMNS:
@@ -572,12 +574,6 @@ def _assert_manual_review_required_is_boolean(frame: pd.DataFrame, *, context: s
     ]
     if invalid:
         raise ValueError(f"{context} manual_review_required must contain boolean values.")
-
-
-def _column_names(columns: pd.DataFrame | Iterable[str]) -> tuple[str, ...]:
-    if isinstance(columns, pd.DataFrame):
-        return tuple(str(column) for column in columns.columns)
-    return tuple(str(column) for column in columns)
 
 
 def _is_integer_like_series(series: pd.Series) -> bool:

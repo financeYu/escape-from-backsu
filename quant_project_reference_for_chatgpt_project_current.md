@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-26T19:19:14+09:00
+Generated at: 2026-04-26T19:21:08+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -130,23 +130,10 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 ## Git Snapshot
 
 - branch: `codex/master-up-post20-pending`
-- commit: `5431cad`
+- commit: `828cffc`
 - status:
 ```text
-M  Quant_mvp/config/README.md
-M  Quant_mvp/config/scores.toml
-UU WORKSPACE_MANIFEST.md
-M  config/global.toml
-M  config/scores.toml
-M  docs/config_policy.md
-M  docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md
-M  docs/context/CONTEXT_ROUTING_INDEX.md
-M  docs/context/decision_log.md
-M  docs/release/MVP_V0_1_QUICKSTART.md
-M  docs/release/MVP_V0_1_VALIDATION_LADDER.md
-A  docs/release/PREFREEZE_OPTIMIZATION_HANDOFF.md
-UU quant_project_reference_for_chatgpt_project_current.md
-A  reports/validation/mvp_v0_1_local_market_data_readiness.md
+clean
 ```
 
 ## Step-End Context Policy
@@ -199,5 +186,9 @@ A candidate score or score family should be assigned one of the following final 
 ## Score Catalog Snapshot
 
 | `short_term_overreaction` | `mean_reversion` | `technical` | core candidate | define for MVP testing | Korea reversal evidence plus short-horizon reversal literature |
+| `atr_adjusted_oversold_distance` | `mean_reversion` | `technical` | robustness variant | define for MVP testing with redundancy warning | volatility-scaled oversold proxy |
+| `donchian_breakout_distance` | `breakout` | `technical` | core candidate | define for MVP testing | trading range breakout evidence |
+| `bollinger_width_squeeze` | `squeeze_expansion` | `technical` | regime/conditional candidate | define for MVP testing as technical-only context | volatility compression and expansion setup |
+| `cmf_confirmation` | `flow` | `technical` | confirmation candidate | define for MVP testing | price-volume participation evidence |
 
 [Context truncated by `max_chars`; consult repository docs for full detail.]

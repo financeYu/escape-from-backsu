@@ -83,7 +83,6 @@ integration validation
 -> rerun affected validation/checks
 -> cross-step conflict checkpoint after required fixes when needed
 -> commit to git
--> refresh latest local Quant project context snapshot
 ```
 
 Rules:
@@ -95,7 +94,7 @@ Rules:
 - Use `review_mvp` for Step-end specialist review when the change touches code, tests, config, schemas, generated-output boundaries, cross-project handoffs, roadmap-gated behavior, or any existing `review_mvp` trigger. Narrow docs-only governance changes may use master code review unless the master or user requests `review_mvp`.
 - Commit only source-controlled files that belong to the Step. Keep unrelated dirty files, runtime caches, generated reports, and local outputs out of the commit unless explicitly promoted as review fixtures.
 - If a commit cannot be made, report why and include the remaining Git state in the Step-end summary.
-- After the Step commit, run `python scripts/refresh_quant_project_context.py` so the current Quant project context file keeps only the latest compact local snapshot. This workflow must not call paid APIs or embed secrets in the repository.
+- Refresh `quant_project_reference_for_chatgpt_project_current.md` only when the user explicitly requests that ChatGPT reference refresh. Use `python scripts/refresh_quant_project_context.py --user-requested`; the workflow must not call paid APIs or embed secrets in the repository.
 
 ## Active Step Continuity
 

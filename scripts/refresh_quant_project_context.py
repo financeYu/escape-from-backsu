@@ -121,9 +121,9 @@ def build_context(config: ContextConfig) -> str:
             max_lines=10,
         ),
         "",
-        "## Step-End Context Policy",
+        "## User-Requested Context Policy",
         "",
-        "- Refresh after Step-end validation, review, required fixes, rerun, and commit.",
+        "- Refresh only when the user explicitly requests this ChatGPT reference update.",
         "- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.",
         "",
         "## Route-Only References",
@@ -146,7 +146,20 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Refresh the latest local Quant project context snapshot.")
     parser.add_argument("--project-root", default=".", help="Repository root. Defaults to current directory.")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Root-relative config path.")
+    parser.add_argument(
+        "--user-requested",
+        action="store_true",
+        help="Required confirmation that the user explicitly requested this ChatGPT reference refresh.",
+    )
     args = parser.parse_args(argv)
+
+    if not args.user_requested:
+        print(
+            "Refusing to refresh ChatGPT reference without --user-requested. "
+            "Run only after the user explicitly asks for this reference update.",
+            file=sys.stderr,
+        )
+        return 2
 
     config = load_config(Path(args.project_root), Path(args.config))
     result = refresh_context(config)

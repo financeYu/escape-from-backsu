@@ -72,7 +72,7 @@ python scripts/build_review_packet.py --step "<current step>" --stage "<stage na
 최신 Quant project context snapshot 갱신:
 
 ```powershell
-python scripts/refresh_quant_project_context.py
+python scripts/refresh_quant_project_context.py --user-requested
 ```
 
 이 context refresh workflow는 local-only이며 paid API 호출이나 secret 저장을 하지 않는다.

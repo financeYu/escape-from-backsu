@@ -122,7 +122,7 @@ recommendations, or backtest feedback. It collects:
 - retained branch-local handoff documents for pre-freeze review_mvp, research
   ingestion, GUI extraction, and readiness support work
 - focused validation summary
-- latest local Quant project context snapshot refresh
+- latest local Quant project context snapshot refresh only when explicitly requested by the user
 - remaining risk summary for root/master final merge
 
 ## Required Validation
@@ -139,7 +139,7 @@ recommendations, or backtest feedback. It collects:
 - python scripts/context/check_context_staleness.py
 - python scripts/context/check_context_conflicts.py
 - python scripts/build_review_packet.py --step "Step20-MVP-v0.1-freeze" --stage "master-up-pending"
-- python scripts/refresh_quant_project_context.py
+- python scripts/refresh_quant_project_context.py --user-requested (only when explicitly requested by the user)
 - git diff --check
 
 ## Handoff Notes

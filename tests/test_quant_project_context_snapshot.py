@@ -51,6 +51,10 @@ def test_build_context_respects_max_chars() -> None:
     assert "Context truncated" in text
 
 
+def test_main_requires_explicit_user_requested_flag() -> None:
+    assert module.main([]) == 2
+
+
 def _config(
     root: Path,
     *,

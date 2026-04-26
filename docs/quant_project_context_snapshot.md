@@ -7,11 +7,11 @@ project:
 quant_project_reference_for_chatgpt_project_current.md
 ```
 
-Step-end automation may run this local-only command after validation, review,
-required fixes, rerun, and commit:
+Run this local-only command only when the user explicitly requests a ChatGPT
+reference refresh:
 
 ```powershell
-python scripts/refresh_quant_project_context.py
+python scripts/refresh_quant_project_context.py --user-requested
 ```
 
 The command:

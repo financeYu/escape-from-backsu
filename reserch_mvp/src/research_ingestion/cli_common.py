@@ -15,6 +15,7 @@ from .sources.openalex_adapter import OpenAlexAdapter
 from .sources.semantic_scholar_adapter import SemanticScholarAdapter
 
 
+@dataclass(frozen=True)
 class SourcePageFetch:
     response: Any
     cache_status: str

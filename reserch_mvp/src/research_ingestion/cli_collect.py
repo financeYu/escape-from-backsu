@@ -15,6 +15,7 @@ from .request_cache import RequestCache, request_cache_from_config
 from .cli_common import (
     SourcePageFetch,
     _adapter_for_source,
+    _adapter_total_wait_seconds,
     _elapsed_ms,
     _empty_source_health,
     _missing_key_note,

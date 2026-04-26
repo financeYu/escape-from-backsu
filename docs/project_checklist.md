@@ -151,6 +151,9 @@ Step 18 시작 시 필수로 진행할 항목:
 
 Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 handoff, audit, master integration이 한 워크트리에서 섞이지 않도록 아래 기준을 적용한다.
 
+- 읽기, 조사, 상태 보고, 정책 제안만 수행하고 파일을 편집하지 않는 작업은 새 branch/worktree를 만들지 않는다.
+- 같은 Step, role, scope에 맞는 active branch/worktree가 이미 있으면 `WORKSPACE_MANIFEST.md`를 확인하거나 갱신한 뒤 재사용한다. prompt나 작은 후속 task마다 새 branch를 만들지 않는다.
+- 새 branch/worktree는 역할이 바뀌거나 write scope 또는 risk level이 active manifest 밖으로 확장될 때 만든다.
 - Step implementation은 major Step branch인 `codex/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
 - Quant score/governance/config-policy 지원 작업은 minor/support branch인 `quant/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
 - Research ingestion 또는 EvidenceCard/handoff 작업은 minor/support branch인 `research/stepXX-<scope>` branch와 전용 worktree에서만 진행한다.
@@ -160,6 +163,7 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
 - 리뷰, 차트, 리서치, 문서 지원의 낮은 위험 마이너 패치는 사용자 또는 root/master가 명시적으로 묶어도 된다고 지정한 경우 Step별 단일 minor/support branch인 `minor/stepXX-<scope>` branch와 전용 worktree에서 관리할 수 있다.
 - 단일 minor branch는 `WORKSPACE_MANIFEST.md`에 모든 allowed write path를 명시해야 하며, 런타임 동작, contract/schema, generated-output boundary, roadmap verdict, Level 3 gate-critical risk를 건드리면 역할별 minor branch로 다시 분리한다.
 - 모든 minor/support branch는 병합 완료 후 local/remote branch 삭제 대상이며, 감사나 재현을 위해 보존해야 할 때만 root/master가 보존 사유를 기록한다.
+- Major Step branch인 `codex/stepXX-<scope>`도 Step 작업이 승인된 integration target에 병합되고 branch tip에 의존하는 미해결 handoff가 없으면 local/remote branch 삭제 대상이다. 핵심 브랜치는 `main`, 현재 root/master integration branch, 아직 병합되지 않은 active role branch/worktree, root/master가 보존 사유를 기록한 audit/repro branch로 제한한다.
 - Master workspace는 merge, validation, Cross-Step Conflict Checkpoint, status-control, context refresh에만 사용한다.
 - 모든 하위 에이전트와 non-master worktree는 편집 전 role branch를 먼저 만들거나 선택하고, 루트 `WORKSPACE_MANIFEST.md`를 작성한 뒤 작업한다.
 - Minor/support branch는 final Step status, roadmap verdict, master integration policy를 수정하지 않는다. 필요한 변경은 handoff/TODO/risk note로 master에 올린다.

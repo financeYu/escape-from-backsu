@@ -11,7 +11,7 @@ own local boundaries, tests, generated-output rules, and master-up duties.
 
 ## Confirmed Baseline
 
-- Step 20 is complete and MVP v0.1 is freeze-ready.
+- Step 20 is complete and MVP v0.1 is frozen.
 - MVP v0.1 remains KOSPI200-only and technical-only.
 - This contract changes governance and handoff language only. It does not
   change score formulas, ranking behavior, report behavior, backtest behavior,

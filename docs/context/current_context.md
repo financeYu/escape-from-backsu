@@ -6,8 +6,8 @@ the active `WORKSPACE_MANIFEST.md`, or the user's latest instruction.
 
 ## Confirmed Context Facts
 
-- No roadmap Step is currently in progress after the MVP v0.1 freeze-ready validation.
-- KOSPI200 technical MVP v0.1 is the current freeze-ready baseline.
+- No roadmap Step is currently in progress after the MVP v0.1 freeze validation.
+- KOSPI200 technical MVP v0.1 is the current frozen baseline.
 - Step 20 is complete and should be treated as release/freeze provenance, not
   an active roadmap Step.
 - Completed Step 1-20 outputs are trusted by default unless a conflict, regression, or provenance check requires targeted archive or release evidence review.
@@ -46,7 +46,7 @@ conflict, regression, provenance question, or direct evidence gap.
 - No generated report, backtest, or runtime output feedback into upstream score, ranking, or report construction.
 - No new quant logic, scoring formulas, ranking semantics, report semantics,
   backtest semantics, valuation logic, or data ingestion outside a separately
-  approved post-MVP Step.
+  approved post-MVP Step/version.
 
 ## Fresh Reasoning Requirement
 

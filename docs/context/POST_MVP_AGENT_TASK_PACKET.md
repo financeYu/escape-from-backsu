@@ -1,7 +1,7 @@
 # Post-MVP Agent Task Packet
 
 This sidecar defines the compact task format for subproject workers after the
-Step 20 MVP v0.1 freeze-ready baseline. It is a routing aid and does not
+frozen Step 20 MVP v0.1 baseline. It is a routing aid and does not
 override `AGENTS.md`, `docs/project_checklist.md`, `docs/roadmap_status.md`, or
 the user's latest explicit instruction.
 
@@ -11,10 +11,10 @@ Use this packet when root/master delegates post-MVP work to `Quant_mvp`,
 ## Packet Template
 
 ```text
-You are working after Step 20 completion for MVP v0.1 freeze.
+You are working after the MVP v0.1 freeze.
 
 Confirmed facts, max 3:
-1. Step 20 is complete and MVP v0.1 is freeze-ready.
+1. Step 20 is complete and MVP v0.1 is frozen.
 2. The MVP v0.1 baseline is KOSPI200-only and technical-only.
 3. Completed Step 1-20 history and old roadmap are archive-only.
 

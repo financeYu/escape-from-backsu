@@ -13,6 +13,7 @@ canonical_contracts = [
 release_evidence = [
   "docs/releases/mvp_kospi200_baseline_manifest.md",
   "docs/releases/step20_mvp_final_report.md",
+  "docs/releases/mvp_v0_1_freeze_record.md",
 ]
 
 [guardrails]

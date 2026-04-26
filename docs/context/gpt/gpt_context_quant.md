@@ -4,7 +4,7 @@ Status: GPT submission brief / routing aid, not an authority document.
 
 ## Confirmed Context
 
-- Step 20 is complete; KOSPI200 technical MVP v0.1 is freeze-ready but not yet frozen.
+- Step 20 is complete; KOSPI200 technical MVP v0.1 is frozen.
 - The baseline is KOSPI200-only and technical-only.
 - Completed Step 1-20 history, full validation logs, and full score catalog material are archive-only.
 
@@ -46,7 +46,7 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 You are working in `master_mvp`.
 Use the current baseline as trusted context.
 Confirmed facts, max 3:
-1. Step 20 is complete and MVP v0.1 is freeze-ready.
+1. Step 20 is complete and MVP v0.1 is frozen.
 2. The baseline is KOSPI200-only and technical-only.
 3. Completed Step 1-20 history is archive-only.
 

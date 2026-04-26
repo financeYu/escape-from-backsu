@@ -17,10 +17,11 @@ evidence questions.
 
 ## Current Baseline
 
-- Step 20 is complete; KOSPI200 technical MVP v0.1 is freeze-ready.
+- Step 20 is complete; KOSPI200 technical MVP v0.1 is frozen.
 - No roadmap Step is currently active.
-- Expansion needs an approved post-MVP Step, routed packet, correct
-  branch/worktree, and conflict checkpoint.
+- Any post-freeze change to scoring, ranking, report, backtest, valuation,
+  ingestion, or universe behavior needs a separately versioned post-MVP Step,
+  routed packet, correct branch/worktree, and conflict checkpoint.
 
 ## Forbidden Scope Without Explicit Approval
 

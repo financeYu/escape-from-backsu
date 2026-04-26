@@ -5,9 +5,10 @@ not an authority document.
 
 ## Current Version
 
-- Version: KOSPI200 technical MVP v0.1 pre-freeze baseline.
-- Status: Step 20 COMPLETE; MVP v0.1 is freeze-ready but not yet frozen.
-- Git baseline: `81bf8d4` at Step 20.5 start; refresh after final freeze commit.
+- Version: KOSPI200 technical MVP v0.1 frozen baseline.
+- Status: Step 20 COMPLETE; MVP v0.1 is frozen.
+- Git baseline: `f7c3734` before the freeze-record commit.
+- Freeze record: `docs/releases/mvp_v0_1_freeze_record.md`.
 
 ## Authority Order
 
@@ -41,6 +42,8 @@ not an authority document.
 - Backtest: evaluation-only; results must not feed upstream scoring or ranking.
 - Reports: explanatory technical context only.
 - Generated outputs, caches, charts, and local reports are not default context.
+- Future changes are managed as separately approved post-MVP versions/Steps, not
+  as modifications to MVP v0.1.
 
 ## Out Of Scope
 
@@ -61,6 +64,7 @@ not an authority document.
 ## Targeted Lookup
 
 - Release evidence: `docs/releases/`.
+- Freeze record: `docs/releases/mvp_v0_1_freeze_record.md`.
 - Contracts: `docs/contracts/step20_composite_contract.md`,
   `docs/contracts/step20_ranking_contract.md`.
 - Archive/provenance: on-demand only.

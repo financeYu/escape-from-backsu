@@ -1,7 +1,7 @@
 # MVP v0.1 Quickstart
 
-This guide is a compact release aid for the KOSPI200 technical MVP v0.1
-pre-freeze baseline.
+This guide is a compact release aid for the frozen KOSPI200 technical MVP v0.1
+baseline.
 
 ## What It Does
 

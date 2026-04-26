@@ -15,7 +15,7 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 | 항목 | 상태 |
 | --- | --- |
 | 현재 단계 | active roadmap Step 없음 |
-| 기준선 | KOSPI200 technical MVP v0.1 freeze-ready |
+| 기준선 | KOSPI200 technical MVP v0.1 frozen |
 | Step 20 | COMPLETE |
 | 밸류에이션 상태 | `candidate_only_not_activated` |
 | 금융 데이터 사용 | technical/final composite 입력 금지 |
@@ -112,6 +112,6 @@ Windows PowerShell에서 한글 출력이 깨지면 프로젝트 루트에서 �
 
 현재 저장소에는 legacy/background artifact가 일부 남아 있습니다. 예를 들어 `outputs/latest_top*`와 `data/scan_results/*`는 과거 산출물이며, 현재 Step에서 새로 만든 랭킹이 아닙니다.
 
-현재 활성 roadmap Step은 없습니다. 새 구현, 확장, scoring/ranking/report/
-backtest/valuation/data-ingestion 변경은 별도 승인된 post-MVP Step과 routed
-context packet이 필요합니다.
+현재 활성 roadmap Step은 없습니다. MVP v0.1은 frozen baseline이며, 새 구현,
+확장, scoring/ranking/report/backtest/valuation/data-ingestion 변경은 별도
+승인된 post-MVP 버전/Step과 routed context packet이 필요합니다.

@@ -73,7 +73,7 @@ results unless the task names an allowed archive lookup reason.
 
 ## Step20+ Boundary
 
-Step 20 is complete and the KOSPI200 technical MVP v0.1 is freeze-ready. Future
+Step 20 is complete and the KOSPI200 technical MVP v0.1 is frozen. Future
 work must treat Step 20 release evidence as completed provenance unless the user
 explicitly asks for a regression, conflict, or post-MVP expansion review.
 

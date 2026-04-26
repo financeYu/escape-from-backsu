@@ -244,7 +244,7 @@ Step 20 완료 기준:
 
 - Step 1-20 = COMPLETE 또는 완료 상태로 신뢰한다.
 - 현재 활성 roadmap Step은 없다.
-- KOSPI200 technical MVP v0.1은 Step 20 이후 freeze-ready baseline이다.
+- KOSPI200 technical MVP v0.1은 Step 20 이후 frozen baseline이다.
 - 최신 compact baseline은 `docs/context/MVP_V0_1_BASELINE.md`를 기본으로 사용한다.
 - 완료 Step 상세 구현/검증 이력은 기본 컨텍스트가 아니며 `docs/context/archive/`와 `docs/roadmap_archive/`에서 필요한 경우에만 확인한다.
 - Research ingestion 확장 상태는 `docs/research_ingestion_expansion.md`와 affected research config를 targeted read한다.

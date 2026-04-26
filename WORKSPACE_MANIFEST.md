@@ -1,32 +1,23 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: master_up_post20_pending
+workspace_id: mvp_v0_1_freeze
 branch: main
 role: root-master-integration
-task_type: master_up_integration_preparation
-active_step: Step 20 COMPLETE / MVP v0.1 pre-freeze hardening and readiness merge
+task_type: release_freeze_status_control
+active_step: MVP v0.1 frozen baseline / no active roadmap Step
 owner_or_worker: root master agent
-created_from_commit: f6f51e9eaa15562899611124646859031cc0533e
+created_from_commit: f7c3734
 
 ## Purpose
 
-Prepare Step 20 closure and MVP v0.1 freeze-support branches for root/master
-review by integrating their commits into one conflict-resolved master-up branch.
+Record the MVP v0.1 freeze decision from the root/master integration workspace.
+This is release/status-control work only. It preserves the Step 20 KOSPI200
+technical-only baseline as frozen and routes any future semantic change to a
+separately approved post-MVP version/Step.
 
-This branch preserves the Step 20 final baseline and records work that belongs
-to MVP v0.1 freeze preparation. It must not be treated as Step 21 entry. It
-does not activate new markets, valuation scoring, new data ingestion, trading
-recommendations, or backtest feedback. It collects:
-
-1. runtime and validation optimizations needed before MVP v0.1 freeze
-2. pre-freeze config, release, and local market-data readiness notes
-3. review_mvp worktree-exclusion and modification-boundary repair
-4. research ingestion operations optimization handoff
-5. local Review Gate and on-demand review skill routing docs
-6. pre-freeze GUI extraction into `gui_mvp`
-7. approved MVP v0.1 pre-freeze readiness policy and symbol-contract refactors
-8. research-informed Quant candidate-governance notes and inactive config
-   metadata
+This task must not be treated as Step 21 entry. It does not activate new
+markets, valuation scoring, new data ingestion, trading recommendations, or
+backtest feedback.
 
 ## Allowed Write Paths
 
@@ -51,11 +42,15 @@ recommendations, or backtest feedback. It collects:
 - chart_mvp/tests/
 - config/
 - docs/config_policy.md
+- docs/contracts/quant_umbrella_handoff_contract.md
 - docs/context/
 - docs/development_environment.md
 - docs/extension/
 - docs/release/
 - docs/releases/
+- docs/roadmap_status.md
+- docs/root_hard_stops.md
+- docs/project_checklist.md
 - docs/review_mvp_policy.md
 - gui_mvp/
 - quant_project_reference_for_chatgpt_project_current.md
@@ -91,8 +86,6 @@ recommendations, or backtest feedback. It collects:
 
 ## Read-Only Paths
 
-- docs/project_checklist.md
-- docs/roadmap_status.md
 - completed Step artifacts except targeted handoff, context, config, and
   validation references needed by the collected support branches
 - generated market caches
@@ -117,10 +110,9 @@ recommendations, or backtest feedback. It collects:
 
 ## Expected Handoff Output
 
-- one conflict-resolved master-up integration branch for Step 20 closure and
-  MVP v0.1 freeze preparation
-- retained branch-local handoff documents for pre-freeze review_mvp, research
-  ingestion, GUI extraction, and readiness support work
+- source-controlled MVP v0.1 freeze record
+- compact context and status docs updated from freeze-ready to frozen
+- future work routed to separately approved post-MVP versions/Steps
 - focused validation summary
 - latest local Quant project context snapshot refresh only when explicitly requested by the user
 - remaining risk summary for root/master final merge
@@ -144,7 +136,6 @@ recommendations, or backtest feedback. It collects:
 
 ## Handoff Notes
 
-This branch is intended as a master-up integration branch for Step 20 closure
-and MVP v0.1 freeze preparation. Root/master may inspect focused handoff
-documents first and avoid repeating completed Step 1-20 history unless
-validation or conflict checks point to a specific risk.
+This workspace records the root/master MVP v0.1 freeze decision. Root/master
+may inspect focused freeze evidence first and avoid repeating completed Step
+1-20 history unless validation or conflict checks point to a specific risk.

@@ -13,7 +13,7 @@ waste, clear baseline trust, and no repetitive reuse of old Step summaries.
 ## Current Baseline Rule
 
 - Step 20 is complete.
-- KOSPI200 technical MVP v0.1 is freeze-ready but not yet frozen.
+- KOSPI200 technical MVP v0.1 is frozen.
 - GPT-facing context must treat Step 1-20 as trusted baseline.
 - Completed Step 1-20 history is archive-only.
 - GPT-facing context must not repeat completed Step history by default.
@@ -65,7 +65,7 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 
 Compress baseline context to the smallest useful set. Prefer:
 
-- Step 20 complete; MVP v0.1 is freeze-ready but not yet frozen.
+- Step 20 complete; MVP v0.1 is frozen.
 - KOSPI200 v0.1 is technical-only.
 - Valuation/fundamental, KOSDAQ150, futures/options, Nasdaq, and trading
   recommendation work remain outside the current baseline unless a later routed

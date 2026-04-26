@@ -4,7 +4,7 @@ Status: sample only / routing aid, not an authority document.
 
 ## Confirmed Context
 
-- Step 20 is complete; KOSPI200 technical MVP v0.1 is freeze-ready but not yet frozen.
+- Step 20 is complete; KOSPI200 technical MVP v0.1 is frozen.
 - MVP v0.1 is KOSPI200-only and technical-only.
 - Valuation/fundamental scoring, KOSDAQ150, futures/options, Nasdaq, and trading recommendation work remain outside the baseline unless a later routed task opens them.
 

@@ -5,10 +5,12 @@
 ## 현재 로드맵 상태
 
 No active roadmap Step is in progress. Step 20 is complete, and the KOSPI200
-technical MVP v0.1 baseline is freeze-ready.
+technical MVP v0.1 baseline is frozen.
 
-- Current baseline: Step 20 completed KOSPI200 MVP completeness hardening and final Done validation.
-- Current gate: future expansion needs a separately approved post-MVP Step, routed context packet, correct role branch/worktree, and conflict checkpoint when required.
+- Current baseline: MVP v0.1 frozen KOSPI200 technical-only scanner baseline.
+- Current gate: future expansion or semantic changes need a separately approved
+  post-MVP version/Step, routed context packet, correct role branch/worktree,
+  and conflict checkpoint when required.
 
 ## 컨텍스트 운영 상태
 
@@ -61,6 +63,8 @@ technical MVP v0.1 baseline is freeze-ready.
 - Valuation/fundamental data는 candidate-only이며 technical/final composite에 들어가지 않는다.
 - Backtest output은 evaluation-only이며 upstream scoring/ranking에 feedback하지 않는다.
 - Generated reports, runtime outputs, chart images, local caches, raw market data는 default context가 아니다.
+- MVP v0.1 frozen baseline 변경은 금지한다. 이후 변경은 `v0.2+` 또는 별도
+  post-MVP 버전/Step으로 관리한다.
 
 ## Research Ingestion 상태
 

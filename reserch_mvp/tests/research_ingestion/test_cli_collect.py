@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
 from argparse import Namespace
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -43,7 +46,41 @@ def test_collect_dry_run_reports_guardrails(capsys, monkeypatch):
     openalex_plan = next(source for source in payload["planned_sources"] if source["source"] == "openalex")
     assert "실행할 수 없습니다" in openalex_plan["missing_key_note_ko"]
     assert payload["relevance_defaults"]["reject_on_exclude_keyword"] is True
+    assert payload["request_budget"]["source_count"] == 2
+    assert payload["request_budget"]["worst_case_request_count"] == 8
+    assert payload["request_budget"]["request_cache_enabled"] is True
     assert "Google Scholar live request는 수행하지 않습니다." in payload["guardrails_ko"]
+
+
+def test_source_tree_module_cli_runs_without_pythonpath():
+    root = Path(__file__).resolve().parents[2]
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "research_ingestion",
+            "collect",
+            "--dry-run",
+            "--sources",
+            "openalex",
+            "--query-set",
+            "technical_momentum",
+            "--run-id",
+            "source_tree_cli",
+            "--max-results",
+            "1",
+        ],
+        cwd=root,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert '"run_id": "source_tree_cli"' in result.stdout
 
 
 def test_offline_collect_writes_empty_artifacts(monkeypatch):

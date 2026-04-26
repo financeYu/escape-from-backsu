@@ -23,7 +23,9 @@ class PaperDedupeIndex:
             getattr(self, key)[value] = index
         bucket = _fuzzy_bucket(paper)
         if bucket is not None:
-            self.title_buckets.setdefault(bucket, []).append(index)
+            indexes = self.title_buckets.setdefault(bucket, [])
+            if index not in indexes:
+                indexes.append(index)
 
     def rebuild(self, papers: list[dict[str, Any]]) -> None:
         self.doi.clear()
@@ -58,7 +60,7 @@ def deduplicate_papers(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
             index.add(len(merged) - 1, merged[-1])
         else:
             merged[match_index] = merge_papers(merged[match_index], paper)
-            index.rebuild(merged)
+            index.add(match_index, merged[match_index])
     for paper in merged:
         validate_normalized_paper(paper)
     return merged

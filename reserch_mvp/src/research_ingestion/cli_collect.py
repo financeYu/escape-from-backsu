@@ -459,6 +459,13 @@ def _collection_plan(
         "refresh_cadence_days": query_set.get("refresh_cadence_days"),
         "precision_mode": query_set.get("precision_mode"),
         "notes": query_set.get("notes"),
+        "request_budget": estimate_collection_request_budget(
+            args=args,
+            config=config,
+            sources=sources,
+            query_set=query_set,
+            adapter_registry=adapter_registry,
+        ),
         "exclude_keywords": query_set.get("exclude_keywords", []),
         "required_keyword_groups": query_set.get("required_keyword_groups", []),
         "relevance_defaults": config.get("queries", {}).get("relevance_defaults", {}),
@@ -478,6 +485,54 @@ def _collection_plan(
             "Google Scholar live request는 수행하지 않습니다.",
             "EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
             "backtest, adoption decision, valuation scoring은 수행하지 않습니다.",
+        ],
+    }
+
+
+def estimate_collection_request_budget(
+    *,
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    sources: list[str],
+    query_set: dict[str, Any],
+    adapter_registry: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    source_budgets = []
+    for source in sources:
+        adapter = _adapter_for_source(source, config, adapter_registry=adapter_registry)
+        source_limit = _source_max_results(args, query_set, source, adapter)
+        page_size = _source_page_size(args, query_set, source, adapter)
+        queries = _queries_for_source(query_set, source)
+        pages_per_query_cap = _ceil_div(source_limit, page_size) if source_limit else 0
+        full_page_request_count = pages_per_query_cap
+        worst_case_request_count = pages_per_query_cap * len(queries)
+        min_interval = float(getattr(adapter, "config", {}).get("min_interval_seconds", 0.0) or 0.0)
+        source_budgets.append(
+            {
+                "source": source,
+                "query_count": len(queries),
+                "max_results": source_limit,
+                "page_size": page_size,
+                "full_page_request_count": full_page_request_count,
+                "worst_case_request_count": worst_case_request_count,
+                "min_interval_seconds": min_interval,
+                "estimated_min_rate_limit_wait_seconds": round(max(0, worst_case_request_count - 1) * min_interval, 3),
+            }
+        )
+    return {
+        "source_count": len(sources),
+        "full_page_request_count": sum(item["full_page_request_count"] for item in source_budgets),
+        "worst_case_request_count": sum(item["worst_case_request_count"] for item in source_budgets),
+        "estimated_min_rate_limit_wait_seconds": round(
+            sum(item["estimated_min_rate_limit_wait_seconds"] for item in source_budgets),
+            3,
+        ),
+        "request_cache_enabled": bool(config.get("policy", {}).get("request_cache", {}).get("enabled", False)),
+        "sources": source_budgets,
+        "notes_ko": [
+            "full_page_request_count는 첫 query가 page를 충분히 채우는 경우의 최소 상한입니다.",
+            "worst_case_request_count는 query별 page cap을 합산한 보수적 상한입니다.",
+            "실제 요청 수는 source 응답 건수, cache hit, early stop에 따라 더 작을 수 있습니다.",
         ],
     }
 
@@ -504,6 +559,12 @@ def _request_cache_plan(config: dict[str, Any], query_set: dict[str, Any]) -> di
         "ttl_days": int(query_set.get("refresh_cadence_days") or cache_policy.get("default_ttl_days") or _refresh_policy(config).get("interval_days") or 14),
         "cache_key_fields": ["source", "query", "page_size", "offset", "page_number", "policy_version"],
     }
+
+
+def _ceil_div(value: int, divisor: int) -> int:
+    if divisor <= 0:
+        return 0
+    return (value + divisor - 1) // divisor
 
 
 def _source_max_results(args: argparse.Namespace, query_set: dict[str, Any], source: str, adapter: Any) -> int:

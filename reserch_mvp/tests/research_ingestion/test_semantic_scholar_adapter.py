@@ -56,3 +56,21 @@ def test_semantic_scholar_fetch_uses_configured_rate_limiter(monkeypatch):
     adapter.fetch_search_response("momentum", limit=1)
 
     assert calls == ["wait", "fetch", "mark"]
+
+
+def test_semantic_scholar_batch_fetch_uses_post_and_rate_limiter(monkeypatch):
+    adapter = SemanticScholarAdapter({"fields": ["paperId", "title"], "min_interval_seconds": 1.0, "max_concurrency": 1})
+    calls: list[str] = []
+
+    def fake_post_json_with_retries(**kwargs):
+        calls.append("post")
+        assert kwargs["payload"] == {"ids": ["S2-1", "DOI:10.1000/example"], "fields": "paperId,title"}
+        return SourceResponse(url=kwargs["url"], body="[]", status=200, headers={}, retry_count=0)
+
+    monkeypatch.setattr(adapter._rate_limiter, "wait_before_request", lambda: calls.append("wait"))
+    monkeypatch.setattr(adapter._rate_limiter, "mark_request_complete", lambda: calls.append("mark"))
+    monkeypatch.setattr("research_ingestion.sources.semantic_scholar_adapter.post_json_with_retries", fake_post_json_with_retries)
+
+    adapter.fetch_batch_response(["S2-1", "DOI:10.1000/example"])
+
+    assert calls == ["wait", "post", "mark"]

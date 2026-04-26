@@ -33,6 +33,9 @@ def test_refresh_dry_run_uses_policy_defaults(capsys):
     assert "technical_momentum" in payload["selected_query_sets"]
     assert payload["selected_sources"] == ["openalex"]
     assert payload["refresh_policy"]["interval_days"] == 14
+    assert payload["request_budget"]["query_set_count"] == 6
+    assert payload["request_budget"]["worst_case_request_count"] >= 6
+    assert payload["request_budget"]["request_cache_enabled"] is True
     assert "Google Scholar live request는 수행하지 않습니다." in payload["guardrails_ko"]
 
 

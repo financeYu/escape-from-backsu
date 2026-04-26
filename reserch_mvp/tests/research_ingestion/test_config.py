@@ -64,6 +64,31 @@ def test_expanded_query_sets_have_routing_metadata():
     assert "hybrid_technical_valuation_split" not in config["policy"]["refresh_policy"]["default_query_sets"]
 
 
+def test_core_query_sets_have_routing_metadata_for_handoff():
+    config = load_research_config(Path(__file__).resolve().parents[2])
+    expected_routes = {
+        "technical_momentum": ("technical", "technical_score_architect"),
+        "technical_mean_reversion": ("technical", "technical_score_architect"),
+        "technical_breakout": ("technical", "technical_score_architect"),
+        "technical_volatility_liquidity": ("technical", "technical_score_architect"),
+        "methodology_diagnostics": ("diagnostic", "diagnostic_backlog"),
+        "backtest_methodology": ("diagnostic", "diagnostic_backlog"),
+        "fundamental_valuation": ("valuation", "valuation_agent_handoff"),
+        "korea_kospi_context": ("technical", "technical_score_architect"),
+    }
+
+    for query_set_name, (branch, route) in expected_routes.items():
+        query_set = get_query_set(config, query_set_name)
+        assert query_set["branch_hint"] == branch
+        assert query_set["downstream_route"] == route
+        assert query_set["allowed_sources"]
+        assert query_set["region_scope"]
+        assert query_set["required_input_policy"]
+        assert query_set["refresh_cadence_days"] >= 14
+        assert query_set["precision_mode"]
+        assert query_set["notes"]
+
+
 def test_refresh_profiles_split_operational_modes_and_keep_valuation_opt_in():
     config = load_research_config(Path(__file__).resolve().parents[2])
     profiles = config["policy"]["refresh_profiles"]

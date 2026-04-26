@@ -5,7 +5,7 @@ from urllib.parse import quote, urlencode
 
 from ..normalize import make_normalized_paper, normalize_arxiv_id, normalize_doi
 from ..redaction import redact_mapping
-from .http import SourceRateLimiter, SourceResponse, fetch_text_with_retries
+from .http import SourceRateLimiter, SourceResponse, fetch_text_with_retries, post_json_with_retries
 
 
 class SemanticScholarAdapter:
@@ -88,12 +88,34 @@ class SemanticScholarAdapter:
     def fetch_paper(self, paper_id_or_external_id: str) -> str:
         return self.fetch_paper_response(paper_id_or_external_id).body
 
+    def fetch_batch_response(self, paper_ids_or_external_ids: list[str]) -> SourceResponse:
+        url = self.batch_base_url
+        self._rate_limiter.wait_before_request()
+        try:
+            return post_json_with_retries(
+                url=url,
+                headers=self.request_headers(),
+                payload=self.build_batch_payload(paper_ids_or_external_ids),
+                timeout_seconds=float(self.config.get("timeout_seconds", 20)),
+                max_retries=int(self.config.get("max_retries", 0)),
+                retry_backoff_seconds=float(self.config.get("retry_backoff_seconds", 1.0)),
+            )
+        finally:
+            self._rate_limiter.mark_request_complete()
+
     def parse_search_json(self, payload: dict[str, Any], raw_snapshot_ref: str | None = None) -> list[dict[str, Any]]:
         papers = payload if isinstance(payload, list) else payload.get("data", [])
         return [parse_semantic_scholar_paper(item, raw_snapshot_ref=raw_snapshot_ref) for item in papers]
 
     def parse_paper_json(self, payload: dict[str, Any], raw_snapshot_ref: str | None = None) -> dict[str, Any]:
         return parse_semantic_scholar_paper(payload, raw_snapshot_ref=raw_snapshot_ref)
+
+    def parse_batch_json(self, payload: list[Any], raw_snapshot_ref: str | None = None) -> list[dict[str, Any]]:
+        return [
+            parse_semantic_scholar_paper(item, raw_snapshot_ref=raw_snapshot_ref)
+            for item in payload
+            if isinstance(item, dict) and item.get("title")
+        ]
 
 
 def parse_semantic_scholar_paper(item: dict[str, Any], raw_snapshot_ref: str | None = None) -> dict[str, Any]:

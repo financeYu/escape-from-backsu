@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from email.utils import parsedate_to_datetime
+import json
 import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
@@ -115,6 +116,69 @@ def fetch_text_with_retries(
     raise RuntimeError("source request failed without a response")
 
 
+def post_json_with_retries(
+    *,
+    url: str,
+    headers: dict[str, str],
+    payload: dict[str, object],
+    timeout_seconds: float,
+    max_retries: int = 0,
+    retry_backoff_seconds: float = 1.0,
+    retry_statuses: set[int] | None = None,
+) -> SourceResponse:
+    assert_no_scholar_request(url)
+    retryable = retry_statuses or {429, 500, 502, 503, 504}
+    attempts = max(0, int(max_retries)) + 1
+    body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    request_headers = {"Content-Type": "application/json", **headers}
+    if requests is not None:
+        return _post_with_requests(
+            url=url,
+            headers=request_headers,
+            payload=payload,
+            timeout_seconds=timeout_seconds,
+            attempts=attempts,
+            retryable=retryable,
+            retry_backoff_seconds=retry_backoff_seconds,
+        )
+    last_error: URLError | None = None
+
+    for attempt in range(attempts):
+        request = Request(url, headers=request_headers, data=body, method="POST")
+        try:
+            with urlopen(request, timeout=timeout_seconds) as response:
+                raw = response.read()
+                return SourceResponse(
+                    url=url,
+                    body=raw.decode("utf-8", errors="replace"),
+                    status=getattr(response, "status", None) or response.getcode(),
+                    headers={key: value for key, value in response.headers.items()},
+                    retry_count=attempt,
+                )
+        except HTTPError as exc:
+            raw = exc.read()
+            if exc.code in retryable and attempt < attempts - 1:
+                _sleep_before_retry(retry_backoff_seconds, attempt, exc.headers.get("Retry-After"))
+                continue
+            return SourceResponse(
+                url=url,
+                body=raw.decode("utf-8", errors="replace"),
+                status=exc.code,
+                headers={key: value for key, value in exc.headers.items()},
+                retry_count=attempt,
+            )
+        except URLError as exc:
+            last_error = exc
+            if attempt < attempts - 1:
+                _sleep_before_retry(retry_backoff_seconds, attempt)
+                continue
+            raise
+
+    if last_error:
+        raise last_error
+    raise RuntimeError("source POST request failed without a response")
+
+
 def _fetch_with_requests(
     *,
     url: str,
@@ -147,6 +211,41 @@ def _fetch_with_requests(
     if last_error:
         raise last_error
     raise RuntimeError("source request failed without a response")
+
+
+def _post_with_requests(
+    *,
+    url: str,
+    headers: dict[str, str],
+    payload: dict[str, object],
+    timeout_seconds: float,
+    attempts: int,
+    retryable: set[int],
+    retry_backoff_seconds: float,
+) -> SourceResponse:
+    last_error: Exception | None = None
+    for attempt in range(attempts):
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=timeout_seconds)  # type: ignore[union-attr]
+            if response.status_code in retryable and attempt < attempts - 1:
+                _sleep_before_retry(retry_backoff_seconds, attempt, response.headers.get("Retry-After"))
+                continue
+            return SourceResponse(
+                url=url,
+                body=response.text,
+                status=response.status_code,
+                headers={key: value for key, value in response.headers.items()},
+                retry_count=attempt,
+            )
+        except requests.RequestException as exc:  # type: ignore[union-attr]
+            last_error = exc
+            if attempt < attempts - 1:
+                _sleep_before_retry(retry_backoff_seconds, attempt)
+                continue
+            raise
+    if last_error:
+        raise last_error
+    raise RuntimeError("source POST request failed without a response")
 
 
 def _sleep_before_retry(backoff_seconds: float, attempt: int, retry_after: str | None = None) -> None:

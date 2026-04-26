@@ -1,0 +1,26 @@
+# Route-only registry for post-MVP extension ideas.
+# Entries here do not authorize implementation.
+
+status = "routing_only"
+baseline = "docs/context/MVP_V0_1_BASELINE.md"
+archive_index = "docs/context/ARCHIVE_INDEX.md"
+
+[extension.kosdaq150]
+state = "not_implemented"
+permission = "requires separately approved post-MVP step"
+context = "docs/context/domain/future_multi_universe_context.md"
+
+[extension.futures_options]
+state = "not_implemented"
+permission = "requires separately approved post-MVP step"
+context = "docs/context/domain/future_derivatives_context.md"
+
+[extension.nasdaq_or_overseas]
+state = "not_implemented"
+permission = "requires separately approved post-MVP step"
+context = "docs/context/domain/future_multi_universe_context.md"
+
+[extension.valuation_fundamental_scoring]
+state = "candidate_only_not_activated"
+permission = "requires separately approved post-MVP step and point-in-time availability proof"
+context = "docs/context/domain/valuation_context.md"

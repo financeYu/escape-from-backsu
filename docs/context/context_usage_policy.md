@@ -16,7 +16,8 @@ limited to:
 
 Completed Step 1-20 outputs are trusted by default. Archive files and old Step
 detail documents may be read only for conflict, regression, provenance, or
-release-evidence checks, and then only through the narrowest relevant file.
+release-evidence checks. Start with `docs/context/ARCHIVE_INDEX.md`, then open
+only the narrowest relevant listed file.
 
 Answers and handoffs must not repeat completed Step history. State no more than
 three confirmed context facts before focusing on current judgment, changes,
@@ -72,6 +73,7 @@ these conditions is present:
 - a missing evidence item that cannot be resolved from default-read files
 
 When archive read is used, name the reason and read the narrowest archive file.
+Do not open old Step plans directly from search results as active context.
 
 ## Step History Compression
 

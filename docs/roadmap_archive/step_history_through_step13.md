@@ -1,6 +1,11 @@
 # 로드맵 상태
 
-## 현재 활성 단계
+> Archive-only notice:
+> This document is historical material from pre-freeze planning.
+> It is not an active roadmap, checklist, or implementation instruction.
+> Use `docs/context/ARCHIVE_INDEX.md` to determine whether this file should be consulted.
+
+## Historical Active Stage At Archive Time
 
 Step 14 = Adoption Synthesis, NEXT / not started
 Recently completed: Step 13 = Technical Selection Reviewer, COMPLETE

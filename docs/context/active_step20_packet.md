@@ -1,4 +1,9 @@
-# Active Step 20 Context Packet
+# Historical Step 20 Context Packet
+
+> Archive-only notice:
+> This packet records Step 20 final-validation routing after completion.
+> It is not an active roadmap Step packet and is not default context.
+> Use `docs/context/ARCHIVE_INDEX.md` before consulting it.
 
 This packet is a routing aid, not an authority document. It does not override
 `AGENTS.md`, `docs/project_checklist.md`, `docs/roadmap_status.md`, the active

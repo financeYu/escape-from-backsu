@@ -144,6 +144,9 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 
 ## Route-Only References
 - `docs/context/MVP_V0_1_BASELINE.md`
+- `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`
+- `docs/context/EXTENSION_REGISTRY.toml`
+- `docs/context/CHANGE_IMPACT_MATRIX.yml`
 - task-specific paths only
 ```
 

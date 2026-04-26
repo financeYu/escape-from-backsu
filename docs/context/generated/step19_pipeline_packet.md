@@ -1,5 +1,9 @@
 # Context Packet
 
+> Archive-only notice:
+> This generated packet is historical and must not be used as active context.
+> Start from `docs/context/ARCHIVE_INDEX.md` before consulting old packets.
+
 Generated at: 2026-04-26T11:42:08+09:00
 
 ## Authority Warning
@@ -10,7 +14,7 @@ Generated context packets are routing aids, not authority documents. They do not
 
 - task: `step19_pipeline`
 - step: Step 19
-- stage: readiness / not started
+- stage: historical readiness / not started at packet generation time
 
 ## Required Context Files
 

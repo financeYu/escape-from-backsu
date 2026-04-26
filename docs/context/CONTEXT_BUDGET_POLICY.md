@@ -9,9 +9,11 @@ history.
 Default prompt context after Step 20 consists of:
 
 1. `docs/context/MVP_V0_1_BASELINE.md`
-2. exactly one active packet, currently
-   `docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`
-3. optional routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
+2. `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`
+3. `docs/context/EXTENSION_REGISTRY.toml`
+4. `docs/context/CHANGE_IMPACT_MATRIX.yml`
+5. exactly one active packet, task-specific, when a task needs one
+6. optional routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
 
 Authority files still govern through `AGENTS.md`, `docs/project_checklist.md`,
 and `docs/roadmap_status.md`; default packets should link to them rather than
@@ -35,6 +37,7 @@ check, and then read the narrowest file needed.
 ## Archive-Only Context
 
 - Completed Step 1-20 history is archive-only.
+- Archive lookup starts from `docs/context/ARCHIVE_INDEX.md`.
 - Full validation logs are archive-only.
 - Score catalog dumps are not default context.
 - Old generated packets, review packets, runtime reports, chart images, market

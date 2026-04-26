@@ -7,8 +7,10 @@ direct conflict, missing contract, or unclear boundary is found.
 ## Default Prompt Context
 
 - `docs/context/MVP_V0_1_BASELINE.md`
-- exactly one active packet, currently
-  `docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`
+- `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`
+- `docs/context/EXTENSION_REGISTRY.toml`
+- `docs/context/CHANGE_IMPACT_MATRIX.yml`
+- exactly one task-specific active packet when a task needs one
 - optional routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
 
 Authority files named in `AGENTS.md` still govern, but they should be linked
@@ -43,9 +45,10 @@ three confirmed context facts before moving to new reasoning.
 
 ## Archive / History Context
 
-- Compact completed Step 1-19 summary: `docs/context/archive/step01_to_step19_summary.md`
-- Compact completed Step 1-20 history: `docs/context/archive/step01_to_step20_history.md`
-- Older completed Step history: `docs/roadmap_archive/`
+- Start at `docs/context/ARCHIVE_INDEX.md`.
+- Open old Step, roadmap, checklist, validation, release, generated review, or
+  context packet files only when the archive index and the current task justify
+  the lookup.
 - Old review packets: do not read or change by default.
 - Obsolete generated snapshots: do not embed in context packets.
 

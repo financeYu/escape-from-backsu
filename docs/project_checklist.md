@@ -1,5 +1,12 @@
 # 퀀트 프로젝트 체크리스트
 
+> Post-MVP notice:
+> The Step roadmap/checklist body in this document is historical pre-freeze
+> planning after the MVP v0.1 baseline.
+> It is not the active post-MVP roadmap or implementation instruction.
+> Use `docs/roadmap_status.md`, `docs/context/MVP_V0_1_BASELINE.md`, and
+> `docs/context/ARCHIVE_INDEX.md` for current routing and archive lookup.
+
 ## 1. 프로젝트 목표
 
 KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통계적 멀티 스코어 랭킹 엔진을 만든다.

@@ -6,8 +6,10 @@ the active `WORKSPACE_MANIFEST.md`, or the user's latest instruction.
 
 ## Confirmed Context Facts
 
-- Step 20 = COMPLETE / KOSPI200 MVP Completeness Hardening & Final Done Validation.
 - No roadmap Step is currently in progress after the MVP v0.1 freeze-ready validation.
+- KOSPI200 technical MVP v0.1 is the current freeze-ready baseline.
+- Step 20 is complete and should be treated as release/freeze provenance, not
+  an active roadmap Step.
 - Completed Step 1-20 outputs are trusted by default unless a conflict, regression, or provenance check requires targeted archive or release evidence review.
 
 Ordinary planning answers should repeat no more than three context facts from this file.
@@ -16,20 +18,22 @@ They should then move to new critique, tradeoff analysis, or implementation opti
 ## Default-Read Context
 
 - `docs/context/MVP_V0_1_BASELINE.md`
-- exactly one active packet; currently
-  `docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`
+- `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`
+- `docs/context/EXTENSION_REGISTRY.toml`
+- `docs/context/CHANGE_IMPACT_MATRIX.yml`
+- exactly one task-specific active packet when a task needs one
 - optional routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
 
 Authority files named in `AGENTS.md` still govern. Keep them linked rather than
-copied into active context. Use `docs/context/active_step20_packet.md` only for
-Step 20 final-validation provenance or post-completion review routing.
+copied into active context. Use `docs/context/active_step20_packet.md` only
+through `docs/context/ARCHIVE_INDEX.md` for Step 20 final-validation provenance
+or post-completion review routing.
 
 ## Archive-Read Context
 
-- `docs/context/archive/step01_to_step19_summary.md`
-- `docs/context/archive/step01_to_step20_history.md`
-- `docs/roadmap_archive/`
-- old generated review or context packets
+- `docs/context/ARCHIVE_INDEX.md`
+- old Step, roadmap, checklist, validation, release, generated review, or
+  context packet files listed from the archive index
 
 Archive/history files must not be read by default. Read them only for a named
 conflict, regression, provenance question, or direct evidence gap.

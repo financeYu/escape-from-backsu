@@ -1,0 +1,24 @@
+# Routing-only manifest for the MVP v0.1 contract surface.
+# Canonical contract semantics remain in the referenced files.
+
+status = "routing_only"
+baseline = "docs/context/MVP_V0_1_BASELINE.md"
+archive_index = "docs/context/ARCHIVE_INDEX.md"
+
+canonical_contracts = [
+  "docs/contracts/step20_composite_contract.md",
+  "docs/contracts/step20_ranking_contract.md",
+]
+
+release_evidence = [
+  "docs/releases/mvp_kospi200_baseline_manifest.md",
+  "docs/releases/step20_mvp_final_report.md",
+]
+
+[guardrails]
+kospi200_only = true
+technical_only = true
+valuation_scoring_active = false
+financial_data_in_technical_composite = false
+financial_data_in_final_composite = false
+backtest_feedback_into_ranking = false

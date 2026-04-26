@@ -2,19 +2,22 @@
 
 이 파일은 현재 작업 판단에 필요한 latest-only status만 유지한다. 완료 Step의 긴 구현/검증 이력은 기본 컨텍스트가 아니며 `docs/context/archive/`와 `docs/roadmap_archive/`에서 필요한 경우에만 확인한다.
 
-## 현재 활성 단계
+## 현재 로드맵 상태
 
-Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE / KOSPI200 technical MVP v0.1 freeze-ready
+No active roadmap Step is in progress. Step 20 is complete, and the KOSPI200
+technical MVP v0.1 baseline is freeze-ready.
 
-- Active: no in-progress roadmap Step.
 - Current baseline: Step 20 completed KOSPI200 MVP completeness hardening and final Done validation.
 - Current gate: future expansion needs a separately approved post-MVP Step, routed context packet, correct role branch/worktree, and conflict checkpoint when required.
 
 ## 컨텍스트 운영 상태
 
-- 기본 시작점: `docs/context/current_context.md`, `docs/context/MVP_V0_1_BASELINE.md`, active packet 1개.
+- 기본 시작점: `docs/context/current_context.md`, `docs/context/MVP_V0_1_BASELINE.md`,
+  `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`, `docs/context/EXTENSION_REGISTRY.toml`,
+  `docs/context/CHANGE_IMPACT_MATRIX.yml`, task-specific file only.
 - Targeted lookup: `docs/context/CONTEXT_ROUTING_INDEX.md`와 필요한 domain stub만 사용한다.
-- Archive lookup: conflict, regression, provenance, release-evidence 확인이 있을 때만 가장 좁은 파일을 읽는다.
+- Archive lookup: `docs/context/ARCHIVE_INDEX.md`에서 시작하고 conflict, regression,
+  provenance, release-evidence 확인이 있을 때만 가장 좁은 파일을 읽는다.
 - 답변과 handoff는 confirmed context fact를 최대 3개만 반복하고 현재 판단, 변경, 검증, 남은 리스크를 중심으로 작성한다.
 - 완료 Step 1-20 산출물은 기본적으로 신뢰한다.
 
@@ -96,8 +99,7 @@ Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE 
 
 - Compact post-Step20 baseline: `docs/context/MVP_V0_1_BASELINE.md`
 - Context routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
-- Step 1-20 archive: `docs/context/archive/step01_to_step20_history.md`
-- Older roadmap archive: `docs/roadmap_archive/`
+- Archive index: `docs/context/ARCHIVE_INDEX.md`
 - Release evidence: `docs/releases/`
 - Contracts: `docs/contracts/step20_composite_contract.md`, `docs/contracts/step20_ranking_contract.md`
 

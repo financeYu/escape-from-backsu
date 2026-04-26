@@ -33,11 +33,17 @@ release-evidence check requires narrow archive lookup.
 
 - `current_context.md`: latest-only default-read context.
 - `MVP_V0_1_BASELINE.md`: compact post-Step20 baseline.
+- `MVP_V0_1_CONTRACT_MANIFEST.toml`: route-only pointer to canonical MVP v0.1 contracts.
+- `EXTENSION_REGISTRY.toml`: route-only registry for disabled post-MVP extension ideas.
+- `CHANGE_IMPACT_MATRIX.yml`: route-only change impact matrix.
+- `ARCHIVE_INDEX.md`: archive lookup index; do not read old Step history by default.
 - `gpt_context_quant.md`: single GPT submission brief generated for prompt improvement work.
 - `GPT_CONTEXT_GENERATION_RULES.md`: internal rules for generating short GPT briefs; do not paste into GPT by default.
-- `ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`: current Step 20.5 active packet.
+- `ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`: historical pre-freeze optimization
+  packet; not default context.
 - `CONTEXT_ROUTING_INDEX.md`: path-only targeted lookup index.
-- `active_step20_packet.md`: Step 20 final-validation routing packet.
+- `active_step20_packet.md`: historical Step 20 final-validation routing packet;
+  not default context.
 - `context_usage_policy.md`: answer and archive-read rules for fresh reasoning.
 - `context_index.md`: compact map of context files and when to read them.
 - `post_mvp_agent_update_chatgpt_source.md`: planning source for post-MVP agent and roadmap redesign.
@@ -47,6 +53,10 @@ release-evidence check requires narrow archive lookup.
 - `domain/`: lightweight domain stubs that link to canonical docs instead of duplicating them.
 - `archive/`: completed-Step summaries that are not default-read context.
 - `generated/`: packet examples or future generated packet outputs. Do not treat generated packets as authority overrides.
+
+Archive lookup should start from `ARCHIVE_INDEX.md`. Do not open old roadmap,
+checklist, Step planning, validation, or release-history files from search
+results unless the task names an allowed archive lookup reason.
 
 ## Tooling
 

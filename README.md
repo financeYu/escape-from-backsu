@@ -1,5 +1,11 @@
 # 퀀트 프로젝트
 
+> Post-MVP notice:
+> Some roadmap/status sections in this README are historical pre-freeze
+> material, not the active roadmap.
+> Use `docs/roadmap_status.md`, `docs/context/MVP_V0_1_BASELINE.md`, and
+> `docs/context/ARCHIVE_INDEX.md` for current routing and archive lookup.
+
 KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통계적 멀티 스코어 랭킹 엔진 MVP입니다.
 
 이 저장소는 하나의 매매 전략을 빠르게 만드는 프로젝트가 아닙니다. 리서치, 점수 설계, 데이터 검증, 실행 코드, 코드 리뷰를 분리해서 보수적으로 쌓아가는 퀀트 엔지니어링 워크스페이스입니다.
@@ -8,18 +14,13 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 
 | 항목 | 상태 |
 | --- | --- |
-| 현재 단계 | Step 7: `기술 지표 계산 레이어 구현` |
-| Step 1 | COMPLETE or mostly complete |
-| Step 2 | COMPLETE |
-| Step 3 | COMPLETE |
-| Step 4 | COMPLETE |
-| Step 5 | COMPLETE |
-| Step 6 | COMPLETE |
-| Step 7 | NEXT, not implemented yet |
-| 밸류에이션 상태 | `valuation_status = deferred` |
-| 금융 데이터 사용 | `inventory_only_or_gui_display_only` |
-| 백테스트 | Step 17 전까지 금지 |
-| 랭킹 생성 | 허용된 단계 전까지 금지 |
+| 현재 단계 | active roadmap Step 없음 |
+| 기준선 | KOSPI200 technical MVP v0.1 freeze-ready |
+| Step 20 | COMPLETE |
+| 밸류에이션 상태 | `candidate_only_not_activated` |
+| 금융 데이터 사용 | technical/final composite 입력 금지 |
+| 백테스트 | evaluation-only, scoring/ranking feedback 금지 |
+| 향후 확장 | 별도 승인된 post-MVP Step 필요 |
 
 자세한 진행 상태는 [docs/roadmap_status.md](docs/roadmap_status.md)를 봅니다.
 
@@ -40,8 +41,8 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 | 경로 | 역할 |
 | --- | --- |
 | `AGENTS.md` | 마스터 에이전트 운영 규칙 |
-| `docs/project_checklist.md` | 전체 로드맵과 hard stop rules |
-| `docs/roadmap_status.md` | 현재 단계와 남은 follow-up |
+| `docs/project_checklist.md` | historical roadmap/checklist body와 hard stop rules |
+| `docs/roadmap_status.md` | latest-only roadmap status와 current gate |
 | `docs/technical_valuation_boundary.md` | 기술 분석과 밸류에이션 경계 |
 | `docs/score_branch_policy.md` | Step 4 score branch 분류 정책 |
 | `docs/selection_criteria.md` | Step 4 technical / valuation / diagnostic routing 기준 |
@@ -55,21 +56,14 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 | `reserch_mvp/` | 리서치 수집/증거 준비 canonical project |
 | `review_mvp/` | 전문 코드 리뷰와 선택적 최종 검증 보조 도구 |
 
-## 로드맵
+## 로드맵 / 아카이브
 
-전체 Step 1-20 로드맵은 [docs/project_checklist.md](docs/project_checklist.md)에 있습니다.
-
-현재 기준:
-
-```text
-Step 1: 에이전트 / 운영 규칙 수립 = COMPLETE or mostly complete
-Step 2: 네이버 파이낸셜 데이터 수집기 검증 = COMPLETE
-Step 3: 디렉터리 / config / 표준 스키마 정리 = COMPLETE
-Step 4: 기술 분석과 밸류에이션 경계 고정 = COMPLETE
-Step 5: Score Architect: MVP 기술 점수 후보 정의 = COMPLETE
-Step 6: 데이터 전처리 파이프라인 구현 = COMPLETE
-Step 7: 기술 지표 계산 레이어 구현 = NEXT, not implemented yet
-```
+이전 Step 1-20 로드맵과 체크리스트 본문은 historical pre-freeze material입니다.
+현재 작업 라우팅은 [docs/roadmap_status.md](docs/roadmap_status.md)와
+[docs/context/MVP_V0_1_BASELINE.md](docs/context/MVP_V0_1_BASELINE.md)를
+먼저 사용합니다. 과거 Step 계획이나 검증 근거가 필요하면
+[docs/context/ARCHIVE_INDEX.md](docs/context/ARCHIVE_INDEX.md)에서 허용된
+lookup reason을 확인한 뒤 가장 좁은 파일만 엽니다.
 
 Step 4 정리 기준:
 
@@ -117,4 +111,6 @@ Windows PowerShell에서 한글 출력이 깨지면 프로젝트 루트에서 �
 
 현재 저장소에는 legacy/background artifact가 일부 남아 있습니다. 예를 들어 `outputs/latest_top*`와 `data/scan_results/*`는 과거 산출물이며, 현재 Step에서 새로 만든 랭킹이 아닙니다.
 
-현재 다음 구현 단계는 Step 7 기술 지표 계산 레이어입니다. 이 단계에서도 score implementation, ranking generation, composite scoring, valuation/fundamental scoring, backtest는 허용된 roadmap step 전까지 금지됩니다.
+현재 활성 roadmap Step은 없습니다. 새 구현, 확장, scoring/ranking/report/
+backtest/valuation/data-ingestion 변경은 별도 승인된 post-MVP Step과 routed
+context packet이 필요합니다.

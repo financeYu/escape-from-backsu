@@ -1,0 +1,46 @@
+# Route-only change impact matrix.
+# This file does not authorize implementation or change contract semantics.
+
+default_context:
+  - docs/context/MVP_V0_1_BASELINE.md
+  - docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml
+  - docs/context/EXTENSION_REGISTRY.toml
+  - docs/context/CHANGE_IMPACT_MATRIX.yml
+  - task-specific files only
+
+archive_lookup:
+  index: docs/context/ARCHIVE_INDEX.md
+  default_read: false
+  allowed_reasons:
+    - regression investigation
+    - provenance/source confirmation
+    - release/freeze verification
+    - resolving contradiction with MVP v0.1 baseline
+
+impact_routes:
+  docs_only_archive_routing:
+    allowed_paths:
+      - docs/context/ARCHIVE_INDEX.md
+      - docs/context/*.md
+      - docs/context/*.toml
+      - docs/context/*.yml
+      - docs/*.md
+    forbidden_changes:
+      - source code
+      - scoring config
+      - ranking config
+      - report templates
+      - data ingestion modules
+      - backtest modules
+      - dependency files
+      - lockfiles
+    validation:
+      - git diff --check
+      - parse changed toml/yml when local parsers are available
+
+  runtime_or_contract_change:
+    requires:
+      - separately approved post-MVP step
+      - correct role branch/worktree
+      - conflict checkpoint
+      - targeted tests

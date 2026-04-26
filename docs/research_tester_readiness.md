@@ -1,5 +1,10 @@
 # Research Tester Readiness
 
+> Archive-only notice:
+> This document is historical material from pre-freeze planning.
+> It is not an active roadmap, checklist, or implementation instruction.
+> Use `docs/context/ARCHIVE_INDEX.md` to determine whether this file should be consulted.
+
 ## Purpose
 
 This document records the Step 9 Research Tester readiness checks and the

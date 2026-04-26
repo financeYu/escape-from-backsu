@@ -1,5 +1,10 @@
 # Step 8 Testing and Normalization Protocol
 
+> Archive-only notice:
+> This document is historical material from pre-freeze planning.
+> It is not an active roadmap, checklist, or implementation instruction.
+> Use `docs/context/ARCHIVE_INDEX.md` to determine whether this file should be consulted.
+
 ## 1. Purpose
 
 Step 8의 목적은 Step 7 raw technical indicator output을 입력 계약으로 고정하고, Step 9/10에서 score와 normalization을 구현하기 전에 테스트 기준과 정규화 프로토콜을 문서로 잠그는 것이다.

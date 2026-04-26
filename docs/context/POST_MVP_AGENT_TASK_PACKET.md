@@ -23,6 +23,10 @@ Current task:
 
 Scope:
 - Work from the current MVP v0.1 baseline, not the old roadmap.
+- Route through `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`,
+  `docs/context/EXTENSION_REGISTRY.toml`, and
+  `docs/context/CHANGE_IMPACT_MATRIX.yml` when contract, extension, or impact
+  classification is needed.
 - Prefer additive sidecar files.
 - Do not modify quant logic, score formulas, ranking behavior, report behavior,
   backtest behavior, valuation activation, or data ingestion unless this
@@ -31,8 +35,9 @@ Scope:
   approved post-MVP step.
 
 Archive lookup rule:
-Only inspect archive/history files for regression, provenance, or freeze
-verification. Do not summarize or import old Step history into active context.
+Start from `docs/context/ARCHIVE_INDEX.md`. Only inspect archive/history files
+for regression, provenance, or freeze verification. Do not summarize or import
+old Step history into active context.
 
 Required Korean final report:
 1. 변경 요약

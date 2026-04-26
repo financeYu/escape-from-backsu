@@ -1,4 +1,9 @@
-# Active Pre-Freeze Optimization Packet
+# Historical Pre-Freeze Optimization Packet
+
+> Archive-only notice:
+> This packet records completed pre-freeze optimization routing.
+> It is not the active roadmap, not an active task packet, and not default
+> context. Use `docs/context/ARCHIVE_INDEX.md` before consulting it.
 
 This packet is a routing aid, not an authority document. It does not override
 `AGENTS.md`, `docs/project_checklist.md`, `docs/roadmap_status.md`, the active
@@ -8,7 +13,7 @@ This packet is a routing aid, not an authority document. It does not override
 
 - task: `prefreeze_optimization`
 - step label: Step 20.5
-- status: post-Step20 pre-freeze optimization patch
+- status: historical post-Step20 pre-freeze optimization patch
 - objective: make MVP v0.1 easier to preserve, explain, validate, and extend
   later with minimal context overhead.
 - quant logic: this patch does not change quant logic, score formulas, score

@@ -6,7 +6,7 @@ completed implementation history.
 Current status:
 
 - Step 19 is complete in the roadmap status.
-- Step 20 is waiting / not started.
+- Step 20 is complete; no roadmap Step is currently active.
 - Pipeline context is review or regression context, not a request to redesign the pipeline.
 
 Use when:
@@ -15,10 +15,10 @@ Use when:
 - a regression or conflict is reported against pipeline guardrails
 - a generated-output or no-network/no-secret pipeline boundary needs review
 
-Forbidden during Pre-Step20 context work:
+Forbidden without a separately approved post-MVP Step:
 
 - scheduler, CI, runtime automation, or pipeline behavior changes
 - new market data sources
 - KOSDAQ150, futures, or options expansion
 - scoring, ranking, backtest, valuation scoring, or report semantic changes
-- Step 20 final validation completion claims
+- reopening Step 20 or inventing new Step 20 final-validation evidence

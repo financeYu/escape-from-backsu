@@ -72,4 +72,3 @@
 - Semantic Scholar live smoke는 API key가 없는 환경에서 public mode를 신뢰하지 않는다.
 - 이번 patch는 source collection/enrichment 운영 최적화이며, new external adapter 추가나 score 품질 검증이 아니다.
 - watchdog audit trigger는 존재한다: config/runtime/generation boundary 관련 변경이므로 master integration 전 scope watchdog 또는 equivalent master gate에서 이 handoff와 diff를 확인해야 한다.
-

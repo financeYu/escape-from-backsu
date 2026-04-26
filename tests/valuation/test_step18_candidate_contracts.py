@@ -59,9 +59,10 @@ def test_candidate_records_can_be_parsed_and_validated() -> None:
     records = validate_candidate_records([candidate_record()], evaluation_date="2026-04-01")
 
     assert len(records) == 1
-    assert records[0].symbol == "005930"
-    assert records[0].metric_name == "per"
-    assert records[0].available_date == "2026-03-31"
+    (record,) = records
+    assert record.symbol == "005930"
+    assert record.metric_name == "per"
+    assert record.available_date == "2026-03-31"
 
 
 def test_as_of_date_alias_is_allowed_but_stored_as_available_date() -> None:
@@ -70,7 +71,8 @@ def test_as_of_date_alias_is_allowed_but_stored_as_available_date() -> None:
 
     parsed = validate_candidate_records([record], evaluation_date="2026-04-01")
 
-    assert parsed[0].available_date == "2026-03-31"
+    (parsed_record,) = parsed
+    assert parsed_record.available_date == "2026-03-31"
 
 
 def test_future_available_date_is_rejected_for_earlier_evaluation() -> None:

@@ -238,12 +238,15 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
 - Step 18 = COMPLETE
   - Candidate-only valuation/fundamental contracts, allowed metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
   - Candidate records require valid `available_date` or `as_of_date`; missing availability dates, future availability relative to evaluation date, unknown metrics, non-numeric or infinite values, unsafe imputation, and registry/category/unit mismatches are rejected.
+  - Step 18 candidate report guardrails reject forbidden trading recommendation, predictive alpha, future prediction/return, target-price, valuation-score, and fundamental-score language.
   - `config/valuation_fundamental_metrics.toml` keeps all metrics candidate-only and disables technical composite integration, final composite integration, backtest integration, alpha validation, and external network calls.
   - Step 18 does not create a valuation score, fundamental score, valuation-aware composite, ranking output, backtest input path, alpha validation, trading signal, or later-Step behavior.
-  - Latest local validation: `python -m pytest -q` = 638 passed, 4 skipped, 25 subtests passed.
-  - Focused Step 18 validation: 31 passed.
-  - Related technical scoring / normalization / Step 17 validation: 149 passed.
-  - `review_mvp` specialist static review found no high or medium findings; remaining low style findings are non-blocking.
+  - Latest local validation after report-language fix: `python -m pytest -q -p no:cacheprovider` = 645 passed, 4 skipped, 25 subtests passed.
+  - Focused Step 18 validation after report-language fix: 38 passed.
+  - Related scanner/report/backtest/validation validation after report-language fix: 229 passed.
+  - Manual forbidden-language reproduction now rejects `buy recommendation and proven alpha` with `alpha proven, buy recommendation`.
+  - `review_mvp` specialist static review command on Step 18 production/test paths returned 0 high and 0 medium findings; 3 low style/quality findings are non-blocking.
+  - Cross-Step Conflict Checkpoint after post-fix validation: PASS; no blocking roadmap/order, hard-stop, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, trading-signal, or unrelated dirty-worktree issue found.
 - Research ingestion scope expansion note:
   - `docs/research_ingestion_expansion.md` documents expanded paper query-set coverage, source expansion candidates, seed lifecycle, new-only run artifacts, and the separated `reserch_mvp` ownership boundary.
   - EvidenceCard is not a score definition.

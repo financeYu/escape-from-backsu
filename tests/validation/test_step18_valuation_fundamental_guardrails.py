@@ -15,6 +15,7 @@ from src.validation.step18_valuation_fundamental_guardrails import (  # noqa: E4
     assert_step18_no_production_leakage,
     assert_step18_no_score_contamination,
     find_step18_candidate_columns,
+    find_step18_forbidden_report_language,
     validate_step18_backtest_candidate_availability,
     validate_step18_candidate_records,
     validate_step18_candidate_report_text,
@@ -45,7 +46,8 @@ def test_guardrail_entrypoint_validates_candidate_records() -> None:
         evaluation_date="2026-04-01",
     )
 
-    assert records[0].metric_name == "roe"
+    (record,) = records
+    assert record.metric_name == "roe"
 
 
 def test_fundamental_columns_next_to_composite_scores_are_blocked() -> None:
@@ -101,13 +103,46 @@ def test_backtest_availability_guardrail_rejects_before_available_date() -> None
 
 
 def test_candidate_report_notices_are_required() -> None:
-    text = (
+    text = valid_candidate_report_text()
+    validate_step18_candidate_report_text(text)
+
+    with pytest.raises(ValueError, match="missing required notices"):
+        validate_step18_candidate_report_text(text.replace("not validated alpha signals", "unreviewed"))
+
+
+@pytest.mark.parametrize(
+    "forbidden_text",
+    [
+        "This is a buy recommendation and proven alpha.",
+        "This report makes a future prediction.",
+        "The candidate metric should forecast future returns.",
+        "The target price is higher.",
+        "This is a valuation score.",
+        "This is a trading signal.",
+    ],
+)
+def test_candidate_report_forbidden_trading_prediction_and_score_language_is_rejected(
+    forbidden_text: str,
+) -> None:
+    text = f"{valid_candidate_report_text()} {forbidden_text}"
+
+    with pytest.raises(ValueError, match="forbidden report language"):
+        validate_step18_candidate_report_text(text)
+
+    assert find_step18_forbidden_report_language(forbidden_text)
+
+
+def test_candidate_report_notice_negation_does_not_trip_alpha_guardrail() -> None:
+    text = valid_candidate_report_text()
+
+    validate_step18_candidate_report_text(text)
+    assert not find_step18_forbidden_report_language("These fields are not validated alpha signals.")
+
+
+def valid_candidate_report_text() -> str:
+    return (
         "Step 18 candidate valuation/fundamental expansion. "
         "These fields are not activated in final ranking. "
         "These fields are not validated alpha signals. "
         "These fields must not be used in backtests unless availability-date rules are enforced."
     )
-    validate_step18_candidate_report_text(text)
-
-    with pytest.raises(ValueError, match="missing required notices"):
-        validate_step18_candidate_report_text(text.replace("not validated alpha signals", "unreviewed"))

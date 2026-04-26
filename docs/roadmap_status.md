@@ -69,13 +69,14 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 - Step 18 candidate-only valuation/fundamental contracts, metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
 - `src/valuation/` defines candidate records and report helpers only; it does not create a valuation score, fundamental score, valuation-aware composite, trading signal, or ranking output.
 - `config/valuation_fundamental_metrics.toml` lists allowed candidate-only metric names and keeps `technical_composite_score`, `final_composite_score`, backtest integration, alpha validation, and external network calls disabled.
-- `src/validation/step18_valuation_fundamental_guardrails.py` validates candidate records, availability-date usage, candidate report notices, production-output leakage, and backtest availability boundaries.
+- `src/validation/step18_valuation_fundamental_guardrails.py` validates candidate records, availability-date usage, candidate report notices, forbidden trading/predictive/score language, production-output leakage, and backtest availability boundaries.
 - `docs/architecture/step18_valuation_fundamental_boundary.md` documents the separation between technical scores, candidate valuation/fundamental data, final ranking scores, and Step 17 backtest inputs.
-- Latest local validation: `python -m pytest -q` = 638 passed, 4 skipped, 25 subtests passed.
-- Focused Step 18 validation: `tests/valuation`, `tests/validation/test_step18_valuation_fundamental_guardrails.py`, `tests/scanner/test_step18_valuation_boundary.py`, and `tests/backtest/test_step18_backtest_boundary.py` = 31 passed.
-- Related technical scoring / normalization / Step 17 validation: 149 passed.
-- `review_mvp` specialist static review found no high or medium findings on Step 18 production code; remaining low style findings are non-blocking.
-- Cross-Step Conflict Checkpoint passed with no blocking roadmap/order, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, or trading-signal issue found.
+- Latest local validation after report-language fix: `python -m pytest -q -p no:cacheprovider` = 645 passed, 4 skipped, 25 subtests passed.
+- Focused Step 18 validation after report-language fix: `python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py` = 38 passed.
+- Related scanner/report/backtest/validation validation after report-language fix: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 229 passed.
+- Manual forbidden-language reproduction now rejects `buy recommendation and proven alpha` with `alpha proven, buy recommendation`.
+- `review_mvp` specialist static review command on Step 18 production/test paths returned 0 high and 0 medium findings; 3 low style/quality findings are non-blocking.
+- Cross-Step Conflict Checkpoint after post-fix validation: PASS. Packet regenerated with `python scripts/build_review_packet.py --step "Step 18" --stage "post-fix validation"`; manual checkpoint found no blocking roadmap/order, hard-stop, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, trading-signal, or unrelated dirty-worktree issue. `WORKSPACE_MANIFEST.md` is intentionally included in the Step 18 fix scope to resolve the worktree identity dirty state.
 
 ### Step 17 = Conservative Backtest
 

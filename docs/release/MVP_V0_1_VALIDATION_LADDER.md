@@ -39,6 +39,17 @@ python -m pytest -q tests/scanner tests/reports tests/validation
 - Failure means: the MVP boundary or user-facing explanation surface may be
   inconsistent; do not freeze until investigated.
 
+## Tier 2.5: Local Market Cache Readiness
+
+- Purpose: verify whether local ignored KOSPI200 runtime caches are present
+  before claiming data readiness beyond fixture validation.
+- Current compact evidence:
+  `reports/validation/mvp_v0_1_local_market_data_readiness.md`.
+- When to run: only after `chart_mvp/data/` or the universe snapshot changes,
+  or when the user asks for fresh local cache validation.
+- Failure means: do not treat local runtime cache state as ready for a freeze
+  review until the missing cache, schema, or ticker-format issue is triaged.
+
 ## Tier 3: Integration Tests
 
 - Purpose: verify cross-surface contracts at integration boundaries.
@@ -71,5 +82,6 @@ python -m pytest -q
 
 - `Tier 1: PASS - tests/context and context checkers passed.`
 - `Tier 2: NOT RUN - docs-only patch after Tier 1; no scanner/report behavior touched.`
+- `Tier 2.5: PASS - local cache readiness report reviewed; no rerun needed.`
 - `Tier 3: NOT RUN - no integration surface touched.`
 - `Tier 4: NOT RUN - focused context validation sufficient for this patch.`

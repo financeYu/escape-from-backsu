@@ -1,10 +1,10 @@
-# In this file, `enabled = true` means visible in the candidate registry.
-# Step 9 may use the formula-locked candidates for raw Research Tester output
-# only. It does not enable runtime production scoring, ranking, composite
-# scoring, valuation scoring, or backtesting.
+# In this file, `enabled = true` means visible in the Quant candidate registry.
+# `runtime_enabled = false` means this registry does not itself activate
+# config-driven runtime scoring. It is not a claim that Step 9 source scores or
+# Step 15/20 ranking contracts are absent.
 
 [registry_status]
-registry_stage = "step_9_research_tester_raw_score_contract"
+registry_stage = "step_9_research_tester_raw_score_contract_with_step20_mvp_downstream_contracts"
 registry_alignment = "official_step_5_score_definitions"
 official_candidate_count = 8
 runtime_score_implementation = false

@@ -1,10 +1,13 @@
 [status]
-score_implementation = "not_implemented"
+# These flags describe config-driven runtime activation, not whether Step 9
+# score code or Step 15/20 ranking contracts exist in source. Current MVP source
+# status is documented in docs/context/MVP_V0_1_BASELINE.md and docs/contracts/.
+score_implementation = "source_implemented_for_mvp_v0_1_config_activation_disabled"
 active_technical_scores = false
 active_composite_score = false
 active_valuation_scores = false
 active_fundamental_scores = false
-step_policy = "step_4_boundary_fixed_before_step_5_definitions"
+step_policy = "post_step20_prefreeze_guardrail_config_not_runtime_activation"
 
 [branch_policy]
 policy_doc = "docs/score_branch_policy.md"
@@ -24,7 +27,7 @@ financial_data_in_final_composite_score = false
 enabled = []
 implemented = []
 placeholders = []
-notes = "Technical score definitions must be documented and approved before implementation."
+notes = "Config-driven activation remains off. MVP v0.1 source contracts define the approved technical ranking path."
 
 [diagnostics]
 enabled = []
@@ -34,6 +37,8 @@ diagnostics_are_alpha = false
 [composite]
 enabled = false
 implemented = false
+# These remain `not_implemented` for the Step 11 config-activation guardrail.
+# The Step 15/20 source contracts define MVP v0.1 composite behavior.
 technical_composite_score = "not_implemented"
 final_composite_score = "not_implemented"
 

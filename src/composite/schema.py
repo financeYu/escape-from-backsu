@@ -13,6 +13,7 @@ import tomllib
 
 import pandas as pd
 
+from src.common_guardrails import COMMON_FORBIDDEN_OUTPUT_COLUMNS, VALUATION_FIELD_TOKENS
 from src.scores.schema import (
     IDENTITY_COLUMNS,
     SCORE_METADATA_COLUMNS,
@@ -84,33 +85,7 @@ EXPECTED_COMPOSITE_POLICY = {
     ),
 }
 
-STEP11_FORBIDDEN_EXACT_COLUMNS = frozenset(
-    {
-        "rank",
-        "ranking",
-        "latest_rank",
-        "latest_ranking",
-        "composite_score",
-        "family_weighted_score",
-        "technical_composite_score",
-        "final_composite_score",
-        "forward_return",
-        "future_return",
-        "next_return",
-        "next_period_return",
-        "backtest_return",
-        "alpha",
-        "signal",
-        "buy",
-        "sell",
-        "buy_signal",
-        "sell_signal",
-        "alpha_signal",
-        "recommendation",
-        "fundamental_score",
-        "valuation_score",
-    }
-)
+STEP11_FORBIDDEN_EXACT_COLUMNS = COMMON_FORBIDDEN_OUTPUT_COLUMNS
 STEP11_FORBIDDEN_PREFIXES = (
     "forward_return",
     "future_return",
@@ -140,23 +115,6 @@ STEP11_FORBIDDEN_SUBSTRINGS = (
     "final_composite_score",
     "technical_composite",
     "technical_composite_score",
-)
-VALUATION_FIELD_TOKENS = frozenset(
-    {
-        "per",
-        "pbr",
-        "roe",
-        "eps",
-        "bps",
-        "book",
-        "earnings",
-        "revenue",
-        "sales",
-        "income",
-        "financial",
-        "fundamental",
-        "valuation",
-    }
 )
 PRODUCTION_DISABLED_REGISTRY_FLAGS = (
     "runtime_score_implementation",

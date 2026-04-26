@@ -10,6 +10,13 @@ from collections.abc import Iterable
 
 import pandas as pd
 
+from src.common_guardrails import (
+    COMMON_FORBIDDEN_OUTPUT_COLUMNS,
+    FORBIDDEN_VALUATION_INPUT_COLUMNS,
+    FORBIDDEN_VALUATION_INPUT_PREFIXES,
+    NORMALIZED_SCORE_OUTPUT_COLUMNS,
+)
+
 
 IDENTITY_COLUMNS = ("ticker", "date")
 SCORE_METADATA_COLUMNS = (
@@ -19,61 +26,7 @@ SCORE_METADATA_COLUMNS = (
     "minimum_history_required",
 )
 
-FORBIDDEN_OUTPUT_COLUMNS = frozenset(
-    {
-        "rank",
-        "ranking",
-        "latest_rank",
-        "latest_ranking",
-        "normalized_score",
-        "normalized_score_time_series",
-        "normalized_score_cross_sectional",
-        "composite_score",
-        "family_weighted_score",
-        "technical_composite_score",
-        "final_composite_score",
-        "forward_return",
-        "future_return",
-        "next_return",
-        "next_period_return",
-        "backtest_return",
-        "alpha",
-        "signal",
-        "buy",
-        "sell",
-        "buy_signal",
-        "sell_signal",
-        "alpha_signal",
-        "recommendation",
-        "fundamental_score",
-        "valuation_score",
-    }
-)
-
-FORBIDDEN_VALUATION_INPUT_COLUMNS = frozenset(
-    {
-        "per",
-        "pbr",
-        "roe",
-        "eps",
-        "bps",
-        "book_value",
-        "earnings",
-        "net_income",
-        "revenue",
-        "sales",
-        "operating_income",
-        "market_cap",
-        "shares_outstanding",
-        "fundamental_score",
-        "valuation_score",
-    }
-)
-FORBIDDEN_VALUATION_INPUT_PREFIXES = (
-    "financial_",
-    "fundamental_",
-    "valuation_",
-)
+FORBIDDEN_OUTPUT_COLUMNS = COMMON_FORBIDDEN_OUTPUT_COLUMNS | NORMALIZED_SCORE_OUTPUT_COLUMNS
 
 
 def find_missing_columns(columns: Iterable[str], required_columns: Iterable[str]) -> list[str]:

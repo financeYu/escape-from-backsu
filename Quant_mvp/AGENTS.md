@@ -6,6 +6,40 @@ If this project is used inside the parent `master_mvp` workspace, read the paren
 
 ---
 
+## Subproject boundary approval gate
+
+`Quant_mvp` agents and workers must not perform work that crosses beyond the
+Quant subproject boundary without explicit root/master approval.
+
+Root/master approval is required before:
+
+- editing root-owned files such as `../AGENTS.md`, root `README.md`, root
+  `.gitignore`, root CI, release notes, project registry, roadmap status, or
+  repository-wide policy
+- editing another subproject such as `../reserch_mvp`, `../chart_mvp`, or
+  `../review_mvp`
+- changing cross-project routing, handoff ownership, integration policy, branch
+  policy, or Step verdicts
+- consuming or modifying another subproject's runtime outputs, generated
+  artifacts, cache paths, or implementation files beyond a read-only targeted
+  boundary check
+- implementing behavior that belongs to another project role, including
+  research ingestion, chart runtime, specialist review tooling, or root/master
+  integration
+
+If a Quant task appears to require crossing this boundary, stop before editing
+or running side-effecting commands outside the Quant scope. Report:
+
+1. the file, subproject, or policy area that would be crossed
+2. why Quant cannot complete the task safely without that cross-boundary work
+3. the proposed minimal root/master-approved change
+4. the risk if approval is not granted
+
+Without approval, record the need as a handoff, TODO, or unresolved risk instead
+of making the cross-boundary change.
+
+---
+
 ## Local first review responsibility
 
 This subproject performs first-pass review for its own changes before master-up.
@@ -134,6 +168,57 @@ Weak evidence must not be polished into a strong claim.
 - if the user explicitly requests another language, follow that request
 - code, config keys, file paths, exported column names, and identifiers may remain in English for implementation clarity
 - when mixing Korean and English, preserve exact field names and paths in English and explain them in Korean
+
+---
+
+## Context optimization policy
+
+Do not read the full repository history at task start. Keep the default context
+small enough for subproject agents to stay autonomous and focused.
+
+Default task-start context is limited to:
+
+- the current root authority status and hard stops
+- this subproject `AGENTS.md`
+- exactly one active context packet for the current task
+- one required domain context stub, when the task has a clear domain
+- only the targeted source, test, or config files needed for the requested change
+
+Completed Step 1-20 outputs are trusted by default. Archive files, old Step
+details, old review packets, generated outputs, validation logs, raw market
+data, caches, and chart images must not be read by default. Read them only for a
+named conflict, regression, provenance check, or release evidence check, and use
+the narrowest file needed.
+
+Active context packets must not copy long document bodies, validation logs,
+generated outputs, raw market data, caches, chart images, or archive content.
+When a large artifact is relevant, include only its file path and the reason it
+matters.
+
+Answers and handoffs must not repeat completed Step history. Include at most
+three confirmed context facts, then focus on the current judgment, changed
+files, validation, and remaining risks.
+
+If work touches scoring, ranking, report semantics, backtest behavior,
+valuation or fundamental boundaries, generated-output boundaries, roadmap
+verdicts, or root policy, follow the existing guardrails, worktree/branch
+separation policy, and required conflict checkpoints.
+
+---
+
+## Post-MVP v0.1 task packet intake
+
+When root/master delegates post-Step20 work, accept the compact task packet in
+`../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+
+For Quant work, this packet does not authorize changes to score definitions,
+score formulas, normalization behavior, ranking behavior, report behavior,
+backtest behavior, valuation/fundamental activation, data ingestion, or
+cross-project routing unless the concrete post-MVP task explicitly assigns that
+scope. If the task is blank or would cross those boundaries, stop and report the
+needed clarification or root/master approval.
+
+Final reports must use the Korean sections defined in the packet.
 
 ---
 

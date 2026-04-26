@@ -45,6 +45,26 @@ targeted lookup only; do not paste long file bodies into active context.
 - Archive/provenance lookup: `docs/context/archive/step01_to_step20_history.md`,
   `docs/roadmap_archive/` - on-demand only.
 
+## Internal GPT Route Map
+
+Use file paths only. Do not embed document bodies. This section is an internal
+route selector for building a generated GPT brief; do not paste this table into
+GPT by default.
+
+| GPT route | internal file paths only | lookup status |
+| --- | --- | --- |
+| planning / critique | `docs/context/MVP_V0_1_BASELINE.md`, `docs/context/GPT_CONTEXT_GENERATION_RULES.md`, `docs/context/CONTEXT_BUDGET_POLICY.md`, `docs/context/CONTEXT_ROUTING_INDEX.md` | default-safe |
+| Codex prompt writing | `docs/context/GPT_CONTEXT_GENERATION_RULES.md`, `docs/context/CONTEXT_BUDGET_POLICY.md`, `docs/context/CONTEXT_ROUTING_INDEX.md`, `AGENTS.md` | default-safe |
+| validation prompt writing | `docs/context/GPT_CONTEXT_GENERATION_RULES.md`, `docs/context/CONTEXT_BUDGET_POLICY.md`, `docs/release/MVP_V0_1_VALIDATION_LADDER.md`, `docs/cross_step_conflict_check.md` | default-safe |
+| release/freeze verification | `docs/context/MVP_V0_1_BASELINE.md`, `docs/releases/step20_mvp_final_report.md`, `docs/releases/mvp_kospi200_baseline_manifest.md`, `docs/contracts/step20_composite_contract.md`, `docs/contracts/step20_ranking_contract.md` | on-demand verification |
+| scoring review | `docs/context/MVP_V0_1_BASELINE.md`, `docs/context/domain/technical_scoring_context.md`, `docs/contracts/step20_composite_contract.md`, `docs/releases/step20_score_lineage_manifest.md` | on-demand review |
+| ranking review | `docs/context/MVP_V0_1_BASELINE.md`, `docs/context/domain/ranking_context.md`, `docs/contracts/step20_ranking_contract.md`, `docs/contracts/step20_composite_contract.md` | on-demand review |
+| report review | `docs/context/MVP_V0_1_BASELINE.md`, `docs/context/domain/report_context.md`, `docs/step16_security_detail_report.md`, `docs/architecture/step16_report_backtest_boundary.md` | on-demand review |
+| valuation boundary review | `docs/context/MVP_V0_1_BASELINE.md`, `docs/context/domain/valuation_context.md`, `docs/architecture/step18_valuation_fundamental_boundary.md`, `docs/technical_valuation_boundary.md` | on-demand review |
+| KOSDAQ150 planning | `docs/context/MVP_V0_1_BASELINE.md`, `docs/context/domain/future_multi_universe_context.md`, `docs/context/post_mvp_agent_update_chatgpt_source.md`, `docs/context/GPT_CONTEXT_GENERATION_RULES.md` | on-demand planning |
+| futures/options planning | `docs/context/MVP_V0_1_BASELINE.md`, `docs/context/domain/future_derivatives_context.md`, `docs/context/post_mvp_agent_update_chatgpt_source.md`, `docs/context/GPT_CONTEXT_GENERATION_RULES.md` | on-demand planning |
+| archive/provenance lookup | `docs/context/archive/step01_to_step20_history.md`, `docs/roadmap_archive/`, `docs/releases/step20_mvp_final_report.md` | on-demand only |
+
 ## Archive Routes
 
 - Archive routes are on-demand only.

@@ -65,6 +65,34 @@ If routing is uncertain, set `manual_review_required: true` and use the more con
 
 ---
 
+## Research scope boundary and root approval
+
+Research-ingestion work is limited to source collection policy, metadata adapters, seed lifecycle, paper metadata normalization, research classification, EvidenceCard generation, Korean ingestion reports, and explicit downstream handoff artifacts.
+
+If a task appears to require work beyond research ingestion, stop before editing files or running side-effecting commands and request explicit root/master approval.
+
+Beyond-scope work includes:
+
+- score definition adoption, Research Tester implementation, normalization implementation, composite scoring, ranking, backtest, or optimization
+- valuation/fundamental review, valuation verdicts, or point-in-time financial availability decisions
+- scanner runtime, chart rendering, CLI, GUI, data cache, or report-generation behavior outside research ingestion
+- root-owned policy, release, CI, Git, roadmap verdict, or cross-project routing decisions
+- generated-output/cache boundary changes outside `reserch_mvp`
+- downstream project file edits except explicitly assigned intake/handoff updates
+
+The approval request must state:
+
+1. the scope boundary being crossed
+2. why the research agent cannot complete safely within research scope
+3. the proposed minimal downstream or root action
+4. the risk if the approval is not granted
+
+Without approval, record the need as a handoff, TODO, or unresolved risk instead of doing the cross-boundary work. A user or root/master instruction counts as approval only for the concrete named scope; it does not authorize broader downstream implementation.
+
+Targeted read-only inspection of downstream contracts or root guidance is allowed when needed for routing, hard-stop checks, or handoff accuracy. Do not use read-only inspection as a pretext to implement beyond research scope.
+
+---
+
 ## Local first review responsibility
 
 This agent performs first-pass review for its own research-ingestion changes before master-up to the root workspace.
@@ -123,6 +151,22 @@ Avoid:
 - `adopted score` during research ingestion
 - `proven alpha` based only on paper claims
 - `valuation-supported` without point-in-time valuation data
+
+---
+
+## Post-MVP v0.1 task packet intake
+
+When root/master delegates post-Step20 work, accept the compact task packet in
+`../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+
+For research-ingestion work, this packet does not authorize score adoption,
+Research Tester implementation, normalization, composite scoring, ranking,
+backtest, valuation verdicts, scanner runtime changes, report behavior changes,
+or data-ingestion expansion unless the concrete post-MVP task explicitly assigns
+that scope. If the task is blank or would cross those boundaries, stop and
+report the needed clarification or root/master approval.
+
+Final reports must use the Korean sections defined in the packet.
 
 ---
 

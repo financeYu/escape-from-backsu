@@ -21,11 +21,17 @@ Run this checkpoint whenever an important in-Step stage ends, including:
 
 - `docs/roadmap_status.md`
 - `docs/project_checklist.md`
+- `docs/context/current_context.md`
+- exactly one active context packet when available
 - current diff or changed-file manifest
 - affected subproject `AGENTS.md`
 - master-up summary or local review summary
 - root-agent conflict stop report or resume decision, when triggered
 - generated review packet from `scripts/build_review_packet.py`
+
+Do not add archive/history files to the checkpoint input by default. Use archive
+only for a named conflict, regression, provenance, or release-evidence check,
+then record the reason and narrow file used.
 
 ## Checks
 
@@ -61,6 +67,9 @@ Record the checkpoint in the review packet or master-up summary:
 ```text
 [Cross-Step Conflict Checkpoint]
 - trigger:
+- context budget:
+- archive/history read:
+- archive/history reason:
 - roadmap/order:
 - hard stops:
 - score/composite boundary:

@@ -23,6 +23,9 @@ The responsible subproject performs first-pass review for its own changes. It sh
 - Step-end code review / fix / validation rerun / commit readiness
 - owned change files are separated from unrelated dirty files
 - mixed-change files are marked for hunk-level staging before commit
+- context budget recorded
+- archive/history read reason recorded when used
+- completed Step history omitted unless a named conflict, regression, provenance, or release-evidence check required it
 
 ## Evidence Expectations
 
@@ -37,6 +40,10 @@ If watchdog audit is marked not needed, state why the change did not touch any r
 If root-agent conflict stop is triggered, stop work and report with `docs/root_agent_conflict_process.md` before any further edits, staging, commit, cleanup, reset, or broad repair action.
 
 When an important in-Step stage ends, include the Cross-Step Conflict Checkpoint from `docs/cross_step_conflict_check.md`. Generate `docs/current_review_packet.md` with `scripts/build_review_packet.py` and attach the packet path in the master-up summary.
+
+For context budget evidence, record the default context files, active packet,
+domain stub, targeted files, and whether archive/history was read. If archive
+or old Step detail was read, state the exact reason and the narrow file used.
 
 ## Required Master-up Summary
 

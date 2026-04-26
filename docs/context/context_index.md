@@ -19,6 +19,8 @@ three confirmed context facts before moving to new reasoning.
 
 ## Domain Context
 
+- GPT submission brief: `docs/context/gpt_context_quant.md`
+- Internal GPT context generation rules: `docs/context/GPT_CONTEXT_GENERATION_RULES.md`
 - Post-MVP agent update source: `docs/context/post_mvp_agent_update_chatgpt_source.md`
 - Technical scoring: `docs/context/domain/technical_scoring_context.md`
 - Normalization: `docs/step10_normalization_policy.md`

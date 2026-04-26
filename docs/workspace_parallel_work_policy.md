@@ -143,11 +143,28 @@ case is likely to create a manifest merge conflict.
 
 ## Context Routing Before Large Tasks
 
-For Step 19+ or other large tasks, workers should use `docs/context/context_index.md` and `docs/context/context_routing.md` before broad file reads.
+For Step 19+ or other large tasks, workers should use `docs/context/current_context.md`, `docs/context/MVP_V0_1_BASELINE.md`, exactly one active packet, and `docs/context/CONTEXT_ROUTING_INDEX.md` before broad file reads.
 
 Worker prompts should name `required_context` and `forbidden_context` when a routed packet is available. The worker may still use targeted search when a direct contract, status, or boundary conflict is missing or unclear.
 
 Context routing reduces default context load; it does not weaken worktree separation, manifest scope, hard stops, generated-output boundaries, or the full Cross-Step Conflict Checkpoint required before closing major Steps.
+
+Do not load archive/history, generated packets, validation logs, runtime
+reports, raw market data, local caches, or chart images by default. Archive
+lookup is allowed only for a named conflict, regression, provenance, or
+release-evidence check, and the worker must record the reason in its handoff.
+
+Worker handoffs should include a short context budget record:
+
+```text
+context_budget:
+  default_context_read:
+  active_packet:
+  domain_stub:
+  targeted_files:
+  archive_read: yes/no
+  archive_read_reason:
+```
 
 ## Branch-Local Commit Default
 

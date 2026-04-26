@@ -92,6 +92,34 @@ def test_archive_files_are_not_embedded_by_default(tmp_path: Path) -> None:
     assert "`docs/context/archive/step01_to_step19_summary.md` - FOUND" not in text
 
 
+def test_gpt_brief_mode_generates_route_only_context(tmp_path: Path) -> None:
+    _write_minimal_context_project(tmp_path)
+    (tmp_path / "docs/context/GPT_CONTEXT_GENERATION_RULES.md").write_text("rules", encoding="utf-8")
+    (tmp_path / "docs/context/CONTEXT_ROUTING_INDEX.md").write_text("routes", encoding="utf-8")
+    config = module.GptBriefConfig(
+        project_root=tmp_path,
+        request="Draft a GPT prompt.",
+        output_path=tmp_path / "docs/context/generated/gpt_brief.md",
+    )
+
+    result = module.write_gpt_brief(config)
+
+    text = result.output_path.read_text(encoding="utf-8")
+    assert len(text.splitlines()) <= 80
+    assert "Draft a GPT prompt." in text
+    assert "Do not repeat completed Step history" in text
+    assert "`docs/context/MVP_V0_1_BASELINE.md` - FOUND" in text
+    assert "GPT_CONTEXT_GENERATION_RULES.md" not in text
+    assert "| Step 1 |" not in text
+
+
+def test_gpt_brief_default_output_is_project_context_doc(tmp_path: Path) -> None:
+    _write_minimal_context_project(tmp_path)
+    output = module.DEFAULT_GPT_BRIEF_OUTPUT
+
+    assert str(output).replace("\\", "/") == "docs/context/gpt_context_quant.md"
+
+
 def _write_minimal_context_project(tmp_path: Path, *, include_missing_route: bool = False) -> None:
     (tmp_path / "docs/context/domain").mkdir(parents=True)
     (tmp_path / "docs/context/generated").mkdir(parents=True)

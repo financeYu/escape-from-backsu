@@ -19,6 +19,7 @@ Master-up summary must prioritize:
 13. which branch integration queue state applies
 14. which validation layer was run: branch-focused or Step-end
 15. where required review/audit fixes must be routed
+16. which context budget was used and whether archive/history reads were justified
 
 Before requesting detailed master integration review, run the preflight gate:
 
@@ -46,6 +47,16 @@ Use the operating levels from `docs/workspace_parallel_work_policy.md`. Level 3 
 - unrelated dirty files:
 - generated outputs excluded:
 - mixed-change files requiring hunk-level staging:
+
+[Context budget]
+- default context read:
+- active packet:
+- domain stub:
+- targeted files read:
+- archive/history read used: yes/no
+- archive/history read reason:
+- omitted completed-Step history:
+- confirmed context facts repeated: 0/1/2/3
 
 [Branch integration queue]
 - queue state:

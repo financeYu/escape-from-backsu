@@ -3,6 +3,33 @@
 This policy is a routing aid, not an authority document. It reduces repeated
 answers caused by over-reading completed roadmap history.
 
+## Task Start Context Optimization Directive
+
+Do not read full repository history at task start. Default context must be
+limited to:
+
+1. current root authority state and hard stops
+2. the affected subproject `AGENTS.md`
+3. exactly one active context packet for the current task
+4. one required domain context stub, when needed
+5. targeted source, test, or config files that may be changed
+
+Completed Step 1-20 outputs are trusted by default. Archive files and old Step
+detail documents may be read only for conflict, regression, provenance, or
+release-evidence checks, and then only through the narrowest relevant file.
+
+Answers and handoffs must not repeat completed Step history. State no more than
+three confirmed context facts before focusing on current judgment, changes,
+validation, and remaining risk.
+
+Active packets must not copy long document bodies, validation logs, generated
+outputs, raw market data, caches, chart images, or archive content. Use file
+paths and short purpose notes instead.
+
+If work touches scoring, ranking, reports, backtests, valuation, generated-output
+boundaries, roadmap verdicts, or root policy, follow the existing guardrails and
+worktree/branch separation policy.
+
 ## Default Answer Rules
 
 - Default answers must not repeat completed Step summaries.

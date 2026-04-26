@@ -21,10 +21,20 @@ This directory does not replace the authority chain:
 
 Context docs are routing aids. They are not permission to bypass roadmap order, Step gates, root/worktree boundaries, valuation guardrails, generated-output policy, or Cross-Step Conflict Checkpoints.
 
+## Default Load Rule
+
+Future workers should not load full repository history by default. Start from
+current root hard stops, the affected subproject `AGENTS.md`, one active packet,
+one needed domain stub, and targeted files in the change scope. Completed Step
+1-20 outputs are trusted unless a specific conflict, regression, provenance, or
+release-evidence check requires narrow archive lookup.
+
 ## Directory Layout
 
 - `current_context.md`: latest-only default-read context.
 - `MVP_V0_1_BASELINE.md`: compact post-Step20 baseline.
+- `gpt_context_quant.md`: single GPT submission brief generated for prompt improvement work.
+- `GPT_CONTEXT_GENERATION_RULES.md`: internal rules for generating short GPT briefs; do not paste into GPT by default.
 - `ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`: current Step 20.5 active packet.
 - `CONTEXT_ROUTING_INDEX.md`: path-only targeted lookup index.
 - `active_step20_packet.md`: Step 20 final-validation routing packet.

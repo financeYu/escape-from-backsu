@@ -1,35 +1,30 @@
 # 로드맵 상태
 
-이 파일은 현재 작업 판단에 필요한 compact status만 유지한다. 완료 Step의 긴 구현/검증 이력은 `docs/roadmap_archive/` 아래 archive 문서를 확인한다.
+이 파일은 현재 작업 판단에 필요한 latest-only status만 유지한다. 완료 Step의 긴 구현/검증 이력은 기본 컨텍스트가 아니며 `docs/context/archive/`와 `docs/roadmap_archive/`에서 필요한 경우에만 확인한다.
 
 ## 현재 활성 단계
 
 Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE / KOSPI200 technical MVP v0.1 freeze-ready
 
-- Active: no in-progress roadmap Step. MVP v0.1 is freeze-ready after Step 20 integration.
-- Recently completed: Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE
-- Recently completed before that: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
-- Carry-forward preserved for this Step: Step 19 orchestrates existing approved stage contracts only; Step 15 ranking, Step 16 reports, Step 17 backtest, and Step 18 candidate-only valuation/fundamental boundaries remain unchanged.
-- Current gate: Step 20 completed KOSPI200 MVP completeness hardening, contract clarity, sanity validation, and final Done validation. KOSDAQ150, futures/options, valuation/fundamental scoring activation, backtest-driven score optimization, and trading recommendations remain outside MVP scope.
+- Active: no in-progress roadmap Step.
+- Current baseline: Step 20 completed KOSPI200 MVP completeness hardening and final Done validation.
+- Current gate: future expansion needs a separately approved post-MVP Step, routed context packet, correct role branch/worktree, and conflict checkpoint when required.
+
+## 컨텍스트 운영 상태
+
+- 기본 시작점: `docs/context/current_context.md`, `docs/context/MVP_V0_1_BASELINE.md`, active packet 1개.
+- Targeted lookup: `docs/context/CONTEXT_ROUTING_INDEX.md`와 필요한 domain stub만 사용한다.
+- Archive lookup: conflict, regression, provenance, release-evidence 확인이 있을 때만 가장 좁은 파일을 읽는다.
+- 답변과 handoff는 confirmed context fact를 최대 3개만 반복하고 현재 판단, 변경, 검증, 남은 리스크를 중심으로 작성한다.
+- 완료 Step 1-20 산출물은 기본적으로 신뢰한다.
 
 ## 병렬 Workspace 운영 메모
 
 - Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
-- Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
-- Step implementation은 major Step branch(`codex/stepXX-<scope>`)에서만 진행하고, Quant/research/review/audit/chart 작업은 minor/support branch(`quant/`, `research/`, `review/`, `audit/`, `chart/`)에서 분리한다.
+- Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리한다.
 - 모든 하위 에이전트는 파일 편집 전에 role branch/worktree를 만들거나 선택하고 루트 `WORKSPACE_MANIFEST.md`를 작성해야 한다.
 - `C:\Users\jjaew\Project\master_mvp`는 integration / verification / status-control 전용 workspace로 유지한다.
-- 모든 non-master worktree는 루트의 `WORKSPACE_MANIFEST.md`를 포함해야 한다.
 - 이 운영 메모는 Step 상태를 변경하지 않는다.
-
-
-## Pre-Step19 Context Routing 준비 메모
-
-- Status: COMPLETE / docs-only support consumed by Step 19.
-- Purpose: Step 19+ workers should start from routed context instead of reading the full repository history.
-- Allowed now: context hierarchy/routing/budget docs and checkpoint policy notes that do not alter Step 18 verdicts.
-- Forbidden now: new market data sources, KOSDAQ150, futures, options expansion, valuation/fundamental scoring activation, backtest feedback into upstream scoring/ranking, or trading recommendation language. Step 20 performed only limited KOSPI200 MVP scoring/ranking completeness hardening needed for v0.1 freeze readiness.
-- Step 18 note: if Step 18 completion evidence is not yet reflected on the integration branch being edited, do not invent evidence; preserve the mismatch as an integration risk until the Step 18 branch is accepted.
 
 ## 전체 Step 판정
 
@@ -56,170 +51,21 @@ Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE 
 | Step 19 | COMPLETE |
 | Step 20 | COMPLETE / KOSPI200 MVP Completeness Hardening & Final Done Validation |
 
-## Research ingestion 범위 확장 상태
+## 현재 Baseline 핵심
 
-- `reserch_mvp/config/research_queries.toml`에 technical, diagnostic, Korea/APAC/EM context, hybrid split query-set 확장 metadata를 추가했다.
-- `reserch_mvp/config/research_classification.toml`에 required input boundary, forbidden valuation language, 명시적 classification rule name을 추가했다.
-- `reserch_mvp/config/research_scholar_discovery.toml`에 user-provided DOI seed와 seed lifecycle을 문서화했다.
-- `Quant_mvp/config/research_intake.toml`은 downstream EvidenceCard intake contract만 소유한다.
-- `docs/research_ingestion_expansion.md`에 source 확장 후보와 정책 검토 조건을 문서화했다.
-- EvidenceCard is not a score definition.
-- EvidenceCard is not an adoption decision.
-- Paper-reported backtest is diagnostic metadata only.
-- Citation count is metadata only, not evidence strength.
-- Scholar seeds are discovery inputs only.
-- PDF fulltext download is disabled by default.
-- Financial/fundamental data must not enter technical_composite_score or final_composite_score.
-- ranking, latest ranking, composite score, backtest, valuation/fundamental scoring은 여전히 생성하지 않는다.
+- MVP universe는 KOSPI200 only다.
+- `technical_composite_score`는 technical-only이며 MVP v0.1에서 `final_composite_score`와 같다.
+- Valuation/fundamental data는 candidate-only이며 technical/final composite에 들어가지 않는다.
+- Backtest output은 evaluation-only이며 upstream scoring/ranking에 feedback하지 않는다.
+- Generated reports, runtime outputs, chart images, local caches, raw market data는 default context가 아니다.
 
-## 최근 완료 Step 요약
+## Research Ingestion 상태
 
-### Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation
-
-- Step 19 completion was verified from repository status documents and artifacts; no status mismatch was found.
-- Step 20 documented score lineage, the composite contract, the ranking contract, a fixture-based ranking sanity report, the final MVP report, and the KOSPI200 v0.1 baseline manifest.
-- Latest ranking output now exposes warmup status, neutral shrinkage count, and a technical-only MVP notice so Step 16 detail/report context can explain ranking rows more clearly.
-- `technical_composite_score` remains technical-only and `final_composite_score` equals `technical_composite_score` for MVP v0.1.
-- Missing direct score inputs shrink to neutral `0.0`; deterministic ranking uses descending score and ticker ascending for ties.
-- Validation passed after final integration merge: `python -m pytest -q tests/context` = 17 passed; `python -m pytest -q tests/scanner tests/reports tests/validation` = 230 passed; `python -m pytest -q tests/integration` = 2 passed; `python -m pytest -q` = 707 passed, 4 skipped, 25 subtests passed.
-- Context checks returned no staleness or conflict findings; `review_mvp` specialist review returned 0 high and 0 medium findings, with 10 low style/quality notes treated as non-blocking; `python -m unittest discover -s review_mvp/tests -v` = 11 passed.
-- KOSDAQ150 was not implemented; futures/options were not implemented; valuation/fundamental scoring remains inactive; Step 17 backtest outputs did not feed upstream scoring or ranking; no trading recommendation or proven alpha claim was introduced.
-
-### Step 19 = Automatic Execution Pipeline
-
-- Step 19 automatic execution pipeline contracts, config, CLI, guardrails, docs, generated-output boundary docs, and tests are implemented.
-- `src/pipeline/` builds deterministic local pipeline summaries from declarative stage contracts without executing or redefining domain scoring, ranking, report, backtest, or valuation/fundamental semantics.
-- `config/step19_pipeline.toml` keeps the default mode as `dry_run`, disables network, secrets, local cache requirements, KOSDAQ150/futures/options expansion, external data ingestion, Step 20 final validation, technical/final composite activation, and valuation/fundamental scoring activation.
-- `src/validation/step19_pipeline_guardrails.py` rejects forbidden valuation/fundamental scoring activation, protected score/output fields, Step 17 return feedback into upstream stages, Step 16 report feedback into scoring/ranking, generated-output path pollution, network/secret requirements, Step 20 completion claims, and trading/performance language.
-- `scripts/run_step19_pipeline.py` prints a structured summary and now returns nonzero when the pipeline is blocked or failed.
-- Runtime Step 19 summaries belong under `reports/pipeline/generated/` and are ignored by `.gitignore`; generated security, backtest, and valuation report roots are also ignored.
-- Step 19 does not create new score formulas, re-rank securities, redesign reports, redesign backtests, activate valuation/fundamental scoring, add market data sources, or perform Step 20 final Done validation.
-- Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 679 passed, 4 skipped, 25 subtests passed.
-- Focused Step 19 validation: `python -m pytest -q -p no:cacheprovider tests/pipeline tests/validation/test_step19_pipeline_guardrails.py` = 19 passed.
-- Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 239 passed.
-- `review_mvp` specialist static review on Step 19 changed Python paths returned no medium-or-higher findings; `python -m unittest discover -s review_mvp/tests -v` = 8 passed.
-- Cross-Step Conflict Checkpoint after post-review-fix validation: PASS; no blocking roadmap/order, hard-stop, score/composite, valuation, diagnostics, handoff, generated-output, dirty-worktree, root-conflict, or context-routing issue found.
-
-### Step 18 = Valuation / Fundamental Expansion
-
-- Step 18 candidate-only valuation/fundamental contracts, metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
-- Candidate metadata schema is canonicalized as `ticker`, `period`, `metric`, `value`, `filing_date`, `availability_date`, `disclosure_id` or `source_report_id`, `source_vendor`, and `collected_at`; legacy aliases are ingestion compatibility only.
-- `src/valuation/` defines candidate records and report helpers only; it does not create a valuation score, fundamental score, valuation-aware composite, trading signal, or ranking output.
-- `config/valuation_fundamental_metrics.toml` lists allowed candidate-only metric names and keeps `technical_composite_score`, `final_composite_score`, backtest integration, alpha validation, and external network calls disabled.
-- `src/validation/step18_valuation_fundamental_guardrails.py` validates candidate records, availability-date usage, required PIT metadata, reporting-lag/stale-data policy, candidate report notices, forbidden trading/predictive/score language, production-output leakage, and backtest availability boundaries.
-- `docs/architecture/step18_valuation_fundamental_boundary.md` documents the separation between technical scores, candidate valuation/fundamental data, final ranking scores, and Step 17 backtest inputs.
-- Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 651 passed, 4 skipped, 25 subtests passed.
-- Focused Step 18 master integration validation: `python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py` = 44 passed.
-- Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 229 passed.
-- Manual forbidden-language reproduction now rejects `buy recommendation and proven alpha` with `alpha proven, buy recommendation`.
-- `review_mvp` specialist static review command on Step 18 production/test paths returned 0 high and 0 medium findings; 3 low style/quality findings are non-blocking.
-- Cross-Step Conflict Checkpoint after post-fix validation: PASS. Packet regenerated with `python scripts/build_review_packet.py --step "Step 18" --stage "post-fix validation"`; manual checkpoint found no blocking roadmap/order, hard-stop, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, trading-signal, or unrelated dirty-worktree issue. During master integration, `WORKSPACE_MANIFEST.md` was updated to reflect the Step 18 integration branch identity.
-
-### Step 17 = Conservative Backtest
-
-- Step 17 Worker A/B conservative backtest core and guardrail branches are integrated through `integration/step17-conservative-backtest-merge`.
-- `src/backtest/` implements deterministic evaluation-only backtest contracts and runner logic using frozen Step 15/16-compatible technical ranking context as read-only input.
-- Step 17 output permits realized/evaluation return fields only in Step 17 result/output context and rejects those fields as upstream inputs.
-- `src/validation/step17_backtest_guardrails.py` rejects valuation/fundamental, future/forward/expected return, trading recommendation, forbidden report language, and return-feedback leakage.
-- `reports/backtest/README.md`, `docs/step17_conservative_backtest_core.md`, `docs/step17_backtest_guardrails.md`, and `docs/architecture/step17_backtest_boundary.md` document the evaluation-only, generated-output, no-feedback, and Step 18 valuation boundary.
-- Latest local validation: `python -m pytest -q` = 607 passed, 4 skipped, 25 subtests passed.
-- Focused Step 17 validation: `tests/backtest` = 18 passed; `tests/validation/test_step17_backtest_guardrails.py` = 39 passed; `tests/reports` = 68 passed; `tests/scanner tests/reports tests/validation` = 188 passed.
-- `review_mvp` specialist review found no high findings; the only Step 17 medium static warning was a false positive around guarded `start_positions[0]`; remaining Step 17 findings are non-blocking style/length warnings.
-- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, Step 18 valuation/fundamental leakage, trading-signal leakage, Step 15 ranking rewrite, Step 16 report rewrite, generated-output boundary break, return-feedback loop, or dirty-worktree blocker found.
-
-### Step 16 = Security Detail Report
-
-- Step 16 Worker A/B implementation and guardrail branches are integrated into the master integration branch.
-- `src/reports/security_detail_report.py` builds deterministic per-security technical-only detail reports from the Step 15 latest ranking snapshot as read-only context.
-- Step 16 output displays ticker/date, source latest ranking date, read-only rank fields, technical-only composite score context, score/component breakdowns, source/adoption metadata, diagnostics, quality flags, explanations, and an explicit `technical-only detail report` boundary notice.
-- `src/validation/step16_detail_report_guardrails.py` validates Step 16 report inputs and outputs, including recursive structured-output language checks after code-review fixes.
-- Step 16 does not create a new ranking, re-rank securities, run backtests, compute future/forward/realized returns, create trading recommendations, or use valuation/fundamental scoring.
-- `docs/step16_security_detail_report.md`, `docs/architecture/step16_report_backtest_boundary.md`, and `reports/security/README.md` document the generated-output and Step 15 read-only boundaries.
-- Latest local validation: `python -m pytest -q` = 548 passed, 4 skipped, 25 subtests passed.
-- Focused Step 16 validation: `tests/reports` = 66 passed; `tests/validation/test_step16_detail_report_guardrails.py` = 37 passed; `tests/scanner tests/reports tests/validation` = 147 passed.
-- `review_mvp` specialist review found no high or medium findings after required Step 16 review fixes; remaining low style/length warnings are non-blocking.
-- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, Step 17 backtest leakage, Step 18 valuation/fundamental leakage, trading-signal leakage, Step 15 read-only boundary, generated-output boundary, or dirty-worktree blocker found.
-
-### Step 15 = Latest Ranking Output
-
-- Step 15 Worker A/B implementation and validation branches are integrated into the master integration branch.
-- `src/scanner/latest_ranking.py` builds a deterministic latest-date technical ranking snapshot from Step 14 adoption synthesis material and Step 10 normalized technical score inputs.
-- Step 15 output keeps `technical_composite_score` and `final_composite_score` technical-only and rejects future/performance, trading, valuation, and financial/fundamental columns.
-- `src/validation/step15_latest_ranking_guardrails.py` validates Step 15 output and input-plan guardrails, including blocked-row handling.
-- `docs/architecture/research_backtest_boundary_design.md` documents the one-way Step 15/16 output -> Step 17 backtest input boundary without implementing backtests.
-- `scripts/Start-RoleWorktree.ps1` and `docs/workspace_parallel_work_policy.md` add lightweight role-worktree setup support without weakening Step 15+ branch separation.
-- Latest local validation: `python -m pytest -q` = 434 passed, 4 skipped, 25 subtests passed.
-- Focused Step 15 validation: 44 passed.
-- Research ingestion focused validation: 96 passed, 4 skipped.
-- `review_mvp` specialist review found no high findings; remaining medium/low findings are pre-existing static-review items or non-blocking style/length warnings after required Step 15 guardrail fix.
-- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, hard-stop, valuation, future-return, backtest, generated-output, or dirty-worktree blocking issue found.
-
-### Step 14 = Adoption Synthesis
-
-- Step 14 adoption synthesis docs, contracts, engine, report guardrails, and tests are complete.
-- Step 14 output remains adoption synthesis material only and preserves Step 13 `review_status` as `source_review_status`.
-- Step 14 does not generate ranking output, latest ranking output, `technical_composite_score`, `final_composite_score`, backtest, trading signals, or valuation/fundamental scoring.
-- Latest recorded local validation: `python -m pytest` = 387 passed, 4 skipped.
-- Focused Step 14 / research-ingestion validation: 180 passed, 4 skipped.
-- `review_mvp` specialist review: no high or medium findings on changed production code; low style findings are non-blocking.
-- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, hard-stop, composite, valuation, diagnostics, or generated-output blocking issue found.
-
-### Step 13 = Technical Selection Reviewer
-
-- Step 13 review contract, status vocabulary, validation guardrail, reviewer engine, report builder, and generated report path/language guardrails are implemented.
-- Step 13 output remains technical review recommendation material for Step 14 only.
-- `review_status` values are technical recommendations, not final adoption states.
-- `diagnostic_only` and context roles remain constrained to diagnostic/context recommendation paths.
-- Severe redundancy or blocked candidate diagnostics cannot auto-promote to adoption.
-- Generated Step 13 reports are constrained to `reports/selection/` and must include `technical selection review material only`.
-- Latest recorded validation: `$env:PYTHONPATH="src"; python -m pytest` = 277 passed, 4 skipped.
-
-### Step 12 = Redundancy / Correlation Diagnostics
-
-- Same-date cross-sectional Spearman redundancy/correlation diagnostics are implemented for review material.
-- Normalized score columns are required; raw score fallback is not allowed.
-- Diagnostics remain non-alpha, non-adoption, non-ranking, non-backtest, and non-valuation material.
-
-## 상세 이력 위치
-
-- Full archived Step history through Step 13: `docs/roadmap_archive/step_history_through_step13.md`
-- Step-specific governing docs remain source of detail, including:
-  - `docs/step13_technical_selection_reviewer.md`
-  - `docs/step12_redundancy_correlation_diagnostics.md`
-  - `docs/step11_composite_score_design.md`
-  - `docs/step10_normalization_policy.md`
-  - `docs/step9_research_tester_scores.md`
-  - `docs/step8_testing_normalization_protocol.md`
-  - `docs/step7_indicator_layer.md`
-  - `docs/step2_financial_validation_summary.md`
-
-## Step 17 진행 / 시작 기준
-
-- Start Step 17 only after explicit user/root assignment and a new role branch/worktree with `WORKSPACE_MANIFEST.md`.
-- Use Step 15 latest ranking output and Step 16 technical-only detail reports only as frozen input context.
-- Do not alter Step 15 ranking generation or Step 16 report generation while implementing Step 17.
-- Do not implement valuation/fundamental scoring before Step 18.
-- Do not merge financial/fundamental data into `technical_composite_score` or `final_composite_score`.
-
-## Step 간 충돌 체크포인트
-
-Run a Cross-Step Conflict Checkpoint whenever an important in-Step stage ends and before each Step is closed.
-
-Required trigger examples:
-
-- design or output contract is locked
-- implementation is ready for master-up
-- cross-project handoff is about to be consumed downstream
-- Step-end validation has passed and code review is about to begin
-- required review fixes are complete and validation is about to be rerun
-
-Use `docs/cross_step_conflict_check.md` and generate a compact review packet with:
-
-```powershell
-python scripts/build_review_packet.py --step "<current step>" --stage "<stage name>"
-```
-
-Completed Step artifacts are trusted by default. The checkpoint checks only whether the current stage conflicts with roadmap order, hard stops, cross-project handoffs, generated-output boundaries, or unresolved carry-forward risks.
+- Research ingestion 확장 상태는 `docs/research_ingestion_expansion.md`와 affected research config를 targeted read한다.
+- EvidenceCard는 score definition, adoption decision, alpha evidence, valuation verdict가 아니다.
+- Paper-reported backtest와 citation count는 diagnostic metadata only다.
+- PDF fulltext download는 기본 비활성화 상태다.
+- Financial/fundamental data must not enter `technical_composite_score` or `final_composite_score`.
 
 ## 밸류에이션 상태
 
@@ -239,8 +85,30 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 - documented score definition 전 score implementation 금지
 - documented composite design 전 composite score implementation 금지
 - active Step이 명시적으로 허용하기 전에는 ranking generation 금지
-- Step 17 전 backtest 금지
 - valuation status가 candidate-only인 동안 active valuation/fundamental scoring 금지
 - financial data를 `technical_composite_score`에 넣지 않는다
 - financial data를 `final_composite_score`에 넣지 않는다
 - price-only evidence에 valuation language 사용 금지
+- backtest feedback을 upstream scoring/ranking에 넣지 않는다
+- trading recommendation, proven alpha, expected return signal language 금지
+
+## 상세 이력 위치
+
+- Compact post-Step20 baseline: `docs/context/MVP_V0_1_BASELINE.md`
+- Context routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
+- Step 1-20 archive: `docs/context/archive/step01_to_step20_history.md`
+- Older roadmap archive: `docs/roadmap_archive/`
+- Release evidence: `docs/releases/`
+- Contracts: `docs/contracts/step20_composite_contract.md`, `docs/contracts/step20_ranking_contract.md`
+
+## Step 간 충돌 체크포인트
+
+Run a Cross-Step Conflict Checkpoint whenever an important in-Step stage ends and before each Step is closed.
+
+Use `docs/cross_step_conflict_check.md` and generate a compact review packet with:
+
+```powershell
+python scripts/build_review_packet.py --step "<current step>" --stage "<stage name>"
+```
+
+Completed Step artifacts are trusted by default. The checkpoint checks only whether the current stage conflicts with roadmap order, hard stops, cross-project handoffs, generated-output boundaries, context-routing boundaries, or unresolved carry-forward risks.

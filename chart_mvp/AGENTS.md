@@ -52,6 +52,14 @@ The subproject must submit a master-up summary using the required template in th
 
 ## Boundaries
 
+### Chart Scope Approval Gate
+
+`chart_mvp` workers must not expand implementation or repair scope beyond the
+`chart_mvp` ownership boundary without explicit root/master approval. If a task
+requires edits or implementation decisions in another subproject or root-owned
+policy area, stop at the boundary, report the required crossing, and wait for
+root/master permission before proceeding.
+
 This agent must not:
 
 - adopt new scores without a `Quant_mvp` score definition or explicit user request
@@ -86,6 +94,22 @@ Do not commit by default:
 - `*.pyc`
 
 If a generated sample is needed in Git, place the smallest possible fixture under an explicit fixture path and document why.
+
+---
+
+## Post-MVP v0.1 task packet intake
+
+When root/master delegates post-Step20 work, accept the compact task packet in
+`../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+
+For chart runtime work, this packet does not authorize changes to scanner
+runtime behavior, scoring, ranking, report behavior, backtest behavior,
+valuation/fundamental activation, data ingestion, cache semantics, or generated
+output policy unless the concrete post-MVP task explicitly assigns that scope.
+If the task is blank or would cross those boundaries, stop and report the needed
+clarification or root/master approval.
+
+Final reports must use the Korean sections defined in the packet.
 
 ---
 

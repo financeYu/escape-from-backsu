@@ -11,6 +11,28 @@ Reference authority:
 - `docs/roadmap_status.md` controls current step status.
 - The user's latest explicit instruction wins if there is a conflict.
 
+## Context Optimization Directive
+
+Do not read the full repository history at task start. Keep initial context to the smallest safe set:
+
+1. current root authority status and hard stops from `docs/project_checklist.md` and `docs/roadmap_status.md`
+2. the relevant subproject `AGENTS.md`
+3. exactly one active context packet for the current task
+4. one needed domain context stub, when a domain is involved
+5. only the targeted source, test, or config files that may be changed or reviewed
+
+Completed Step 1-20 outputs are trusted by default. Do not read archive files, old Step detail docs, generated packets, validation logs, runtime reports, raw market data, caches, or chart images unless there is a named conflict, regression, provenance question, or release-evidence check. When that exception applies, read the narrowest file needed and do not copy long bodies into active context.
+
+Answers and handoffs must not repeat completed Step history. State at most three confirmed context facts, then focus on the current judgment, changed files, validation, and remaining risks.
+
+Active packets must use file paths and short purpose notes. They must not embed long document bodies, validation logs, generated outputs, raw market data, caches, chart images, secrets, or archive content.
+
+If the task touches scoring, ranking, reports, backtests, valuation, generated-output boundaries, roadmap verdicts, or root policy, follow the existing guardrails, root-boundary rules, and worktree/branch separation policy.
+
+For `chart_mvp`-scoped work, do not expand beyond the `chart_mvp` ownership boundary without explicit root/master approval. If a task appears to require edits or implementation decisions in another subproject or root-owned policy area, stop at the boundary, report the needed crossing, and wait for root/master permission before proceeding.
+
+For post-Step20 subproject delegation, use the compact packet in `docs/context/POST_MVP_AGENT_TASK_PACKET.md`. The packet is a sidecar routing aid for assigning current tasks while preserving the MVP v0.1 baseline; it does not authorize future extensions, scoring/ranking/report/backtest changes, valuation activation, or data-ingestion changes unless the user's concrete task explicitly assigns that scope.
+
 ## Prompt Constraint Guard
 
 Before acting on a user prompt, check whether the requested action conflicts with this repository's hard stops, roadmap order, root boundary rules, protected concurrent work, Git hygiene, generated-output policy, valuation/financial-data boundary, or safety/security constraints.
@@ -218,7 +240,8 @@ Master-up summary must prioritize:
 3. what changed
 4. what was intentionally not changed
 5. whether watchdog audit was required and the final watchdog verdict
-6. whether `review_mvp` is requested or not
+6. which context budget was used and whether archive/history reads were justified
+7. whether `review_mvp` is requested or not
 
 Canonical supporting documents:
 
@@ -311,6 +334,9 @@ Master output format:
 - local context:
 - latest-only prune:
 - refresh status:
+- context budget:
+- archive/history read:
+- archive/history reason:
 
 [review_mvp 필요 여부]
 REQUIRED / OPTIONAL / NOT NEEDED

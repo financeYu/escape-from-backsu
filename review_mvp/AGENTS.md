@@ -192,6 +192,23 @@ Avoid low-value comments about formatting, naming, or broad cleanup unless they 
 
 ---
 
+## Post-MVP v0.1 task packet intake
+
+When root/master delegates post-Step20 work, accept the compact task packet in
+`../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+
+For specialist review work, this packet authorizes review, risk classification,
+and minimal findings only. It does not authorize repairs in root-owned files or
+other subprojects, scoring/ranking/report/backtest changes, valuation activation,
+or data-ingestion changes unless the concrete post-MVP task and active
+workspace manifest explicitly assign that repair scope. If the task is blank or
+would cross those boundaries, stop and report the needed clarification or
+root/master approval.
+
+Final reports must use the Korean sections defined in the packet.
+
+---
+
 ## Final validation role
 
 Use this project as the final review checkpoint when the specialist invocation policy requires it:

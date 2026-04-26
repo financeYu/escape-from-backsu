@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-26T19:26:19+09:00
+Generated at: 2026-04-26T20:11:43+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -20,18 +20,18 @@ No paid API upload is performed by this local-only workflow.
 ## Current Roadmap Position
 
 Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE / KOSPI200 technical MVP v0.1 freeze-ready
-- Active: no in-progress roadmap Step. MVP v0.1 is freeze-ready after Step 20 integration.
-- Recently completed: Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE
-- Recently completed before that: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
-- Carry-forward preserved for this Step: Step 19 orchestrates existing approved stage contracts only; Step 15 ranking, Step 16 reports, Step 17 backtest, and Step 18 candidate-only valuation/fundamental boundaries remain unchanged.
-- Current gate: Step 20 completed KOSPI200 MVP completeness hardening, contract clarity, sanity validation, and final Done validation. KOSDAQ150, futures/options, valuation/fundamental scoring activation, backtest-driven score optimization, and trading recommendations remain outside MVP scope.
+- Active: no in-progress roadmap Step.
+- Current baseline: Step 20 completed KOSPI200 MVP completeness hardening and final Done validation.
+- Current gate: future expansion needs a separately approved post-MVP Step, routed context packet, correct role branch/worktree, and conflict checkpoint when required.
+## 컨텍스트 운영 상태
+- 기본 시작점: `docs/context/current_context.md`, `docs/context/MVP_V0_1_BASELINE.md`, active packet 1개.
+- Targeted lookup: `docs/context/CONTEXT_ROUTING_INDEX.md`와 필요한 domain stub만 사용한다.
+- Archive lookup: conflict, regression, provenance, release-evidence 확인이 있을 때만 가장 좁은 파일을 읽는다.
+- 답변과 handoff는 confirmed context fact를 최대 3개만 반복하고 현재 판단, 변경, 검증, 남은 리스크를 중심으로 작성한다.
+- 완료 Step 1-20 산출물은 기본적으로 신뢰한다.
 ## 병렬 Workspace 운영 메모
 - Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
-- Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
-- Step implementation은 major Step branch(`codex/stepXX-<scope>`)에서만 진행하고, Quant/research/review/audit/chart 작업은 minor/support branch(`quant/`, `research/`, `review/`, `audit/`, `chart/`)에서 분리한다.
-- 모든 하위 에이전트는 파일 편집 전에 role branch/worktree를 만들거나 선택하고 루트 `WORKSPACE_MANIFEST.md`를 작성해야 한다.
-- `C:\Users\jjaew\Project\master_mvp`는 integration / verification / status-control 전용 workspace로 유지한다.
-- omitted 8 additional lines for compact context
+- omitted 4 additional lines for compact context
 
 ## Roadmap Verdicts
 
@@ -57,64 +57,26 @@ Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE 
 | Step 18 | COMPLETE |
 | Step 19 | COMPLETE |
 | Step 20 | COMPLETE / KOSPI200 MVP Completeness Hardening & Final Done Validation |
-## Research ingestion 범위 확장 상태
-- `reserch_mvp/config/research_queries.toml`에 technical, diagnostic, Korea/APAC/EM context, hybrid split query-set 확장 metadata를 추가했다.
-- `reserch_mvp/config/research_classification.toml`에 required input boundary, forbidden valuation language, 명시적 classification rule name을 추가했다.
-- `reserch_mvp/config/research_scholar_discovery.toml`에 user-provided DOI seed와 seed lifecycle을 문서화했다.
-- `Quant_mvp/config/research_intake.toml`은 downstream EvidenceCard intake contract만 소유한다.
-- `docs/research_ingestion_expansion.md`에 source 확장 후보와 정책 검토 조건을 문서화했다.
-- omitted 8 additional lines for compact context
+## 현재 Baseline 핵심
+- MVP universe는 KOSPI200 only다.
+- `technical_composite_score`는 technical-only이며 MVP v0.1에서 `final_composite_score`와 같다.
+- Valuation/fundamental data는 candidate-only이며 technical/final composite에 들어가지 않는다.
+- Backtest output은 evaluation-only이며 upstream scoring/ranking에 feedback하지 않는다.
+- Generated reports, runtime outputs, chart images, local caches, raw market data는 default context가 아니다.
+- omitted 41 additional lines for compact context
 
 ## Most Recent Completed Step
 
-### Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation
-- Step 19 completion was verified from repository status documents and artifacts; no status mismatch was found.
-- Step 20 documented score lineage, the composite contract, the ranking contract, a fixture-based ranking sanity report, the final MVP report, and the KOSPI200 v0.1 baseline manifest.
-- Latest ranking output now exposes warmup status, neutral shrinkage count, and a technical-only MVP notice so Step 16 detail/report context can explain ranking rows more clearly.
-- `technical_composite_score` remains technical-only and `final_composite_score` equals `technical_composite_score` for MVP v0.1.
-- Missing direct score inputs shrink to neutral `0.0`; deterministic ranking uses descending score and ticker ascending for ties.
-- Validation passed after final integration merge: `python -m pytest -q tests/context` = 17 passed; `python -m pytest -q tests/scanner tests/reports tests/validation` = 230 passed; `python -m pytest -q tests/integration` = 2 passed; `python -m pytest -q` = 707 passed, 4 skipped, 25 subtests passed.
-- Context checks returned no staleness or conflict findings; `review_mvp` specialist review returned 0 high and 0 medium findings, with 10 low style/quality notes treated as non-blocking; `python -m unittest discover -s review_mvp/tests -v` = 11 passed.
-- KOSDAQ150 was not implemented; futures/options were not implemented; valuation/fundamental scoring remains inactive; Step 17 backtest outputs did not feed upstream scoring or ranking; no trading recommendation or proven alpha claim was introduced.
-### Step 19 = Automatic Execution Pipeline
-- Step 19 automatic execution pipeline contracts, config, CLI, guardrails, docs, generated-output boundary docs, and tests are implemented.
-- `src/pipeline/` builds deterministic local pipeline summaries from declarative stage contracts without executing or redefining domain scoring, ranking, report, backtest, or valuation/fundamental semantics.
-- `config/step19_pipeline.toml` keeps the default mode as `dry_run`, disables network, secrets, local cache requirements, KOSDAQ150/futures/options expansion, external data ingestion, Step 20 final validation, technical/final composite activation, and valuation/fundamental scoring activation.
-- `src/validation/step19_pipeline_guardrails.py` rejects forbidden valuation/fundamental scoring activation, protected score/output fields, Step 17 return feedback into upstream stages, Step 16 report feedback into scoring/ranking, generated-output path pollution, network/secret requirements, Step 20 completion claims, and trading/performance language.
-- `scripts/run_step19_pipeline.py` prints a structured summary and now returns nonzero when the pipeline is blocked or failed.
-- Runtime Step 19 summaries belong under `reports/pipeline/generated/` and are ignored by `.gitignore`; generated security, backtest, and valuation report roots are also ignored.
-- Step 19 does not create new score formulas, re-rank securities, redesign reports, redesign backtests, activate valuation/fundamental scoring, add market data sources, or perform Step 20 final Done validation.
-- Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 679 passed, 4 skipped, 25 subtests passed.
-- Focused Step 19 validation: `python -m pytest -q -p no:cacheprovider tests/pipeline tests/validation/test_step19_pipeline_guardrails.py` = 19 passed.
-- Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 239 passed.
-- `review_mvp` specialist static review on Step 19 changed Python paths returned no medium-or-higher findings; `python -m unittest discover -s review_mvp/tests -v` = 8 passed.
-- Cross-Step Conflict Checkpoint after post-review-fix validation: PASS; no blocking roadmap/order, hard-stop, score/composite, valuation, diagnostics, handoff, generated-output, dirty-worktree, root-conflict, or context-routing issue found.
-### Step 18 = Valuation / Fundamental Expansion
-- Step 18 candidate-only valuation/fundamental contracts, metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
-- Candidate metadata schema is canonicalized as `ticker`, `period`, `metric`, `value`, `filing_date`, `availability_date`, `disclosure_id` or `source_report_id`, `source_vendor`, and `collected_at`; legacy aliases are ingestion compatibility only.
-- `src/valuation/` defines candidate records and report helpers only; it does not create a valuation score, fundamental score, valuation-aware composite, trading signal, or ranking output.
-- `config/valuation_fundamental_metrics.toml` lists allowed candidate-only metric names and keeps `technical_composite_score`, `final_composite_score`, backtest integration, alpha validation, and external network calls disabled.
-- `src/validation/step18_valuation_fundamental_guardrails.py` validates candidate records, availability-date usage, required PIT metadata, reporting-lag/stale-data policy, candidate report notices, forbidden trading/predictive/score language, production-output leakage, and backtest availability boundaries.
-- `docs/architecture/step18_valuation_fundamental_boundary.md` documents the separation between technical scores, candidate valuation/fundamental data, final ranking scores, and Step 17 backtest inputs.
-- Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 651 passed, 4 skipped, 25 subtests passed.
-- Focused Step 18 master integration validation: `python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py` = 44 passed.
-- Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 229 passed.
-- omitted 56 additional lines for compact context
+- unavailable
 
 ## Cross-Step Conflict Checkpoint
 
 Run a Cross-Step Conflict Checkpoint whenever an important in-Step stage ends and before each Step is closed.
-Required trigger examples:
-- design or output contract is locked
-- implementation is ready for master-up
-- cross-project handoff is about to be consumed downstream
-- Step-end validation has passed and code review is about to begin
-- required review fixes are complete and validation is about to be rerun
 Use `docs/cross_step_conflict_check.md` and generate a compact review packet with:
 ```powershell
 python scripts/build_review_packet.py --step "<current step>" --stage "<stage name>"
 ```
-Completed Step artifacts are trusted by default. The checkpoint checks only whether the current stage conflicts with roadmap order, hard stops, cross-project handoffs, generated-output boundaries, or unresolved carry-forward risks.
+Completed Step artifacts are trusted by default. The checkpoint checks only whether the current stage conflicts with roadmap order, hard stops, cross-project handoffs, generated-output boundaries, context-routing boundaries, or unresolved carry-forward risks.
 
 ## Active Guardrails
 
@@ -130,7 +92,7 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 ## Git Snapshot
 
 - branch: `codex/master-up-post20-pending`
-- commit: `a3afb17`
+- commit: `c7d1b59`
 - status:
 ```text
 clean
@@ -190,5 +152,26 @@ A candidate score or score family should be assigned one of the following final 
 | `donchian_breakout_distance` | `breakout` | `technical` | core candidate | define for MVP testing | trading range breakout evidence |
 | `bollinger_width_squeeze` | `squeeze_expansion` | `technical` | regime/conditional candidate | define for MVP testing as technical-only context | volatility compression and expansion setup |
 | `cmf_confirmation` | `flow` | `technical` | confirmation candidate | define for MVP testing | price-volume participation evidence |
+| `rsi_price_divergence` | `oscillator_divergence` | `technical` | cautious pattern proxy | define only as deterministic proxy | oscillator divergence, with pattern-mining warning |
+| `realized_vol_percentile` | `volatility_regime` | `diagnostic` | regime diagnostic | keep out of direct alpha ranking until reviewed | risk/regime context and testing discipline |
+| `efficiency_ratio_trend` | `trend_efficiency` | `technical` | distinctness candidate | define for MVP testing | smooth-trend versus noisy-trend proxy |
+| `medium_term_relative_strength` | folded into trend/breakout review queue | Korea evidence is mixed and overlap with breakout, 52-week high, and trend return is high |
+| `moving_average_trend_structure` | folded into `efficiency_ratio_trend` or later trend review | high overlap with breakout and relative strength |
+| `price_near_52w_high` | folded into `donchian_breakout_distance` as longer-window alternative | concept is useful but redundant in first MVP set |
+| `time_series_trend_return` | folded into `efficiency_ratio_trend` review | too close to relative strength unless separate use is proven later |
+| `volume_participation_momentum_filter` | future conditional filter / diagnostic backlog | strict turnover may require shares outstanding; OHLCV proxy needs review |
+| `trading_activity_variability_penalty` | diagnostic backlog | risk/liquidity context, not first-pass ranking alpha |
 
-[Context truncated by `max_chars`; consult repository docs for full detail.]
+## Family Map Snapshot
+
+| `mean_reversion` | `short_term_overreaction`, `atr_adjusted_oversold_distance` | `technical` | reversal candidates | high within family | implement both only if diagnostics compare distinctness |
+| `breakout` | `donchian_breakout_distance` | `technical` | continuation candidate | high with trend ideas | keep one simple breakout definition first |
+| `squeeze_expansion` | `bollinger_width_squeeze` | `technical` | setup/regime candidate | medium with volatility diagnostics | report as conditional context unless review supports ranking use |
+| `flow` | `cmf_confirmation` | `technical` | volume confirmation | medium with liquidity diagnostics | define whether standalone or interaction before coding |
+| `oscillator_divergence` | `rsi_price_divergence` | `technical` | cautious reversal proxy | medium-high with mean reversion | use deterministic proxy only |
+| `volatility_regime` | `realized_vol_percentile` | `diagnostic` | risk/regime context | medium with squeeze and ATR scores | keep out of direct alpha ranking until reviewed |
+| `trend_efficiency` | `efficiency_ratio_trend` | `technical` | cleaner trend candidate | medium with breakout | signed versus unsigned role must be fixed |
+| Short-term reversal cluster | `short_term_overreaction`, `atr_adjusted_oversold_distance`, `rsi_price_divergence` | compare correlation, rank overlap, warmup coverage, and trigger sparsity; downgrade duplicates |
+| Trend and breakout cluster | `donchian_breakout_distance`, `efficiency_ratio_trend`, folded relative-strength ideas | do not add 52-week high, moving-average trend, and medium-term return variants until distinctness is shown |
+| Volatility context cluster | `bollinger_width_squeeze`, `realized_vol_percentile`, ATR scaling | keep setup/regime diagnostics separate from direct ranking signals |
+| Volume and activity cluster | `cmf_confirmation`, folded volume participation ideas, folded trading activity variability | avoid strict turnover unless shares outstanding becomes point-in-time safe and explicitly allowed |

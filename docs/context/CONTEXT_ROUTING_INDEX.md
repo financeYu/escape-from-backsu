@@ -18,6 +18,12 @@ targeted lookup only; do not paste long file bodies into active context.
   usage and boundaries.
 - Validation ladder: `docs/release/MVP_V0_1_VALIDATION_LADDER.md` - tiered
   validation commands and failure meaning.
+- Pre-freeze duplicate-work handoff:
+  `docs/release/PREFREEZE_OPTIMIZATION_HANDOFF.md` - completed local cache,
+  config-status, and release-documentation work.
+- Local market cache readiness:
+  `reports/validation/mvp_v0_1_local_market_data_readiness.md` - compact
+  read-only cache evidence; rerun only when cache or universe changes.
 - KOSDAQ150 expansion planning: `docs/context/domain/future_multi_universe_context.md`
   - planning only; no implementation.
 - Futures/options research planning: `docs/context/domain/future_derivatives_context.md`

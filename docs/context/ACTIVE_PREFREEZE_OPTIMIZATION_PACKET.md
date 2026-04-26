@@ -14,6 +14,8 @@ This packet is a routing aid, not an authority document. It does not override
 - quant logic: this patch does not change quant logic, score formulas, score
   weights, ranking behavior, backtest logic, valuation activation, or data
   ingestion behavior.
+- user-requested additions: local market-cache readiness evidence,
+  config/status consistency clarification, and duplicate-work handoff.
 
 ## Allowed Scope
 
@@ -21,6 +23,9 @@ This packet is a routing aid, not an authority document. It does not override
 - One active packet for current pre-freeze work.
 - Context budget policy and targeted routing index.
 - Release quickstart and validation ladder documentation.
+- Read-only local cache readiness report.
+- Config/status wording clarification with no behavior change.
+- Duplicate-work handoff for root/master.
 - Context/release documentation tests under `tests/context/`.
 - Context checker reference updates only when needed for renamed docs.
 
@@ -38,6 +43,12 @@ This packet is a routing aid, not an authority document. It does not override
 
 - `docs/context/**`
 - `docs/release/**`
+- `docs/config_policy.md`
+- `config/global.toml`
+- `config/scores.toml`
+- `Quant_mvp/config/README.md`
+- `Quant_mvp/config/scores.toml`
+- `reports/validation/mvp_v0_1_local_market_data_readiness.md`
 - `scripts/context/**`
 - `tests/context/**`
 - `WORKSPACE_MANIFEST.md` only if workspace role identity needs an update.
@@ -88,6 +99,8 @@ Run broader release checks only after focused context checks pass.
 - Focused context tests and context checker scripts pass.
 - Final report confirms no quant/scoring/ranking/backtest/valuation/data
   ingestion logic changed.
+- Root/master can consume `docs/release/PREFREEZE_OPTIMIZATION_HANDOFF.md`
+  instead of repeating the same cache discovery or config-status review.
 
 ## Archive Lookup Conditions
 

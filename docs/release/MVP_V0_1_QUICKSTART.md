@@ -34,6 +34,17 @@ pre-freeze baseline.
 - Source-controlled release evidence under `docs/releases/` and contracts under
   `docs/contracts/`.
 
+## Pre-Freeze Evidence Now Available
+
+- Local market-cache readiness:
+  `reports/validation/mvp_v0_1_local_market_data_readiness.md`.
+- Config/status interpretation: `docs/config_policy.md`.
+- Duplicate-work handoff:
+  `docs/release/PREFREEZE_OPTIMIZATION_HANDOFF.md`.
+
+Do not repeat the local cache discovery by default. Repeat it only when
+`chart_mvp/data/`, the KOSPI200 universe snapshot, or the user's request changes.
+
 ## Generated Output Locations
 
 - Runtime security reports: `reports/security/generated/`.
@@ -64,3 +75,4 @@ For scanner/report/release confidence, use the validation ladder in
   `docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`.
 - Routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`.
 - Final Step 20 release evidence: `docs/releases/step20_mvp_final_report.md`.
+- Pre-freeze handoff: `docs/release/PREFREEZE_OPTIMIZATION_HANDOFF.md`.

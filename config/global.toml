@@ -1,14 +1,18 @@
 [project]
 name = "master_mvp"
 domain = "KOSPI200 stock scanner"
-status = "step_3_directory_config_schema_cleanup"
+# Current release status is recorded in docs/context/MVP_V0_1_BASELINE.md.
+# This file keeps conservative config-driven activation switches.
+status = "step20_complete_prefreeze_ready"
 canonical_root = "master_mvp"
 canonical_root_assumption = "User instruction and root AGENTS.md indicate master_mvp is the canonical workspace root."
 timezone = "Asia/Seoul"
 base_currency = "KRW"
 
 [execution]
-run_mode = "validation_scaffold"
+# Config-driven production execution remains disabled even though Step 15/20
+# source contracts implement the MVP ranking builder.
+run_mode = "prefreeze_contract_validation"
 ranking_generation_enabled = false
 backtest_enabled = false
 score_implementation_enabled = false
@@ -38,4 +42,3 @@ no_lookahead = true
 no_silent_score_redefinition = true
 unknowns_remain_unknown = true
 diagnostics_are_not_alpha = true
-

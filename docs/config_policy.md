@@ -6,9 +6,9 @@ The project is config-first.
 
 Paths, windows, thresholds, weights, score toggles, normalization modes, and branch enablement should live in config unless a narrow hardcoded exception is necessary and documented.
 
-## Step 3 Status
+## Config Status
 
-The root `config/` files are draft scaffolds:
+The root `config/` files are conservative control surfaces:
 
 - `config/global.toml`
 - `config/data.toml`
@@ -17,7 +17,10 @@ The root `config/` files are draft scaffolds:
 - `config/weights.toml`
 - `config/scores.toml`
 
-They prepare config-first management. They do not activate scores, composites, rankings, backtests, valuation scores, or fundamental scores.
+After Step 20, the approved MVP v0.1 source contracts implement technical score
+processing, latest ranking, reports, and evaluation-only backtest boundaries.
+The config files still keep config-driven production activation disabled unless
+a later approved Step changes that explicitly.
 
 ## Score Config Policy
 
@@ -29,8 +32,24 @@ Rules:
 - no implementation before score purpose, formula path, input fields, normalization, and failure modes are documented
 - no diagnostic may be presented as an alpha signal
 - no valuation or fundamental score may be enabled while valuation status is deferred
-- root `config/scores.toml` is the active runtime guardrail and keeps all runtime score/composite toggles off
-- `Quant_mvp/config/scores.toml` may list Step 5 candidate registry entries, but `runtime_enabled = false` means those entries are not implemented production scores
+- root `config/scores.toml` is the activation guardrail and keeps config-driven
+  score/composite toggles off
+- `Quant_mvp/config/scores.toml` lists candidate registry metadata; in that
+  file, `runtime_enabled = false` means the registry does not activate runtime
+  scoring by itself
+- current MVP source status comes from `docs/context/MVP_V0_1_BASELINE.md`,
+  `docs/contracts/step20_composite_contract.md`, and
+  `docs/contracts/step20_ranking_contract.md`, not from pre-Step registry flags
+
+## Pre-Freeze Consistency Note
+
+Do not spend root-agent review tokens reconciling `runtime_enabled = false` with
+Step 20 completion. The intended meaning is:
+
+- source contracts: MVP v0.1 technical ranking path exists and is validated
+- config switches: production-style config activation remains disabled
+- valuation/fundamental activation: still disabled and candidate-only
+- backtest feedback: still forbidden from upstream scoring or ranking
 
 ## Branch Policy
 

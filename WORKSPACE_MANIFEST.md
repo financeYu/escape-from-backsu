@@ -56,6 +56,8 @@ local codex hyphen pattern used by `codex-step20-prefreeze-optimization`.
 - src/backtest/
 - src/reports/
 - tests/backtest/
+- conftest.py
+- pytest.ini
 - tests/context/
 - tests/reports/
 

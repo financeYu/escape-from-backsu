@@ -54,7 +54,7 @@ DEFAULT_EXCLUDE_DIRS = {
     "samples",
 }
 MAX_FUNCTION_LINES = 50
-BOUNDS_CHECK_LOOKBACK_LINES = 4
+BOUNDS_CHECK_LOOKBACK_LINES = 16
 DYNAMIC_EXECUTION_CALLS = {"eval", "exec"}
 EXTERNAL_INPUT_CALLS = {"input"}
 SUBPROCESS_SHELL_CALLS = {"subprocess.run", "subprocess.Popen"}
@@ -72,6 +72,12 @@ FAIL_ON_SEVERITY = {
 MIN_SEVERITY_CHOICES = ("low", "medium", "high")
 DEFAULT_MIN_SEVERITY = "low"
 DEFAULT_MAX_FINDINGS = 0
+NOISY_TEST_RULES = {
+    "missing-bounds-check",
+    "prefer-comprehension",
+    "single-responsibility",
+    "explicit-internal-api",
+}
 
 
 @dataclass(frozen=True)
@@ -392,10 +398,58 @@ class PythonReviewVisitor(ast.NodeVisitor):
             rf"len\(\s*{re.escape(variable)}\s*\)\s*>\s*{index}",
             rf"len\(\s*{re.escape(variable)}\s*\)\s*>=\s*{index + 1}",
             rf"if\s+{re.escape(variable)}\s+and",
+            rf"assert\s+{re.escape(variable)}\s*,",
+            rf"assert\s+len\(\s*{re.escape(variable)}\s*\)\s*>\s*{index}",
+            rf"assert\s+len\(\s*{re.escape(variable)}\s*\)\s*>=\s*{index + 1}",
         ]
         if index == 0:
             patterns.append(rf"if\s+{re.escape(variable)}\s*:")
-        return any(re.search(pattern, context) for pattern in patterns)
+            patterns.append(rf"assert\s+{re.escape(variable)}\s*$")
+        if any(re.search(pattern, context) for pattern in patterns):
+            return True
+        return self._has_fail_fast_bounds_guard(variable, line_no, index)
+
+    def _has_fail_fast_bounds_guard(self, variable: str, line_no: int, index: int) -> bool:
+        start = max(0, line_no - BOUNDS_CHECK_LOOKBACK_LINES - 1)
+        stop = min(line_no - 1, len(self.source_lines))
+        for line_index in range(start, stop):
+            line = self.source_lines[line_index]
+            match = re.match(r"^(\s*)if\s+(.+):\s*$", line)
+            if not match:
+                continue
+            if not self._condition_proves_min_length(match.group(2), variable, index):
+                continue
+            if self._guard_body_exits(line_index, len(match.group(1)), stop):
+                return True
+        return False
+
+    def _condition_proves_min_length(self, condition: str, variable: str, index: int) -> bool:
+        escaped = re.escape(variable)
+        less_than = re.search(rf"len\(\s*{escaped}\s*\)\s*<\s*(\d+)", condition)
+        if less_than and int(less_than.group(1)) > index:
+            return True
+
+        less_than_or_equal = re.search(rf"len\(\s*{escaped}\s*\)\s*<=\s*(\d+)", condition)
+        if less_than_or_equal and int(less_than_or_equal.group(1)) >= index:
+            return True
+
+        equals_zero = re.search(rf"len\(\s*{escaped}\s*\)\s*==\s*0", condition)
+        if equals_zero and index == 0:
+            return True
+
+        return bool(index == 0 and re.search(rf"not\s+{escaped}\b", condition))
+
+    def _guard_body_exits(self, guard_line_index: int, guard_indent: int, stop: int) -> bool:
+        for line in self.source_lines[guard_line_index + 1 : stop]:
+            stripped = line.strip()
+            if not stripped:
+                continue
+            indent = len(line) - len(line.lstrip())
+            if indent <= guard_indent:
+                return False
+            if stripped.startswith(("return", "continue", "raise", "break")):
+                return True
+        return False
 
     def _call_name(self, node: ast.AST) -> str:
         if isinstance(node, ast.Name):
@@ -452,6 +506,8 @@ class PythonReviewVisitor(ast.NodeVisitor):
         rule: str,
         **message_context: object,
     ) -> None:
+        if rule in NOISY_TEST_RULES and _is_test_path(self.path):
+            return
         self.findings.append(build_finding(self.path, line, rule, **message_context))
 
 
@@ -465,6 +521,10 @@ def iter_python_files(paths: Iterable[Path], exclude_dirs: set[str]) -> Iterable
             )
         elif path.suffix == ".py":
             yield path
+
+
+def _is_test_path(path: Path) -> bool:
+    return path.name.lower().startswith("test_")
 
 
 def review_file(path: Path) -> list[Finding]:

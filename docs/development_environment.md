@@ -45,6 +45,20 @@ python -m pytest -q -p no:cacheprovider tests/context
 python -m unittest discover -s review_mvp/tests -v
 ```
 
+Windows local 또는 sandbox 환경에서 pytest temp permission 문제가 반복되면
+repository-local temp root를 강제하는 검증 실행기를 사용한다.
+
+```powershell
+python scripts/run_local_validation.py context
+python scripts/run_local_validation.py reports-backtest
+python scripts/run_local_validation.py chart
+```
+
+이 실행기는 `.pytest_tmp/local_validation/` 아래에 `TMP`, `TEMP`,
+`PYTEST_DEBUG_TEMPROOT`, pytest `--basetemp`를 맞춰 global Temp 권한 문제를
+우회한다. 검증 의미를 바꾸지 않으며, Step 완료 판정은 여전히 해당 Step의
+gate 문서가 우선한다.
+
 Step 종료나 master integration 맥락에서는 로드맵 문서의 현재 Step-end gate가 우선한다.
 
 ## Review And Context Scripts

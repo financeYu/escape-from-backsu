@@ -1,110 +1,103 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: step20_final_integration_merge
-branch: main
-role: root-master-integration
-task_type: master_integration
-active_step: Step 20 KOSPI200 MVP Completeness Hardening & Final Done Validation
-owner_or_worker: root master agent
-created_from_commit: dd0066112f5dd773f86cc6765795b0b9ffc46ca9
+workspace_id: step20_post_mvp_optimization
+branch: codex-step20-post-mvp-optimization
+role: post-mvp optimization worker
+task_type: cross_project_runtime_validation_optimization
+active_step: post-Step20 / Step 20 COMPLETE follow-up
+owner_or_worker: Codex
+created_from_commit: 1ad7727d7f73a5eac3b1a20f02967eb12a11a177
 
 ## Purpose
 
-Integrate the Step 20 KOSPI200 MVP completeness hardening branch, Step 20
-review-noise repair branch, pre-Step20 development-environment branch, and the
-context-compression patch into one validated main-branch commit.
+Implement the user's five requested optimization follow-ups from the
+post-Step20 review without changing quant score formulas, score weights,
+ranking semantics, valuation/fundamental activation, backtest feedback policy,
+or market-data scope.
 
-Step 20 closes the KOSPI200 daily OHLCV technical scanner MVP as v0.1
-freeze-ready. The context patch keeps future Step 20+ work routed through
-latest-only context rather than repeated completed-Step history.
+This worktree exists so the master/root workspace does not repeat the same
+implementation or broad review pass. The handoff output must list the five
+completed items, changed files, validation commands, and remaining risks.
 
-## Allowed write paths
+Branch note: the preferred `codex/` namespace could not be created in this
+local repository from the sandboxed shell. This branch follows the existing
+local codex hyphen pattern used by `codex-step20-prefreeze-optimization`.
+
+## Five Assigned Optimization Items
+
+1. Clarify and harden the boundary between `chart_mvp` legacy Top-N runtime
+   output and canonical Step 20 latest ranking output so root does not treat
+   the legacy placeholder path as canonical ranking evidence.
+2. Reduce avoidable Naver runtime I/O by separating price refresh from
+   financial-statement refresh cadence and documenting the behavior.
+3. Avoid redundant chart-data refetches when the already processed Top-N row
+   contains enough indicator data for rendering.
+4. Stabilize Windows pytest/temp validation by adding a repository-local test
+   runner path instead of requiring repeated manual temp-root troubleshooting.
+5. Reduce Step 16/17 scaling overhead by caching repeated report metadata work
+   and speeding Step 17 price-date lookup without changing selection or
+   realized-return semantics.
+
+## Allowed Write Paths
 
 - WORKSPACE_MANIFEST.md
-- .gitignore
-- docs/project_checklist.md
-- docs/roadmap_status.md
+- chart_mvp/README.md
+- chart_mvp/TEMPORARY_TOP5_OVERRIDE.md
+- chart_mvp/docs/
+- chart_mvp/src/stock_core/cache/
+- chart_mvp/src/stock_core/pipeline/
+- chart_mvp/src/stock_core/ranking/
+- chart_mvp/tests/
 - docs/context/
-- docs/contracts/step20_composite_contract.md
-- docs/contracts/step20_ranking_contract.md
 - docs/development_environment.md
 - docs/releases/
-- pyproject.toml
-- requirements-dev.txt
-- quant_project_reference_for_chatgpt_project_current.md
-- reports/validation/step20_ranking_sanity_report.md
-- review_mvp/
-- scripts/context/
-- src/scanner/
-- src/composite/
+- reports/validation/
+- scripts/
+- src/backtest/
 - src/reports/
-- src/validation/
+- tests/backtest/
+- conftest.py
+- pytest.ini
 - tests/context/
-- tests/scanner/
-- tests/integration/
 - tests/reports/
-- tests/validation/
-- tests/step20_fixtures.py
 
-## Read-only paths
+## Read-Only Paths
 
 - AGENTS.md
-- completed Step artifacts except for targeted hard-stop, context, and contract checks
-- generated market data caches
-- generated report roots except the explicit Step 20 validation fixture report
+- docs/project_checklist.md
+- docs/roadmap_status.md
+- completed Step docs except targeted references needed for boundaries
+- generated market caches
+- generated runtime report roots
 - secrets and local environment files
-- post-MVP universe expansion material except as forbidden-scope references
 
-## Forbidden actions
+## Forbidden Actions
 
-- KOSDAQ150 implementation, config, ticker list, data ingestion, or universe schema
-- futures/options data or logic
-- multi-universe ranking
-- valuation/fundamental scoring activation
-- valuation_score, fundamental_score, undervalued_score, cheap_score, target_price,
-  or valuation-aware final ranking
-- financial/fundamental data in `technical_composite_score` or `final_composite_score`
-- backtest-driven score optimization
-- realized, future, or backtest output feedback into upstream scoring/ranking
-- trading recommendations or buy/sell/hold language
-- proven alpha claims
-- new external data ingestion
-- network-dependent tests
-- committing generated market caches, secrets, .env files, chart images, local
-  runtime artifacts, or nested worktree directories
-- unrelated cleanup, reset, stash deletion, or history rewrite
+- KOSDAQ150, futures, options, or multi-universe implementation
+- new external market-data source ingestion
+- score formula, score weight, score adoption, or normalization semantic changes
+- `technical_composite_score` or `final_composite_score` semantic changes
+- valuation/fundamental scoring activation or financial/fundamental data in
+  technical/final composite scoring
+- backtest-driven score optimization or return feedback into upstream ranking
+- trading recommendations, buy/sell/hold wording, or proven-alpha claims
+- committing generated market caches, chart images, local runtime outputs, or
+  nested worktree artifacts
 
-## Expected output
+## Expected Handoff Output
 
-- integrated Step 20 score lineage manifest, composite contract, ranking contract,
-  MVP gap audit, ranking sanity report, final MVP report, and v0.1 baseline manifest
-- latest-only context files, Step 20 context packet, archive summary, usage policy,
-  decision log, and context routing updates
-- development environment declaration files
-- Step 20 review_mvp static-review-noise repair
-- focused and full validation summary
-- one integration commit on `main`
-- post-commit context snapshot refresh
-- Git hygiene ignore rule for local nested worktree containers
+- A concise optimization handoff document that maps each of the five requested
+  items to changed files, implementation notes, tests, and residual risks.
+- Focused tests for each behavioral optimization.
+- A final validation summary suitable for root/master review without rereading
+  completed Step history.
 
-## Required validation
+## Required Validation
 
-- python -m pytest -q tests/context
-- python -m pytest -q tests/scanner tests/reports tests/validation
-- python -m pytest -q tests/integration
-- python -m pytest -q
+- python scripts/run_local_validation.py chart
+- python scripts/run_local_validation.py context
+- python scripts/run_local_validation.py reports-backtest
 - python scripts/context/check_context_staleness.py
 - python scripts/context/check_context_conflicts.py
-- python scripts/build_review_packet.py --step "Step 20" --stage "final-integration-merge"
-- python review_mvp/review.py on Step 20 changed Python paths with `--fail-on medium`
-- python -m unittest discover -s review_mvp/tests -v
+- python scripts/build_review_packet.py --step "Post-Step20" --stage "post-mvp-optimization"
 - git diff --check
-
-## Handoff notes
-
-Step 20 remains KOSPI200-only. KOSDAQ150, futures, and options are post-MVP
-extension tracks. Valuation/fundamental data remains candidate-only and inactive.
-Backtest output must not tune or feed upstream scoring or ranking.
-
-The `worktrees/` directory under this workspace is local workspace state and
-must not be staged or committed.

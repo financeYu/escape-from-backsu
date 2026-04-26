@@ -112,7 +112,7 @@ class NaverFinanceTests(unittest.TestCase):
         self.assertEqual(saved_path, cache_path)
         mock_to_csv.assert_called_once_with(cache_path, index=False, encoding="utf-8-sig")
 
-    def test_refresh_stock_data_saves_financial_statements_when_fetching(self) -> None:
+    def test_refresh_stock_data_skips_financial_statements_by_default(self) -> None:
         from stock_core.cache import csv_cache
 
         price_df = pd.DataFrame({"x": [1]})
@@ -130,6 +130,28 @@ class NaverFinanceTests(unittest.TestCase):
             patch("stock_core.cache.csv_cache.save_financial_statements") as mock_save_financials,
         ):
             _, source = csv_cache.refresh_stock_data(code="005930", pages=1)
+
+        self.assertEqual(source, "fetched")
+        mock_save_financials.assert_not_called()
+
+    def test_refresh_stock_data_saves_financial_statements_when_requested(self) -> None:
+        from stock_core.cache import csv_cache
+
+        price_df = pd.DataFrame({"x": [1]})
+        statement_df = pd.DataFrame(
+            [{"code": "005930", "table_index": "0", "metric": METRIC_REVENUE, "period": "2023/12", "value": "100"}]
+        )
+
+        with (
+            patch("stock_core.cache.csv_cache.get_cache_path", return_value=PROJECT_ROOT / "data" / "__missing__.csv"),
+            patch("stock_core.cache.csv_cache.crawl_stock_data", return_value=price_df),
+            patch("stock_core.cache.csv_cache.clean_stock_data", return_value=price_df),
+            patch("stock_core.cache.csv_cache.add_indicators", return_value=price_df),
+            patch("stock_core.cache.csv_cache.save_stock_data"),
+            patch("stock_core.cache.csv_cache.crawl_financial_statements", return_value=statement_df),
+            patch("stock_core.cache.csv_cache.save_financial_statements") as mock_save_financials,
+        ):
+            _, source = csv_cache.refresh_stock_data(code="005930", pages=1, refresh_financials=True)
 
         self.assertEqual(source, "fetched")
         mock_save_financials.assert_called_once_with(statement_df, "005930")

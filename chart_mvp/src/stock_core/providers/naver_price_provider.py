@@ -29,6 +29,7 @@ def get_price_df(
     *,
     provider_spec: PriceProviderSpec = NAVER_PRICE_PROVIDER_SPEC,
     cache_policy: PriceCachePolicy = DEFAULT_PRICE_CACHE_POLICY,
+    refresh_financials: bool = False,
 ) -> pd.DataFrame:
     """Return normalized daily price data for a stock code.
 
@@ -45,16 +46,18 @@ def get_price_df(
             pages=pages,
             provider_spec=provider_spec,
             cache_policy=cache_policy,
+            refresh_financials=refresh_financials,
         )
         logger.info("Loaded %s from %s path", code, source)
     else:
         raw_df = crawl_stock_data(code=code, pages=pages, sleep_seconds=provider_spec.request_sleep_seconds)
         df = clean_stock_data(raw_df)
-        try:
-            financial_statements_df = crawl_financial_statements(code=code)
-            save_financial_statements(financial_statements_df, code, cache_policy=cache_policy)
-        except Exception as exc:
-            logger.warning("Failed to save financial statements for %s during direct fetch: %s", code, exc)
+        if refresh_financials:
+            try:
+                financial_statements_df = crawl_financial_statements(code=code)
+                save_financial_statements(financial_statements_df, code, cache_policy=cache_policy)
+            except Exception as exc:
+                logger.warning("Failed to save financial statements for %s during direct fetch: %s", code, exc)
         logger.info("Loaded %s without cache", code)
 
     existing_columns = [column for column in BASE_PRICE_COLUMNS if column in df.columns]

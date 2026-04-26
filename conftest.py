@@ -4,6 +4,7 @@ import re
 import shutil
 import uuid
 from collections.abc import Iterator
+from hashlib import sha1
 from pathlib import Path
 
 import pytest
@@ -36,4 +37,6 @@ def tmp_path(request: pytest.FixtureRequest) -> Iterator[Path]:
 
 def _safe_node_name(nodeid: str) -> str:
     name = re.sub(r"[^A-Za-z0-9_.-]+", "_", nodeid).strip("._")
-    return name[:80] or "pytest_tmp_path"
+    digest = sha1(nodeid.encode("utf-8")).hexdigest()[:10]
+    prefix = (name[:32] or "pytest_tmp_path").rstrip("._")
+    return f"{prefix}-{digest}"

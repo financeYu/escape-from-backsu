@@ -16,12 +16,14 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from stock_core.pipeline.daily_update import (
+    LEGACY_PLACEHOLDER_SCORE_NOTICE,
     DailyUpdateRow,
     _render_selected_charts,
     run_daily_top5_update,
     run_daily_top5_update_if_due,
 )
 from stock_core.providers.kospi200_universe_provider import UniverseEntry
+from stock_core.utils.constants import DATE_COLUMN, INDICATOR_COLUMNS, PRICE_COLUMNS
 
 
 def make_row(code: str, name: str, score: float = 0.0) -> DailyUpdateRow:
@@ -37,6 +39,25 @@ def make_row(code: str, name: str, score: float = 0.0) -> DailyUpdateRow:
         data_source="cache_or_fetch",
         df=pd.DataFrame(),
     )
+
+
+def make_chart_ready_frame(rows: int = 80) -> pd.DataFrame:
+    dates = pd.date_range("2026-01-01", periods=rows, freq="B")
+    frame = pd.DataFrame(
+        {
+            DATE_COLUMN: dates,
+            "종가": [100.0 + index for index in range(rows)],
+            "전일비": [0.0 for _ in range(rows)],
+            "시가": [99.0 + index for index in range(rows)],
+            "고가": [101.0 + index for index in range(rows)],
+            "저가": [98.0 + index for index in range(rows)],
+            "거래량": [1000.0 + index for index in range(rows)],
+        }
+    )
+    for column in INDICATOR_COLUMNS:
+        frame[column] = 50.0
+    assert set(PRICE_COLUMNS).issubset(frame.columns)
+    return frame
 
 
 class PipelineTests(unittest.TestCase):
@@ -67,6 +88,32 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(chart_paths[0].endswith("005930.png"))
         self.assertEqual(chart_failed_codes, ["000660"])
 
+    def test_render_selected_charts_reuses_processed_indicator_data_when_sufficient(self) -> None:
+        rows = [make_row("005930", "Samsung Electronics")]
+        rows[0].df = make_chart_ready_frame()
+
+        output_dir = TEST_OUTPUT_DIR
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        with (
+            patch("stock_core.pipeline.daily_update.prepare_chart_dataframe") as mock_prepare,
+            patch("stock_core.charts.renderer.render_stock_chart") as mock_render,
+        ):
+            chart_paths, chart_failed_codes = _render_selected_charts(
+                rows=rows,
+                selected_codes={"005930"},
+                pages=1,
+                use_cache=True,
+                output_dir=output_dir,
+                file_name_builder=lambda row: f"{row.code}.png",
+            )
+
+        mock_prepare.assert_not_called()
+        rendered_frame = mock_render.call_args.args[0]
+        self.assertEqual(len(rendered_frame), 70)
+        self.assertEqual(chart_failed_codes, [])
+        self.assertEqual(len(chart_paths), 1)
+
     def test_run_daily_top5_update_reports_chart_failures_without_raising(self) -> None:
         row = make_row("005930", "Samsung Electronics")
 
@@ -90,6 +137,10 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(meta["chart_failed_count"], 1)
         self.assertEqual(meta["chart_failed_codes"], ["005930"])
         self.assertEqual(meta["top_n"], 5)
+        self.assertEqual(meta["runtime_boundary_notice"], LEGACY_PLACEHOLDER_SCORE_NOTICE)
+        self.assertEqual(meta["canonical_ranking_source"], "root src.scanner.latest_ranking")
+        self.assertFalse(meta["financial_refresh_with_price"])
+        self.assertEqual(top5_df["runtime_boundary_notice"].tolist(), [LEGACY_PLACEHOLDER_SCORE_NOTICE])
 
     def test_run_daily_top5_update_honors_top_n(self) -> None:
         rows = [

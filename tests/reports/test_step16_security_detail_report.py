@@ -15,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.composite.contracts import DEFAULT_COMPOSITE_INPUT_REGISTRY  # noqa: E402
+import src.reports.security_detail_report as report_module  # noqa: E402
 from src.reports.security_detail_report import (  # noqa: E402
     FINAL_COMPOSITE_TECHNICAL_ONLY_NOTE,
     build_security_detail_report,
@@ -180,6 +181,27 @@ def test_multiple_ticker_report_generation_preserves_requested_order() -> None:
 
     assert [report.ticker for report in reports] == ["000660", "005930"]
     assert [report.readonly_rank_fields["rank"] for report in reports] == [2, 1]
+
+
+def test_multiple_ticker_report_generation_merges_metadata_once(monkeypatch: pytest.MonkeyPatch) -> None:
+    original = report_module.merge_security_detail_metadata
+    calls = 0
+
+    def counting_merge(*args: Any, **kwargs: Any) -> Any:
+        nonlocal calls
+        calls += 1
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(report_module, "merge_security_detail_metadata", counting_merge)
+
+    reports = build_security_detail_reports(
+        latest_ranking_frame(),
+        tickers=["000660", "005930"],
+        adoption_synthesis=adoption_synthesis_table(),
+    )
+
+    assert [report.ticker for report in reports] == ["000660", "005930"]
+    assert calls == 1
 
 
 def test_missing_ticker_handling() -> None:

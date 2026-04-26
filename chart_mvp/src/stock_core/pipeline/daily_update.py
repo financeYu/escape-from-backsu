@@ -15,9 +15,9 @@ from stock_core.cache.csv_cache import DEFAULT_PRICE_CACHE_POLICY, PriceCachePol
 from stock_core.indicators.technicals import add_indicators
 from stock_core.providers.kospi200_universe_provider import UniverseEntry, get_universe_constituents
 from stock_core.providers.naver_price_provider import get_price_df
-from stock_core.ranking.scorer import score_stock
+from stock_core.ranking.scorer import LEGACY_PLACEHOLDER_SCORE_NOTICE, score_stock
 from stock_core.ranking.selector import select_top_stocks
-from stock_core.utils.constants import CLOSE_COLUMN, DATE_COLUMN, VOLUME_COLUMN
+from stock_core.utils.constants import CLOSE_COLUMN, DATE_COLUMN, INDICATOR_COLUMNS, PRICE_COLUMNS, VOLUME_COLUMN
 from stock_core.utils.daily_update_schedule import DailyUpdateDueStatus, get_daily_update_due_status
 from stock_core.utils.logging_utils import get_logger
 from stock_core.utils.market_specs import KOSPI200_UNIVERSE_SPEC, NAVER_PRICE_PROVIDER_SPEC, PriceProviderSpec, UniverseSpec
@@ -55,6 +55,8 @@ class BatchRuntimePolicy:
     rows_per_page: int = NAVER_PRICE_PROVIDER_SPEC.rows_per_page
     market_cap_leader_codes: tuple[str, ...] = KOSPI200_MARKET_CAP_LEADER_CODES
     market_cap_override_message: str = MARKET_CAP_OVERRIDE_MESSAGE
+    refresh_financials_with_price: bool = False
+    runtime_boundary_notice: str = LEGACY_PLACEHOLDER_SCORE_NOTICE
 
 
 DEFAULT_BATCH_RUNTIME_POLICY = BatchRuntimePolicy()
@@ -101,7 +103,10 @@ def _resolve_top_n(explicit_top_n: int) -> int:
     return explicit_top_n
 
 
-def _build_rankings_frame(rows: Iterable[DailyUpdateRow]) -> pd.DataFrame:
+def _build_rankings_frame(
+    rows: Iterable[DailyUpdateRow],
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
+) -> pd.DataFrame:
     return pd.DataFrame(
         [
             {
@@ -114,6 +119,7 @@ def _build_rankings_frame(rows: Iterable[DailyUpdateRow]) -> pd.DataFrame:
                 "거래량": row.latest_volume,
                 "RSI14": row.rsi14,
                 "데이터소스": row.data_source,
+                "runtime_boundary_notice": runtime_policy.runtime_boundary_notice,
             }
             for row in rows
         ]
@@ -195,6 +201,7 @@ def _process_universe_entry(
         use_cache=use_cache,
         provider_spec=runtime_policy.price_provider_spec,
         cache_policy=runtime_policy.cache_policy,
+        refresh_financials=runtime_policy.refresh_financials_with_price,
     )
     indicator_df = add_indicators(base_df)
     latest = _select_latest_summary_row(indicator_df)
@@ -242,6 +249,7 @@ def _apply_market_cap_leader_override(
 
     top_rankings.insert(0, "순위", range(1, len(top_rankings) + 1))
     ordered_columns = ["순위", "종목코드", "종목명", "점수", "최신일", "종가", "전일대비", "거래량", "RSI14", "데이터소스"]
+    ordered_columns.append("runtime_boundary_notice")
     return top_rankings.loc[:, [column for column in ordered_columns if column in top_rankings.columns]]
 
 
@@ -272,6 +280,23 @@ def prepare_chart_dataframe(
     )
     indicator_df = add_indicators(base_df)
     return indicator_df.tail(display_rows).reset_index(drop=True)
+
+
+def _reuse_processed_chart_dataframe(
+    row: DailyUpdateRow,
+    requested_pages: int,
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
+) -> pd.DataFrame | None:
+    """Return already processed indicator data when it covers the chart window."""
+
+    display_pages = get_minimum_chart_pages(requested_pages)
+    display_rows = display_pages * runtime_policy.rows_per_page
+    required_columns = {DATE_COLUMN, *PRICE_COLUMNS, *INDICATOR_COLUMNS}
+    if row.df.empty or len(row.df) < display_rows:
+        return None
+    if not required_columns.issubset(set(row.df.columns)):
+        return None
+    return row.df.tail(display_rows).reset_index(drop=True).copy()
 
 
 def _export_outputs(top_rankings: pd.DataFrame, meta: dict) -> None:
@@ -309,12 +334,14 @@ def _render_selected_charts(
 
         chart_path = output_dir / file_name_builder(row)
         try:
-            chart_df = prepare_chart_dataframe(
-                row.code,
-                requested_pages=pages,
-                use_cache=use_cache,
-                runtime_policy=runtime_policy,
-            )
+            chart_df = _reuse_processed_chart_dataframe(row, pages, runtime_policy)
+            if chart_df is None:
+                chart_df = prepare_chart_dataframe(
+                    row.code,
+                    requested_pages=pages,
+                    use_cache=use_cache,
+                    runtime_policy=runtime_policy,
+                )
             render_stock_chart(chart_df, row.code, row.name, str(chart_path))
             chart_paths.append(str(chart_path))
         except Exception as exc:
@@ -377,7 +404,7 @@ def run_daily_update(
     if not rows:
         raise ValueError("No stocks were updated successfully.")
 
-    rankings = _build_rankings_frame(rows)
+    rankings = _build_rankings_frame(rows, runtime_policy=runtime_policy)
     top_rankings = select_top_stocks(rankings, top_n=top_n)
     as_of = datetime.now().strftime("%Y%m%d")
     output_path = RESULTS_DIR / f"top{top_n}_scan_{as_of}.csv"
@@ -459,7 +486,7 @@ def run_daily_top5_update(
     if not rows:
         raise ValueError("No stocks were processed successfully.")
 
-    results_df = _build_rankings_frame(rows)
+    results_df = _build_rankings_frame(rows, runtime_policy=runtime_policy)
     ordered_results = results_df.sort_values(
         by=["점수", "최신일", "종목코드"],
         ascending=[False, False, True],
@@ -512,6 +539,9 @@ def run_daily_top5_update(
         "market_cap_override": use_market_cap_override,
         "market_cap_override_message": runtime_policy.market_cap_override_message if use_market_cap_override else "",
         "market_cap_override_codes": list(runtime_policy.market_cap_leader_codes) if use_market_cap_override else [],
+        "runtime_boundary_notice": runtime_policy.runtime_boundary_notice,
+        "canonical_ranking_source": "root src.scanner.latest_ranking",
+        "financial_refresh_with_price": runtime_policy.refresh_financials_with_price,
     }
     _export_outputs(top_df, meta)
     logger.info("Exported latest top-ranked outputs to %s", OUTPUTS_DIR)

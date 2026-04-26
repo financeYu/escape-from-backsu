@@ -68,18 +68,33 @@ def build_security_detail_report(
     if len(matches) > 1:
         raise ValueError(f"Step 16 latest ranking input has duplicate rows for ticker: {ticker}")
 
-    metadata_frames = tuple(
-        coerce_optional_metadata_frame(item)
-        for item in (adoption_synthesis, score_metadata, diagnostic_metadata)
+    metadata_by_score = _prepare_metadata_by_score(
+        adoption_synthesis=adoption_synthesis,
+        score_metadata=score_metadata,
+        diagnostic_metadata=diagnostic_metadata,
+        registry=registry,
     )
-    for index, metadata_frame in enumerate(metadata_frames, start=1):
-        validate_step16_metadata_table(
-            metadata_frame,
-            context=f"Step 16 metadata input {index}",
-        )
+    return _build_security_detail_report_from_row(
+        matches.iloc[0],
+        ticker=ticker,
+        report_date=report_date,
+        metadata_by_score=metadata_by_score,
+        registry=registry,
+        boundary_notice=boundary_notice,
+    )
 
-    metadata_by_score = merge_security_detail_metadata(metadata_frames, registry=registry)
-    row = matches.iloc[0]
+
+def _build_security_detail_report_from_row(
+    row: pd.Series,
+    *,
+    ticker: str,
+    report_date: object | None,
+    metadata_by_score: Mapping[str, Mapping[str, Any]],
+    registry: Sequence[CompositeInputSpec],
+    boundary_notice: SecurityReportBoundaryNotice | None,
+) -> SecurityDetailReport:
+    """Build a report from already validated latest-ranking and metadata inputs."""
+
     snapshot_date = _date_string(row["date"])
     source_latest_ranking_date = _date_string(
         row.get("source_latest_ranking_date", row["date"])
@@ -143,14 +158,19 @@ def build_security_detail_reports(
             "Step 16 latest ranking input does not contain ticker(s): "
             f"{', '.join(missing)}"
         )
+    metadata_by_score = _prepare_metadata_by_score(
+        adoption_synthesis=adoption_synthesis,
+        score_metadata=score_metadata,
+        diagnostic_metadata=diagnostic_metadata,
+        registry=registry,
+    )
+    rows_by_ticker = frame.set_index("ticker", drop=False)
     return tuple(
-        build_security_detail_report(
-            frame,
-            ticker,
+        _build_security_detail_report_from_row(
+            rows_by_ticker.loc[ticker],
+            ticker=ticker,
             report_date=report_date,
-            adoption_synthesis=adoption_synthesis,
-            score_metadata=score_metadata,
-            diagnostic_metadata=diagnostic_metadata,
+            metadata_by_score=metadata_by_score,
             registry=registry,
             boundary_notice=boundary_notice,
         )
@@ -196,6 +216,25 @@ def _selected_tickers(frame: pd.DataFrame, tickers: Sequence[str] | str | None) 
     if isinstance(tickers, str):
         return [_validate_ticker(tickers)]
     return [_validate_ticker(ticker) for ticker in tickers]
+
+
+def _prepare_metadata_by_score(
+    *,
+    adoption_synthesis: pd.DataFrame | Iterable[Mapping[str, Any]] | None,
+    score_metadata: pd.DataFrame | Iterable[Mapping[str, Any]] | None,
+    diagnostic_metadata: pd.DataFrame | Iterable[Mapping[str, Any]] | None,
+    registry: Sequence[CompositeInputSpec],
+) -> Mapping[str, Mapping[str, Any]]:
+    metadata_frames = tuple(
+        coerce_optional_metadata_frame(item)
+        for item in (adoption_synthesis, score_metadata, diagnostic_metadata)
+    )
+    for index, metadata_frame in enumerate(metadata_frames, start=1):
+        validate_step16_metadata_table(
+            metadata_frame,
+            context=f"Step 16 metadata input {index}",
+        )
+    return merge_security_detail_metadata(metadata_frames, registry=registry)
 
 
 def _date_string(value: object) -> str:

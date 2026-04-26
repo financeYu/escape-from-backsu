@@ -256,11 +256,80 @@ class ReviewTests(unittest.TestCase):
 
         self.assertNotIn("explicit-internal-api", {finding.rule for finding in result.findings})
 
+    def test_explicit_internal_api_allows_gui_callback_handlers(self) -> None:
+        target = self._write_temp_file(
+            """
+            import tkinter as tk
+            from tkinter import messagebox, ttk
+
+            class Top5App:
+                def __init__(self):
+                    self.root = tk.Tk()
+                    self.status_var = tk.StringVar()
+                    self.run_button = ttk.Button(command=self.run_update)
+                    ttk.Button(command=self.open_selected_chart)
+                    self.root.after(500, self.run_update)
+
+                def set_status(self, text):
+                    self.status_var.set(text)
+                    self.root.update_idletasks()
+
+                def run_update(self):
+                    self.set_status("running")
+                    messagebox.showwarning("title", "body")
+
+                def run_legacy_update(self):
+                    self.run_button.state(["disabled"])
+                    self.set_status("running")
+
+                def run_evaluation(self):
+                    self.run_button.state(["disabled"])
+
+                def open_selected_chart(self):
+                    self.set_status("opening")
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertNotIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
     def test_explicit_internal_api_still_reports_plain_public_method(self) -> None:
         target = self._write_temp_file(
             """
             class Helper:
                 def process(self):
+                    return "internal"
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
+    def test_explicit_internal_api_still_reports_non_callback_gui_method(self) -> None:
+        target = self._write_temp_file(
+            """
+            import tkinter as tk
+
+            class Top5App:
+                def __init__(self):
+                    self.root = tk.Tk()
+
+                def process(self):
+                    return "internal"
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
+    def test_explicit_internal_api_still_reports_gui_named_method_without_gui_context(self) -> None:
+        target = self._write_temp_file(
+            """
+            class JobApp:
+                def run_update(self):
                     return "internal"
             """
         )

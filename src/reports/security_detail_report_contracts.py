@@ -382,23 +382,23 @@ def validate_security_detail_report_content(
 
     violations: list[str] = []
 
-    def walk(value: Any, path: str) -> None:
+    def _walk(value: Any, path: str) -> None:
         if isinstance(value, Mapping):
             key_violations = find_forbidden_step16_report_columns(str(key) for key in value)
             violations.extend(f"{path}.{key}" for key in key_violations)
             for key, child in value.items():
                 child_path = f"{path}.{key}" if path else str(key)
-                walk(child, child_path)
+                _walk(child, child_path)
             return
         if isinstance(value, (list, tuple)):
             for index, child in enumerate(value):
-                walk(child, f"{path}[{index}]")
+                _walk(child, f"{path}[{index}]")
             return
         if isinstance(value, str):
             text_violations = find_forbidden_step16_report_text(value)
             violations.extend(f"{path}: {term}" for term in text_violations)
 
-    walk(report, "")
+    _walk(report, "")
     if violations:
         raise ValueError(
             f"{context} contains forbidden Step 16 report content: "

@@ -134,14 +134,22 @@ def test_request_only_cli_requires_explicit_gpt_brief_mode(tmp_path: Path, capsy
     output = tmp_path / "docs/context/gpt/gpt_context_quant.md"
     assert exc_info.value.code == 2
     assert not output.exists()
-    assert "--mode gpt-brief --request" in captured.err
+    assert "--mode gpt-brief --user-requested --request" in captured.err
 
 
 def test_explicit_gpt_brief_cli_writes_separate_context_path(tmp_path: Path, capsys) -> None:
     _write_minimal_context_project(tmp_path)
 
     exit_code = module.main(
-        ["--project-root", str(tmp_path), "--mode", "gpt-brief", "--request", "Draft a GPT prompt."]
+        [
+            "--project-root",
+            str(tmp_path),
+            "--mode",
+            "gpt-brief",
+            "--user-requested",
+            "--request",
+            "Draft a GPT prompt.",
+        ]
     )
 
     captured = capsys.readouterr()

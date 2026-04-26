@@ -61,7 +61,7 @@ class PipelineStageContract:
     ) -> "PipelineStageContract":
         """Build a contract from parsed config values."""
 
-        def tuple_value(name: str) -> tuple[str, ...]:
+        def _tuple_value(name: str) -> tuple[str, ...]:
             value = values.get(name, ())
             if value is None:
                 return ()
@@ -74,18 +74,18 @@ class PipelineStageContract:
             order=int(values.get("order", order)),
             enabled=bool(values.get("enabled", True)),
             optional=bool(values.get("optional", False)),
-            input_refs=tuple_value("input_refs"),
-            output_refs=tuple_value("output_refs"),
-            read_only_upstream_context=tuple_value("read_only_upstream_context"),
-            forbidden_inputs=tuple_value("forbidden_inputs"),
-            allowed_generated_outputs=tuple_value("allowed_generated_outputs"),
-            validation_expectations=tuple_value("validation_expectations"),
-            required_input_paths=tuple_value("required_input_paths"),
+            input_refs=_tuple_value("input_refs"),
+            output_refs=_tuple_value("output_refs"),
+            read_only_upstream_context=_tuple_value("read_only_upstream_context"),
+            forbidden_inputs=_tuple_value("forbidden_inputs"),
+            allowed_generated_outputs=_tuple_value("allowed_generated_outputs"),
+            validation_expectations=_tuple_value("validation_expectations"),
+            required_input_paths=_tuple_value("required_input_paths"),
             implementation_ref=str(values.get("implementation_ref", "unknown")),
             execution_policy=str(
                 values.get("execution_policy", "contract_validation_only")
             ),
-            boundary_notes=tuple_value("boundary_notes"),
+            boundary_notes=_tuple_value("boundary_notes"),
         )
 
     def to_dict(self) -> dict[str, Any]:

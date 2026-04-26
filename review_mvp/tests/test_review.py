@@ -275,6 +275,42 @@ class ReviewTests(unittest.TestCase):
 
         self.assertNotIn("explicit-internal-api", {finding.rule for finding in result.findings})
 
+    def test_explicit_internal_api_allows_public_utility_hooks(self) -> None:
+        target = self._write_temp_file(
+            """
+            class RequestCache:
+                def get(self, key):
+                    return None
+
+                def store(self, key, value):
+                    return None
+
+                def cache_key(self, request):
+                    return str(request)
+
+            class PaperDedupeIndex:
+                def add(self, paper):
+                    return None
+
+                def rebuild(self):
+                    return None
+
+                def find_duplicate_index(self, paper):
+                    return None
+
+            class SourceRateLimiter:
+                def wait_before_request(self):
+                    return None
+
+                def mark_request_complete(self):
+                    return None
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertNotIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
     def test_explicit_internal_api_allows_gui_callback_handlers(self) -> None:
         target = self._write_temp_file(
             """
@@ -345,6 +381,23 @@ class ReviewTests(unittest.TestCase):
             class SymbolPolicy:
                 def random_public_method(self):
                     return "internal"
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
+    def test_explicit_internal_api_still_reports_plain_utility_names(self) -> None:
+        target = self._write_temp_file(
+            """
+            class Helper:
+                def get(self, key):
+                    return None
+
+            class RequestCache:
+                def process(self):
+                    return None
             """
         )
 

@@ -108,6 +108,13 @@ PUBLIC_HOOK_METHODS_BY_CLASS_SUFFIX = {
     "Spec": {"is_valid", "normalize", "validate_size"},
 }
 SYMBOL_POLICY_HOOK_METHODS = {"leading_zero_loss_candidates"}
+PUBLIC_UTILITY_METHODS_BY_CLASS_SUFFIX = {
+    "Cache": {"cache_key", "get", "store"},
+    "DedupeIndex": {"add", "find_duplicate_index", "rebuild"},
+    "Deduper": {"add", "find_duplicate_index", "rebuild"},
+    "RateLimiter": {"mark_request_complete", "wait_before_request"},
+    "Throttle": {"mark_request_complete", "wait_before_request"},
+}
 PUBLIC_HOOK_PREFIXES_BY_CLASS_SUFFIX = {
     "Adapter": ("build_", "fetch_", "parse_", "request_", "validate_"),
     "Parser": ("handle_", "parse_"),
@@ -734,6 +741,8 @@ class PythonReviewVisitor(ast.NodeVisitor):
             return True
         if self._is_symbol_policy_hook(node, parent):
             return True
+        if self._is_public_utility_method(node, parent):
+            return True
         for suffix, method_names in PUBLIC_HOOK_METHODS_BY_CLASS_SUFFIX.items():
             if parent.name.endswith(suffix) and node.name in method_names:
                 return True
@@ -748,6 +757,16 @@ class PythonReviewVisitor(ast.NodeVisitor):
         parent: ast.ClassDef,
     ) -> bool:
         return parent.name.endswith("SymbolPolicy") and node.name in SYMBOL_POLICY_HOOK_METHODS
+
+    def _is_public_utility_method(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parent: ast.ClassDef,
+    ) -> bool:
+        return any(
+            parent.name.endswith(suffix) and node.name in method_names
+            for suffix, method_names in PUBLIC_UTILITY_METHODS_BY_CLASS_SUFFIX.items()
+        )
 
     def _is_gui_handler_method(
         self,

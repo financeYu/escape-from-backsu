@@ -115,6 +115,19 @@ FRAMEWORK_OVERRIDE_METHODS_BY_BASE = {
     "HTMLParser": {"handle_data", "handle_endtag", "handle_starttag"},
 }
 PUBLIC_RESULT_METHODS = {"raise_for_errors"}
+GUI_CONTAINER_CLASS_SUFFIXES = ("App", "Dialog", "Frame", "Panel", "View", "Viewer", "Window")
+GUI_HANDLER_METHOD_PREFIXES = ("run_", "open_selected_")
+GUI_HANDLER_METHODS = {"set_status"}
+GUI_METHOD_SURFACE_ATTRS = {
+    "after",
+    "bind",
+    "selection",
+    "set_status",
+    "state",
+    "status_var",
+    "update_idletasks",
+}
+GUI_METHOD_SURFACE_NAMES = {"filedialog", "messagebox"}
 
 
 @dataclass(frozen=True)
@@ -668,6 +681,8 @@ class PythonReviewVisitor(ast.NodeVisitor):
             return True
         if self._is_named_public_hook(node, parent):
             return True
+        if self._is_gui_handler_method(node, parent):
+            return True
         return self._is_abstract_hook(node, parent)
 
     def _is_conversion_method(
@@ -723,6 +738,74 @@ class PythonReviewVisitor(ast.NodeVisitor):
             if parent.name.endswith(suffix) and node.name.startswith(prefixes):
                 return True
         return False
+
+    def _is_gui_handler_method(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parent: ast.ClassDef,
+    ) -> bool:
+        if not parent.name.endswith(GUI_CONTAINER_CLASS_SUFFIXES):
+            return False
+        if not self._module_imports_tkinter(parent):
+            return False
+        if node.name in GUI_HANDLER_METHODS:
+            return self._method_uses_gui_surface(node)
+        if not node.name.startswith(GUI_HANDLER_METHOD_PREFIXES):
+            return False
+        return self._method_uses_gui_surface(node) or self._class_registers_gui_callback(parent, node.name)
+
+    def _module_imports_tkinter(self, node: ast.AST) -> bool:
+        module = self._module_for(node)
+        if module is None:
+            return False
+        for statement in module.body:
+            if isinstance(statement, ast.Import):
+                for alias in statement.names:
+                    if alias.name == "tkinter" or alias.name.startswith("tkinter."):
+                        return True
+            elif isinstance(statement, ast.ImportFrom) and statement.module:
+                if statement.module == "tkinter" or statement.module.startswith("tkinter."):
+                    return True
+        return False
+
+    def _method_uses_gui_surface(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        for child in ast.walk(node):
+            if isinstance(child, ast.Attribute) and child.attr in GUI_METHOD_SURFACE_ATTRS:
+                return True
+            if isinstance(child, ast.Name) and child.id in GUI_METHOD_SURFACE_NAMES:
+                return True
+        return False
+
+    def _class_registers_gui_callback(self, parent: ast.ClassDef, method_name: str) -> bool:
+        for child in ast.walk(parent):
+            if isinstance(child, ast.keyword) and child.arg == "command":
+                if self._is_self_method_reference(child.value, method_name):
+                    return True
+            elif isinstance(child, ast.Call) and self._call_name(child.func).endswith((".after", ".bind")):
+                if any(self._is_gui_callback_arg(argument, method_name) for argument in child.args):
+                    return True
+        return False
+
+    def _is_gui_callback_arg(self, node: ast.AST, method_name: str) -> bool:
+        if self._is_self_method_reference(node, method_name):
+            return True
+        if isinstance(node, ast.Lambda):
+            return any(self._is_self_method_reference(child, method_name) for child in ast.walk(node.body))
+        return False
+
+    def _is_self_method_reference(self, node: ast.AST, method_name: str) -> bool:
+        return (
+            isinstance(node, ast.Attribute)
+            and node.attr == method_name
+            and isinstance(node.value, ast.Name)
+            and node.value.id == "self"
+        )
+
+    def _module_for(self, node: ast.AST) -> ast.Module | None:
+        current = node
+        while current in self.parents:
+            current = self.parents[current]
+        return current if isinstance(current, ast.Module) else None
 
     def _is_abstract_hook(
         self,

@@ -15,6 +15,12 @@ The repository includes evaluation-only helpers for this candidate in
 label and map an already calibrated probability input to a 0-100 candidate
 score. They do not train a model or activate ranking.
 
+The exception-managed migration plan is documented in
+`Quant_mvp/docs/primary_score_migration_contract.md`. In that plan, this score
+is the new `primary_score` candidate, while the MVP v0.1 composite score is
+preserved only as archived `old_score` material until a later cutover branch is
+approved.
+
 ## Candidate Score
 
 This design uses one parameterized score instead of hardcoded 1-day, 1-week, or

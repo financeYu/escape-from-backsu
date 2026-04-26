@@ -30,6 +30,7 @@ Context docs are routing aids. They are not permission to bypass roadmap order, 
 - `active_step20_packet.md`: Step 20 final-validation routing packet.
 - `context_usage_policy.md`: answer and archive-read rules for fresh reasoning.
 - `context_index.md`: compact map of context files and when to read them.
+- `post_mvp_agent_update_chatgpt_source.md`: planning source for post-MVP agent and roadmap redesign.
 - `context_routing.md`: task-based routing matrix for Step 20+ review and planning work.
 - `CONTEXT_BUDGET_POLICY.md`: budget rules for packets and review inputs.
 - `decision_log.md`: changed context-routing decisions only, not full history.

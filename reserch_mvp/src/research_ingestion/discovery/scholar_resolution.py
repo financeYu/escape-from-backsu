@@ -19,9 +19,7 @@ def assert_approved_resolution_url(url: str) -> None:
 
 def resolve_seed(seed: dict[str, Any], candidates_by_source: dict[str, list[dict[str, Any]]]) -> dict[str, Any]:
     validate_discovery_seed(seed)
-    for source in candidates_by_source:
-        if source not in APPROVED_RESOLUTION_SOURCES:
-            raise ValueError(f"Unapproved resolution source: {source}")
+    _validate_resolution_sources(candidates_by_source)
 
     matches = _find_matches(seed, candidates_by_source)
     resolved = dict(seed)
@@ -40,8 +38,7 @@ def resolve_seed(seed: dict[str, Any], candidates_by_source: dict[str, list[dict
         )
         return resolved
 
-    unique_ids = {paper["canonical_paper_id"] for _, paper, _ in matches}
-    if len(unique_ids) > 1:
+    if _has_ambiguous_matches(matches):
         resolved.update(
             {
                 "canonical_lookup_status": "ambiguous",
@@ -70,6 +67,16 @@ def resolve_seed(seed: dict[str, Any], candidates_by_source: dict[str, list[dict
         }
     )
     return resolved
+
+
+def _validate_resolution_sources(candidates_by_source: dict[str, list[dict[str, Any]]]) -> None:
+    for source in candidates_by_source:
+        if source not in APPROVED_RESOLUTION_SOURCES:
+            raise ValueError(f"Unapproved resolution source: {source}")
+
+
+def _has_ambiguous_matches(matches: list[tuple[str, dict[str, Any], str]]) -> bool:
+    return len({paper["canonical_paper_id"] for _, paper, _ in matches}) > 1
 
 
 def resolve_seeds(

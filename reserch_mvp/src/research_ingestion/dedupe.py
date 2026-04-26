@@ -6,6 +6,49 @@ from typing import Any
 from .normalize import canonical_id, first_author, normalize_arxiv_id, normalize_doi, normalize_title, utc_now_iso, validate_normalized_paper
 
 
+IDENTIFIER_FIELDS = ["doi", "arxiv_id", "openalex_id", "semantic_scholar_id"]
+MERGED_LIST_FIELDS = [
+    "authors",
+    "source_adapters",
+    "source_urls",
+    "pdf_urls",
+    "topics",
+    "categories",
+    "fields_of_study",
+    "raw_snapshot_refs",
+    "same_as_sources",
+    "research_query_sets",
+    "research_branch_hints",
+    "research_management_lanes",
+]
+PRIMARY_OR_SECONDARY_FIELDS = [
+    "research_query_set",
+    "research_branch_hint",
+    "research_management_lane",
+    "source_query_set",
+    "query_run_id",
+    "source_record_id",
+    "retrieved_at",
+]
+SECONDARY_FILL_FIELDS = [
+    "title",
+    "title_normalized",
+    "publication_year",
+    "publication_date",
+    "updated_date",
+    "venue",
+    "publisher",
+    "language",
+    "oa_status",
+    "open_access_status",
+    "license",
+    "metadata_license",
+    "is_retracted",
+    "citation_count",
+    "influential_citation_count",
+]
+
+
 class PaperDedupeIndex:
     """Identifier-first duplicate lookup with narrow fuzzy title buckets."""
 
@@ -69,28 +112,11 @@ def deduplicate_papers(papers: list[dict[str, Any]]) -> list[dict[str, Any]]:
 def merge_papers(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str, Any]:
     merged = dict(primary)
     merged["source_ids"] = _merge_source_ids(primary.get("source_ids", {}), secondary.get("source_ids", {}))
-    for field in ["doi", "arxiv_id", "openalex_id", "semantic_scholar_id"]:
+    for field in IDENTIFIER_FIELDS:
         merged[field] = primary.get(field) or secondary.get(field) or merged["source_ids"].get(field)
     merged["crossref_id"] = merged["source_ids"].get("crossref_id")
-    merged["authors"] = _merge_unique(primary.get("authors", []), secondary.get("authors", []))
-    merged["source_adapters"] = _merge_unique(primary.get("source_adapters", []), secondary.get("source_adapters", []))
-    merged["source_urls"] = _merge_unique(primary.get("source_urls", []), secondary.get("source_urls", []))
-    merged["pdf_urls"] = _merge_unique(primary.get("pdf_urls", []), secondary.get("pdf_urls", []))
-    merged["topics"] = _merge_unique(primary.get("topics", []), secondary.get("topics", []))
-    merged["categories"] = _merge_unique(primary.get("categories", []), secondary.get("categories", []))
-    merged["fields_of_study"] = _merge_unique(primary.get("fields_of_study", []), secondary.get("fields_of_study", []))
-    merged["raw_snapshot_refs"] = _merge_unique(primary.get("raw_snapshot_refs", []), secondary.get("raw_snapshot_refs", []))
-    merged["same_as_sources"] = _merge_unique(primary.get("same_as_sources", []), secondary.get("same_as_sources", []))
-    merged["research_query_sets"] = _merge_unique(primary.get("research_query_sets", []), secondary.get("research_query_sets", []))
-    merged["research_branch_hints"] = _merge_unique(primary.get("research_branch_hints", []), secondary.get("research_branch_hints", []))
-    merged["research_management_lanes"] = _merge_unique(primary.get("research_management_lanes", []), secondary.get("research_management_lanes", []))
-    merged["research_query_set"] = primary.get("research_query_set") or secondary.get("research_query_set")
-    merged["research_branch_hint"] = primary.get("research_branch_hint") or secondary.get("research_branch_hint")
-    merged["research_management_lane"] = primary.get("research_management_lane") or secondary.get("research_management_lane")
-    merged["source_query_set"] = primary.get("source_query_set") or secondary.get("source_query_set")
-    merged["query_run_id"] = primary.get("query_run_id") or secondary.get("query_run_id")
-    merged["source_record_id"] = primary.get("source_record_id") or secondary.get("source_record_id")
-    merged["retrieved_at"] = primary.get("retrieved_at") or secondary.get("retrieved_at")
+    _merge_list_fields(merged, primary, secondary)
+    _merge_primary_or_secondary_fields(merged, primary, secondary)
     merged["seed_origin_type"] = _merge_seed_origin_type(primary, secondary)
     merged["seed_origin_is_evidence"] = False
     merged["canonical_resolution_status"] = _merge_resolution_status(primary, secondary)
@@ -102,25 +128,7 @@ def merge_papers(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str
     merged["citation_count_metadata_only"] = True
     merged["abstract"] = _prefer_longer(primary.get("abstract"), secondary.get("abstract"))
     merged["abstract_available"] = bool(merged.get("abstract"))
-    for field in [
-        "title",
-        "title_normalized",
-        "publication_year",
-        "publication_date",
-        "updated_date",
-        "venue",
-        "publisher",
-        "language",
-        "oa_status",
-        "open_access_status",
-        "license",
-        "metadata_license",
-        "is_retracted",
-        "citation_count",
-        "influential_citation_count",
-    ]:
-        if _is_empty_value(merged.get(field)) and not _is_empty_value(secondary.get(field)):
-            merged[field] = secondary[field]
+    _fill_empty_fields_from_secondary(merged, secondary)
     conflict_notes = _merge_unique(primary.get("conflict_notes", []), secondary.get("conflict_notes", []))
     conflict_notes.extend(_conflict_notes(primary, secondary))
     if secondary.get("is_retracted") is True:
@@ -142,6 +150,26 @@ def merge_papers(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str
     merged["dedup_key"] = merged["canonical_paper_id"]
     merged["updated_at"] = utc_now_iso()
     return merged
+
+
+def _merge_list_fields(merged: dict[str, Any], primary: dict[str, Any], secondary: dict[str, Any]) -> None:
+    for field in MERGED_LIST_FIELDS:
+        merged[field] = _merge_unique(primary.get(field, []), secondary.get(field, []))
+
+
+def _merge_primary_or_secondary_fields(
+    merged: dict[str, Any],
+    primary: dict[str, Any],
+    secondary: dict[str, Any],
+) -> None:
+    for field in PRIMARY_OR_SECONDARY_FIELDS:
+        merged[field] = primary.get(field) or secondary.get(field)
+
+
+def _fill_empty_fields_from_secondary(merged: dict[str, Any], secondary: dict[str, Any]) -> None:
+    for field in SECONDARY_FILL_FIELDS:
+        if _is_empty_value(merged.get(field)) and not _is_empty_value(secondary.get(field)):
+            merged[field] = secondary[field]
 
 
 def is_duplicate_paper(left: dict[str, Any], right: dict[str, Any]) -> bool:

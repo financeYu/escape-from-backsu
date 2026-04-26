@@ -38,9 +38,10 @@ def redact_url(
         return url
     secret_keys = {key.lower() for key in (secret_query_keys or DEFAULT_SECRET_QUERY_KEYS)}
     parts = urlsplit(redact_text(url, env_var_names) or "")
-    query = []
-    for key, value in parse_qsl(parts.query, keep_blank_values=True):
-        query.append((key, REDACTED if key.lower() in secret_keys else value))
+    query = [
+        (key, REDACTED if key.lower() in secret_keys else value)
+        for key, value in parse_qsl(parts.query, keep_blank_values=True)
+    ]
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
 
 

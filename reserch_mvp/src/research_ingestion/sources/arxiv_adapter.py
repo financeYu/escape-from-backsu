@@ -72,63 +72,76 @@ class ArxivAdapter:
 
     def parse_atom(self, xml_text: str, raw_snapshot_ref: str | None = None) -> list[dict[str, Any]]:
         root = ET.fromstring(xml_text)
-        papers = []
-        for entry in root.findall("atom:entry", ATOM_NS):
-            title = clean_text(_find_text(entry, "atom:title"))
-            abstract = clean_text(_find_text(entry, "atom:summary"))
-            published = clean_text(_find_text(entry, "atom:published"))
-            updated = clean_text(_find_text(entry, "atom:updated"))
-            entry_url = clean_text(_find_text(entry, "atom:id"))
-            arxiv_id = _arxiv_id_from_url(entry_url)
-            doi = clean_text(_find_text(entry, "arxiv:doi"))
-            authors = [
-                clean_text(author.findtext("atom:name", namespaces=ATOM_NS))
-                for author in entry.findall("atom:author", ATOM_NS)
-            ]
-            authors = [author for author in authors if author]
-            categories = [
-                category.attrib.get("term")
-                for category in entry.findall("atom:category", ATOM_NS)
-                if category.attrib.get("term")
-            ]
-            source_urls: list[str] = []
-            pdf_urls: list[str] = []
-            if entry_url:
-                source_urls.append(entry_url)
-            for link in entry.findall("atom:link", ATOM_NS):
-                href = link.attrib.get("href")
-                if not href:
-                    continue
-                if link.attrib.get("title") == "pdf" or link.attrib.get("type") == "application/pdf":
-                    pdf_urls.append(href)
-                elif href not in source_urls:
-                    source_urls.append(href)
-            papers.append(
-                make_normalized_paper(
-                    title=title or "",
-                    source_adapter=self.source_name,
-                    authors=authors,
-                    doi=doi,
-                    arxiv_id=arxiv_id,
-                    publication_year=_year_from_date(published),
-                    publication_date=_date_only(published),
-                    venue="arXiv",
-                    abstract=abstract,
-                    source_urls=source_urls,
-                    oa_status="open",
-                    license=None,
-                    is_retracted=False,
-                    citation_count=None,
-                    topics=categories,
-                    fields_of_study=[],
-                    raw_snapshot_refs=[raw_snapshot_ref] if raw_snapshot_ref else [],
-                    updated_date=_date_only(updated),
-                    categories=categories,
-                    pdf_urls=pdf_urls,
-                    pdf_downloaded=False,
-                )
-            )
-        return papers
+        return [
+            _parse_atom_entry(entry, source_name=self.source_name, raw_snapshot_ref=raw_snapshot_ref)
+            for entry in root.findall("atom:entry", ATOM_NS)
+        ]
+
+
+def _parse_atom_entry(entry: ET.Element, *, source_name: str, raw_snapshot_ref: str | None) -> dict[str, Any]:
+    title = clean_text(_find_text(entry, "atom:title"))
+    abstract = clean_text(_find_text(entry, "atom:summary"))
+    published = clean_text(_find_text(entry, "atom:published"))
+    updated = clean_text(_find_text(entry, "atom:updated"))
+    entry_url = clean_text(_find_text(entry, "atom:id"))
+    categories = _entry_categories(entry)
+    source_urls, pdf_urls = _entry_urls(entry, entry_url)
+    return make_normalized_paper(
+        title=title or "",
+        source_adapter=source_name,
+        authors=_entry_authors(entry),
+        doi=clean_text(_find_text(entry, "arxiv:doi")),
+        arxiv_id=_arxiv_id_from_url(entry_url),
+        publication_year=_year_from_date(published),
+        publication_date=_date_only(published),
+        venue="arXiv",
+        abstract=abstract,
+        source_urls=source_urls,
+        oa_status="open",
+        license=None,
+        is_retracted=False,
+        citation_count=None,
+        topics=categories,
+        fields_of_study=[],
+        raw_snapshot_refs=[raw_snapshot_ref] if raw_snapshot_ref else [],
+        updated_date=_date_only(updated),
+        categories=categories,
+        pdf_urls=pdf_urls,
+        pdf_downloaded=False,
+    )
+
+
+def _entry_authors(entry: ET.Element) -> list[str]:
+    return [
+        author
+        for author in (
+            clean_text(node.findtext("atom:name", namespaces=ATOM_NS))
+            for node in entry.findall("atom:author", ATOM_NS)
+        )
+        if author
+    ]
+
+
+def _entry_categories(entry: ET.Element) -> list[str]:
+    return [
+        category.attrib["term"]
+        for category in entry.findall("atom:category", ATOM_NS)
+        if category.attrib.get("term")
+    ]
+
+
+def _entry_urls(entry: ET.Element, entry_url: str | None) -> tuple[list[str], list[str]]:
+    source_urls = [entry_url] if entry_url else []
+    pdf_urls: list[str] = []
+    for link in entry.findall("atom:link", ATOM_NS):
+        href = link.attrib.get("href")
+        if not href:
+            continue
+        if link.attrib.get("title") == "pdf" or link.attrib.get("type") == "application/pdf":
+            pdf_urls.append(href)
+        elif href not in source_urls:
+            source_urls.append(href)
+    return source_urls, pdf_urls
 
 
 def _find_text(entry: ET.Element, path: str) -> str | None:

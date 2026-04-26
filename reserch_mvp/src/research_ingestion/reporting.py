@@ -178,9 +178,7 @@ def render_source_health(run_id: str, source_health: dict[str, Any]) -> str:
     if not source_health:
         lines.append("현재 기록된 source health 이벤트가 없습니다.")
     for source, payload in source_health.items():
-        lines.append(f"## {source}")
-        for key, value in payload.items():
-            lines.append(f"- {key}: {value}")
+        lines.extend(_source_health_payload_lines(source, payload))
     lines.append("")
     return "\n".join(lines)
 
@@ -215,8 +213,7 @@ def render_rejected_items(run_id: str, evidence_cards: list[dict[str, Any]]) -> 
     lines = ["# Rejected Items", "", f"- run_id: `{run_id}`", ""]
     if not rejected:
         lines.append("현재 reject_log 항목이 없습니다.")
-    for card in rejected:
-        lines.append(f"- {card['paper'].get('title')} / reason: {card['classification'].get('classification_reason_ko')}")
+    lines.extend(_rejected_item_lines(rejected))
     lines.append("")
     return "\n".join(lines)
 
@@ -247,10 +244,27 @@ def render_handoff_summary(run_id: str, evidence_cards: list[dict[str, Any]]) ->
         lines.append(f"## {route}")
         if not cards:
             lines.append("- 없음")
-        for card in cards:
-            lines.append(f"- {card['paper'].get('title')} ({card['classification']['research_branch']})")
+        lines.extend(_handoff_card_lines(cards))
         lines.append("")
     return "\n".join(lines)
+
+
+def _source_health_payload_lines(source: str, payload: dict[str, Any]) -> list[str]:
+    return [f"## {source}", *[f"- {key}: {value}" for key, value in payload.items()]]
+
+
+def _rejected_item_lines(rejected: list[dict[str, Any]]) -> list[str]:
+    return [
+        f"- {card['paper'].get('title')} / reason: {card['classification'].get('classification_reason_ko')}"
+        for card in rejected
+    ]
+
+
+def _handoff_card_lines(cards: list[dict[str, Any]]) -> list[str]:
+    return [
+        f"- {card['paper'].get('title')} ({card['classification']['research_branch']})"
+        for card in cards
+    ]
 
 
 def _branch_counts(cards: list[dict[str, Any]]) -> Counter:

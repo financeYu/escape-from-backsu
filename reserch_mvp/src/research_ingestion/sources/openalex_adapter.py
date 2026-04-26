@@ -67,10 +67,7 @@ class OpenAlexAdapter:
 
     def parse_works_json(self, payload: dict[str, Any], raw_snapshot_ref: str | None = None) -> list[dict[str, Any]]:
         results = payload if isinstance(payload, list) else payload.get("results", [])
-        papers = []
-        for work in results:
-            papers.append(parse_openalex_work(work, raw_snapshot_ref=raw_snapshot_ref))
-        return papers
+        return [parse_openalex_work(work, raw_snapshot_ref=raw_snapshot_ref) for work in results]
 
 
 def reconstruct_abstract(abstract_inverted_index: dict[str, list[int]] | None) -> str | None:

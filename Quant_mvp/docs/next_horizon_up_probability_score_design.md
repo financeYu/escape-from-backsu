@@ -10,21 +10,41 @@ This document does not implement model training, create runtime ranking output,
 change `technical_composite_score`, change `final_composite_score`, activate
 backtest feedback, or add valuation/fundamental inputs.
 
-## Candidate Scores
+## Candidate Score
 
-| score_name | horizon | display_column | label |
-| --- | ---: | --- | --- |
-| `next_1d_up_probability_score` | 1 trading day | `next_1d_up_probability_score` | `close[t+1] / close[t] - 1 > 0` |
-| `next_5d_up_probability_score` | 5 trading days | `next_5d_up_probability_score` | `close[t+5] / close[t] - 1 > 0` |
-| `next_20d_up_probability_score` | 20 trading days | `next_20d_up_probability_score` | `close[t+20] / close[t] - 1 > 0` |
+This design uses one parameterized score instead of hardcoded 1-day, 1-week, or
+1-month score names.
 
-All three scores share one candidate family:
+| field | value |
+| --- | --- |
+| `score_name` | `next_horizon_up_probability_score` |
+| `display_column` | `next_horizon_up_probability_score` |
+| `horizon_parameter` | `horizon_trading_days` |
+| `default_horizon_trading_days` | `1` |
+| `user_facing_label_template` | `{horizon_trading_days}거래일 뒤 상승확률 후보` |
+| `default_user_facing_label` | `1거래일 뒤 상승확률 후보` |
+| `label_template` | `close[t + horizon_trading_days] / close[t] - 1 > 0` |
+| `usage_status` | `primary_candidate_for_default_1_trading_day_horizon` |
+
+The score family is:
 
 - `score_family`: `directional_probability`
 - `score_branch`: `technical`
 - `status`: `candidate_only`
 - `runtime_enabled`: `false`
 - `ranking_integration`: `not_allowed_without_later_adoption_step`
+
+Initial operating selection:
+
+- `default_horizon_trading_days`: `1`
+- `active_horizon_source`: config value, not a hardcoded score name
+- `non_default_horizons`: not active until a later review step approves them
+- `non_default_horizon_reason`: first pass should validate the default
+  1-trading-day close-to-close directional label before expanding to longer,
+  overlapping labels.
+- `gui_main_display_candidate`: `next_horizon_up_probability_score` with
+  `horizon_trading_days = 1` only after a later implementation and review step
+  approves evaluation-only display.
 
 ## Prediction Timing
 
@@ -63,8 +83,8 @@ forward_return_h = close[t+h] / close[t] - 1
 target_h = 1 if forward_return_h > 0 else 0
 ```
 
-where `h` is one of `1`, `5`, or `20` trading days. Calendar days must not be
-used as a substitute for trading-day horizons.
+where `h = horizon_trading_days`. The default first-pass value is `h = 1`.
+Calendar days must not be used as a substitute for trading-day horizons.
 
 Rows without a complete future label are excluded from supervised training and
 evaluation for that horizon. They must not be filled with `0`, neutral values,
@@ -116,9 +136,10 @@ Minimum validation expectations:
 
 - date-ordered train, validation, and test splits
 - no future labels or future features in the training feature matrix
-- horizon-specific evaluation for 1, 5, and 20 trading days
+- horizon-specific evaluation for the configured horizon, starting with the
+  default 1-trading-day horizon
 - purged or embargoed validation when overlapping labels could leak adjacent
-  outcomes, especially for 5-day and 20-day horizons
+  outcomes before enabling longer non-default horizons
 - per-date diagnostics rather than only pooled metrics
 - class-balance checks by horizon
 - calibration checks by horizon
@@ -159,12 +180,10 @@ Candidate output tables should use explicit horizon-specific names:
 ```text
 ticker
 date
-next_1d_up_probability_score
-next_5d_up_probability_score
-next_20d_up_probability_score
-next_1d_probability_bucket
-next_5d_probability_bucket
-next_20d_probability_bucket
+next_horizon_up_probability_score
+next_horizon_probability_bucket
+horizon_trading_days
+horizon_usage_status
 probability_model_version
 prediction_asof
 input_cutoff
@@ -188,15 +207,19 @@ These candidates must remain separate from the MVP v0.1 ranking contract.
 - Do not use these scores for production ranking without a later adoption step.
 - Do not compare them as valuation signals.
 - Do not feed backtest diagnostics into the score definition.
+- Use `next_horizon_up_probability_score` with `horizon_trading_days = 1` as the
+  only first-pass main candidate.
+- Keep non-default horizons disabled until a later review step explicitly
+  enables them.
 
 The safe first integration point is a sidecar evaluation table, not the GUI's
 current `점수` column.
 
 ## Failure Modes
 
-- Direction labels may be noisy and close to random at one trading day.
-- Five-day and twenty-day labels overlap, so naive validation can overstate
-  stability.
+- The default 1-trading-day direction label may be noisy and close to random.
+- Longer non-default labels can overlap, so naive validation can overstate
+  stability when those horizons are later evaluated.
 - Market-wide drift can dominate stock-specific technical signals.
 - Transaction costs and slippage are not captured by a binary close-to-close
   label.
@@ -206,10 +229,10 @@ current `점수` column.
 
 ## Required Next Steps Before Implementation
 
-1. Add a versioned config stub for horizons, split dates, model family, and
-   calibration method.
+1. Add a versioned config stub with `horizon_trading_days = 1` as the default
+   active main horizon and non-default horizons disabled.
 2. Add leakage guardrail tests for feature cutoff and label construction.
 3. Build an evaluation-only dataset generator.
-4. Run horizon-specific walk-forward validation.
+4. Run walk-forward validation for the default 1-trading-day horizon first.
 5. Submit technical review and adoption review before any ranking or GUI
    integration.

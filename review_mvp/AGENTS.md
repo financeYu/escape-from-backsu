@@ -86,10 +86,34 @@ The subproject must submit a master-up summary using the required template in th
 
 - become the default reviewer for every small local change
 - rewrite local implementation unless explicitly asked
+- edit another subproject or root-owned file from an internal `review_mvp` task
+- apply cross-project/root fixes unless explicitly assigned by the source subproject or master/root as a code-review repair
 - invent new scores
 - implement scores before allowed roadmap step
 - run or design backtests before allowed roadmap step
 - introduce valuation/fundamental scoring before allowed roadmap step
+
+### Cross-project modification boundary
+
+Inspection authority is not write authority. `review_mvp` may inspect another
+subproject or the root only when a source subproject, master/root, Step-end gate,
+or final-validation gate explicitly invokes specialist review.
+
+`review_mvp` may modify files outside `review_mvp/` only when all of the
+following are true:
+
+- the source subproject or master/root explicitly asks `review_mvp` to apply a
+  code-review repair
+- the repair is the narrowest necessary fix for a concrete review finding
+- the target files are listed in the active `WORKSPACE_MANIFEST.md` or covered
+  by a documented root/master resume decision
+- the responsible subproject's `AGENTS.md`, local tests/checks, generated-output
+  policy, and root-boundary rules are followed
+
+If these conditions are not met, `review_mvp` must report findings, route the
+fix to the responsible subproject, or record a handoff/TODO. It must not
+directly edit `Quant_mvp`, `chart_mvp`, `reserch_mvp`, root-owned files, or
+other project areas from an internal review task.
 
 `review_mvp` output format:
 
@@ -176,6 +200,20 @@ Use this project as the final review checkpoint when the specialist invocation p
 python review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --exclude-dir samples --format markdown
 python -m unittest discover -s review_mvp/tests -v
 ```
+
+When the active task is local to `review_mvp`, run review commands from inside
+`review_mvp` and target only that subproject:
+
+```powershell
+cd review_mvp
+python review.py . --format markdown
+python -m unittest discover -s tests -v
+```
+
+Do not use the root-wide command from a subproject-local review task. Root-wide
+specialist review can inspect `Quant_mvp`, `chart_mvp`, `reserch_mvp`, and
+other project areas, so it is reserved for explicit master/root final-validation
+or cross-project review requests.
 
 For narrow local changes, responsible subproject review and local tests/checks may be sufficient. Run `review_mvp` checks when the change is high-risk, cross-project, near a roadmap gate, or leaves unresolved risk.
 

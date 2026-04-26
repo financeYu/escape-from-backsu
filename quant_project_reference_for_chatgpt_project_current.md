@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-26T11:27:17+09:00
+Generated at: 2026-04-26T11:39:42+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -69,16 +69,17 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 
 ### Step 18 = Valuation / Fundamental Expansion
 - Step 18 candidate-only valuation/fundamental contracts, metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
+- Candidate metadata schema is canonicalized as `ticker`, `period`, `metric`, `value`, `filing_date`, `availability_date`, `disclosure_id` or `source_report_id`, `source_vendor`, and `collected_at`; legacy aliases are ingestion compatibility only.
 - `src/valuation/` defines candidate records and report helpers only; it does not create a valuation score, fundamental score, valuation-aware composite, trading signal, or ranking output.
 - `config/valuation_fundamental_metrics.toml` lists allowed candidate-only metric names and keeps `technical_composite_score`, `final_composite_score`, backtest integration, alpha validation, and external network calls disabled.
-- `src/validation/step18_valuation_fundamental_guardrails.py` validates candidate records, availability-date usage, candidate report notices, forbidden trading/predictive/score language, production-output leakage, and backtest availability boundaries.
+- `src/validation/step18_valuation_fundamental_guardrails.py` validates candidate records, availability-date usage, required PIT metadata, reporting-lag/stale-data policy, candidate report notices, forbidden trading/predictive/score language, production-output leakage, and backtest availability boundaries.
 - `docs/architecture/step18_valuation_fundamental_boundary.md` documents the separation between technical scores, candidate valuation/fundamental data, final ranking scores, and Step 17 backtest inputs.
-- Latest local validation after report-language fix: `python -m pytest -q -p no:cacheprovider` = 645 passed, 4 skipped, 25 subtests passed.
-- Focused Step 18 validation after report-language fix: `python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py` = 38 passed.
-- Related scanner/report/backtest/validation validation after report-language fix: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 229 passed.
+- Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 651 passed, 4 skipped, 25 subtests passed.
+- Focused Step 18 master integration validation: `python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py` = 44 passed.
+- Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 229 passed.
 - Manual forbidden-language reproduction now rejects `buy recommendation and proven alpha` with `alpha proven, buy recommendation`.
 - `review_mvp` specialist static review command on Step 18 production/test paths returned 0 high and 0 medium findings; 3 low style/quality findings are non-blocking.
-- Cross-Step Conflict Checkpoint after post-fix validation: PASS. Packet regenerated with `python scripts/build_review_packet.py --step "Step 18" --stage "post-fix validation"`; manual checkpoint found no blocking roadmap/order, hard-stop, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, trading-signal, or unrelated dirty-worktree issue. `WORKSPACE_MANIFEST.md` is intentionally included in the Step 18 fix scope to resolve the worktree identity dirty state.
+- Cross-Step Conflict Checkpoint after post-fix validation: PASS. Packet regenerated with `python scripts/build_review_packet.py --step "Step 18" --stage "post-fix validation"`; manual checkpoint found no blocking roadmap/order, hard-stop, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, trading-signal, or unrelated dirty-worktree issue. During master integration, `WORKSPACE_MANIFEST.md` was updated to reflect the Step 18 integration branch identity.
 ### Step 17 = Conservative Backtest
 - Step 17 Worker A/B conservative backtest core and guardrail branches are integrated through `integration/step17-conservative-backtest-merge`.
 - `src/backtest/` implements deterministic evaluation-only backtest contracts and runner logic using frozen Step 15/16-compatible technical ranking context as read-only input.
@@ -98,8 +99,7 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 - `docs/step16_security_detail_report.md`, `docs/architecture/step16_report_backtest_boundary.md`, and `reports/security/README.md` document the generated-output and Step 15 read-only boundaries.
 - Latest local validation: `python -m pytest -q` = 548 passed, 4 skipped, 25 subtests passed.
 - Focused Step 16 validation: `tests/reports` = 66 passed; `tests/validation/test_step16_detail_report_guardrails.py` = 37 passed; `tests/scanner tests/reports tests/validation` = 147 passed.
-- `review_mvp` specialist review found no high or medium findings after required Step 16 review fixes; remaining low style/length warnings are non-blocking.
-- omitted 33 additional lines for compact context
+- omitted 34 additional lines for compact context
 
 ## Cross-Step Conflict Checkpoint
 
@@ -129,8 +129,8 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 
 ## Git Snapshot
 
-- branch: `codex/step18-valuation-fundamental-expansion`
-- commit: `832d568`
+- branch: `integration/step18-valuation-fundamental-expansion-merge`
+- commit: `de990c2`
 - status:
 ```text
 clean
@@ -193,6 +193,5 @@ A candidate score or score family should be assigned one of the following final 
 | `bollinger_width_squeeze` | `squeeze_expansion` | `technical` | regime/conditional candidate | define for MVP testing as technical-only context | volatility compression and expansion setup |
 | `cmf_confirmation` | `flow` | `technical` | confirmation candidate | define for MVP testing | price-volume participation evidence |
 | `rsi_price_divergence` | `oscillator_divergence` | `technical` | cautious pattern proxy | define only as deterministic proxy | oscillator divergence, with pattern-mining warning |
-| `realized_vol_percentile` | `volatility_regime` | `diagnostic` | regime diagnostic | keep out of direct alpha ranking until reviewed | risk/regime context and testing discipline |
 
 [Context truncated by `max_chars`; consult repository docs for full detail.]

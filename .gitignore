@@ -74,6 +74,9 @@ docs/current_review_packet.md
 *.log
 *.tmp
 
+# Local git worktree containers
+worktrees/
+
 # OS/editor noise
 .DS_Store
 Thumbs.db

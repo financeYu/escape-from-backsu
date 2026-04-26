@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-26T13:10:58+09:00
+Generated at: 2026-04-26T13:25:34+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -20,7 +20,7 @@ No paid API upload is performed by this local-only workflow.
 ## Current Roadmap Position
 
 Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE / KOSPI200 technical MVP v0.1 freeze-ready
-- Active: no in-progress roadmap Step. MVP v0.1 is freeze-ready pending integration branch merge.
+- Active: no in-progress roadmap Step. MVP v0.1 is freeze-ready after Step 20 integration.
 - Recently completed: Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE
 - Recently completed before that: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
 - Carry-forward preserved for this Step: Step 19 orchestrates existing approved stage contracts only; Step 15 ranking, Step 16 reports, Step 17 backtest, and Step 18 candidate-only valuation/fundamental boundaries remain unchanged.
@@ -73,8 +73,8 @@ Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE 
 - Latest ranking output now exposes warmup status, neutral shrinkage count, and a technical-only MVP notice so Step 16 detail/report context can explain ranking rows more clearly.
 - `technical_composite_score` remains technical-only and `final_composite_score` equals `technical_composite_score` for MVP v0.1.
 - Missing direct score inputs shrink to neutral `0.0`; deterministic ranking uses descending score and ticker ascending for ties.
-- Validation passed: `python -m pytest -q tests/scanner tests/reports tests/validation` = 230 passed; `python -m pytest -q tests/integration` = 2 passed; `python -m pytest -q` = 696 passed, 4 skipped, 25 subtests passed.
-- Context checks returned no staleness or conflict findings; `review_mvp` specialist review returned 0 high and 0 medium findings, with low style/quality notes treated as non-blocking.
+- Validation passed after final integration merge: `python -m pytest -q tests/context` = 17 passed; `python -m pytest -q tests/scanner tests/reports tests/validation` = 230 passed; `python -m pytest -q tests/integration` = 2 passed; `python -m pytest -q` = 707 passed, 4 skipped, 25 subtests passed.
+- Context checks returned no staleness or conflict findings; `review_mvp` specialist review returned 0 high and 0 medium findings, with 10 low style/quality notes treated as non-blocking; `python -m unittest discover -s review_mvp/tests -v` = 11 passed.
 - KOSDAQ150 was not implemented; futures/options were not implemented; valuation/fundamental scoring remains inactive; Step 17 backtest outputs did not feed upstream scoring or ranking; no trading recommendation or proven alpha claim was introduced.
 ### Step 19 = Automatic Execution Pipeline
 - Step 19 automatic execution pipeline contracts, config, CLI, guardrails, docs, generated-output boundary docs, and tests are implemented.
@@ -129,11 +129,13 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 
 ## Git Snapshot
 
-- branch: `codex/step20-mvp-completeness-hardening`
-- commit: `21767ac`
+- branch: `main`
+- commit: `61cbfa6`
 - status:
 ```text
-clean
+M .gitignore
+ M WORKSPACE_MANIFEST.md
+ M quant_project_reference_for_chatgpt_project_current.md
 ```
 
 ## Step-End Context Policy
@@ -190,6 +192,5 @@ A candidate score or score family should be assigned one of the following final 
 | `donchian_breakout_distance` | `breakout` | `technical` | core candidate | define for MVP testing | trading range breakout evidence |
 | `bollinger_width_squeeze` | `squeeze_expansion` | `technical` | regime/conditional candidate | define for MVP testing as technical-only context | volatility compression and expansion setup |
 | `cmf_confirmation` | `flow` | `technical` | confirmation candidate | define for MVP testing | price-volume participation evidence |
-| `rsi_price_divergence` | `oscillator_divergence` | `technical` | cautious pattern proxy | define only as deterministic proxy | oscillator divergence, with pattern-mining warning |
 
 [Context truncated by `max_chars`; consult repository docs for full detail.]

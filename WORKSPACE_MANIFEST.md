@@ -21,6 +21,7 @@ latest-only context rather than repeated completed-Step history.
 ## Allowed write paths
 
 - WORKSPACE_MANIFEST.md
+- .gitignore
 - docs/project_checklist.md
 - docs/roadmap_status.md
 - docs/context/
@@ -84,6 +85,7 @@ latest-only context rather than repeated completed-Step history.
 - focused and full validation summary
 - one integration commit on `main`
 - post-commit context snapshot refresh
+- Git hygiene ignore rule for local nested worktree containers
 
 ## Required validation
 

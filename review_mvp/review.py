@@ -107,6 +107,7 @@ PUBLIC_HOOK_METHODS_BY_CLASS_SUFFIX = {
     "Policy": {"is_valid", "normalize"},
     "Spec": {"is_valid", "normalize", "validate_size"},
 }
+SYMBOL_POLICY_HOOK_METHODS = {"leading_zero_loss_candidates"}
 PUBLIC_HOOK_PREFIXES_BY_CLASS_SUFFIX = {
     "Adapter": ("build_", "fetch_", "parse_", "request_", "validate_"),
     "Parser": ("handle_", "parse_"),
@@ -731,6 +732,8 @@ class PythonReviewVisitor(ast.NodeVisitor):
     ) -> bool:
         if node.name in PUBLIC_RESULT_METHODS and parent.name.endswith(("Result", "Report", "Summary")):
             return True
+        if self._is_symbol_policy_hook(node, parent):
+            return True
         for suffix, method_names in PUBLIC_HOOK_METHODS_BY_CLASS_SUFFIX.items():
             if parent.name.endswith(suffix) and node.name in method_names:
                 return True
@@ -738,6 +741,13 @@ class PythonReviewVisitor(ast.NodeVisitor):
             if parent.name.endswith(suffix) and node.name.startswith(prefixes):
                 return True
         return False
+
+    def _is_symbol_policy_hook(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parent: ast.ClassDef,
+    ) -> bool:
+        return parent.name.endswith("SymbolPolicy") and node.name in SYMBOL_POLICY_HOOK_METHODS
 
     def _is_gui_handler_method(
         self,

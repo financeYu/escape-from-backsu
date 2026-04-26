@@ -1,78 +1,87 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: integration_step18_valuation_fundamental_expansion_merge
-branch: integration/step18-valuation-fundamental-expansion-merge
-task_type: master_integration
-active_step: Step 18 Valuation / Fundamental Expansion
-owner_or_worker: root master agent
-created_from_commit: e075ef3c31cef2bda64bb722c01d3e1f4f9e2417
+workspace_id: step19_automatic_execution_pipeline
+branch: codex/step19-automatic-execution-pipeline
+task_type: step_implementation
+active_step: Step 19 Automatic Execution Pipeline
+owner_or_worker: Codex
+created_from_commit: be1b07f218c0621a2e3640705cb391798973ff2f
+base_branch: integration/step18-valuation-fundamental-expansion-merge
 
 ## Purpose
 
-Merge the Step 18 implementation branch, validate candidate-only valuation/fundamental boundaries, run Step-end review gates, close Step 18, and refresh the compact local Quant project context.
+Implement Step 19 automatic execution pipeline without changing scoring, ranking, report, backtest, or valuation semantics.
 
-## Source branch
+role: step19-automatic-execution-pipeline
 
-- codex/step18-valuation-fundamental-expansion
+allowed scope: Step 19 orchestration/pipeline code, pipeline config, pipeline validation, tests, docs.
 
-## Allowed work
+forbidden scope: new scoring formulas, ranking semantic changes, report semantic changes, backtest semantic changes, valuation/fundamental scoring activation, KOSDAQ150/futures/options expansion, external data ingestion, Step 20 final done validation.
 
-- merge the Step 18 implementation branch into this integration branch
-- preserve Step 18 candidate-only valuation/fundamental scope
-- run full and focused pytest validation
-- run forbidden-scope searches for valuation, score, ranking, backtest, alpha, and trading-signal leakage
-- run the Cross-Step Conflict Checkpoint
-- run required Step-end specialist review checks
-- apply minimal manifest, status, or documentation corrections required by the master integration gate
-- commit the validated merge result
-- refresh the latest local Quant project context snapshot after the Step commit
+expected output: deterministic automatic execution pipeline, guardrails, tests, docs, validation report.
 
-## Read-only paths unless a validation gate requires a narrow correction
+## Allowed write paths
+
+- WORKSPACE_MANIFEST.md
+- docs/step19_automatic_execution_pipeline.md
+- docs/architecture/step19_pipeline_boundary.md
+- reports/pipeline/README.md
+- config/step19_pipeline.toml
+- src/pipeline/
+- src/validation/step19_pipeline_guardrails.py
+- scripts/run_step19_pipeline.py
+- tests/pipeline/
+- tests/validation/test_step19_pipeline_guardrails.py
+
+## Read-only paths
 
 - AGENTS.md
-- Quant_mvp/AGENTS.md
-- Quant_mvp/agents/valuation/AGENTS.md
+- docs/project_checklist.md
+- docs/roadmap_status.md
+- docs/context/
 - docs/workspace_parallel_work_policy.md
-- docs/step2_financial_validation_summary.md
+- docs/cross_step_conflict_check.md
 - src/scanner/
+- src/reports/
 - src/backtest/
+- src/valuation/
 - src/composite/
 - src/scores/
 
 ## Forbidden actions
 
-- active valuation/fundamental scoring
-- valuation-aware composite scoring
+- roadmap status or final Step verdict changes unless explicitly assigned
+- ranking output, composite scoring, backtest, valuation/fundamental scoring, or trading signals unless explicitly assigned by the active Step
 - financial/fundamental data in technical_composite_score or final_composite_score
-- ranking output changes beyond tests proving Step 18 exclusion
-- Step 17 backtest behavior changes beyond tests proving Step 18 exclusion
-- trading recommendations, target prices, expected returns, predictive alpha claims, or signal output
-- external financial data/network collection
-- Step 19 or later implementation
-- unrelated cleanup, reset, stash, or history rewrite
-- generated market-data, runtime report, cache, or chart commits unless explicitly promoted as review fixtures
+- generated market-data output commits unless explicitly promoted as review fixtures
+- unrelated worktree cleanup, staging, committing, merging, or reset operations
+- new scoring formulas
+- ranking semantic changes
+- detail report semantic changes
+- backtest semantic changes
+- valuation/fundamental scoring activation
+- KOSDAQ150/futures/options expansion
+- external data ingestion
+- Step 20 final validation or completion claims
+- network calls or secret usage
 
 ## Expected output
 
-- integrated Step 18 candidate-only source-controlled files
-- validation and review summary
-- Cross-Step Conflict Checkpoint result
-- Step 18 COMPLETE roadmap/status update
-- merge commit SHA
-- post-commit context refresh result
+- deterministic automatic execution pipeline
+- pipeline guardrails
+- focused tests
+- pipeline docs
+- validation and handoff report
 
 ## Required validation
 
-- git status / changed-file manifest
-- python -m pytest -q -p no:cacheprovider
-- python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py
-- python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation
-- review_mvp static review on Step 18 changed production/test paths
-- forbidden-scope search
-- python scripts/build_review_packet.py --step "Step 18" --stage "master integration pre-commit"
-- Cross-Step Conflict Checkpoint using docs/cross_step_conflict_check.md and the generated review packet
+- python -m pytest -q tests/pipeline tests/validation/test_step19_pipeline_guardrails.py
+- python -m pytest -q tests/scanner tests/reports tests/backtest tests/validation
+- python -m pytest -q
+- python scripts/build_review_packet.py --step "Step 19" --stage "automatic-execution-pipeline-ready"
 
 ## Handoff notes
 
-The implementation worktree remains `C:\Users\jjaew\Project\worktrees\step18_valuation_fundamental_expansion` on `codex/step18-valuation-fundamental-expansion`.
-The root workspace at `C:\Users\jjaew\Project\master_mvp` is used only for merge, validation, Step status, and context refresh.
+Update this manifest before editing outside the allowed write paths.
+After focused validation passes, commit source-controlled branch changes by default and report the commit SHA.
+This Step 19 assignment explicitly requires the root WORKSPACE_MANIFEST.md update; include it with the branch-local handoff unless master integration later chooses a different manifest policy.

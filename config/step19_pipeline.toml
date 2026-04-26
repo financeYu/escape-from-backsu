@@ -1,0 +1,179 @@
+[step19]
+name = "automatic_execution_pipeline"
+step = "Step 19"
+default_run_mode = "dry_run"
+validation_mode = "fail_closed"
+network_allowed = false
+secrets_allowed = false
+local_cache_required = false
+generated_output_root = "reports/pipeline/generated"
+source_controlled_output_policy = "docs_config_code_tests_only"
+
+[boundary]
+no_semantics_changed = true
+technical_composite_score_semantics = "unchanged"
+final_composite_score_semantics = "unchanged"
+step15_latest_ranking_semantics = "unchanged"
+step16_report_semantics = "unchanged"
+step17_backtest_semantics = "unchanged"
+step18_candidate_only_status = "preserved"
+valuation_fundamental_scoring_activation = false
+technical_composite_score_integration = false
+final_composite_score_activation = false
+kosdaq150_expansion = false
+futures_expansion = false
+options_expansion = false
+external_data_ingestion = false
+step20_final_validation = false
+
+[stages.preflight]
+order = 10
+enabled = true
+optional = false
+implementation_ref = "src.pipeline.step19_pipeline"
+execution_policy = "contract_validation_only"
+input_refs = ["AGENTS.md", "docs/project_checklist.md", "docs/roadmap_status.md", "WORKSPACE_MANIFEST.md"]
+output_refs = ["reports/pipeline/generated/step19_pipeline_summary.json"]
+validation_expectations = ["local-only execution", "no network", "no secrets", "dry_run default"]
+boundary_notes = ["Preflight validates Step 19 orchestration scope only."]
+
+[stages.context_check]
+order = 20
+enabled = true
+optional = false
+implementation_ref = "docs/context/generated/step19_pipeline_packet.md"
+execution_policy = "contract_validation_only"
+input_refs = ["docs/context/generated/step19_pipeline_packet.md", "docs/context/domain/pipeline_context.md"]
+output_refs = ["reports/pipeline/generated/step19_context_check.json"]
+validation_expectations = ["generated packet is routing aid only", "authority docs remain higher priority"]
+boundary_notes = ["Context routing does not override source, tests, roadmap status, or explicit user instruction."]
+
+[stages.data_preprocess]
+order = 30
+enabled = true
+optional = false
+implementation_ref = "src.preprocess.daily_ohlcv"
+execution_policy = "contract_validation_only"
+input_refs = ["daily OHLCV source-controlled or explicit local input path"]
+output_refs = ["preprocessed_daily_ohlcv_frame"]
+forbidden_inputs = ["future_return", "forward_return", "expected_return", "valuation_score", "fundamental_score", "external_network_data"]
+validation_expectations = ["schema validation", "no future labels", "ticker/date alignment"]
+boundary_notes = ["Step 19 does not fetch market data or create local cache files."]
+
+[stages.technical_indicators]
+order = 40
+enabled = true
+optional = false
+implementation_ref = "src.indicators.technical"
+execution_policy = "contract_validation_only"
+input_refs = ["preprocessed_daily_ohlcv_frame"]
+output_refs = ["technical_indicator_frame"]
+forbidden_inputs = ["future_return", "forward_return", "expected_return", "valuation_score", "fundamental_score"]
+validation_expectations = ["daily OHLCV-only indicator inputs", "no valuation/fundamental data"]
+boundary_notes = ["Indicator semantics remain owned by the existing Step 7 module."]
+
+[stages.raw_scores]
+order = 50
+enabled = true
+optional = false
+implementation_ref = "src.scores.technical_scores"
+execution_policy = "contract_validation_only"
+input_refs = ["technical_indicator_frame"]
+output_refs = ["raw_technical_score_frame"]
+forbidden_inputs = ["future_return", "forward_return", "expected_return", "valuation_score", "fundamental_score", "backtest_period_return"]
+validation_expectations = ["existing Step 9 score definitions only", "no new score formula"]
+boundary_notes = ["Step 19 never defines or rewrites raw score formulas."]
+
+[stages.normalized_scores]
+order = 60
+enabled = true
+optional = false
+implementation_ref = "src.scores.normalization_timeseries / src.scores.normalization_cross_sectional"
+execution_policy = "contract_validation_only"
+input_refs = ["raw_technical_score_frame"]
+output_refs = ["normalized_technical_score_frame"]
+forbidden_inputs = ["future_return", "forward_return", "expected_return", "valuation_score", "fundamental_score", "backtest_period_return"]
+validation_expectations = ["existing Step 10 normalization only", "same-date cross-sectional policy preserved"]
+boundary_notes = ["Step 19 never changes normalization policy."]
+
+[stages.composite_or_adoption_context]
+order = 70
+enabled = true
+optional = false
+implementation_ref = "src.selection.adoption_synthesis"
+execution_policy = "contract_validation_only"
+input_refs = ["normalized_technical_score_frame", "Step 14 adoption synthesis"]
+output_refs = ["technical_only_adoption_context"]
+forbidden_inputs = ["future_return", "forward_return", "expected_return", "valuation_score", "fundamental_score", "backtest_period_return"]
+validation_expectations = ["Step 14 adoption states remain source context", "no automatic adoption from backtest"]
+boundary_notes = ["Composite/adoption context remains technical-only in Step 19."]
+
+[stages.latest_ranking]
+order = 80
+enabled = true
+optional = false
+implementation_ref = "src.scanner.latest_ranking"
+execution_policy = "contract_validation_only"
+input_refs = ["normalized_technical_score_frame", "technical_only_adoption_context"]
+output_refs = ["Step 15 latest ranking snapshot"]
+forbidden_inputs = ["future_return", "forward_return", "expected_return", "valuation_score", "fundamental_score", "backtest_period_return"]
+validation_expectations = ["Step 15 guardrails", "technical-only final_composite_score policy"]
+boundary_notes = ["Step 15 remains the ranking source; Step 19 does not re-rank securities."]
+
+[stages.security_detail_reports]
+order = 90
+enabled = true
+optional = false
+implementation_ref = "src.reports.security_detail_report"
+execution_policy = "contract_validation_only"
+input_refs = ["Step 15 latest ranking snapshot"]
+output_refs = ["reports/security/generated/"]
+forbidden_inputs = ["future_return", "forward_return", "expected_return", "valuation_score", "fundamental_score", "backtest_period_return"]
+validation_expectations = ["Step 16 report guardrails", "rank fields read-only", "technical-only detail report notice"]
+boundary_notes = ["Step 16 reports do not create a new ranking."]
+
+[stages.conservative_backtest_optional]
+order = 100
+enabled = false
+optional = true
+implementation_ref = "src.backtest.engine"
+execution_policy = "contract_validation_only"
+input_refs = ["Step 15/16 frozen technical ranking context", "explicit local OHLCV price input"]
+output_refs = ["reports/backtest/generated/"]
+forbidden_inputs = ["valuation_score", "fundamental_score", "valuation/fundamental candidate data", "future_return", "forward_return", "expected_return"]
+validation_expectations = ["Step 17 guardrails", "evaluation-only", "no return feedback into upstream inputs"]
+boundary_notes = ["Backtest output remains downstream evaluation material only."]
+
+[stages.candidate_valuation_boundary_check_optional]
+order = 110
+enabled = false
+optional = true
+implementation_ref = "src.valuation.validation"
+execution_policy = "contract_validation_only"
+input_refs = ["Step 18 candidate valuation/fundamental records"]
+output_refs = ["reports/valuation/generated/"]
+forbidden_inputs = ["technical_composite_score", "final_composite_score", "backtest_period_return"]
+validation_expectations = ["Step 18 candidate-only guardrails", "no production score activation"]
+boundary_notes = ["Step 18 valuation/fundamental data remains candidate-only and inactive."]
+
+[stages.output_validation]
+order = 120
+enabled = true
+optional = false
+implementation_ref = "src.validation.step19_pipeline_guardrails"
+execution_policy = "contract_validation_only"
+input_refs = ["pipeline stage contracts", "pipeline run summary"]
+output_refs = ["reports/pipeline/generated/step19_validation_summary.json"]
+validation_expectations = ["forbidden language blocked", "feedback loops blocked", "generated path boundary checked"]
+boundary_notes = ["Validation is fail-closed when boundary violations are found."]
+
+[stages.final_summary]
+order = 130
+enabled = true
+optional = false
+implementation_ref = "src.pipeline.step19_pipeline"
+execution_policy = "contract_validation_only"
+input_refs = ["pipeline stage results", "validation summary", "git commit if available"]
+output_refs = ["reports/pipeline/generated/step19_pipeline_summary.json"]
+validation_expectations = ["structured summary only", "no secrets", "no large data dumps"]
+boundary_notes = ["Step 20 final validation is not implemented or completed by Step 19."]

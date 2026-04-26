@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-26T11:39:42+09:00
+Generated at: 2026-04-26T12:36:42+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -19,11 +19,11 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fundamental expansion implemented
-- Recently completed: Step 18 = 밸류에이션 확장 준비, COMPLETE
-- Recently completed before that: Step 17 = 보수적 백테스트, COMPLETE
-- Carry-forward resolved for this Step: Step 18 now defines candidate-only financial metadata schema, availability-date validation, metric registry, and leakage guardrails.
-- Current gate: Step 19 remains WAITING / not started. Step 18 candidate data is not activated in technical scoring, final ranking, or Step 17 backtest inputs.
+Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local orchestration pipeline implemented
+- Recently completed: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
+- Recently completed before that: Step 18 = 밸류에이션 확장 준비, COMPLETE
+- Carry-forward preserved for this Step: Step 19 orchestrates existing approved stage contracts only; Step 15 ranking, Step 16 reports, Step 17 backtest, and Step 18 candidate-only valuation/fundamental boundaries remain unchanged.
+- Current gate: Step 20 remains WAITING / not started. Step 19 does not implement or complete final Done validation.
 ## 병렬 Workspace 운영 메모
 - Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
 - Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
@@ -31,7 +31,7 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 - 모든 하위 에이전트는 파일 편집 전에 role branch/worktree를 만들거나 선택하고 루트 `WORKSPACE_MANIFEST.md`를 작성해야 한다.
 - `C:\Users\jjaew\Project\master_mvp`는 integration / verification / status-control 전용 workspace로 유지한다.
 - 모든 non-master worktree는 루트의 `WORKSPACE_MANIFEST.md`를 포함해야 한다.
-- omitted 1 additional lines for compact context
+- omitted 7 additional lines for compact context
 
 ## Roadmap Verdicts
 
@@ -55,7 +55,7 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 | Step 16 | COMPLETE |
 | Step 17 | COMPLETE |
 | Step 18 | COMPLETE |
-| Step 19 | WAITING / not started |
+| Step 19 | COMPLETE |
 | Step 20 | WAITING / not started |
 ## Research ingestion 범위 확장 상태
 - `reserch_mvp/config/research_queries.toml`에 technical, diagnostic, Korea/APAC/EM context, hybrid split query-set 확장 metadata를 추가했다.
@@ -67,6 +67,19 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 
 ## Most Recent Completed Step
 
+### Step 19 = Automatic Execution Pipeline
+- Step 19 automatic execution pipeline contracts, config, CLI, guardrails, docs, generated-output boundary docs, and tests are implemented.
+- `src/pipeline/` builds deterministic local pipeline summaries from declarative stage contracts without executing or redefining domain scoring, ranking, report, backtest, or valuation/fundamental semantics.
+- `config/step19_pipeline.toml` keeps the default mode as `dry_run`, disables network, secrets, local cache requirements, KOSDAQ150/futures/options expansion, external data ingestion, Step 20 final validation, technical/final composite activation, and valuation/fundamental scoring activation.
+- `src/validation/step19_pipeline_guardrails.py` rejects forbidden valuation/fundamental scoring activation, protected score/output fields, Step 17 return feedback into upstream stages, Step 16 report feedback into scoring/ranking, generated-output path pollution, network/secret requirements, Step 20 completion claims, and trading/performance language.
+- `scripts/run_step19_pipeline.py` prints a structured summary and now returns nonzero when the pipeline is blocked or failed.
+- Runtime Step 19 summaries belong under `reports/pipeline/generated/` and are ignored by `.gitignore`; generated security, backtest, and valuation report roots are also ignored.
+- Step 19 does not create new score formulas, re-rank securities, redesign reports, redesign backtests, activate valuation/fundamental scoring, add market data sources, or perform Step 20 final Done validation.
+- Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 679 passed, 4 skipped, 25 subtests passed.
+- Focused Step 19 validation: `python -m pytest -q -p no:cacheprovider tests/pipeline tests/validation/test_step19_pipeline_guardrails.py` = 19 passed.
+- Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 239 passed.
+- `review_mvp` specialist static review on Step 19 changed Python paths returned no medium-or-higher findings; `python -m unittest discover -s review_mvp/tests -v` = 8 passed.
+- Cross-Step Conflict Checkpoint after post-review-fix validation: PASS; no blocking roadmap/order, hard-stop, score/composite, valuation, diagnostics, handoff, generated-output, dirty-worktree, root-conflict, or context-routing issue found.
 ### Step 18 = Valuation / Fundamental Expansion
 - Step 18 candidate-only valuation/fundamental contracts, metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
 - Candidate metadata schema is canonicalized as `ticker`, `period`, `metric`, `value`, `filing_date`, `availability_date`, `disclosure_id` or `source_report_id`, `source_vendor`, and `collected_at`; legacy aliases are ingestion compatibility only.
@@ -86,20 +99,7 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 - Step 17 output permits realized/evaluation return fields only in Step 17 result/output context and rejects those fields as upstream inputs.
 - `src/validation/step17_backtest_guardrails.py` rejects valuation/fundamental, future/forward/expected return, trading recommendation, forbidden report language, and return-feedback leakage.
 - `reports/backtest/README.md`, `docs/step17_conservative_backtest_core.md`, `docs/step17_backtest_guardrails.md`, and `docs/architecture/step17_backtest_boundary.md` document the evaluation-only, generated-output, no-feedback, and Step 18 valuation boundary.
-- Latest local validation: `python -m pytest -q` = 607 passed, 4 skipped, 25 subtests passed.
-- Focused Step 17 validation: `tests/backtest` = 18 passed; `tests/validation/test_step17_backtest_guardrails.py` = 39 passed; `tests/reports` = 68 passed; `tests/scanner tests/reports tests/validation` = 188 passed.
-- `review_mvp` specialist review found no high findings; the only Step 17 medium static warning was a false positive around guarded `start_positions[0]`; remaining Step 17 findings are non-blocking style/length warnings.
-- Cross-Step Conflict Checkpoint: PASS, with no roadmap/order, Step 18 valuation/fundamental leakage, trading-signal leakage, Step 15 ranking rewrite, Step 16 report rewrite, generated-output boundary break, return-feedback loop, or dirty-worktree blocker found.
-### Step 16 = Security Detail Report
-- Step 16 Worker A/B implementation and guardrail branches are integrated into the master integration branch.
-- `src/reports/security_detail_report.py` builds deterministic per-security technical-only detail reports from the Step 15 latest ranking snapshot as read-only context.
-- Step 16 output displays ticker/date, source latest ranking date, read-only rank fields, technical-only composite score context, score/component breakdowns, source/adoption metadata, diagnostics, quality flags, explanations, and an explicit `technical-only detail report` boundary notice.
-- `src/validation/step16_detail_report_guardrails.py` validates Step 16 report inputs and outputs, including recursive structured-output language checks after code-review fixes.
-- Step 16 does not create a new ranking, re-rank securities, run backtests, compute future/forward/realized returns, create trading recommendations, or use valuation/fundamental scoring.
-- `docs/step16_security_detail_report.md`, `docs/architecture/step16_report_backtest_boundary.md`, and `reports/security/README.md` document the generated-output and Step 15 read-only boundaries.
-- Latest local validation: `python -m pytest -q` = 548 passed, 4 skipped, 25 subtests passed.
-- Focused Step 16 validation: `tests/reports` = 66 passed; `tests/validation/test_step16_detail_report_guardrails.py` = 37 passed; `tests/scanner tests/reports tests/validation` = 147 passed.
-- omitted 34 additional lines for compact context
+- omitted 47 additional lines for compact context
 
 ## Cross-Step Conflict Checkpoint
 
@@ -129,8 +129,8 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 
 ## Git Snapshot
 
-- branch: `integration/step18-valuation-fundamental-expansion-merge`
-- commit: `de990c2`
+- branch: `integration/step19-automatic-execution-pipeline-merge`
+- commit: `1466b0e`
 - status:
 ```text
 clean
@@ -144,9 +144,7 @@ clean
 
 ## Next Allowed Work
 
-- Step 17 conservative backtest is the next roadmap step.
-- Start Step 17 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.
-- Step 18 valuation/fundamental scoring remains gated.
+- Follow `docs/roadmap_status.md` and `docs/project_checklist.md` before starting the next Step.
 
 ## Quant Agent Scope
 

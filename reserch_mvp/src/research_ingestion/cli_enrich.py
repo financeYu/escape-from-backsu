@@ -6,13 +6,16 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 import json
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 from .config import ProjectPaths
 from .dedupe import deduplicate_papers
 from .persistence import read_jsonl, write_jsonl
 from .cli_common import (
+    _adapter_total_wait_seconds,
     _adapter_for_source,
+    _elapsed_ms,
     _empty_source_health,
     _missing_key_skip_reason,
     _new_source_health,
@@ -141,6 +144,19 @@ def _parse_enrichment_response(adapter: Any, source: str, body: str, raw_snapsho
     raise ValueError(f"지원하지 않는 enrichment source입니다: {source}")
 
 
+def _parse_semantic_scholar_batch_response(adapter: Any, body: str, raw_snapshot_ref: str) -> list[dict[str, Any]]:
+    payload = json.loads(body)
+    if not isinstance(payload, list):
+        return []
+    if hasattr(adapter, "parse_batch_json"):
+        return adapter.parse_batch_json(payload, raw_snapshot_ref=raw_snapshot_ref)
+    return [
+        adapter.parse_paper_json(item, raw_snapshot_ref=raw_snapshot_ref)
+        for item in payload
+        if isinstance(item, dict) and item.get("title")
+    ]
+
+
 def _enrichment_summary(
     args: argparse.Namespace,
     sources: list[str],
@@ -175,6 +191,7 @@ def cmd_enrich(
     *,
     fetch_response: Callable[[Any, dict[str, Any]], Any] | None = None,
 ) -> None:
+    use_default_fetch_response = fetch_response is None or fetch_response is _fetch_enrichment_response
     if fetch_response is None:
         fetch_response = _fetch_enrichment_response
     sources = _split_csv(args.sources)
@@ -200,7 +217,23 @@ def cmd_enrich(
     enrichment_index: list[dict[str, Any]] = []
     raw_counts: Counter[str] = Counter()
 
-    for target in targets:
+    target_loop = targets
+    if use_default_fetch_response and "semantic_scholar" in sources:
+        batch_targets = [target for target in targets if target["source"] == "semantic_scholar"]
+        if batch_targets:
+            batch_records, batch_index, batch_counts = _enrich_semantic_scholar_batches(
+                args=args,
+                config=config,
+                paths=paths,
+                targets=batch_targets,
+                health=health,
+            )
+            enrichment_records.extend(batch_records)
+            enrichment_index.extend(batch_index)
+            raw_counts.update(batch_counts)
+            target_loop = [target for target in targets if target["source"] != "semantic_scholar"]
+
+    for target in target_loop:
         source = target["source"]
         adapter = _adapter_for_source(source, config)
         skipped = _missing_key_skip_reason(source, adapter)
@@ -290,6 +323,120 @@ def cmd_enrich(
     write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_enrichment_index.jsonl", enrichment_index)
     write_jsonl(paths.data_dir / "indexes" / f"{args.run_id}_dedupe_index.jsonl", [_dedupe_index_row(paper) for paper in merged])
     _write_enrichment_metadata(paths, args.run_id, health, summary)
+
+
+def _enrich_semantic_scholar_batches(
+    *,
+    args: argparse.Namespace,
+    config: dict[str, Any],
+    paths: ProjectPaths,
+    targets: list[dict[str, Any]],
+    health: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Counter[str]]:
+    source = "semantic_scholar"
+    adapter = _adapter_for_source(source, config)
+    records: list[dict[str, Any]] = []
+    index_rows: list[dict[str, Any]] = []
+    raw_counts: Counter[str] = Counter()
+    skipped = _missing_key_skip_reason(source, adapter)
+    if skipped:
+        health[source]["status"] = "skipped"
+        health[source]["skipped_source_reason"] = skipped
+        return (
+            records,
+            [{**target, "status": "skipped", "notes_ko": skipped} for target in targets],
+            raw_counts,
+        )
+
+    batch_size = max(1, int(getattr(adapter, "config", {}).get("batch_max_ids", 100) or 100))
+    for batch_number, batch in enumerate(_chunks(targets, batch_size), start=1):
+        lookup_ids = [str(target["lookup_id"]) for target in batch]
+        wait_before = _adapter_total_wait_seconds(adapter)
+        started = perf_counter()
+        try:
+            response = adapter.fetch_batch_response(lookup_ids)
+        except Exception as exc:
+            health[source]["request_count"] += 1
+            health[source]["failure_count"] += 1
+            health[source]["status"] = "failed"
+            health[source]["last_error_ko"] = f"semantic_scholar batch enrichment 요청 실패: {type(exc).__name__}: {_safe_error_message(exc, _redaction_env_vars(config, adapter))}"
+            index_rows.extend({**target, "status": "failed", "notes_ko": health[source]["last_error_ko"]} for target in batch)
+            continue
+
+        health[source]["request_count"] += 1
+        health[source]["request_latency_ms"] += _elapsed_ms(started)
+        rate_wait = max(0.0, _adapter_total_wait_seconds(adapter) - wait_before)
+        health[source]["rate_limit_wait_seconds"] += rate_wait
+        if rate_wait > 0:
+            health[source]["rate_limit_wait_count"] += 1
+        health[source]["http_status_summary"][str(response.status or "unknown")] += 1
+        query_id = f"enrich_batch:{source}:batch{batch_number}"
+        snapshot = _store_source_response_snapshot(
+            paths=paths,
+            config=config,
+            adapter=adapter,
+            source=source,
+            run_id=args.run_id,
+            response=response,
+            query_id=query_id,
+            query_set="enrichment",
+            query=",".join(lookup_ids),
+            page_size=len(batch),
+            offset=(batch_number - 1) * batch_size,
+            page_number=batch_number,
+        )
+        if not response.ok:
+            health[source]["failure_count"] += 1
+            health[source]["status"] = "failed"
+            health[source]["last_raw_snapshot_ref"] = snapshot["body_path"]
+            if response.status in {403, 429}:
+                health[source]["rate_limit_observations"].append(f"HTTP {response.status} observed for {query_id}")
+            if response.status == 429:
+                health[source]["http_429_count"] += 1
+            index_rows.extend(
+                {
+                    **target,
+                    "status": "failed",
+                    "http_status": response.status,
+                    "raw_snapshot_ref": snapshot["body_path"],
+                    "notes_ko": "approved metadata API batch enrichment 응답이 성공 상태가 아닙니다.",
+                }
+                for target in batch
+            )
+            continue
+
+        parsed = _parse_semantic_scholar_batch_response(adapter, response.body, snapshot["body_path"])
+        if parsed:
+            records.extend(parsed)
+            raw_counts[source] += len(parsed)
+            health[source]["success_count"] += 1
+            health[source]["status"] = "ok"
+            index_rows.extend(
+                {
+                    **target,
+                    "status": "batch_submitted",
+                    "http_status": response.status,
+                    "raw_snapshot_ref": snapshot["body_path"],
+                }
+                for target in batch
+            )
+        else:
+            health[source]["failure_count"] += 1
+            health[source]["status"] = "partial"
+            index_rows.extend(
+                {
+                    **target,
+                    "status": "no_parseable_metadata",
+                    "http_status": response.status,
+                    "raw_snapshot_ref": snapshot["body_path"],
+                }
+                for target in batch
+            )
+    return records, index_rows, raw_counts
+
+
+def _chunks(values: list[dict[str, Any]], size: int) -> list[list[dict[str, Any]]]:
+    return [values[index : index + size] for index in range(0, len(values), size)]
 
 
 def _enrich_args_from_run_all(args: argparse.Namespace, paths: ProjectPaths) -> argparse.Namespace:

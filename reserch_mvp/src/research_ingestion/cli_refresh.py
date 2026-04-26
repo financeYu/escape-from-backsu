@@ -15,6 +15,7 @@ from .persistence import read_json, read_jsonl, validate_storage_segment, write_
 from .refresh import build_refresh_summary, select_unseen_papers
 from .reporting import generate_reports
 from .cli_collect import cmd_collect
+from .cli_collect import estimate_collection_request_budget
 from .cli_common import (
     _dedup_ratio,
     _elapsed_ms,
@@ -278,6 +279,18 @@ def _refresh_plan(
     profile = _refresh_profile_config(args, config)
     existing_papers = read_jsonl(paths.data_dir / "normalized" / "papers.jsonl")
     child_run_ids = [_refresh_child_run_id(args.run_id, query_set, index) for index, query_set in enumerate(query_sets)]
+    child_budgets = [
+        {
+            "query_set": query_set,
+            **estimate_collection_request_budget(
+                args=_refresh_collect_args(args, child_run_ids[index], query_set, sources),
+                config=config,
+                sources=sources,
+                query_set=get_query_set(config, query_set),
+            ),
+        }
+        for index, query_set in enumerate(query_sets)
+    ]
     return {
         "run_id": args.run_id,
         "mode": "periodic_refresh",
@@ -291,6 +304,7 @@ def _refresh_plan(
         "existing_paper_count": len(existing_papers),
         "offline": bool(getattr(args, "offline", False)),
         "dry_run": bool(args.dry_run),
+        "request_budget": _aggregate_refresh_request_budget(child_budgets),
         "outputs": {
             "new_papers_jsonl": str(paths.data_dir / "normalized" / f"{args.run_id}_refresh_new_papers.jsonl"),
             "normalized_papers_new_jsonl": str(paths.data_dir / "normalized" / "normalized_papers_new.jsonl"),
@@ -312,6 +326,25 @@ def _refresh_plan(
             "Google Scholar live request는 수행하지 않습니다.",
             "EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
             "backtest, adoption decision, valuation scoring은 수행하지 않습니다.",
+        ],
+    }
+
+
+def _aggregate_refresh_request_budget(child_budgets: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "query_set_count": len(child_budgets),
+        "full_page_request_count": sum(int(item.get("full_page_request_count", 0) or 0) for item in child_budgets),
+        "worst_case_request_count": sum(int(item.get("worst_case_request_count", 0) or 0) for item in child_budgets),
+        "estimated_min_rate_limit_wait_seconds": round(
+            sum(float(item.get("estimated_min_rate_limit_wait_seconds", 0.0) or 0.0) for item in child_budgets),
+            3,
+        ),
+        "request_cache_enabled": any(bool(item.get("request_cache_enabled", False)) for item in child_budgets),
+        "child_query_set_budgets": child_budgets,
+        "notes_ko": [
+            "refresh dry-run 예산은 각 child query-set collect plan의 보수적 상한을 합산합니다.",
+            "cache hit, early stop, API page underfill이 있으면 실제 live request 수는 더 작을 수 있습니다.",
+            "이 예산은 root/master가 동일한 request 계산을 반복하지 않도록 handoff에 포함됩니다.",
         ],
     }
 

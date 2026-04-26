@@ -11,6 +11,7 @@ from research_ingestion.sources.semantic_scholar_adapter import SemanticScholarA
 pytestmark = pytest.mark.skipif(os.environ.get("RUN_LIVE_RESEARCH_API_TESTS") != "1", reason="live API tests are opt-in")
 
 
+@pytest.mark.skipif(not os.environ.get("SEMANTIC_SCHOLAR_API_KEY"), reason="Semantic Scholar live smoke requires SEMANTIC_SCHOLAR_API_KEY")
 def test_live_semantic_scholar_collect_one_record():
     adapter = SemanticScholarAdapter(
         {

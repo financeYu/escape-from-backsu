@@ -5,6 +5,7 @@ from argparse import Namespace
 from pathlib import Path
 
 from research_ingestion import cli
+import research_ingestion.cli_enrich as cli_enrich_module
 from research_ingestion.cli import _enrichment_targets, cmd_enrich, main
 from research_ingestion.config import ProjectPaths, load_research_config
 from research_ingestion.persistence import write_jsonl
@@ -121,6 +122,79 @@ def test_crossref_doi_enrichment_fixture_merges_metadata(sample_paper, workspace
     assert len(merged_rows) == 1
     assert "crossref" in merged_rows[0]["source_adapters"]
     assert "matched" in index.read_text(encoding="utf-8")
+
+
+def test_semantic_scholar_enrichment_batches_default_fetch(sample_paper, workspace_tmp_path, monkeypatch):
+    input_path = workspace_tmp_path / "input" / "papers.jsonl"
+    write_jsonl(
+        input_path,
+        [
+            sample_paper(doi="10.1000/batch-1", semantic_scholar_id="S2-batch-1", title="Batch paper 1"),
+            sample_paper(doi="10.1000/batch-2", semantic_scholar_id="S2-batch-2", title="Batch paper 2"),
+        ],
+    )
+    batch_calls: list[list[str]] = []
+
+    class FakeSemanticScholarAdapter:
+        source_name = "semantic_scholar"
+        config = {"batch_max_ids": 100}
+
+        def request_headers(self):
+            return {}
+
+        def request_metadata(self, url, headers):
+            return {"request_url": url, "headers": headers}
+
+        def fetch_batch_response(self, ids):
+            batch_calls.append(list(ids))
+            body = json.dumps(
+                [
+                    {
+                        "paperId": "S2-batch-1",
+                        "externalIds": {"DOI": "10.1000/batch-1"},
+                        "title": "Batch paper 1",
+                        "authors": [{"name": "A"}],
+                        "year": 2024,
+                    },
+                    {
+                        "paperId": "S2-batch-2",
+                        "externalIds": {"DOI": "10.1000/batch-2"},
+                        "title": "Batch paper 2",
+                        "authors": [{"name": "B"}],
+                        "year": 2024,
+                    },
+                ]
+            )
+            return SourceResponse(url="https://api.semanticscholar.org/graph/v1/paper/batch", body=body, status=200, headers={}, retry_count=0)
+
+        def parse_batch_json(self, payload, raw_snapshot_ref=None):
+            return [
+                sample_paper(
+                    doi=item["externalIds"]["DOI"],
+                    semantic_scholar_id=item["paperId"],
+                    title=item["title"],
+                    source_adapter="semantic_scholar",
+                    raw_snapshot_refs=[raw_snapshot_ref] if raw_snapshot_ref else [],
+                )
+                for item in payload
+            ]
+
+    monkeypatch.setattr(cli_enrich_module, "_adapter_for_source", lambda source, config: FakeSemanticScholarAdapter())
+    args = Namespace(
+        run_id="semantic_batch",
+        dry_run=False,
+        sources="semantic_scholar",
+        input_path=str(input_path),
+        max_records=None,
+        offline=False,
+    )
+    config = load_research_config(Path(__file__).resolve().parents[2])
+    paths = ProjectPaths(workspace_tmp_path)
+    cmd_enrich(args, config, paths)
+
+    index_rows = (workspace_tmp_path / "data" / "research" / "indexes" / "semantic_batch_enrichment_index.jsonl").read_text(encoding="utf-8")
+    assert batch_calls == [["S2-batch-1", "S2-batch-2"]]
+    assert "batch_submitted" in index_rows
 
 
 def test_run_all_dry_run_can_plan_optional_enrichment(capsys):

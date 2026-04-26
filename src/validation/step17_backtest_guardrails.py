@@ -370,57 +370,76 @@ def validate_step17_backtest_report(
 ) -> Step17BacktestValidationResult:
     """Validate Step 17 report text and structured generated-output boundary."""
 
-    if isinstance(report, str):
-        columns: tuple[str, ...] = ()
-        report_text = report
-        structured_result = Step17BacktestValidationResult(context=context)
-    else:
-        frame = coerce_frame(report)
-        columns = column_names(frame)
-        report_text = extract_text_from_frame(frame)
-        structured_result = _validate_structured_step17_data(
-            frame,
-            context=context,
-            allow_backtest_evaluation_columns=True,
-            require_limitation_flags=False,
-            raise_on_error=False,
-        )
-
-    errors = list(structured_result.errors)
-    warnings = list(structured_result.warnings)
-
-    forbidden_language = find_step17_forbidden_report_language(report_text)
-    if forbidden_language:
-        errors.append(f"contains forbidden report language: {', '.join(forbidden_language)}")
-
-    missing_notices = (
-        find_missing_step17_report_notices(report_text) if require_notice else []
+    report_text, structured_result = _coerce_step17_report(report, context=context)
+    report_issues = _step17_report_issues(
+        report,
+        report_text=report_text,
+        structured_result=structured_result,
+        require_notice=require_notice,
+        require_limitation_flags=require_limitation_flags,
     )
-    if missing_notices:
-        errors.append(f"missing required notices: {', '.join(missing_notices)}")
-
-    missing_limitations = (
-        find_missing_step17_limitation_flags(report)
-        if require_limitation_flags
-        else []
-    )
-    if missing_limitations:
-        errors.append(f"missing limitation disclosures: {', '.join(missing_limitations)}")
 
     result = Step17BacktestValidationResult(
         context=context,
-        errors=tuple(errors),
-        warnings=tuple(warnings),
+        errors=tuple(report_issues["errors"]),
+        warnings=tuple(report_issues["warnings"]),
         forbidden_fields=structured_result.forbidden_fields,
-        forbidden_language=tuple(forbidden_language),
-        missing_notices=tuple(missing_notices),
-        missing_limitation_flags=tuple(missing_limitations),
+        forbidden_language=tuple(report_issues["forbidden_language"]),
+        missing_notices=tuple(report_issues["missing_notices"]),
+        missing_limitation_flags=tuple(report_issues["missing_limitations"]),
         evaluation_fields=structured_result.evaluation_fields,
         upstream_mutation_fields=structured_result.upstream_mutation_fields,
     )
     if raise_on_error:
         result.raise_for_errors()
     return result
+
+
+def _coerce_step17_report(
+    report: str | pd.DataFrame | Mapping[str, Any] | Sequence[Mapping[str, Any]],
+    *,
+    context: str,
+) -> tuple[str, Step17BacktestValidationResult]:
+    if isinstance(report, str):
+        return report, Step17BacktestValidationResult(context=context)
+    frame = coerce_frame(report)
+    return extract_text_from_frame(frame), _validate_structured_step17_data(
+        frame,
+        context=context,
+        allow_backtest_evaluation_columns=True,
+        require_limitation_flags=False,
+        raise_on_error=False,
+    )
+
+
+def _step17_report_issues(
+    report: str | pd.DataFrame | Mapping[str, Any] | Sequence[Mapping[str, Any]],
+    *,
+    report_text: str,
+    structured_result: Step17BacktestValidationResult,
+    require_notice: bool,
+    require_limitation_flags: bool,
+) -> dict[str, list[str]]:
+    issues = {
+        "errors": list(structured_result.errors),
+        "warnings": list(structured_result.warnings),
+        "forbidden_language": find_step17_forbidden_report_language(report_text),
+        "missing_notices": find_missing_step17_report_notices(report_text) if require_notice else [],
+        "missing_limitations": (
+            find_missing_step17_limitation_flags(report) if require_limitation_flags else []
+        ),
+    }
+    if issues["forbidden_language"]:
+        issues["errors"].append(
+            f"contains forbidden report language: {', '.join(issues['forbidden_language'])}"
+        )
+    if issues["missing_notices"]:
+        issues["errors"].append(f"missing required notices: {', '.join(issues['missing_notices'])}")
+    if issues["missing_limitations"]:
+        issues["errors"].append(
+            f"missing limitation disclosures: {', '.join(issues['missing_limitations'])}"
+        )
+    return issues
 
 
 def validate_step17_report_boundary(
@@ -618,47 +637,84 @@ def _validate_structured_step17_data(
 ) -> Step17BacktestValidationResult:
     frame = coerce_frame(data)
     columns = column_names(frame)
-    errors: list[str] = []
-    warnings: list[str] = []
+    issues = _structured_step17_issues(
+        frame,
+        columns,
+        allow_backtest_evaluation_columns=allow_backtest_evaluation_columns,
+        require_limitation_flags=require_limitation_flags,
+    )
 
+    result = Step17BacktestValidationResult(
+        context=context,
+        errors=tuple(issues["errors"]),
+        warnings=tuple(issues["warnings"]),
+        forbidden_fields=tuple(issues["forbidden"]),
+        missing_limitation_flags=tuple(issues["missing_limitations"]),
+        evaluation_fields=tuple(issues["evaluation_fields"]),
+        upstream_mutation_fields=tuple(issues["mutation_fields"]),
+    )
+    if raise_on_error:
+        result.raise_for_errors()
+    return result
+
+
+def _structured_step17_issues(
+    frame: pd.DataFrame,
+    columns: tuple[str, ...],
+    *,
+    allow_backtest_evaluation_columns: bool,
+    require_limitation_flags: bool,
+) -> dict[str, list[str]]:
     forbidden = find_step17_forbidden_fields(
         columns,
         allow_backtest_evaluation_columns=allow_backtest_evaluation_columns,
     )
+    evaluation_fields = find_step17_evaluation_fields(columns)
+    mutation_fields = find_step17_upstream_mutation_fields(columns)
+    missing_limitations = (
+        find_missing_step17_limitation_flags(frame) if require_limitation_flags else []
+    )
+    errors = _structured_step17_errors(
+        forbidden,
+        evaluation_fields,
+        missing_limitations,
+        allow_backtest_evaluation_columns=allow_backtest_evaluation_columns,
+    )
+    warnings = _structured_step17_warnings(mutation_fields)
+    return {
+        "errors": errors,
+        "warnings": warnings,
+        "forbidden": forbidden,
+        "missing_limitations": missing_limitations,
+        "evaluation_fields": evaluation_fields,
+        "mutation_fields": mutation_fields,
+    }
+
+
+def _structured_step17_errors(
+    forbidden: list[str],
+    evaluation_fields: list[str],
+    missing_limitations: list[str],
+    *,
+    allow_backtest_evaluation_columns: bool,
+) -> list[str]:
+    errors: list[str] = []
     if forbidden:
         errors.append(f"contains forbidden Step 17 fields: {', '.join(forbidden)}")
-
-    evaluation_fields = find_step17_evaluation_fields(columns)
     if evaluation_fields and not allow_backtest_evaluation_columns:
         errors.append(
             "Step 17 evaluation fields are allowed only in backtest output context: "
             f"{', '.join(evaluation_fields)}"
         )
-
-    mutation_fields = find_step17_upstream_mutation_fields(columns)
-    if mutation_fields:
-        warnings.append(
-            "Upstream score/rank/adoption fields must remain read-only context, not updates."
-        )
-
-    missing_limitations = (
-        find_missing_step17_limitation_flags(frame) if require_limitation_flags else []
-    )
     if missing_limitations:
         errors.append(f"missing limitation disclosures: {', '.join(missing_limitations)}")
+    return errors
 
-    result = Step17BacktestValidationResult(
-        context=context,
-        errors=tuple(errors),
-        warnings=tuple(warnings),
-        forbidden_fields=tuple(forbidden),
-        missing_limitation_flags=tuple(missing_limitations),
-        evaluation_fields=tuple(evaluation_fields),
-        upstream_mutation_fields=tuple(mutation_fields),
-    )
-    if raise_on_error:
-        result.raise_for_errors()
-    return result
+
+def _structured_step17_warnings(mutation_fields: list[str]) -> list[str]:
+    if not mutation_fields:
+        return []
+    return ["Upstream score/rank/adoption fields must remain read-only context, not updates."]
 
 
 def _extract_explicit_limitation_flags(frame: pd.DataFrame) -> set[str]:

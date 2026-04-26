@@ -113,38 +113,21 @@ def run_step19_pipeline(
     resolved_mode = _resolve_run_mode(run_mode, config)
     contracts = build_default_stage_contracts(config)
     selected_names = _resolve_selected_stage_names(selected_stages, contracts)
-
-    stage_results = tuple(
-        _run_stage_contract(
-            contract,
-            run_mode=resolved_mode,
-            project_root=root,
-            selected=contract.stage_name in selected_names,
-        )
-        for contract in contracts
-    )
-    skipped_stages = tuple(
-        result.stage_name
-        for result in stage_results
-        if result.status == PipelineStageStatus.SKIPPED
-    )
-    forbidden_scope_check = _forbidden_scope_check(config, stage_results)
-    summary = PipelineRunSummary(
+    stage_results = _run_stage_contracts(
+        contracts,
         run_mode=resolved_mode,
-        generated_at=generated_at or _utc_timestamp(),
-        stages=stage_results,
-        overall_status=_overall_status(stage_results),
-        validation_summary=_validation_summary(stage_results, resolved_mode),
-        forbidden_scope_check=forbidden_scope_check,
-        no_semantics_changed_notice=NO_SEMANTICS_CHANGED_NOTICE,
-        selected_stages=tuple(
-            contract.stage_name
-            for contract in contracts
-            if contract.stage_name in selected_names
-        ),
-        skipped_stages=skipped_stages,
-        git_commit=git_commit or _git_commit_or_unknown(root),
-        boundary_notice=STEP19_PIPELINE_NOTICE,
+        project_root=root,
+        selected_names=selected_names,
+    )
+    summary = _build_pipeline_summary(
+        config=config,
+        contracts=contracts,
+        stage_results=stage_results,
+        run_mode=resolved_mode,
+        selected_names=selected_names,
+        generated_at=generated_at,
+        git_commit=git_commit,
+        project_root=root,
     )
     validate_step19_pipeline_summary(summary)
     if write_summary or summary_output_path is not None:
@@ -154,6 +137,65 @@ def run_step19_pipeline(
     return summary
 
 
+def _run_stage_contracts(
+    contracts: Sequence[PipelineStageContract],
+    *,
+    run_mode: PipelineRunMode,
+    project_root: Path,
+    selected_names: frozenset[str],
+) -> tuple[PipelineStageResult, ...]:
+    return tuple(
+        _run_stage_contract(
+            contract,
+            run_mode=run_mode,
+            project_root=project_root,
+            selected=contract.stage_name in selected_names,
+        )
+        for contract in contracts
+    )
+
+
+def _build_pipeline_summary(
+    *,
+    config: Mapping[str, Any],
+    contracts: Sequence[PipelineStageContract],
+    stage_results: Sequence[PipelineStageResult],
+    run_mode: PipelineRunMode,
+    selected_names: frozenset[str],
+    generated_at: str | None,
+    git_commit: str | None,
+    project_root: Path,
+) -> PipelineRunSummary:
+    return PipelineRunSummary(
+        run_mode=run_mode,
+        generated_at=generated_at or _utc_timestamp(),
+        stages=tuple(stage_results),
+        overall_status=_overall_status(stage_results),
+        validation_summary=_validation_summary(stage_results, run_mode),
+        forbidden_scope_check=_forbidden_scope_check(config, stage_results),
+        no_semantics_changed_notice=NO_SEMANTICS_CHANGED_NOTICE,
+        selected_stages=_selected_stage_names(contracts, selected_names),
+        skipped_stages=_skipped_stage_names(stage_results),
+        git_commit=git_commit or _git_commit_or_unknown(project_root),
+        boundary_notice=STEP19_PIPELINE_NOTICE,
+    )
+
+
+def _selected_stage_names(
+    contracts: Sequence[PipelineStageContract],
+    selected_names: frozenset[str],
+) -> tuple[str, ...]:
+    return tuple(contract.stage_name for contract in contracts if contract.stage_name in selected_names)
+
+
+def _skipped_stage_names(results: Sequence[PipelineStageResult]) -> tuple[str, ...]:
+    return tuple(
+        result.stage_name
+        for result in results
+        if result.status == PipelineStageStatus.SKIPPED
+    )
+
+
 def _run_stage_contract(
     contract: PipelineStageContract,
     *,
@@ -161,69 +203,70 @@ def _run_stage_contract(
     project_root: Path,
     selected: bool,
 ) -> PipelineStageResult:
-    warnings: list[str] = []
-    errors: list[str] = []
-    boundary_notes = list(contract.boundary_notes)
-    validation_status = "passed"
+    boundary_notes = tuple(contract.boundary_notes)
 
     if not selected:
-        return PipelineStageResult(
-            stage_name=contract.stage_name,
-            status=PipelineStageStatus.SKIPPED,
-            input_refs=contract.input_refs,
-            output_refs=(),
-            warnings=("stage not selected",),
-            boundary_notes=tuple(boundary_notes),
-            validation_status="not_run",
-        )
+        return _stage_result(contract, PipelineStageStatus.SKIPPED, boundary_notes, warnings=("stage not selected",))
     if not contract.enabled:
-        return PipelineStageResult(
-            stage_name=contract.stage_name,
-            status=PipelineStageStatus.SKIPPED,
-            input_refs=contract.input_refs,
-            output_refs=(),
+        return _stage_result(
+            contract,
+            PipelineStageStatus.SKIPPED,
+            boundary_notes,
             warnings=("stage disabled by config",),
-            boundary_notes=tuple(boundary_notes),
-            validation_status="not_run",
         )
 
     missing_inputs = _missing_required_inputs(contract, project_root)
     if missing_inputs:
-        errors.append(
-            "missing required input path(s): " + ", ".join(missing_inputs)
-        )
-        validation_status = "failed"
-        return PipelineStageResult(
-            stage_name=contract.stage_name,
-            status=PipelineStageStatus.BLOCKED,
-            input_refs=contract.input_refs,
+        return _stage_result(
+            contract,
+            PipelineStageStatus.BLOCKED,
+            boundary_notes,
             output_refs=contract.output_refs,
-            warnings=tuple(warnings),
-            errors=tuple(errors),
-            boundary_notes=tuple(boundary_notes),
-            validation_status=validation_status,
+            errors=("missing required input path(s): " + ", ".join(missing_inputs),),
+            validation_status="failed",
         )
 
+    status, warning = _stage_execution_outcome(run_mode)
+    output_refs = contract.output_refs if run_mode != PipelineRunMode.DRY_RUN else ()
+    return _stage_result(
+        contract,
+        status,
+        boundary_notes,
+        output_refs=output_refs,
+        warnings=(warning,),
+        validation_status="passed",
+    )
+
+
+def _stage_execution_outcome(run_mode: PipelineRunMode) -> tuple[PipelineStageStatus, str]:
     if run_mode == PipelineRunMode.DRY_RUN:
-        warnings.append("dry-run only; no production output written")
-        status = PipelineStageStatus.READY
-    elif run_mode == PipelineRunMode.VALIDATE_ONLY:
-        warnings.append("validate-only mode; stage execution not invoked")
-        status = PipelineStageStatus.COMPLETED
-    else:
-        warnings.append(
-            "contract-validation execution only; existing component semantics are unchanged"
-        )
-        status = PipelineStageStatus.COMPLETED
+        return PipelineStageStatus.READY, "dry-run only; no production output written"
+    if run_mode == PipelineRunMode.VALIDATE_ONLY:
+        return PipelineStageStatus.COMPLETED, "validate-only mode; stage execution not invoked"
+    return (
+        PipelineStageStatus.COMPLETED,
+        "contract-validation execution only; existing component semantics are unchanged",
+    )
 
+
+def _stage_result(
+    contract: PipelineStageContract,
+    status: PipelineStageStatus,
+    boundary_notes: tuple[str, ...],
+    *,
+    output_refs: tuple[str, ...] = (),
+    warnings: tuple[str, ...] = (),
+    errors: tuple[str, ...] = (),
+    validation_status: str = "not_run",
+) -> PipelineStageResult:
     return PipelineStageResult(
         stage_name=contract.stage_name,
         status=status,
         input_refs=contract.input_refs,
-        output_refs=contract.output_refs if run_mode != PipelineRunMode.DRY_RUN else (),
-        warnings=tuple(warnings),
-        errors=tuple(errors),
-        boundary_notes=tuple(boundary_notes),
+        output_refs=output_refs,
+        warnings=warnings,
+        errors=errors,
+        boundary_notes=boundary_notes,
         validation_status=validation_status,
     )
 
@@ -379,23 +422,21 @@ def _git_commit_or_unknown(project_root: Path) -> str:
 
 
 def _default_contracts() -> tuple[PipelineStageContract, ...]:
-    contracts: list[PipelineStageContract] = []
-    for index, stage_name in enumerate(STEP19_CANONICAL_STAGE_ORDER, start=1):
-        contracts.append(
-            PipelineStageContract(
-                stage_name=stage_name,
-                order=index * 10,
-                optional=stage_name.endswith("_optional"),
-                implementation_ref=_default_implementation_ref(stage_name),
-                input_refs=_default_input_refs(stage_name),
-                output_refs=_default_output_refs(stage_name),
-                forbidden_inputs=_default_forbidden_inputs(stage_name),
-                allowed_generated_outputs=_default_allowed_outputs(stage_name),
-                validation_expectations=_default_validation_expectations(stage_name),
-                boundary_notes=_default_boundary_notes(stage_name),
-            )
+    return tuple(
+        PipelineStageContract(
+            stage_name=stage_name,
+            order=index * 10,
+            optional=stage_name.endswith("_optional"),
+            implementation_ref=_default_implementation_ref(stage_name),
+            input_refs=_default_input_refs(stage_name),
+            output_refs=_default_output_refs(stage_name),
+            forbidden_inputs=_default_forbidden_inputs(stage_name),
+            allowed_generated_outputs=_default_allowed_outputs(stage_name),
+            validation_expectations=_default_validation_expectations(stage_name),
+            boundary_notes=_default_boundary_notes(stage_name),
         )
-    return tuple(contracts)
+        for index, stage_name in enumerate(STEP19_CANONICAL_STAGE_ORDER, start=1)
+    )
 
 
 def _default_implementation_ref(stage_name: str) -> str:

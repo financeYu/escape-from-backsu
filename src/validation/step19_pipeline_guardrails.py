@@ -290,29 +290,7 @@ def validate_step19_pipeline_summary(
     if step20_claims:
         errors.append(f"contains Step 20 completion claim: {', '.join(step20_claims)}")
 
-    stages = summary_dict.get("stages", ())
-    if not isinstance(stages, Iterable):
-        errors.append("summary.stages must be iterable")
-        stages = ()
-
-    forbidden_fields: set[str] = set()
-    for stage in stages:
-        if not isinstance(stage, Mapping):
-            errors.append("summary stage result must be a mapping")
-            continue
-        stage_name = str(stage.get("stage_name", ""))
-        if not stage_name:
-            errors.append("summary stage is missing stage_name")
-        status = str(stage.get("status", ""))
-        if not status:
-            errors.append(f"{stage_name or 'unknown stage'} is missing status")
-        for key in ("input_refs", "output_refs"):
-            for ref in string_tuple(stage.get(key, ())):
-                forbidden_fields.update(_find_forbidden_field_refs((ref,)))
-                if key == "output_refs":
-                    path_error = _generated_output_path_error(ref)
-                    if path_error:
-                        errors.append(path_error)
+    forbidden_fields = _validate_summary_stages(summary_dict, errors)
 
     if summary_dict.get("run_mode") != "dry_run":
         warnings.append("non-dry-run summary should remain summary-only unless stage inputs are explicit")
@@ -327,6 +305,40 @@ def validate_step19_pipeline_summary(
     if raise_on_error:
         result.raise_for_errors()
     return result
+
+
+def _validate_summary_stages(summary_dict: Mapping[str, Any], errors: list[str]) -> set[str]:
+    stages = summary_dict.get("stages", ())
+    if not isinstance(stages, Iterable):
+        errors.append("summary.stages must be iterable")
+        return set()
+
+    forbidden_fields: set[str] = set()
+    for stage in stages:
+        if not isinstance(stage, Mapping):
+            errors.append("summary stage result must be a mapping")
+            continue
+        forbidden_fields.update(_validate_summary_stage(stage, errors))
+    return forbidden_fields
+
+
+def _validate_summary_stage(stage: Mapping[str, Any], errors: list[str]) -> set[str]:
+    stage_name = str(stage.get("stage_name", ""))
+    if not stage_name:
+        errors.append("summary stage is missing stage_name")
+    status = str(stage.get("status", ""))
+    if not status:
+        errors.append(f"{stage_name or 'unknown stage'} is missing status")
+
+    forbidden_fields: set[str] = set()
+    for key in ("input_refs", "output_refs"):
+        for ref in string_tuple(stage.get(key, ())):
+            forbidden_fields.update(_find_forbidden_field_refs((ref,)))
+            if key == "output_refs":
+                path_error = _generated_output_path_error(ref)
+                if path_error:
+                    errors.append(path_error)
+    return forbidden_fields
 
 
 def validate_step19_generated_output_path(path: str, *, context: str = "Step 19 output path") -> None:

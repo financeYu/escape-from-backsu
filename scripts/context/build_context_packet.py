@@ -66,20 +66,59 @@ class PacketResult:
 
 def build_context_packet(config: PacketConfig) -> str:
     root = config.project_root.resolve()
-    routes = load_routes(root, config.routing_path)
-    task = config.task.strip()
-    if task not in routes:
-        known = ", ".join(sorted(routes)) or "none"
-        raise ValueError(f"Unknown context task `{task}`. Known tasks: {known}")
+    route = _load_task_route(root, config.routing_path, config.task)
+    required_refs, optional_refs, missing_refs = _packet_references(root, route)
+    sections = _context_packet_sections(
+        root=root,
+        config=config,
+        route=route,
+        required_refs=required_refs,
+        optional_refs=optional_refs,
+        missing_refs=missing_refs,
+    )
+    return "\n".join(sections).rstrip() + "\n"
 
-    route = routes[task]
+
+def _load_task_route(project_root: Path, routing_path: Path, task: str) -> ContextRoute:
+    routes = load_routes(project_root, routing_path)
+    normalized_task = task.strip()
+    if normalized_task in routes:
+        return routes[normalized_task]
+    known = ", ".join(sorted(routes)) or "none"
+    raise ValueError(f"Unknown context task `{normalized_task}`. Known tasks: {known}")
+
+
+def _packet_references(
+    project_root: Path,
+    route: ContextRoute,
+) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
     required_refs = tuple(dict.fromkeys((*ALWAYS_READ_REFS, *_extract_path_refs(route.required_context))))
     optional_refs = _extract_path_refs(route.optional_context)
-    missing_required = _missing_refs(root, required_refs)
-    missing_optional = _missing_refs(root, optional_refs)
+    missing_required = _missing_refs(project_root, required_refs)
+    missing_optional = _missing_refs(project_root, optional_refs)
     missing_refs = tuple(dict.fromkeys((*missing_required, *missing_optional)))
+    return required_refs, optional_refs, missing_refs
 
-    sections = [
+
+def _context_packet_sections(
+    *,
+    root: Path,
+    config: PacketConfig,
+    route: ContextRoute,
+    required_refs: tuple[str, ...],
+    optional_refs: tuple[str, ...],
+    missing_refs: tuple[str, ...],
+) -> list[str]:
+    return [
+        *_context_packet_header(config, route),
+        *_context_reference_sections(root, route, required_refs, optional_refs),
+        *_context_boundary_sections(route),
+        *_context_packet_footer(missing_refs),
+    ]
+
+
+def _context_packet_header(config: PacketConfig, route: ContextRoute) -> list[str]:
+    return [
         "# Context Packet",
         "",
         f"Generated at: {_now()}",
@@ -94,6 +133,16 @@ def build_context_packet(config: PacketConfig) -> str:
         f"- step: {config.step}",
         f"- stage: {config.stage}",
         "",
+    ]
+
+
+def _context_reference_sections(
+    root: Path,
+    route: ContextRoute,
+    required_refs: tuple[str, ...],
+    optional_refs: tuple[str, ...],
+) -> list[str]:
+    return [
         "## Required Context Files",
         "",
         _format_ref_list(root, required_refs),
@@ -114,6 +163,11 @@ def build_context_packet(config: PacketConfig) -> str:
         "",
         _format_single_bullet(route.forbidden_or_do_not_read_unless_needed),
         "",
+    ]
+
+
+def _context_boundary_sections(route: ContextRoute) -> list[str]:
+    return [
         "## Allowed Scope",
         "",
         _format_single_bullet(route.allowed_scope),
@@ -130,6 +184,11 @@ def build_context_packet(config: PacketConfig) -> str:
         "",
         _format_single_bullet(route.validation_expectations),
         "",
+    ]
+
+
+def _context_packet_footer(missing_refs: tuple[str, ...]) -> list[str]:
+    return [
         "## Missing Referenced Files",
         "",
         _format_missing_refs(missing_refs),
@@ -139,7 +198,6 @@ def build_context_packet(config: PacketConfig) -> str:
         "- This packet lists context paths and routing rules only.",
         "- It does not embed source files, generated data, caches, secrets, images, or raw reports.",
     ]
-    return "\n".join(sections).rstrip() + "\n"
 
 
 def write_context_packet(config: PacketConfig) -> PacketResult:
@@ -233,6 +291,26 @@ def load_routes(project_root: Path, routing_path: Path = DEFAULT_ROUTING_PATH) -
 
 
 def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args = parser.parse_args(argv)
+
+    if args.mode != "gpt-brief" and args.request and not any((args.task, args.step, args.stage)):
+        parser.error(
+            "--request is for GPT submission briefs only when --mode gpt-brief is explicit. "
+            "Use: --mode gpt-brief --user-requested --request \"...\""
+        )
+
+    try:
+        result = _write_requested_packet(args, parser)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+    _print_packet_result(result)
+    return 0
+
+
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build a compact context routing packet.")
     parser.add_argument(
         "--mode",
@@ -255,47 +333,44 @@ def main(argv: list[str] | None = None) -> int:
         "--output",
         help="Output path. Defaults to docs/context/generated/<task>_packet.md or docs/context/gpt/gpt_context_quant.md.",
     )
-    args = parser.parse_args(argv)
+    return parser
 
-    if args.mode != "gpt-brief" and args.request and not any((args.task, args.step, args.stage)):
-        parser.error(
-            "--request is for GPT submission briefs only when --mode gpt-brief is explicit. "
-            "Use: --mode gpt-brief --user-requested --request \"...\""
+
+def _write_requested_packet(
+    args: argparse.Namespace,
+    parser: argparse.ArgumentParser,
+) -> PacketResult:
+    if args.mode == "gpt-brief":
+        if not args.user_requested:
+            parser.error(
+                "Refusing to refresh GPT brief without --user-requested. "
+                "Run only after the user explicitly asks for this GPT context update."
+            )
+        output = Path(args.output) if args.output else DEFAULT_GPT_BRIEF_OUTPUT
+        return write_gpt_brief(
+            GptBriefConfig(
+                project_root=Path(args.project_root),
+                request=args.request or "Replace this placeholder with the active user request.",
+                output_path=output,
+            )
         )
 
-    try:
-        if args.mode == "gpt-brief":
-            if not args.user_requested:
-                parser.error(
-                    "Refusing to refresh GPT brief without --user-requested. "
-                    "Run only after the user explicitly asks for this GPT context update."
-                )
-            output = Path(args.output) if args.output else DEFAULT_GPT_BRIEF_OUTPUT
-            result = write_gpt_brief(
-                GptBriefConfig(
-                    project_root=Path(args.project_root),
-                    request=args.request or "Replace this placeholder with the active user request.",
-                    output_path=output,
-                )
-            )
-        else:
-            if not args.task or not args.step or not args.stage:
-                parser.error("--task, --step, and --stage are required unless --mode gpt-brief is used.")
-            output = Path(args.output) if args.output else DEFAULT_OUTPUT_DIR / f"{args.task}_packet.md"
-            result = write_context_packet(
-                PacketConfig(
-                    project_root=Path(args.project_root),
-                    task=args.task,
-                    step=args.step,
-                    stage=args.stage,
-                    output_path=output,
-                    routing_path=Path(args.routing),
-                )
-            )
-    except ValueError as exc:
-        print(str(exc), file=sys.stderr)
-        return 2
+    if not args.task or not args.step or not args.stage:
+        parser.error("--task, --step, and --stage are required unless --mode gpt-brief is used.")
+    output = Path(args.output) if args.output else DEFAULT_OUTPUT_DIR / f"{args.task}_packet.md"
+    return write_context_packet(
+        PacketConfig(
+            project_root=Path(args.project_root),
+            task=args.task,
+            step=args.step,
+            stage=args.stage,
+            output_path=output,
+            routing_path=Path(args.routing),
+        )
+    )
 
+
+def _print_packet_result(result: PacketResult) -> None:
     print(
         json.dumps(
             {
@@ -307,7 +382,6 @@ def main(argv: list[str] | None = None) -> int:
             indent=2,
         )
     )
-    return 0
 
 
 def _split_markdown_row(row: str) -> list[str]:

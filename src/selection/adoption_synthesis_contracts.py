@@ -358,45 +358,7 @@ def validate_adoption_synthesis_table(
     """Validate a Step 14 adoption synthesis table without ranking or scoring."""
 
     validate_adoption_synthesis_columns(frame, context=context)
-    _assert_allowed_values(frame, "family", ALLOWED_STEP13_FAMILIES, context=context)
-    _assert_allowed_values(frame, "role", ALLOWED_STEP13_ROLES, context=context)
-    _assert_allowed_values(frame, "eligibility", ALLOWED_STEP13_ELIGIBILITY, context=context)
-    _assert_allowed_values(
-        frame,
-        "source_review_status",
-        ALLOWED_STEP13_REVIEW_STATUSES,
-        context=context,
-    )
-    _assert_allowed_values(
-        frame,
-        "adoption_state",
-        ALLOWED_STEP14_ADOPTION_STATES,
-        context=context,
-    )
-    _assert_optional_allowed_values(
-        frame,
-        "coverage_status",
-        ALLOWED_STEP13_COVERAGE_STATUSES,
-        context=context,
-    )
-    _assert_optional_allowed_values(
-        frame,
-        "redundancy_status",
-        ALLOWED_STEP13_REDUNDANCY_STATUSES,
-        context=context,
-    )
-    _assert_optional_allowed_values(
-        frame,
-        "complexity_status",
-        ALLOWED_STEP13_COMPLEXITY_STATUSES,
-        context=context,
-    )
-    _assert_optional_allowed_values(
-        frame,
-        "regime_fit_status",
-        ALLOWED_STEP13_REGIME_FIT_STATUSES,
-        context=context,
-    )
+    _assert_adoption_value_domains(frame, context=context)
     _assert_required_fields_non_empty(frame, context=context)
     _assert_manual_review_required_is_boolean(frame, context=context)
     _assert_needs_manual_review_is_marked(frame, context=context)
@@ -409,6 +371,26 @@ def validate_adoption_synthesis_table(
     _assert_registry_metadata_alignment(frame, registry=tuple(registry), context=context)
     _assert_conservative_source_status_mapping(frame, context=context)
     _assert_text_columns_avoid_forbidden_adoption_language(frame, context=context)
+
+
+def _assert_adoption_value_domains(frame: pd.DataFrame, *, context: str) -> None:
+    required_domains = (
+        ("family", ALLOWED_STEP13_FAMILIES),
+        ("role", ALLOWED_STEP13_ROLES),
+        ("eligibility", ALLOWED_STEP13_ELIGIBILITY),
+        ("source_review_status", ALLOWED_STEP13_REVIEW_STATUSES),
+        ("adoption_state", ALLOWED_STEP14_ADOPTION_STATES),
+    )
+    optional_domains = (
+        ("coverage_status", ALLOWED_STEP13_COVERAGE_STATUSES),
+        ("redundancy_status", ALLOWED_STEP13_REDUNDANCY_STATUSES),
+        ("complexity_status", ALLOWED_STEP13_COMPLEXITY_STATUSES),
+        ("regime_fit_status", ALLOWED_STEP13_REGIME_FIT_STATUSES),
+    )
+    for column, allowed in required_domains:
+        _assert_allowed_values(frame, column, allowed, context=context)
+    for column, allowed in optional_domains:
+        _assert_optional_allowed_values(frame, column, allowed, context=context)
 
 
 def find_forbidden_adoption_columns(columns: pd.DataFrame | Iterable[str]) -> list[str]:

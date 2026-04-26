@@ -65,12 +65,42 @@ def calculate_all_raw_scores(
     )
     _assert_same_identity(part_a, part_b)
 
-    output = part_a.loc[:, list(IDENTITY_COLUMNS)].copy()
-    for column in PART_A_RAW_COLUMNS:
-        output[column] = part_a[column]
-    for column in PART_B_RAW_SCORE_COLUMNS:
-        output[column] = part_b[column]
+    output = _integrated_raw_score_output(part_a, part_b)
+    validate_raw_score_output_frame(output, context="Step 9 integrated raw score output")
+    return output.reset_index(drop=True)
 
+
+def _integrated_raw_score_output(part_a: pd.DataFrame, part_b: pd.DataFrame) -> pd.DataFrame:
+    output = part_a.loc[:, list(IDENTITY_COLUMNS)].copy()
+    _copy_columns(output, part_a, PART_A_RAW_COLUMNS)
+    _copy_columns(output, part_b, PART_B_RAW_SCORE_COLUMNS)
+    _add_integrated_metadata(output, part_a, part_b)
+    _copy_columns(output, part_a, PART_A_MISSING_REASON_COLUMNS)
+    _copy_columns(output, part_b, PART_B_MISSING_REASON_COLUMNS)
+    return output[
+        [
+            *IDENTITY_COLUMNS,
+            *ALL_STEP9_RAW_SCORE_COLUMNS,
+            *SCORE_METADATA_COLUMNS,
+            *ALL_STEP9_MISSING_REASON_COLUMNS,
+        ]
+    ]
+
+
+def _copy_columns(
+    output: pd.DataFrame,
+    source: pd.DataFrame,
+    columns: tuple[str, ...],
+) -> None:
+    for column in columns:
+        output[column] = source[column]
+
+
+def _add_integrated_metadata(
+    output: pd.DataFrame,
+    part_a: pd.DataFrame,
+    part_b: pd.DataFrame,
+) -> None:
     output["score_warmup_state"] = _combine_warmup_state(
         part_a["score_warmup_state"],
         part_b["score_warmup_state"],
@@ -80,29 +110,17 @@ def calculate_all_raw_scores(
         part_a["score_data_quality_flag"],
         part_b["score_data_quality_flag"],
     )
-    output["minimum_history_required"] = pd.concat(
+    output["minimum_history_required"] = _combined_minimum_history(part_a, part_b)
+
+
+def _combined_minimum_history(part_a: pd.DataFrame, part_b: pd.DataFrame) -> pd.Series:
+    return pd.concat(
         [
             pd.to_numeric(part_a["minimum_history_required"], errors="coerce"),
             pd.to_numeric(part_b["minimum_history_required"], errors="coerce"),
         ],
         axis=1,
     ).max(axis=1).astype("Int64")
-
-    for column in PART_A_MISSING_REASON_COLUMNS:
-        output[column] = part_a[column]
-    for column in PART_B_MISSING_REASON_COLUMNS:
-        output[column] = part_b[column]
-
-    output = output[
-        [
-            *IDENTITY_COLUMNS,
-            *ALL_STEP9_RAW_SCORE_COLUMNS,
-            *SCORE_METADATA_COLUMNS,
-            *ALL_STEP9_MISSING_REASON_COLUMNS,
-        ]
-    ]
-    validate_raw_score_output_frame(output, context="Step 9 integrated raw score output")
-    return output.reset_index(drop=True)
 
 
 def _assert_same_identity(left: pd.DataFrame, right: pd.DataFrame) -> None:

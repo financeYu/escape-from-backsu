@@ -43,15 +43,42 @@ def build_latest_ranking_output(
     in `review_routed_score_count`.
     """
 
-    normalized_frame = normalized_scores.copy()
-    adoption_frame = adoption_synthesis.copy()
-    validate_step15_inputs(
-        normalized_frame,
-        adoption_frame,
+    latest_frame, ranking_specs, review_routed_score_count = _prepare_ranking_inputs(
+        normalized_scores,
+        adoption_synthesis,
+        as_of_date=as_of_date,
+        max_allowed_date=max_allowed_date,
         registry=registry,
         policy=policy,
     )
+    working, family_columns = _build_working_ranking_frame(
+        latest_frame,
+        ranking_specs=ranking_specs,
+        review_routed_score_count=review_routed_score_count,
+        policy=policy,
+    )
+    output = _finalize_latest_ranking_output(
+        working,
+        ranking_specs=ranking_specs,
+        family_columns=family_columns,
+        top_n=top_n,
+        policy=policy,
+    )
+    return output
 
+
+def _prepare_ranking_inputs(
+    normalized_scores: pd.DataFrame,
+    adoption_synthesis: pd.DataFrame,
+    *,
+    as_of_date: object | None,
+    max_allowed_date: object | None,
+    registry: Sequence[CompositeInputSpec],
+    policy: Step15RankingPolicy,
+) -> tuple[pd.DataFrame, tuple[CompositeInputSpec, ...], int]:
+    normalized_frame = normalized_scores.copy()
+    adoption_frame = adoption_synthesis.copy()
+    validate_step15_inputs(normalized_frame, adoption_frame, registry=registry, policy=policy)
     latest_frame = _latest_date_frame(
         normalized_frame,
         as_of_date=as_of_date,
@@ -68,15 +95,71 @@ def build_latest_ranking_output(
             "Step 15 ranking requires at least one direct technical adoption "
             "state without manual review."
         )
+    return latest_frame, ranking_specs, review_routed_score_count
 
+
+def _finalize_latest_ranking_output(
+    working: pd.DataFrame,
+    *,
+    ranking_specs: Sequence[CompositeInputSpec],
+    family_columns: Sequence[str],
+    top_n: int | None,
+    policy: Step15RankingPolicy,
+) -> pd.DataFrame:
+    output = _sort_and_rank(working)
+    output = output.loc[
+        :,
+        _ordered_output_columns(
+            ranking_specs=ranking_specs,
+            family_columns=family_columns,
+        ),
+    ]
+    output = _apply_top_n(output, top_n)
+    validate_step15_latest_ranking_output(output, policy=policy)
+    return output
+
+
+def _build_working_ranking_frame(
+    latest_frame: pd.DataFrame,
+    *,
+    ranking_specs: Sequence[CompositeInputSpec],
+    review_routed_score_count: int,
+    policy: Step15RankingPolicy,
+) -> tuple[pd.DataFrame, list[str]]:
     working = latest_frame.loc[:, list(IDENTITY_COLUMNS)].copy()
+    valid_masks = _add_direct_score_columns(working, latest_frame, ranking_specs)
+    family_columns = _add_family_score_columns(working, ranking_specs, policy=policy)
+    _add_ranking_status_columns(
+        working,
+        latest_frame,
+        valid_masks=valid_masks,
+        expected_score_count=len(ranking_specs),
+        review_routed_score_count=review_routed_score_count,
+        policy=policy,
+    )
+    return working, family_columns
+
+
+def _add_direct_score_columns(
+    working: pd.DataFrame,
+    latest_frame: pd.DataFrame,
+    ranking_specs: Sequence[CompositeInputSpec],
+) -> dict[str, pd.Series]:
     valid_masks: dict[str, pd.Series] = {}
     for spec in ranking_specs:
         values = pd.to_numeric(latest_frame[spec.normalized_column], errors="coerce")
         score_mask = _valid_score_mask(latest_frame, spec, values)
         valid_masks[spec.score_name] = score_mask
         working[spec.normalized_column] = values.where(score_mask)
+    return valid_masks
 
+
+def _add_family_score_columns(
+    working: pd.DataFrame,
+    ranking_specs: Sequence[CompositeInputSpec],
+    *,
+    policy: Step15RankingPolicy,
+) -> list[str]:
     family_columns: list[str] = []
     for family in _families_in_registry_order(ranking_specs):
         family_specs = tuple(spec for spec in ranking_specs if spec.family == family)
@@ -86,16 +169,26 @@ def build_latest_ranking_output(
         working[family_column] = (
             working[score_columns].fillna(policy.neutral_score_value).mean(axis=1)
         )
+    return family_columns
 
+
+def _add_ranking_status_columns(
+    working: pd.DataFrame,
+    latest_frame: pd.DataFrame,
+    *,
+    valid_masks: Mapping[str, pd.Series],
+    expected_score_count: int,
+    review_routed_score_count: int,
+    policy: Step15RankingPolicy,
+) -> None:
     valid_score_count = _valid_score_count(valid_masks, index=working.index)
-    expected_score_count = len(ranking_specs)
-    coverage_metric = valid_score_count / float(expected_score_count)
-
-    working["technical_composite_score"] = working[family_columns].mean(axis=1, skipna=True)
-    blocked = valid_score_count < policy.minimum_valid_score_count
-    working.loc[blocked, "technical_composite_score"] = np.nan
+    working["technical_composite_score"] = _technical_composite_score(
+        working,
+        valid_score_count=valid_score_count,
+        policy=policy,
+    )
     working["final_composite_score"] = working["technical_composite_score"]
-    working["coverage_metric"] = coverage_metric
+    working["coverage_metric"] = valid_score_count / float(expected_score_count)
     working["warmup_status"] = _source_warmup_status(latest_frame)
     working["coverage_status"] = _coverage_status(
         valid_score_count,
@@ -112,18 +205,24 @@ def build_latest_ranking_output(
     working["final_score_policy"] = policy.final_score_policy
     working["technical_only_notice"] = policy.technical_only_notice
 
-    output = _sort_and_rank(working)
-    ordered_columns = _ordered_output_columns(
-        ranking_specs=ranking_specs,
-        family_columns=family_columns,
-    )
-    output = output.loc[:, ordered_columns]
-    if top_n is not None:
-        if top_n < 1:
-            raise ValueError("Step 15 top_n must be at least 1 when provided.")
-        output = output.head(top_n).reset_index(drop=True)
-    validate_step15_latest_ranking_output(output, policy=policy)
-    return output
+
+def _technical_composite_score(
+    working: pd.DataFrame,
+    *,
+    valid_score_count: pd.Series,
+    policy: Step15RankingPolicy,
+) -> pd.Series:
+    family_columns = [column for column in working.columns if column.endswith("_family_score")]
+    technical = working[family_columns].mean(axis=1, skipna=True)
+    return technical.mask(valid_score_count < policy.minimum_valid_score_count, np.nan)
+
+
+def _apply_top_n(output: pd.DataFrame, top_n: int | None) -> pd.DataFrame:
+    if top_n is None:
+        return output
+    if top_n < 1:
+        raise ValueError("Step 15 top_n must be at least 1 when provided.")
+    return output.head(top_n).reset_index(drop=True)
 
 
 def _latest_date_frame(

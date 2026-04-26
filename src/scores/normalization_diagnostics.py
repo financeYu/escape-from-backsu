@@ -37,48 +37,59 @@ def summarize_normalization_coverage(
 
     selected_columns = _select_raw_columns(frame, raw_score_columns)
     prepared = prepare_cross_sectional_input_frame(frame, raw_score_columns=selected_columns)
-    rows: list[dict[str, object]] = []
-    for raw_column in selected_columns:
-        score_name = score_name_from_raw_column(raw_column)
-        numeric = pd.to_numeric(prepared[raw_column], errors="coerce")
-        finite = _finite_numeric_mask(numeric)
-        eligible = eligible_cross_sectional_observations(prepared, raw_column)
-        row_count = int(len(prepared))
-        missing_count = int((~finite).sum())
-        valid_observation_count = int(eligible.sum())
-        warmup_count = int(prepared["score_warmup_state"].astype("string").eq("warmup").sum())
-        insufficient_history_count = int(
-            prepared["score_warmup_state"].astype("string").eq("insufficient_history").sum()
+    rows = [
+        _normalization_coverage_row(
+            prepared,
+            raw_column,
+            normalized_frame=normalized_frame,
         )
-        coverage_ratio = valid_observation_count / row_count if row_count else 0.0
-        event_counts = _normalization_event_counts(normalized_frame, score_name)
-        rows.append(
-            {
-                "diagnostic_name": "coverage",
-                "score_name": score_name,
-                "raw_column": raw_column,
-                "normalization_scope": "cross_sectional",
-                "row_count": row_count,
-                "valid_observation_count": valid_observation_count,
-                "missing_count": missing_count,
-                "coverage_ratio": coverage_ratio,
-                "warmup_count": warmup_count,
-                "insufficient_history_count": insufficient_history_count,
-                "blocked_coverage_count": int(
-                    prepared["score_coverage_status"].astype("string").eq("blocked").sum()
-                ),
-                "winsorized_count": event_counts["winsorized_count"],
-                "clipped_count": event_counts["clipped_count"],
-                "zero_scale_fallback_count": event_counts["zero_scale_fallback_count"],
-                "zero_dispersion_count": event_counts["zero_dispersion_count"],
-                "insufficient_cross_section_count": event_counts[
-                    "insufficient_cross_section_count"
-                ],
-                "diagnostic_status": _coverage_status(coverage_ratio, valid_observation_count),
-                "notes": "diagnostic_only_review_material",
-            }
-        )
+        for raw_column in selected_columns
+    ]
     return pd.DataFrame(rows)
+
+
+def _normalization_coverage_row(
+    prepared: pd.DataFrame,
+    raw_column: str,
+    *,
+    normalized_frame: pd.DataFrame | None,
+) -> dict[str, object]:
+    score_name = score_name_from_raw_column(raw_column)
+    numeric = pd.to_numeric(prepared[raw_column], errors="coerce")
+    finite = _finite_numeric_mask(numeric)
+    eligible = eligible_cross_sectional_observations(prepared, raw_column)
+    row_count = int(len(prepared))
+    valid_observation_count = int(eligible.sum())
+    coverage_ratio = valid_observation_count / row_count if row_count else 0.0
+    event_counts = _normalization_event_counts(normalized_frame, score_name)
+    return {
+        "diagnostic_name": "coverage",
+        "score_name": score_name,
+        "raw_column": raw_column,
+        "normalization_scope": "cross_sectional",
+        "row_count": row_count,
+        "valid_observation_count": valid_observation_count,
+        "missing_count": int((~finite).sum()),
+        "coverage_ratio": coverage_ratio,
+        "warmup_count": _status_count(prepared, "score_warmup_state", "warmup"),
+        "insufficient_history_count": _status_count(
+            prepared, "score_warmup_state", "insufficient_history"
+        ),
+        "blocked_coverage_count": _status_count(prepared, "score_coverage_status", "blocked"),
+        "winsorized_count": event_counts["winsorized_count"],
+        "clipped_count": event_counts["clipped_count"],
+        "zero_scale_fallback_count": event_counts["zero_scale_fallback_count"],
+        "zero_dispersion_count": event_counts["zero_dispersion_count"],
+        "insufficient_cross_section_count": event_counts[
+            "insufficient_cross_section_count"
+        ],
+        "diagnostic_status": _coverage_status(coverage_ratio, valid_observation_count),
+        "notes": "diagnostic_only_review_material",
+    }
+
+
+def _status_count(frame: pd.DataFrame, column: str, status: str) -> int:
+    return int(frame[column].astype("string").eq(status).sum())
 
 
 def build_normalization_diagnostics(
@@ -157,22 +168,31 @@ def _date_valid_counts(
         working["_eligible"] = eligible
         working["_missing"] = ~finite
         grouped = working.groupby("date", sort=True)
-        for date_value, group in grouped:
-            rows.append(
-                {
-                    "diagnostic_name": "date_cross_sectional_valid_count",
-                    "score_name": score_name,
-                    "raw_column": raw_column,
-                    "normalization_scope": "cross_sectional",
-                    "date": date_value,
-                    "ticker_count": int(len(group)),
-                    "cross_sectional_valid_count": int(group["_eligible"].sum()),
-                    "missing_count": int(group["_missing"].sum()),
-                    "diagnostic_status": "info",
-                    "notes": "same_date_only",
-                }
-            )
+        rows.extend(
+            _date_valid_count_row(score_name, raw_column, date_value, group)
+            for date_value, group in grouped
+        )
     return pd.DataFrame(rows)
+
+
+def _date_valid_count_row(
+    score_name: str,
+    raw_column: str,
+    date_value: object,
+    group: pd.DataFrame,
+) -> dict[str, object]:
+    return {
+        "diagnostic_name": "date_cross_sectional_valid_count",
+        "score_name": score_name,
+        "raw_column": raw_column,
+        "normalization_scope": "cross_sectional",
+        "date": date_value,
+        "ticker_count": int(len(group)),
+        "cross_sectional_valid_count": int(group["_eligible"].sum()),
+        "missing_count": int(group["_missing"].sum()),
+        "diagnostic_status": "info",
+        "notes": "same_date_only",
+    }
 
 
 def _ticker_available_counts(
@@ -188,21 +208,30 @@ def _ticker_available_counts(
         working["_eligible"] = eligible
         working["_missing"] = ~finite
         grouped = working.groupby("ticker", sort=True)
-        for ticker, group in grouped:
-            rows.append(
-                {
-                    "diagnostic_name": "ticker_available_observation_count",
-                    "score_name": score_name,
-                    "raw_column": raw_column,
-                    "normalization_scope": "cross_sectional",
-                    "ticker": ticker,
-                    "available_observation_count": int(group["_eligible"].sum()),
-                    "missing_count": int(group["_missing"].sum()),
-                    "diagnostic_status": "info",
-                    "notes": "no_time_series_normalization",
-                }
-            )
+        rows.extend(
+            _ticker_available_count_row(score_name, raw_column, ticker, group)
+            for ticker, group in grouped
+        )
     return pd.DataFrame(rows)
+
+
+def _ticker_available_count_row(
+    score_name: str,
+    raw_column: str,
+    ticker: object,
+    group: pd.DataFrame,
+) -> dict[str, object]:
+    return {
+        "diagnostic_name": "ticker_available_observation_count",
+        "score_name": score_name,
+        "raw_column": raw_column,
+        "normalization_scope": "cross_sectional",
+        "ticker": ticker,
+        "available_observation_count": int(group["_eligible"].sum()),
+        "missing_count": int(group["_missing"].sum()),
+        "diagnostic_status": "info",
+        "notes": "no_time_series_normalization",
+    }
 
 
 def _event_count_table(

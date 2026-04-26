@@ -15,22 +15,19 @@ They should then move to new critique, tradeoff analysis, or implementation opti
 
 ## Default-Read Context
 
-- `AGENTS.md`
-- `docs/project_checklist.md`
-- `docs/roadmap_status.md`
-- active `WORKSPACE_MANIFEST.md`
-- `docs/context/current_context.md`
-- `docs/context/context_usage_policy.md`
-- `docs/context/context_routing.md`
+- `docs/context/MVP_V0_1_BASELINE.md`
+- exactly one active packet; currently
+  `docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`
+- optional routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
 
-Use `docs/context/active_step20_packet.md` only for Step 20 final-validation
-provenance or post-completion review routing.
-Use task-specific domain stubs from `docs/context/context_routing.md` for scoring,
-ranking, report, backtest, valuation boundary, research ingestion, code review, or planning work.
+Authority files named in `AGENTS.md` still govern. Keep them linked rather than
+copied into active context. Use `docs/context/active_step20_packet.md` only for
+Step 20 final-validation provenance or post-completion review routing.
 
 ## Archive-Read Context
 
 - `docs/context/archive/step01_to_step19_summary.md`
+- `docs/context/archive/step01_to_step20_history.md`
 - `docs/roadmap_archive/`
 - old generated review or context packets
 

@@ -24,11 +24,14 @@ Context docs are routing aids. They are not permission to bypass roadmap order, 
 ## Directory Layout
 
 - `current_context.md`: latest-only default-read context.
+- `MVP_V0_1_BASELINE.md`: compact post-Step20 baseline.
+- `ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`: current Step 20.5 active packet.
+- `CONTEXT_ROUTING_INDEX.md`: path-only targeted lookup index.
 - `active_step20_packet.md`: Step 20 final-validation routing packet.
 - `context_usage_policy.md`: answer and archive-read rules for fresh reasoning.
 - `context_index.md`: compact map of context files and when to read them.
 - `context_routing.md`: task-based routing matrix for Step 20+ review and planning work.
-- `context_budget_policy.md`: budget rules for packets and review inputs.
+- `CONTEXT_BUDGET_POLICY.md`: budget rules for packets and review inputs.
 - `decision_log.md`: changed context-routing decisions only, not full history.
 - `domain/`: lightweight domain stubs that link to canonical docs instead of duplicating them.
 - `archive/`: completed-Step summaries that are not default-read context.

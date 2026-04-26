@@ -23,13 +23,10 @@ Future assistants and workers must:
 
 Use this label only for statements directly supported by default-read files:
 
-- `AGENTS.md`
-- `docs/project_checklist.md`
-- `docs/roadmap_status.md`
-- active `WORKSPACE_MANIFEST.md`
-- `docs/context/current_context.md`
-- `docs/context/context_routing.md`
-- task-specific context files routed by `docs/context/context_routing.md`
+- `docs/context/MVP_V0_1_BASELINE.md`
+- exactly one active packet
+- optional `docs/context/CONTEXT_ROUTING_INDEX.md`
+- authority files linked by those context docs when the task requires them
 
 ## New Reasoning
 
@@ -51,6 +48,6 @@ When archive read is used, name the reason and read the narrowest archive file.
 
 ## Step History Compression
 
-Step 1-19 history belongs in `docs/context/archive/step01_to_step19_summary.md`
-or other explicit archive files. It should not be copied into active packets,
-ordinary planning answers, or default context summaries.
+Step 1-20 history belongs in explicit archive files such as
+`docs/context/archive/step01_to_step20_history.md`. It should not be copied into
+active packets, ordinary planning answers, or default context summaries.

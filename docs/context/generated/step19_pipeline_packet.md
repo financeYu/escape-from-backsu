@@ -20,7 +20,7 @@ Generated context packets are routing aids, not authority documents. They do not
 - `WORKSPACE_MANIFEST.md` - FOUND
 - `docs/context/context_index.md` - FOUND
 - `docs/context/context_routing.md` - FOUND
-- `docs/context/context_budget_policy.md` - FOUND
+- `docs/context/CONTEXT_BUDGET_POLICY.md` - FOUND
 - `docs/context/domain/pipeline_context.md` - FOUND
 - `docs/workspace_parallel_work_policy.md` - FOUND
 

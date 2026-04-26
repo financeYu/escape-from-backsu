@@ -76,9 +76,13 @@ def check_staleness(project_root: Path) -> tuple[StalenessWarning, ...]:
     if generated_dir.exists():
         packet_paths.extend(sorted(generated_dir.glob("*.md")))
 
-    active_step20_packet = root / "docs/context/active_step20_packet.md"
-    if active_step20_packet.exists():
-        packet_paths.append(active_step20_packet)
+    active_packets = (
+        root / "docs/context/active_step20_packet.md",
+        root / "docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md",
+    )
+    for active_packet in active_packets:
+        if active_packet.exists():
+            packet_paths.append(active_packet)
 
     for packet_path in packet_paths:
         packet_text = _read_optional(packet_path)

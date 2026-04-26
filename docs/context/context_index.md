@@ -4,15 +4,15 @@ Use this index to pick the smallest useful context set before starting a task.
 Workers should start from routed context and use targeted search only when a
 direct conflict, missing contract, or unclear boundary is found.
 
-## Always-Read Control Files
+## Default Prompt Context
 
-- `AGENTS.md`
-- `docs/project_checklist.md`
-- `docs/roadmap_status.md`
-- `WORKSPACE_MANIFEST.md` in the active role worktree
-- `docs/context/current_context.md`
-- `docs/context/context_usage_policy.md`
-- `docs/context/context_routing.md`
+- `docs/context/MVP_V0_1_BASELINE.md`
+- exactly one active packet, currently
+  `docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`
+- optional routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
+
+Authority files named in `AGENTS.md` still govern, but they should be linked
+instead of copied into active context packets.
 
 Default answers should not repeat completed Step summaries. Use no more than
 three confirmed context facts before moving to new reasoning.
@@ -41,6 +41,7 @@ three confirmed context facts before moving to new reasoning.
 ## Archive / History Context
 
 - Compact completed Step 1-19 summary: `docs/context/archive/step01_to_step19_summary.md`
+- Compact completed Step 1-20 history: `docs/context/archive/step01_to_step20_history.md`
 - Older completed Step history: `docs/roadmap_archive/`
 - Old review packets: do not read or change by default.
 - Obsolete generated snapshots: do not embed in context packets.

@@ -29,6 +29,8 @@ def test_packet_generation_for_step20_final_validation(tmp_path: Path) -> None:
     text = output.read_text(encoding="utf-8")
     assert result.output_path == output
     assert "`step20_final_validation`" in text
+    assert "`docs/context/MVP_V0_1_BASELINE.md` - FOUND" in text
+    assert "`docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md` - FOUND" in text
     assert "`docs/context/active_step20_packet.md` - FOUND" in text
     assert "`docs/context/current_context.md` - FOUND" in text
     assert "`docs/context/context_usage_policy.md` - FOUND" in text
@@ -50,6 +52,7 @@ def test_packet_generation_for_planning_only(tmp_path: Path) -> None:
 
     assert "`planning_only`" in text
     assert "`docs/context/context_usage_policy.md` - FOUND" in text
+    assert "`docs/context/CONTEXT_BUDGET_POLICY.md` - FOUND" in text
     assert "no more than three context facts" in text
 
 
@@ -93,6 +96,8 @@ def _write_minimal_context_project(tmp_path: Path, *, include_missing_route: boo
     (tmp_path / "docs/context/domain").mkdir(parents=True)
     (tmp_path / "docs/context/generated").mkdir(parents=True)
     (tmp_path / "docs/context/active_step20_packet.md").write_text("active", encoding="utf-8")
+    (tmp_path / "docs/context/MVP_V0_1_BASELINE.md").write_text("baseline", encoding="utf-8")
+    (tmp_path / "docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md").write_text("active", encoding="utf-8")
     (tmp_path / "docs/context/current_context.md").write_text("current", encoding="utf-8")
     (tmp_path / "docs/context/context_usage_policy.md").write_text("usage", encoding="utf-8")
     (tmp_path / "docs/context/decision_log.md").write_text("decision", encoding="utf-8")
@@ -101,7 +106,7 @@ def _write_minimal_context_project(tmp_path: Path, *, include_missing_route: boo
     (tmp_path / "docs/project_checklist.md").write_text("checklist", encoding="utf-8")
     (tmp_path / "docs/roadmap_status.md").write_text("roadmap", encoding="utf-8")
     (tmp_path / "docs/context/context_index.md").write_text("index", encoding="utf-8")
-    (tmp_path / "docs/context/context_budget_policy.md").write_text("budget", encoding="utf-8")
+    (tmp_path / "docs/context/CONTEXT_BUDGET_POLICY.md").write_text("budget", encoding="utf-8")
     (tmp_path / "docs/workspace_parallel_work_policy.md").write_text("policy", encoding="utf-8")
     (tmp_path / "docs/scope_audit_process.md").write_text("audit", encoding="utf-8")
     (tmp_path / "docs/cross_step_conflict_check.md").write_text("checkpoint", encoding="utf-8")

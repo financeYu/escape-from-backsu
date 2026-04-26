@@ -256,6 +256,25 @@ class ReviewTests(unittest.TestCase):
 
         self.assertNotIn("explicit-internal-api", {finding.rule for finding in result.findings})
 
+    def test_explicit_internal_api_allows_symbol_policy_leading_zero_hook(self) -> None:
+        target = self._write_temp_file(
+            """
+            class SymbolPolicy:
+                def is_valid(self, value):
+                    return True
+
+                def normalize(self, value):
+                    return str(value)
+
+                def leading_zero_loss_candidates(self, values):
+                    return int(values.notna().sum())
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertNotIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
     def test_explicit_internal_api_allows_gui_callback_handlers(self) -> None:
         target = self._write_temp_file(
             """
@@ -299,6 +318,32 @@ class ReviewTests(unittest.TestCase):
             """
             class Helper:
                 def process(self):
+                    return "internal"
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
+    def test_explicit_internal_api_still_reports_plain_leading_zero_method(self) -> None:
+        target = self._write_temp_file(
+            """
+            class Helper:
+                def leading_zero_loss_candidates(self, values):
+                    return int(values.notna().sum())
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
+    def test_explicit_internal_api_still_reports_symbol_policy_random_public_method(self) -> None:
+        target = self._write_temp_file(
+            """
+            class SymbolPolicy:
+                def random_public_method(self):
                     return "internal"
             """
         )

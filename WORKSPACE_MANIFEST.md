@@ -24,6 +24,7 @@ roadmap implementation. It collects:
 ## Allowed Write Paths
 
 - WORKSPACE_MANIFEST.md
+- .github/workflows/
 - Quant_mvp/config/
 - chart_mvp/README.md
 - chart_mvp/TEMPORARY_TOP5_OVERRIDE.md

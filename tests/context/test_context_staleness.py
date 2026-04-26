@@ -56,3 +56,52 @@ def test_staleness_checker_returns_no_warning_for_matching_status(tmp_path: Path
     warnings = module.check_staleness(tmp_path)
 
     assert warnings == ()
+
+
+def test_staleness_checker_warns_when_current_context_exceeds_budget(tmp_path: Path) -> None:
+    (tmp_path / "docs/context").mkdir(parents=True)
+    (tmp_path / "docs/roadmap_status.md").write_text(
+        "| Step | Status |\n| --- | --- |\n| Step 20 | WAITING / not started |\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs/project_checklist.md").write_text("- Step 20 = WAITING / not started\n", encoding="utf-8")
+    (tmp_path / "docs/context/current_context.md").write_text(
+        "x" * (module.MAX_CURRENT_CONTEXT_CHARS + 1),
+        encoding="utf-8",
+    )
+
+    warnings = module.check_staleness(tmp_path)
+
+    assert any(warning.code == "current_context_too_large" for warning in warnings)
+
+
+def test_staleness_checker_requires_packet_authority_notice(tmp_path: Path) -> None:
+    (tmp_path / "docs/context").mkdir(parents=True)
+    (tmp_path / "docs/roadmap_status.md").write_text(
+        "| Step | Status |\n| --- | --- |\n| Step 20 | WAITING / not started |\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs/project_checklist.md").write_text("- Step 20 = WAITING / not started\n", encoding="utf-8")
+    (tmp_path / "docs/context/active_step20_packet.md").write_text("Step 20 packet", encoding="utf-8")
+
+    warnings = module.check_staleness(tmp_path)
+
+    assert any(warning.code == "packet_missing_authority_notice" for warning in warnings)
+
+
+def test_staleness_checker_ignores_negated_step20_complete_claims(tmp_path: Path) -> None:
+    (tmp_path / "docs/context").mkdir(parents=True)
+    (tmp_path / "docs/roadmap_status.md").write_text(
+        "| Step | Status |\n| --- | --- |\n| Step 20 | WAITING / not started |\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "docs/project_checklist.md").write_text("- Step 20 = WAITING / not started\n", encoding="utf-8")
+    (tmp_path / "docs/context/active_step20_packet.md").write_text(
+        "This packet is a routing aid, not an authority document.\n"
+        "Do not make Step 20 COMPLETE claims before validation finishes.\n",
+        encoding="utf-8",
+    )
+
+    warnings = module.check_staleness(tmp_path)
+
+    assert not any(warning.code == "packet_status_contradiction" for warning in warnings)

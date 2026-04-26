@@ -17,7 +17,7 @@ class ReviewTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp_dir = Path(__file__).resolve().parent / "workspace"
         self.temp_dir.mkdir(exist_ok=True)
-        self.target = self.temp_dir / f"{self._testMethodName}.py"
+        self.target = self.temp_dir / "sample_under_review.py"
 
     def tearDown(self) -> None:
         if self.target.exists():
@@ -77,6 +77,55 @@ class ReviewTests(unittest.TestCase):
         result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
         self.assertEqual([], result.findings)
         self.assertFalse(review.should_fail(result, "high"))
+
+    def test_fail_fast_bounds_guard_suppresses_index_warning(self) -> None:
+        target = self._write_temp_file(
+            """
+            def eighth_cell(cells):
+                if len(cells) < 8:
+                    return None
+                return cells[0], cells[6], cells[7]
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertNotIn("missing-bounds-check", {finding.rule for finding in result.findings})
+
+    def test_non_exiting_length_check_still_reports_index_warning(self) -> None:
+        target = self._write_temp_file(
+            """
+            def first_item(items):
+                if len(items) < 1:
+                    note = "too short"
+                return items[0]
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("missing-bounds-check", {finding.rule for finding in result.findings})
+
+    def test_test_file_noise_is_suppressed_but_security_still_reports(self) -> None:
+        target = self.temp_dir / "test_generated_contract.py"
+        target.write_text(
+            textwrap.dedent(
+                """
+                token = "plain-text"
+
+                def test_contract(rows):
+                    assert rows[0] == "ok"
+                """
+            ),
+            encoding="utf-8",
+        )
+        self.addCleanup(lambda: target.unlink(missing_ok=True))
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+        rules = {finding.rule for finding in result.findings}
+
+        self.assertIn("hardcoded-secret", rules)
+        self.assertNotIn("missing-bounds-check", rules)
 
     def test_fail_on_thresholds_follow_severity_order(self) -> None:
         result = review.ReviewResult(

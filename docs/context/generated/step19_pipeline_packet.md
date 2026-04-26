@@ -4,7 +4,7 @@ Generated at: 2026-04-26T11:42:08+09:00
 
 ## Authority Warning
 
-Generated context packets are routing aids. They do not override `AGENTS.md`, `docs/project_checklist.md`, `docs/roadmap_status.md`, the active `WORKSPACE_MANIFEST.md`, or the user's latest instruction.
+Generated context packets are routing aids, not authority documents. They do not override `AGENTS.md`, `docs/project_checklist.md`, `docs/roadmap_status.md`, the active `WORKSPACE_MANIFEST.md`, or the user's latest instruction.
 
 ## Task
 

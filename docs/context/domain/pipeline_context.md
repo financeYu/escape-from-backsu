@@ -1,24 +1,24 @@
 # Pipeline / Automation Context
 
-Purpose: prepare Step 19 routing without implementing Step 19.
+Purpose: preserve Step 19 pipeline boundaries for later review without reloading
+completed implementation history.
 
-Required before implementation:
+Current status:
 
-- explicit Step 19 start instruction
-- dedicated Step 19 branch/worktree and `WORKSPACE_MANIFEST.md`
-- context packet or equivalent routed context summary
-- Cross-Step Conflict Checkpoint before closure
+- Step 19 is complete in the roadmap status.
+- Step 20 is waiting / not started.
+- Pipeline context is review or regression context, not a request to redesign the pipeline.
 
-Allowed during Pre-Step19:
+Use when:
 
-- document context hierarchy
-- document routing and context budgets
-- prepare readiness notes
+- a Step 20 validation question touches Step 19 orchestration evidence
+- a regression or conflict is reported against pipeline guardrails
+- a generated-output or no-network/no-secret pipeline boundary needs review
 
-Forbidden during Pre-Step19:
+Forbidden during Pre-Step20 context work:
 
-- automatic execution pipeline implementation
-- scheduler/CI/runtime automation changes
+- scheduler, CI, runtime automation, or pipeline behavior changes
 - new market data sources
 - KOSDAQ150, futures, or options expansion
 - scoring, ranking, backtest, valuation scoring, or report semantic changes
+- Step 20 final validation completion claims

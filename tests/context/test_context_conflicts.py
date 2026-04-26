@@ -23,7 +23,7 @@ def test_conflict_checker_catches_forbidden_wording(tmp_path: Path) -> None:
                 "diagnostics are alpha signals.",
                 "generated report output can feed upstream score construction.",
                 "future returns can be used as score inputs.",
-                "Step 19 has already implemented automatic execution.",
+                "Step 20 final Done validation complete.",
             ]
         ),
         encoding="utf-8",
@@ -36,7 +36,7 @@ def test_conflict_checker_catches_forbidden_wording(tmp_path: Path) -> None:
     assert "diagnostics_as_alpha" in codes
     assert "generated_output_feedback" in codes
     assert "future_returns_as_inputs" in codes
-    assert "step19_already_implemented" in codes
+    assert "step20_final_validation_claimed_complete" in codes
 
 
 def test_conflict_checker_ignores_negated_guardrails(tmp_path: Path) -> None:
@@ -49,9 +49,26 @@ def test_conflict_checker_ignores_negated_guardrails(tmp_path: Path) -> None:
                 "Diagnostics are not alpha signals.",
                 "Generated report output must not feed upstream score construction.",
                 "Do not use future returns as score inputs.",
-                "Step 19 automatic execution is not implemented.",
+                "Step 20 final Done validation is not complete.",
             ]
         ),
+        encoding="utf-8",
+    )
+
+    findings = module.check_conflicts(tmp_path)
+
+    assert findings == ()
+
+
+def test_conflict_checker_allows_step20_complete_after_roadmap_closure(tmp_path: Path) -> None:
+    context_dir = tmp_path / "docs/context"
+    context_dir.mkdir(parents=True)
+    (tmp_path / "docs/roadmap_status.md").write_text(
+        "| Step | Status |\n| --- | --- |\n| Step 20 | COMPLETE |\n",
+        encoding="utf-8",
+    )
+    (context_dir / "current_context.md").write_text(
+        "Step 20 = COMPLETE / KOSPI200 MVP final validation closed.",
         encoding="utf-8",
     )
 

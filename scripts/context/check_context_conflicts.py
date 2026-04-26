@@ -78,26 +78,25 @@ RULES = (
         message="future returns appear allowed as score inputs.",
     ),
     ConflictRule(
-        code="step19_already_implemented",
+        code="step20_final_validation_claimed_complete",
         pattern=re.compile(
-            r"\bStep 19\b.{0,80}\b(already implemented|implemented automatic execution)\b|"
-            r"\bStep 19\b\s*=\s*COMPLETE\b|"
-            r"\bautomatic execution pipeline\b.{0,80}\b(has been implemented|is implemented)\b",
+            r"\bStep 20\b.{0,100}\b(COMPLETE|completed|final Done validation complete|Done validation complete)\b",
             flags=re.IGNORECASE,
         ),
-        message="Step 19 automatic execution appears claimed as already implemented.",
+        message="Step 20 final validation appears claimed complete before the active Step closes.",
     ),
 )
 
 
 def check_conflicts(project_root: Path, scan_roots: tuple[Path, ...] = DEFAULT_SCAN_ROOTS) -> tuple[ConflictFinding, ...]:
     root = project_root.resolve()
+    step20_complete = _roadmap_step20_complete(root)
     findings: list[ConflictFinding] = []
     for scan_root in scan_roots:
         resolved = _root_path(root, scan_root)
         paths = [resolved] if resolved.is_file() else sorted(resolved.glob("**/*.md")) if resolved.exists() else []
         for path in paths:
-            findings.extend(_check_file(root, path))
+            findings.extend(_check_file(root, path, step20_complete=step20_complete))
     return tuple(findings)
 
 
@@ -126,13 +125,15 @@ def main(argv: list[str] | None = None) -> int:
     return 1
 
 
-def _check_file(project_root: Path, path: Path) -> list[ConflictFinding]:
+def _check_file(project_root: Path, path: Path, *, step20_complete: bool) -> list[ConflictFinding]:
     text = path.read_text(encoding="utf-8")
     findings: list[ConflictFinding] = []
     for index, line in enumerate(text.splitlines(), start=1):
         if _is_negated(line):
             continue
         for rule in RULES:
+            if rule.code == "step20_final_validation_claimed_complete" and step20_complete:
+                continue
             if rule.pattern.search(line):
                 findings.append(
                     ConflictFinding(
@@ -155,6 +156,21 @@ def _root_path(project_root: Path, path: Path) -> Path:
     if path.is_absolute():
         return path
     return project_root / path
+
+
+def _roadmap_step20_complete(project_root: Path) -> bool:
+    roadmap = project_root / "docs/roadmap_status.md"
+    if not roadmap.exists():
+        return False
+    text = roadmap.read_text(encoding="utf-8")
+    for line in text.splitlines():
+        if re.search(r"\bStep\s+20\b", line, flags=re.IGNORECASE) and re.search(
+            r"\bCOMPLETE\b",
+            line,
+            flags=re.IGNORECASE,
+        ):
+            return True
+    return False
 
 
 def _display_path(root: Path, path: Path) -> str:

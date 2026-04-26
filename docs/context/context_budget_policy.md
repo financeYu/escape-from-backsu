@@ -10,6 +10,9 @@ Context packets should be small enough that future workers can act without reloa
 - Generated data, caches, secrets, images, local runtime outputs, and large raw reports must never be embedded in packets.
 - Current state summary and historical details must stay separated.
 - Completed Step artifacts are trusted by default unless current changes touch their boundary.
+- Ordinary planning answers should repeat no more than three context facts.
+- Active packets must not embed long completed-Step history.
+- `docs/context/current_context.md` should stay under 8,000 characters.
 - Packets should list required and optional files rather than copying large file contents.
 - If a file is missing, the packet or handoff should report the missing file instead of silently ignoring it.
 

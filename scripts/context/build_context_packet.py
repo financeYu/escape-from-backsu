@@ -17,12 +17,14 @@ ALWAYS_READ_REFS = (
     "docs/project_checklist.md",
     "docs/roadmap_status.md",
     "WORKSPACE_MANIFEST.md",
+    "docs/context/current_context.md",
+    "docs/context/context_usage_policy.md",
     "docs/context/context_index.md",
     "docs/context/context_routing.md",
     "docs/context/context_budget_policy.md",
 )
 AUTHORITY_WARNING = (
-    "Generated context packets are routing aids. They do not override "
+    "Generated context packets are routing aids, not authority documents. They do not override "
     "`AGENTS.md`, `docs/project_checklist.md`, `docs/roadmap_status.md`, "
     "the active `WORKSPACE_MANIFEST.md`, or the user's latest instruction."
 )

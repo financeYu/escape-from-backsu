@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-26T12:36:42+09:00
+Generated at: 2026-04-26T13:10:58+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -19,19 +19,19 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local orchestration pipeline implemented
-- Recently completed: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
-- Recently completed before that: Step 18 = 밸류에이션 확장 준비, COMPLETE
+Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE / KOSPI200 technical MVP v0.1 freeze-ready
+- Active: no in-progress roadmap Step. MVP v0.1 is freeze-ready pending integration branch merge.
+- Recently completed: Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE
+- Recently completed before that: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
 - Carry-forward preserved for this Step: Step 19 orchestrates existing approved stage contracts only; Step 15 ranking, Step 16 reports, Step 17 backtest, and Step 18 candidate-only valuation/fundamental boundaries remain unchanged.
-- Current gate: Step 20 remains WAITING / not started. Step 19 does not implement or complete final Done validation.
+- Current gate: Step 20 completed KOSPI200 MVP completeness hardening, contract clarity, sanity validation, and final Done validation. KOSDAQ150, futures/options, valuation/fundamental scoring activation, backtest-driven score optimization, and trading recommendations remain outside MVP scope.
 ## 병렬 Workspace 운영 메모
 - Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
 - Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리하는 Step 15+ Branch Separation Process가 필수다.
 - Step implementation은 major Step branch(`codex/stepXX-<scope>`)에서만 진행하고, Quant/research/review/audit/chart 작업은 minor/support branch(`quant/`, `research/`, `review/`, `audit/`, `chart/`)에서 분리한다.
 - 모든 하위 에이전트는 파일 편집 전에 role branch/worktree를 만들거나 선택하고 루트 `WORKSPACE_MANIFEST.md`를 작성해야 한다.
 - `C:\Users\jjaew\Project\master_mvp`는 integration / verification / status-control 전용 workspace로 유지한다.
-- 모든 non-master worktree는 루트의 `WORKSPACE_MANIFEST.md`를 포함해야 한다.
-- omitted 7 additional lines for compact context
+- omitted 8 additional lines for compact context
 
 ## Roadmap Verdicts
 
@@ -56,7 +56,7 @@ Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local o
 | Step 17 | COMPLETE |
 | Step 18 | COMPLETE |
 | Step 19 | COMPLETE |
-| Step 20 | WAITING / not started |
+| Step 20 | COMPLETE / KOSPI200 MVP Completeness Hardening & Final Done Validation |
 ## Research ingestion 범위 확장 상태
 - `reserch_mvp/config/research_queries.toml`에 technical, diagnostic, Korea/APAC/EM context, hybrid split query-set 확장 metadata를 추가했다.
 - `reserch_mvp/config/research_classification.toml`에 required input boundary, forbidden valuation language, 명시적 classification rule name을 추가했다.
@@ -67,6 +67,15 @@ Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local o
 
 ## Most Recent Completed Step
 
+### Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation
+- Step 19 completion was verified from repository status documents and artifacts; no status mismatch was found.
+- Step 20 documented score lineage, the composite contract, the ranking contract, a fixture-based ranking sanity report, the final MVP report, and the KOSPI200 v0.1 baseline manifest.
+- Latest ranking output now exposes warmup status, neutral shrinkage count, and a technical-only MVP notice so Step 16 detail/report context can explain ranking rows more clearly.
+- `technical_composite_score` remains technical-only and `final_composite_score` equals `technical_composite_score` for MVP v0.1.
+- Missing direct score inputs shrink to neutral `0.0`; deterministic ranking uses descending score and ticker ascending for ties.
+- Validation passed: `python -m pytest -q tests/scanner tests/reports tests/validation` = 230 passed; `python -m pytest -q tests/integration` = 2 passed; `python -m pytest -q` = 696 passed, 4 skipped, 25 subtests passed.
+- Context checks returned no staleness or conflict findings; `review_mvp` specialist review returned 0 high and 0 medium findings, with low style/quality notes treated as non-blocking.
+- KOSDAQ150 was not implemented; futures/options were not implemented; valuation/fundamental scoring remains inactive; Step 17 backtest outputs did not feed upstream scoring or ranking; no trading recommendation or proven alpha claim was introduced.
 ### Step 19 = Automatic Execution Pipeline
 - Step 19 automatic execution pipeline contracts, config, CLI, guardrails, docs, generated-output boundary docs, and tests are implemented.
 - `src/pipeline/` builds deterministic local pipeline summaries from declarative stage contracts without executing or redefining domain scoring, ranking, report, backtest, or valuation/fundamental semantics.
@@ -90,16 +99,7 @@ Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local o
 - Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 651 passed, 4 skipped, 25 subtests passed.
 - Focused Step 18 master integration validation: `python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py` = 44 passed.
 - Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 229 passed.
-- Manual forbidden-language reproduction now rejects `buy recommendation and proven alpha` with `alpha proven, buy recommendation`.
-- `review_mvp` specialist static review command on Step 18 production/test paths returned 0 high and 0 medium findings; 3 low style/quality findings are non-blocking.
-- Cross-Step Conflict Checkpoint after post-fix validation: PASS. Packet regenerated with `python scripts/build_review_packet.py --step "Step 18" --stage "post-fix validation"`; manual checkpoint found no blocking roadmap/order, hard-stop, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, trading-signal, or unrelated dirty-worktree issue. During master integration, `WORKSPACE_MANIFEST.md` was updated to reflect the Step 18 integration branch identity.
-### Step 17 = Conservative Backtest
-- Step 17 Worker A/B conservative backtest core and guardrail branches are integrated through `integration/step17-conservative-backtest-merge`.
-- `src/backtest/` implements deterministic evaluation-only backtest contracts and runner logic using frozen Step 15/16-compatible technical ranking context as read-only input.
-- Step 17 output permits realized/evaluation return fields only in Step 17 result/output context and rejects those fields as upstream inputs.
-- `src/validation/step17_backtest_guardrails.py` rejects valuation/fundamental, future/forward/expected return, trading recommendation, forbidden report language, and return-feedback leakage.
-- `reports/backtest/README.md`, `docs/step17_conservative_backtest_core.md`, `docs/step17_backtest_guardrails.md`, and `docs/architecture/step17_backtest_boundary.md` document the evaluation-only, generated-output, no-feedback, and Step 18 valuation boundary.
-- omitted 47 additional lines for compact context
+- omitted 56 additional lines for compact context
 
 ## Cross-Step Conflict Checkpoint
 
@@ -129,8 +129,8 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 
 ## Git Snapshot
 
-- branch: `integration/step19-automatic-execution-pipeline-merge`
-- commit: `1466b0e`
+- branch: `codex/step20-mvp-completeness-hardening`
+- commit: `21767ac`
 - status:
 ```text
 clean

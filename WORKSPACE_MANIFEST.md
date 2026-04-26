@@ -1,94 +1,108 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: integration_step19_automatic_execution_pipeline_merge
-branch: integration/step19-automatic-execution-pipeline-merge
+workspace_id: step20_final_integration_merge
+branch: main
+role: root-master-integration
 task_type: master_integration
-active_step: Step 19 Automatic Execution Pipeline
+active_step: Step 20 KOSPI200 MVP Completeness Hardening & Final Done Validation
 owner_or_worker: root master agent
-created_from_commit: be1b07f218c0621a2e3640705cb391798973ff2f
+created_from_commit: dd0066112f5dd773f86cc6765795b0b9ffc46ca9
 
 ## Purpose
 
-Merge the Step 19 automatic execution pipeline branch, validate orchestration
-and generated-output boundaries, run Step-end review gates, close Step 19, and
-refresh the compact local Quant project context.
+Integrate the Step 20 KOSPI200 MVP completeness hardening branch, Step 20
+review-noise repair branch, pre-Step20 development-environment branch, and the
+context-compression patch into one validated main-branch commit.
 
-## Source branch
+Step 20 closes the KOSPI200 daily OHLCV technical scanner MVP as v0.1
+freeze-ready. The context patch keeps future Step 20+ work routed through
+latest-only context rather than repeated completed-Step history.
 
-- codex/step19-automatic-execution-pipeline
+## Allowed write paths
 
-## Allowed work
+- WORKSPACE_MANIFEST.md
+- docs/project_checklist.md
+- docs/roadmap_status.md
+- docs/context/
+- docs/contracts/step20_composite_contract.md
+- docs/contracts/step20_ranking_contract.md
+- docs/development_environment.md
+- docs/releases/
+- pyproject.toml
+- requirements-dev.txt
+- quant_project_reference_for_chatgpt_project_current.md
+- reports/validation/step20_ranking_sanity_report.md
+- review_mvp/
+- scripts/context/
+- src/scanner/
+- src/composite/
+- src/reports/
+- src/validation/
+- tests/context/
+- tests/scanner/
+- tests/integration/
+- tests/reports/
+- tests/validation/
+- tests/step20_fixtures.py
 
-- merge the Step 19 implementation branch into this integration branch
-- preserve Step 15 ranking, Step 16 report, Step 17 backtest, and Step 18
-  candidate-only valuation/fundamental boundaries
-- run focused and full pytest validation
-- run generated-output ignore checks for Step 19 report roots
-- run the Cross-Step Conflict Checkpoint
-- run required Step-end specialist review checks
-- apply minimal Step 19 CLI, status, manifest, or generated-output boundary
-  corrections required by the master integration gate
-- commit the validated Step 19 merge result
-- refresh the latest local Quant project context snapshot after the Step commit
-
-## Read-only paths unless a validation gate requires a narrow correction
+## Read-only paths
 
 - AGENTS.md
-- Quant_mvp/AGENTS.md
-- Quant_mvp/agents/valuation/AGENTS.md
-- docs/workspace_parallel_work_policy.md
-- docs/cross_step_conflict_check.md
-- docs/context/
-- src/scanner/
-- src/reports/
-- src/backtest/
-- src/valuation/
-- src/composite/
-- src/scores/
+- completed Step artifacts except for targeted hard-stop, context, and contract checks
+- generated market data caches
+- generated report roots except the explicit Step 20 validation fixture report
+- secrets and local environment files
+- post-MVP universe expansion material except as forbidden-scope references
 
 ## Forbidden actions
 
-- new score formulas
-- ranking semantic changes
-- detail report semantic changes
-- backtest semantic changes
-- active valuation/fundamental scoring
-- valuation-aware composite scoring
-- financial/fundamental data in technical_composite_score or final_composite_score
-- KOSDAQ150, futures, or options expansion
-- external financial data/network collection
-- trading recommendations, target prices, expected returns, predictive alpha
-  claims, or signal output
-- Step 20 final validation or completion claims
-- unrelated cleanup, reset, stash, or history rewrite
-- generated market-data, runtime report, cache, or chart commits unless
-  explicitly promoted as review fixtures
+- KOSDAQ150 implementation, config, ticker list, data ingestion, or universe schema
+- futures/options data or logic
+- multi-universe ranking
+- valuation/fundamental scoring activation
+- valuation_score, fundamental_score, undervalued_score, cheap_score, target_price,
+  or valuation-aware final ranking
+- financial/fundamental data in `technical_composite_score` or `final_composite_score`
+- backtest-driven score optimization
+- realized, future, or backtest output feedback into upstream scoring/ranking
+- trading recommendations or buy/sell/hold language
+- proven alpha claims
+- new external data ingestion
+- network-dependent tests
+- committing generated market caches, secrets, .env files, chart images, local
+  runtime artifacts, or nested worktree directories
+- unrelated cleanup, reset, stash deletion, or history rewrite
 
 ## Expected output
 
-- integrated Step 19 automatic execution pipeline source-controlled files
-- validation and review summary
-- Cross-Step Conflict Checkpoint result
-- Step 19 COMPLETE roadmap/status update
-- final integrated commit SHA
-- post-commit context refresh result
+- integrated Step 20 score lineage manifest, composite contract, ranking contract,
+  MVP gap audit, ranking sanity report, final MVP report, and v0.1 baseline manifest
+- latest-only context files, Step 20 context packet, archive summary, usage policy,
+  decision log, and context routing updates
+- development environment declaration files
+- Step 20 review_mvp static-review-noise repair
+- focused and full validation summary
+- one integration commit on `main`
+- post-commit context snapshot refresh
 
 ## Required validation
 
-- git status / changed-file manifest
-- python -m pytest -q -p no:cacheprovider tests/pipeline tests/validation/test_step19_pipeline_guardrails.py
-- python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation
-- python -m pytest -q -p no:cacheprovider
-- review_mvp static review on Step 19 changed production/test Python paths
+- python -m pytest -q tests/context
+- python -m pytest -q tests/scanner tests/reports tests/validation
+- python -m pytest -q tests/integration
+- python -m pytest -q
+- python scripts/context/check_context_staleness.py
+- python scripts/context/check_context_conflicts.py
+- python scripts/build_review_packet.py --step "Step 20" --stage "final-integration-merge"
+- python review_mvp/review.py on Step 20 changed Python paths with `--fail-on medium`
 - python -m unittest discover -s review_mvp/tests -v
-- git check-ignore for Step 19 and related generated report roots
-- python scripts/build_review_packet.py --step "Step 19" --stage "post-review-fix validation"
-- Cross-Step Conflict Checkpoint using docs/cross_step_conflict_check.md and the generated review packet
+- git diff --check
 
 ## Handoff notes
 
-The implementation worktree remains
-`C:\Users\jjaew\Project\worktrees\step19_automatic_execution_pipeline` on
-`codex/step19-automatic-execution-pipeline`.
-The root workspace at `C:\Users\jjaew\Project\master_mvp` is used only for
-merge, validation, Step status, and context refresh.
+Step 20 remains KOSPI200-only. KOSDAQ150, futures, and options are post-MVP
+extension tracks. Valuation/fundamental data remains candidate-only and inactive.
+Backtest output must not tune or feed upstream scoring or ranking.
+
+The `worktrees/` directory under this workspace is local workspace state and
+must not be staged or committed.

@@ -48,12 +48,15 @@ STEP15_BASE_OUTPUT_COLUMNS: tuple[str, ...] = (
     "final_composite_score",
     "coverage_metric",
     "data_quality_flag",
+    "warmup_status",
     "coverage_status",
     "ranking_validity_flag",
     "valid_score_count",
     "expected_score_count",
+    "neutral_shrinkage_count",
     "review_routed_score_count",
     "final_score_policy",
+    "technical_only_notice",
 )
 
 STEP15_ALLOWED_COVERAGE_STATUSES = frozenset({"adequate", "partial", "blocked"})
@@ -150,6 +153,8 @@ class Step15RankingPolicy:
     direct_ranking_states: frozenset[str] = STEP15_DIRECT_RANKING_STATES
     minimum_valid_score_count: int = 1
     final_score_policy: str = "technical_only_no_valuation"
+    neutral_score_value: float = 0.0
+    technical_only_notice: str = "kospi200_technical_only_mvp_no_valuation_or_fundamental_activation"
 
     def __post_init__(self) -> None:
         if self.minimum_valid_score_count < 1:
@@ -216,7 +221,9 @@ def build_latest_ranking_output(
         family_column = f"{family}_family_score"
         family_columns.append(family_column)
         score_columns = [spec.normalized_column for spec in family_specs]
-        working[family_column] = working[score_columns].mean(axis=1, skipna=True)
+        working[family_column] = (
+            working[score_columns].fillna(policy.neutral_score_value).mean(axis=1)
+        )
 
     valid_score_count = _valid_score_count(valid_masks, index=working.index)
     expected_score_count = len(ranking_specs)
@@ -227,6 +234,7 @@ def build_latest_ranking_output(
     working.loc[blocked, "technical_composite_score"] = np.nan
     working["final_composite_score"] = working["technical_composite_score"]
     working["coverage_metric"] = coverage_metric
+    working["warmup_status"] = _source_warmup_status(latest_frame)
     working["coverage_status"] = _coverage_status(
         valid_score_count,
         expected_score_count=expected_score_count,
@@ -235,8 +243,12 @@ def build_latest_ranking_output(
     working["data_quality_flag"] = working["ranking_validity_flag"]
     working["valid_score_count"] = valid_score_count.astype("int64")
     working["expected_score_count"] = expected_score_count
+    working["neutral_shrinkage_count"] = (
+        expected_score_count - valid_score_count
+    ).astype("int64")
     working["review_routed_score_count"] = review_routed_score_count
     working["final_score_policy"] = policy.final_score_policy
+    working["technical_only_notice"] = policy.technical_only_notice
 
     output = _sort_and_rank(working)
     ordered_columns = _ordered_output_columns(
@@ -461,6 +473,15 @@ def _validity_flag(coverage_status: pd.Series) -> pd.Series:
     return coverage_status.map(mapping).astype("string")
 
 
+def _source_warmup_status(frame: pd.DataFrame) -> pd.Series:
+    warmup = _normalized_status(frame["score_warmup_state"])
+    return pd.Series(
+        np.where(warmup.eq("ready"), "ready", "blocked"),
+        index=frame.index,
+        dtype="string",
+    )
+
+
 def _sort_and_rank(frame: pd.DataFrame) -> pd.DataFrame:
     output = frame.sort_values(
         by=["final_composite_score", "ticker"],
@@ -489,14 +510,17 @@ def _ordered_output_columns(
         "final_composite_score",
         "coverage_metric",
         "data_quality_flag",
+        "warmup_status",
         *score_columns,
         *family_columns,
         "coverage_status",
         "ranking_validity_flag",
         "valid_score_count",
         "expected_score_count",
+        "neutral_shrinkage_count",
         "review_routed_score_count",
         "final_score_policy",
+        "technical_only_notice",
     )
 
 

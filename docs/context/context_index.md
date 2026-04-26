@@ -1,6 +1,8 @@
 # Context Index
 
-Use this index to pick the smallest useful context set before starting a task. Workers should start from routed context and use targeted search only when a direct conflict, missing contract, or unclear boundary is found.
+Use this index to pick the smallest useful context set before starting a task.
+Workers should start from routed context and use targeted search only when a
+direct conflict, missing contract, or unclear boundary is found.
 
 ## Always-Read Control Files
 
@@ -8,7 +10,12 @@ Use this index to pick the smallest useful context set before starting a task. W
 - `docs/project_checklist.md`
 - `docs/roadmap_status.md`
 - `WORKSPACE_MANIFEST.md` in the active role worktree
-- `docs/context/current_context.md`, if present later
+- `docs/context/current_context.md`
+- `docs/context/context_usage_policy.md`
+- `docs/context/context_routing.md`
+
+Default answers should not repeat completed Step summaries. Use no more than
+three confirmed context facts before moving to new reasoning.
 
 ## Domain Context
 
@@ -26,13 +33,18 @@ Use this index to pick the smallest useful context set before starting a task. W
 
 - Input schema: `docs/data_schema.md`, affected Step docs, and affected source contracts.
 - Output schema: Step-specific docs and validation guardrails for the affected domain.
+- Step 20 MVP contracts: `docs/contracts/step20_composite_contract.md` and `docs/contracts/step20_ranking_contract.md`.
+- Step 20 release evidence: `docs/releases/step20_mvp_final_report.md`, `docs/releases/step20_mvp_gap_audit.md`, `docs/releases/step20_score_lineage_manifest.md`, and `docs/releases/mvp_kospi200_baseline_manifest.md`.
 - Generated report boundaries: `reports/*/README.md` files and Step-specific generated-output guardrails.
 - No-lookahead / no-future-data boundaries: `docs/project_checklist.md`, `docs/cross_step_conflict_check.md`, and Step-specific boundary docs.
 
 ## Archive / History Context
 
-- Completed Step history: `docs/roadmap_archive/`
+- Compact completed Step 1-19 summary: `docs/context/archive/step01_to_step19_summary.md`
+- Older completed Step history: `docs/roadmap_archive/`
 - Old review packets: do not read or change by default.
 - Obsolete generated snapshots: do not embed in context packets.
 
-Completed Step artifacts are trusted by default unless the current task touches their boundary, consumes their output downstream, or appears to violate a hard stop.
+Completed Step artifacts are trusted by default unless the current task touches
+their boundary, consumes their output downstream, or appears to violate a hard
+stop.

@@ -97,6 +97,15 @@ def normalize_timeseries_scores(
         required_columns=selected,
         symbol_policy=symbol_policy,
     )
+    return _normalize_timeseries_outputs(data, selected, config=config)
+
+
+def _normalize_timeseries_outputs(
+    data: pd.DataFrame,
+    selected: Sequence[str],
+    *,
+    config: TimeSeriesNormalizationConfig | None,
+) -> pd.DataFrame:
     output = data.loc[:, list(IDENTITY_COLUMNS)].copy()
     for raw_score_column in selected:
         score_output = _normalize_prepared_timeseries_score(
@@ -246,17 +255,7 @@ def _normalize_series_online(
     missing = raw.isna()
     finite_values = numeric.where(finite)
 
-    normalized_values: list[float | pd.NA] = []
-    statuses: list[str] = []
-    coverage_statuses: list[str] = []
-    quality_flags: list[str] = []
-    observation_counts: list[int] = []
-    scales: list[float | pd.NA] = []
-    scale_methods: list[str | pd.NA] = []
-    winsorized_values: list[float | pd.NA] = []
-    was_winsorized: list[bool] = []
-    was_clipped: list[bool] = []
-
+    columns = _empty_timeseries_result_columns()
     warmup_values = (
         upstream_warmup.reset_index(drop=True).astype("string") if upstream_warmup is not None else None
     )
@@ -267,68 +266,147 @@ def _normalize_series_online(
     )
 
     for position in range(len(raw)):
-        context = _context_values(finite_values, position=position, window=config.window)
-        observation_count = int(context.count())
-        row_min_periods = _row_min_periods(config.min_periods, minimum_history_values, position)
-        upstream_status = _upstream_status(warmup_values, position)
+        _append_timeseries_row(
+            columns,
+            raw=raw,
+            numeric=numeric,
+            finite_values=finite_values,
+            missing=missing,
+            invalid=invalid,
+            position=position,
+            config=config,
+            warmup_values=warmup_values,
+            minimum_history_values=minimum_history_values,
+        )
 
-        normalized_value: float | pd.NA = pd.NA
-        status = STATUS_OK
-        scale: float | pd.NA = pd.NA
-        scale_method: str | pd.NA = pd.NA
-        current_winsorized: float | pd.NA = pd.NA
-        current_was_winsorized = False
-        current_was_clipped = False
+    return _timeseries_result_frame(columns, raw.index)
 
-        if upstream_status is not None:
-            status = upstream_status
-        elif bool(missing.iloc[position]):
-            status = STATUS_MISSING_RAW_SCORE
-        elif bool(invalid.iloc[position]):
-            status = STATUS_INVALID_RAW_SCORE
-        elif observation_count < row_min_periods:
-            status = STATUS_WARMUP
-        else:
-            current_raw = float(numeric.iloc[position])
-            context_result = _robust_zscore_for_context(
-                context.astype(float),
-                current_raw=current_raw,
-                config=config,
-            )
-            status = context_result["status"]
-            normalized_value = context_result["value"]
-            scale = context_result["scale"]
-            scale_method = context_result["scale_method"]
-            current_winsorized = context_result["winsorized_value"]
-            current_was_winsorized = bool(context_result["was_winsorized"])
-            current_was_clipped = bool(context_result["was_clipped"])
 
-        normalized_values.append(normalized_value)
-        statuses.append(status)
-        coverage_statuses.append("adequate" if status == STATUS_OK else "blocked")
-        quality_flags.append(_quality_flag(status, current_was_winsorized, current_was_clipped))
-        observation_counts.append(observation_count)
-        scales.append(scale)
-        scale_methods.append(scale_method)
-        winsorized_values.append(current_winsorized)
-        was_winsorized.append(current_was_winsorized)
-        was_clipped.append(current_was_clipped)
-
+def _timeseries_result_frame(
+    columns: dict[str, list[object]],
+    index: pd.Index,
+) -> pd.DataFrame:
     return pd.DataFrame(
         {
-            ROBUST_ZSCORE_COLUMN: normalized_values,
-            "status": statuses,
-            "coverage_status": coverage_statuses,
-            "data_quality_flag": quality_flags,
-            "observation_count": observation_counts,
-            "scale": scales,
-            "scale_method": scale_methods,
-            "winsorized_value": winsorized_values,
-            "was_winsorized": was_winsorized,
-            "was_clipped": was_clipped,
+            ROBUST_ZSCORE_COLUMN: columns["normalized_values"],
+            "status": columns["statuses"],
+            "coverage_status": columns["coverage_statuses"],
+            "data_quality_flag": columns["quality_flags"],
+            "observation_count": columns["observation_counts"],
+            "scale": columns["scales"],
+            "scale_method": columns["scale_methods"],
+            "winsorized_value": columns["winsorized_values"],
+            "was_winsorized": columns["was_winsorized"],
+            "was_clipped": columns["was_clipped"],
         },
-        index=raw.index,
+        index=index,
     )
+
+
+def _empty_timeseries_result_columns() -> dict[str, list[object]]:
+    return {
+        "normalized_values": [],
+        "statuses": [],
+        "coverage_statuses": [],
+        "quality_flags": [],
+        "observation_counts": [],
+        "scales": [],
+        "scale_methods": [],
+        "winsorized_values": [],
+        "was_winsorized": [],
+        "was_clipped": [],
+    }
+
+
+def _append_timeseries_row(
+    columns: dict[str, list[object]],
+    *,
+    raw: pd.Series,
+    numeric: pd.Series,
+    finite_values: pd.Series,
+    missing: pd.Series,
+    invalid: pd.Series,
+    position: int,
+    config: TimeSeriesNormalizationConfig,
+    warmup_values: pd.Series | None,
+    minimum_history_values: pd.Series | None,
+) -> None:
+    context = _context_values(finite_values, position=position, window=config.window)
+    row = _evaluate_timeseries_row(
+        raw=raw,
+        numeric=numeric,
+        context=context,
+        missing=missing,
+        invalid=invalid,
+        position=position,
+        config=config,
+        warmup_values=warmup_values,
+        minimum_history_values=minimum_history_values,
+    )
+    _append_timeseries_result(columns, row, observation_count=int(context.count()))
+
+
+def _evaluate_timeseries_row(
+    *,
+    raw: pd.Series,
+    numeric: pd.Series,
+    context: pd.Series,
+    missing: pd.Series,
+    invalid: pd.Series,
+    position: int,
+    config: TimeSeriesNormalizationConfig,
+    warmup_values: pd.Series | None,
+    minimum_history_values: pd.Series | None,
+) -> dict[str, object]:
+    upstream_status = _upstream_status(warmup_values, position)
+    row_min_periods = _row_min_periods(config.min_periods, minimum_history_values, position)
+    if upstream_status is not None:
+        return _empty_timeseries_row(upstream_status)
+    if bool(missing.iloc[position]):
+        return _empty_timeseries_row(STATUS_MISSING_RAW_SCORE)
+    if bool(invalid.iloc[position]):
+        return _empty_timeseries_row(STATUS_INVALID_RAW_SCORE)
+    if int(context.count()) < row_min_periods:
+        return _empty_timeseries_row(STATUS_WARMUP)
+
+    return _robust_zscore_for_context(
+        context.astype(float),
+        current_raw=float(numeric.iloc[position]),
+        config=config,
+    )
+
+
+def _empty_timeseries_row(status: str) -> dict[str, object]:
+    return {
+        "value": pd.NA,
+        "status": status,
+        "scale": pd.NA,
+        "scale_method": pd.NA,
+        "winsorized_value": pd.NA,
+        "was_winsorized": False,
+        "was_clipped": False,
+    }
+
+
+def _append_timeseries_result(
+    columns: dict[str, list[object]],
+    row: dict[str, object],
+    *,
+    observation_count: int,
+) -> None:
+    status = str(row["status"])
+    was_winsorized = bool(row["was_winsorized"])
+    was_clipped = bool(row["was_clipped"])
+    columns["normalized_values"].append(row["value"])
+    columns["statuses"].append(status)
+    columns["coverage_statuses"].append("adequate" if status == STATUS_OK else "blocked")
+    columns["quality_flags"].append(_quality_flag(status, was_winsorized, was_clipped))
+    columns["observation_counts"].append(observation_count)
+    columns["scales"].append(row["scale"])
+    columns["scale_methods"].append(row["scale_method"])
+    columns["winsorized_values"].append(row["winsorized_value"])
+    columns["was_winsorized"].append(was_winsorized)
+    columns["was_clipped"].append(was_clipped)
 
 
 def _robust_zscore_for_context(
@@ -337,46 +415,16 @@ def _robust_zscore_for_context(
     current_raw: float,
     config: TimeSeriesNormalizationConfig,
 ) -> dict[str, object]:
-    winsorized_context = context.copy()
-    winsorized_current = current_raw
-    was_winsorized = False
-    if config.winsorize_lower_pct is not None or config.winsorize_upper_pct is not None:
-        lower = (
-            float(context.quantile(config.winsorize_lower_pct))
-            if config.winsorize_lower_pct is not None
-            else None
-        )
-        upper = (
-            float(context.quantile(config.winsorize_upper_pct))
-            if config.winsorize_upper_pct is not None
-            else None
-        )
-        winsorized_context = clip_series_to_bounds(context, lower, upper)
-        winsorized_current = float(clip_value_to_bounds(current_raw, lower, upper))
-        was_winsorized = not math.isclose(winsorized_current, current_raw, rel_tol=0.0, abs_tol=0.0)
+    winsorized_context, winsorized_current, was_winsorized = _winsorized_context(
+        context,
+        current_raw=current_raw,
+        config=config,
+    )
 
     median = float(winsorized_context.median())
-    mad = float((winsorized_context - median).abs().median())
-    scale = mad * config.mad_scale
-    scale_method = "mad"
-
+    scale, scale_method = _timeseries_scale(winsorized_context, median, config)
     if not positive_finite(scale):
-        if config.use_iqr_fallback:
-            iqr = float(winsorized_context.quantile(0.75) - winsorized_context.quantile(0.25))
-            fallback_scale = iqr / config.iqr_scale
-            if positive_finite(fallback_scale):
-                scale = fallback_scale
-                scale_method = "iqr"
-        if not positive_finite(scale):
-            return {
-                "value": pd.NA,
-                "status": STATUS_ZERO_SCALE,
-                "scale": pd.NA,
-                "scale_method": pd.NA,
-                "winsorized_value": winsorized_current,
-                "was_winsorized": was_winsorized,
-                "was_clipped": False,
-            }
+        return _zero_scale_timeseries_row(winsorized_current, was_winsorized)
 
     value = (winsorized_current - median) / scale
     clipped = apply_clipping([value], lower=config.clip_lower, upper=config.clip_upper)
@@ -389,6 +437,65 @@ def _robust_zscore_for_context(
         "winsorized_value": winsorized_current,
         "was_winsorized": was_winsorized,
         "was_clipped": bool(clipped.loc[0, "was_clipped"]),
+    }
+
+
+def _winsorized_context(
+    context: pd.Series,
+    *,
+    current_raw: float,
+    config: TimeSeriesNormalizationConfig,
+) -> tuple[pd.Series, float, bool]:
+    if config.winsorize_lower_pct is None and config.winsorize_upper_pct is None:
+        return context.copy(), current_raw, False
+
+    lower = (
+        float(context.quantile(config.winsorize_lower_pct))
+        if config.winsorize_lower_pct is not None
+        else None
+    )
+    upper = (
+        float(context.quantile(config.winsorize_upper_pct))
+        if config.winsorize_upper_pct is not None
+        else None
+    )
+    winsorized_context = clip_series_to_bounds(context, lower, upper)
+    winsorized_current = float(clip_value_to_bounds(current_raw, lower, upper))
+    was_winsorized = not math.isclose(
+        winsorized_current, current_raw, rel_tol=0.0, abs_tol=0.0
+    )
+    return winsorized_context, winsorized_current, was_winsorized
+
+
+def _timeseries_scale(
+    winsorized_context: pd.Series,
+    median: float,
+    config: TimeSeriesNormalizationConfig,
+) -> tuple[float, str]:
+    mad = float((winsorized_context - median).abs().median())
+    scale = mad * config.mad_scale
+    if positive_finite(scale):
+        return scale, "mad"
+    if config.use_iqr_fallback:
+        iqr = float(winsorized_context.quantile(0.75) - winsorized_context.quantile(0.25))
+        fallback_scale = iqr / config.iqr_scale
+        if positive_finite(fallback_scale):
+            return fallback_scale, "iqr"
+    return scale, "mad"
+
+
+def _zero_scale_timeseries_row(
+    winsorized_current: float,
+    was_winsorized: bool,
+) -> dict[str, object]:
+    return {
+        "value": pd.NA,
+        "status": STATUS_ZERO_SCALE,
+        "scale": pd.NA,
+        "scale_method": pd.NA,
+        "winsorized_value": winsorized_current,
+        "was_winsorized": was_winsorized,
+        "was_clipped": False,
     }
 
 

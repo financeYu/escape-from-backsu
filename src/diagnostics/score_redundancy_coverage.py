@@ -33,56 +33,68 @@ def _build_coverage_summary(
         score_inputs=score_inputs,
         as_of_date=as_of_date,
     )
-    rows: list[dict[str, object]] = []
     ticker_count = int(prepared["ticker"].nunique())
     observation_count = int(len(prepared))
-    for score_input in score_inputs:
-        if score_input.normalized_column not in prepared.columns:
-            rows.append(
-                _coverage_row(
-                    score_input,
-                    ticker_count=ticker_count,
-                    observation_count=observation_count,
-                    non_nan_observation_count=0,
-                    coverage_ratio=0.0,
-                    config=config,
-                    status=Step12DiagnosticStatus.INSUFFICIENT_INPUT.value,
-                    reason="upstream_missing_normalized_score_column:"
-                    + score_input.normalized_column,
-                )
-            )
-            continue
-        values = _numeric_score_values(prepared, score_input)
-        non_nan_observation_count = int(_finite_mask(values).sum())
-        coverage_ratio = (
-            non_nan_observation_count / observation_count if observation_count else 0.0
-        )
-        same_date_usable_cross_sections = _same_date_usable_cross_section_count(
+    rows = [
+        _coverage_summary_row(
             prepared,
             score_input,
-            config,
+            ticker_count=ticker_count,
+            observation_count=observation_count,
+            config=config,
         )
-        status, reason = _coverage_status_and_reason(
-            non_nan_observation_count,
-            same_date_usable_cross_sections,
-            config,
-        )
-        rows.append(
-            _coverage_row(
-                score_input,
-                ticker_count=ticker_count,
-                observation_count=observation_count,
-                non_nan_observation_count=non_nan_observation_count,
-                coverage_ratio=coverage_ratio,
-                config=config,
-                status=status,
-                reason=reason,
-                same_date_usable_cross_sections=same_date_usable_cross_sections,
-            )
-        )
+        for score_input in score_inputs
+    ]
     output = pd.DataFrame(rows, columns=STEP12_COVERAGE_SUMMARY_COLUMNS)
     assert_no_forbidden_diagnostic_output_columns(output)
     return output
+
+
+def _coverage_summary_row(
+    prepared: pd.DataFrame,
+    score_input: RedundancyScoreInput,
+    *,
+    ticker_count: int,
+    observation_count: int,
+    config: ScoreRedundancyConfig,
+) -> dict[str, object]:
+    if score_input.normalized_column not in prepared.columns:
+        return _coverage_row(
+            score_input,
+            ticker_count=ticker_count,
+            observation_count=observation_count,
+            non_nan_observation_count=0,
+            coverage_ratio=0.0,
+            config=config,
+            status=Step12DiagnosticStatus.INSUFFICIENT_INPUT.value,
+            reason="upstream_missing_normalized_score_column:"
+            + score_input.normalized_column,
+        )
+
+    values = _numeric_score_values(prepared, score_input)
+    non_nan_observation_count = int(_finite_mask(values).sum())
+    coverage_ratio = non_nan_observation_count / observation_count if observation_count else 0.0
+    same_date_usable_cross_sections = _same_date_usable_cross_section_count(
+        prepared,
+        score_input,
+        config,
+    )
+    status, reason = _coverage_status_and_reason(
+        non_nan_observation_count,
+        same_date_usable_cross_sections,
+        config,
+    )
+    return _coverage_row(
+        score_input,
+        ticker_count=ticker_count,
+        observation_count=observation_count,
+        non_nan_observation_count=non_nan_observation_count,
+        coverage_ratio=coverage_ratio,
+        config=config,
+        status=status,
+        reason=reason,
+        same_date_usable_cross_sections=same_date_usable_cross_sections,
+    )
 
 
 def _config_missing_coverage_summary(

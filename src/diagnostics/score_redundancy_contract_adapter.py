@@ -60,38 +60,59 @@ def build_score_redundancy_diagnostics(
             thresholds_config_path=thresholds_config_path
         )
     except ScoreRedundancyConfigError as exc:
-        pair_summary = _config_missing_summary(active_inputs, str(exc))
-        pair_diagnostics = _pair_summary_to_contract(
-            pair_summary=pair_summary,
-            pair_date_diagnostics=pd.DataFrame(columns=PAIR_DATE_COLUMNS),
-            score_inputs=active_inputs,
-        )
-        return {
-            "pair_summary": pair_summary,
-            "pair_date_diagnostics": pd.DataFrame(columns=PAIR_DATE_COLUMNS),
-            "pair_diagnostics": pair_diagnostics,
-            "coverage_summary": _config_missing_coverage_summary(active_inputs, str(exc)),
-        }
+        return _config_missing_diagnostics(active_inputs, str(exc))
 
-    pair_date = calculate_score_pair_correlations(
+    return _active_score_redundancy_diagnostics(
         prepared,
         score_inputs=active_inputs,
         config=active_config,
     )
+
+
+def _config_missing_diagnostics(
+    score_inputs: Sequence[RedundancyScoreInput],
+    reason: str,
+) -> dict[str, pd.DataFrame]:
+    pair_date = pd.DataFrame(columns=PAIR_DATE_COLUMNS)
+    pair_summary = _config_missing_summary(score_inputs, reason)
+    pair_diagnostics = _pair_summary_to_contract(
+        pair_summary=pair_summary,
+        pair_date_diagnostics=pair_date,
+        score_inputs=score_inputs,
+    )
+    return {
+        "pair_summary": pair_summary,
+        "pair_date_diagnostics": pair_date,
+        "pair_diagnostics": pair_diagnostics,
+        "coverage_summary": _config_missing_coverage_summary(score_inputs, reason),
+    }
+
+
+def _active_score_redundancy_diagnostics(
+    prepared: pd.DataFrame,
+    *,
+    score_inputs: Sequence[RedundancyScoreInput],
+    config: ScoreRedundancyConfig,
+) -> dict[str, pd.DataFrame]:
+    pair_date = calculate_score_pair_correlations(
+        prepared,
+        score_inputs=score_inputs,
+        config=config,
+    )
     pair_summary = summarize_score_redundancy(
         prepared,
-        score_inputs=active_inputs,
-        config=active_config,
+        score_inputs=score_inputs,
+        config=config,
     )
     pair_diagnostics = _pair_summary_to_contract(
         pair_summary=pair_summary,
         pair_date_diagnostics=pair_date,
-        score_inputs=active_inputs,
+        score_inputs=score_inputs,
     )
     coverage_summary = _build_coverage_summary(
         prepared,
-        score_inputs=active_inputs,
-        config=active_config,
+        score_inputs=score_inputs,
+        config=config,
     )
     validate_step12_pair_diagnostics(pair_diagnostics)
     validate_step12_coverage_summary(coverage_summary)

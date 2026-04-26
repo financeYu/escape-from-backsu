@@ -77,8 +77,7 @@ def write_indicator_summary_report(summary: dict[str, object], path: Path) -> No
         "## Summary",
         "",
     ]
-    for key, value in summary.items():
-        lines.append(f"- {key}: {value}")
+    lines.extend(f"- {key}: {value}" for key, value in summary.items())
     lines.extend(
         [
             "",

@@ -90,13 +90,86 @@ def robust_zscore_cross_sectional(
 ) -> pd.DataFrame:
     """Return robust z-scores for one same-date cross-section.
 
-    ``values`` must represent a single cross-sectional context. NaN and
-    infinite values are excluded from the median/MAD denominator and retain
-    missing/invalid flags. Tied finite values receive identical z-scores.
-    When the context has too few finite observations or zero dispersion, the
-    normalized value is left missing rather than filled optimistically.
+    Missing/invalid values stay flagged outside the denominator. Too-small or
+    zero-dispersion contexts leave normalized values missing.
     """
 
+    active_config, numeric, finite, result, row_flags = _cross_sectional_inputs(
+        values,
+        config=config,
+        min_count=min_count,
+        winsorize_lower_pct=winsorize_lower_pct,
+        winsorize_upper_pct=winsorize_upper_pct,
+        zscore_clip=zscore_clip,
+    )
+    valid_count = int(finite.sum())
+    if valid_count < active_config.min_count:
+        return _finish_blocked_cross_section(
+            result,
+            row_flags,
+            values.index,
+            "insufficient_cross_section",
+        )
+
+    return _adequate_cross_sectional_result(
+        values,
+        numeric=numeric,
+        finite=finite,
+        result=result,
+        row_flags=row_flags,
+        config=active_config,
+    )
+
+
+def _adequate_cross_sectional_result(
+    values: pd.Series,
+    *,
+    numeric: pd.Series,
+    finite: pd.Series,
+    result: pd.DataFrame,
+    row_flags: dict[object, set[str]],
+    config: CrossSectionalNormalizationConfig,
+) -> pd.DataFrame:
+    finite_values = numeric.loc[finite].astype(float)
+    winsorized = _winsorize_and_flag(
+        result,
+        row_flags,
+        finite_values,
+        config,
+    )
+    median = float(winsorized.median())
+    scale, scale_method = _cross_sectional_scale(winsorized, median, config)
+    if scale is None:
+        result.loc[finite_values.index, "cross_sectional_scale_method"] = "zero_dispersion"
+        return _finish_blocked_cross_section(result, row_flags, values.index, "zero_dispersion")
+
+    z_values = (winsorized - median) / scale
+    z_values = _clip_z_values(result, row_flags, z_values, config)
+    return _finish_adequate_cross_section(
+        result,
+        row_flags,
+        values.index,
+        finite_values.index,
+        z_values=z_values,
+        scale_method=scale_method,
+    )
+
+
+def _cross_sectional_inputs(
+    values: pd.Series,
+    *,
+    config: CrossSectionalNormalizationConfig | None,
+    min_count: int | None,
+    winsorize_lower_pct: float | None,
+    winsorize_upper_pct: float | None,
+    zscore_clip: float | None,
+) -> tuple[
+    CrossSectionalNormalizationConfig,
+    pd.Series,
+    pd.Series,
+    pd.DataFrame,
+    dict[object, set[str]],
+]:
     active_config = _merge_config(
         config=config,
         min_count=min_count,
@@ -106,77 +179,114 @@ def robust_zscore_cross_sectional(
     )
     numeric = pd.to_numeric(values, errors="coerce")
     finite = finite_mask(numeric)
-    valid_count = int(finite.sum())
+    result = _empty_cross_sectional_result(values.index, int(finite.sum()))
+    row_flags = _initial_value_flags(values, numeric, finite)
+    return active_config, numeric, finite, result, row_flags
 
-    result = pd.DataFrame(index=values.index)
-    result["cross_sectional_robust_z"] = pd.Series(pd.NA, index=values.index, dtype="Float64")
+
+def _empty_cross_sectional_result(index: pd.Index, valid_count: int) -> pd.DataFrame:
+    result = pd.DataFrame(index=index)
+    result["cross_sectional_robust_z"] = pd.Series(pd.NA, index=index, dtype="Float64")
     result["cross_sectional_valid_count"] = valid_count
-    result["cross_sectional_status"] = pd.Series("blocked", index=values.index, dtype="string")
+    result["cross_sectional_status"] = pd.Series("blocked", index=index, dtype="string")
     result["cross_sectional_scale_method"] = pd.Series(
-        "insufficient_count", index=values.index, dtype="string"
+        "insufficient_count", index=index, dtype="string"
     )
     result["cross_sectional_winsorized"] = False
     result["cross_sectional_clipped"] = False
+    return result
 
-    row_flags = _initial_value_flags(values, numeric, finite)
-    if valid_count < active_config.min_count:
-        for index in values.index:
-            row_flags[index].add("insufficient_cross_section")
-        result["cross_sectional_quality_flag"] = flags_to_series(row_flags, values.index, flag_order=FLAG_ORDER)
-        return result
 
-    finite_values = numeric.loc[finite].astype(float)
-    winsorized = _winsorize(finite_values, active_config)
-    winsorized_mask = ~np.isclose(
-        finite_values.to_numpy(dtype=float),
-        winsorized.to_numpy(dtype=float),
-        equal_nan=True,
+def _finish_blocked_cross_section(
+    result: pd.DataFrame,
+    row_flags: dict[object, set[str]],
+    index: pd.Index,
+    flag: str,
+) -> pd.DataFrame:
+    for row_index in index:
+        row_flags[row_index].add(flag)
+    result["cross_sectional_quality_flag"] = flags_to_series(
+        row_flags, index, flag_order=FLAG_ORDER
     )
-    if winsorized_mask.any():
-        changed_index = finite_values.index[winsorized_mask]
-        result.loc[changed_index, "cross_sectional_winsorized"] = True
-        for index in changed_index:
-            row_flags[index].add("winsorized_outlier")
+    return result
 
-    median = float(winsorized.median())
+
+def _finish_adequate_cross_section(
+    result: pd.DataFrame,
+    row_flags: dict[object, set[str]],
+    full_index: pd.Index,
+    finite_index: pd.Index,
+    *,
+    z_values: pd.Series,
+    scale_method: str,
+) -> pd.DataFrame:
+    result.loc[finite_index, "cross_sectional_robust_z"] = z_values.astype(float)
+    result.loc[finite_index, "cross_sectional_status"] = "adequate"
+    result.loc[finite_index, "cross_sectional_scale_method"] = scale_method
+    result["cross_sectional_quality_flag"] = flags_to_series(
+        row_flags, full_index, flag_order=FLAG_ORDER
+    )
+    return result
+
+
+def _winsorize_and_flag(
+    result: pd.DataFrame,
+    row_flags: dict[object, set[str]],
+    finite_values: pd.Series,
+    config: CrossSectionalNormalizationConfig,
+) -> pd.Series:
+    winsorized = _winsorize(finite_values, config)
+    changed_index = finite_values.index[
+        ~np.isclose(
+            finite_values.to_numpy(dtype=float),
+            winsorized.to_numpy(dtype=float),
+            equal_nan=True,
+        )
+    ]
+    result.loc[changed_index, "cross_sectional_winsorized"] = True
+    for row_index in changed_index:
+        row_flags[row_index].add("winsorized_outlier")
+    return winsorized
+
+
+def _cross_sectional_scale(
+    winsorized: pd.Series,
+    median: float,
+    config: CrossSectionalNormalizationConfig,
+) -> tuple[float | None, str]:
     mad = float((winsorized - median).abs().median())
-    scale_method = "mad"
-    scale = mad * active_config.mad_scale_factor
+    scale = mad * config.mad_scale_factor
+    if np.isfinite(scale) and scale > 0:
+        return scale, "mad"
 
-    if not np.isfinite(scale) or scale <= 0:
-        q75 = float(winsorized.quantile(0.75))
-        q25 = float(winsorized.quantile(0.25))
-        iqr_scale = (q75 - q25) / 1.349
-        if np.isfinite(iqr_scale) and iqr_scale > 0:
-            scale = iqr_scale
-            scale_method = "iqr_fallback"
-        else:
-            result.loc[finite_values.index, "cross_sectional_scale_method"] = "zero_dispersion"
-            for index in values.index:
-                row_flags[index].add("zero_dispersion")
-            result["cross_sectional_quality_flag"] = flags_to_series(row_flags, values.index, flag_order=FLAG_ORDER)
-            return result
+    q75 = float(winsorized.quantile(0.75))
+    q25 = float(winsorized.quantile(0.25))
+    iqr_scale = (q75 - q25) / 1.349
+    if np.isfinite(iqr_scale) and iqr_scale > 0:
+        return iqr_scale, "iqr_fallback"
+    return None, "zero_dispersion"
 
-    z_values = (winsorized - median) / scale
-    if active_config.zscore_clip is not None:
-        clipped = z_values.clip(-active_config.zscore_clip, active_config.zscore_clip)
-        clipped_mask = ~np.isclose(
+
+def _clip_z_values(
+    result: pd.DataFrame,
+    row_flags: dict[object, set[str]],
+    z_values: pd.Series,
+    config: CrossSectionalNormalizationConfig,
+) -> pd.Series:
+    if config.zscore_clip is None:
+        return z_values
+    clipped = z_values.clip(-config.zscore_clip, config.zscore_clip)
+    changed_index = z_values.index[
+        ~np.isclose(
             z_values.to_numpy(dtype=float),
             clipped.to_numpy(dtype=float),
             equal_nan=True,
         )
-        if clipped_mask.any():
-            changed_index = z_values.index[clipped_mask]
-            result.loc[changed_index, "cross_sectional_clipped"] = True
-            for index in changed_index:
-                row_flags[index].add("clipped_outlier")
-        z_values = clipped
-
-    result.loc[finite_values.index, "cross_sectional_robust_z"] = z_values.astype(float)
-    result.loc[finite_values.index, "cross_sectional_status"] = "adequate"
-    result.loc[finite_values.index, "cross_sectional_scale_method"] = scale_method
-    result["cross_sectional_quality_flag"] = flags_to_series(row_flags, values.index, flag_order=FLAG_ORDER)
-    return result
+    ]
+    result.loc[changed_index, "cross_sectional_clipped"] = True
+    for row_index in changed_index:
+        row_flags[row_index].add("clipped_outlier")
+    return clipped
 
 
 def normalize_cross_sectional_score(
@@ -190,10 +300,8 @@ def normalize_cross_sectional_score(
 ) -> pd.DataFrame:
     """Normalize one Step 9 raw score within each same-date cross-section.
 
-    Rows with missing/non-finite raw values, non-ready warmup status, blocked
-    coverage, or hard data-quality flags are excluded from the same-date
-    denominator. The returned frame preserves one row per input ``ticker`` and
-    ``date`` and does not create ranking or composite columns.
+    Ineligible rows stay aligned to input rows and do not enter the same-date
+    denominator. No ranking or composite columns are created.
     """
 
     prepared = prepare_cross_sectional_input_frame(
@@ -208,17 +316,7 @@ def normalize_cross_sectional_score(
     finite = finite_mask(numeric)
     eligible = eligible_cross_sectional_observations(prepared, raw_column)
     context_values = numeric.where(eligible)
-
-    parts: list[pd.DataFrame] = []
-    for _, group in prepared.groupby("date", sort=False):
-        parts.append(
-            robust_zscore_cross_sectional(
-                context_values.loc[group.index],
-                config=active_config,
-            )
-        )
-    generic = pd.concat(parts).sort_index()
-
+    generic = _generic_cross_sectional_result(prepared, context_values, active_config)
     quality_flags = _score_quality_flags(
         prepared=prepared,
         raw_column=raw_column,
@@ -227,6 +325,38 @@ def normalize_cross_sectional_score(
         eligible=eligible,
         generic=generic,
     )
+    return _build_cross_sectional_score_result(
+        prepared,
+        raw_column=raw_column,
+        normalized_name=normalized_name,
+        generic=generic,
+        quality_flags=quality_flags,
+    )
+
+
+def _generic_cross_sectional_result(
+    prepared: pd.DataFrame,
+    context_values: pd.Series,
+    config: CrossSectionalNormalizationConfig,
+) -> pd.DataFrame:
+    parts = [
+        robust_zscore_cross_sectional(
+            context_values.loc[group.index],
+            config=config,
+        )
+        for _, group in prepared.groupby("date", sort=False)
+    ]
+    return pd.concat(parts).sort_index()
+
+
+def _build_cross_sectional_score_result(
+    prepared: pd.DataFrame,
+    *,
+    raw_column: str,
+    normalized_name: str,
+    generic: pd.DataFrame,
+    quality_flags: pd.Series,
+) -> pd.DataFrame:
     result = prepared.loc[
         :,
         [

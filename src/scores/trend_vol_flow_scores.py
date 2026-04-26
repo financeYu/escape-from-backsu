@@ -141,44 +141,93 @@ def calculate_trend_vol_flow_raw_scores(
     output = data.loc[:, list(IDENTITY_COLUMNS)].copy()
     output["minimum_history_required"] = config.minimum_history_required
 
+    raw_results, missing_reasons = _part_b_raw_components(
+        data=data,
+        config=config,
+        enough_history=enough_history,
+        warmup_state=warmup_state,
+    )
+    _assign_part_b_results(output, raw_results)
+    _assign_part_b_metadata(
+        output,
+        data=data,
+        warmup_state=warmup_state,
+        missing_reasons=missing_reasons,
+        symbol_policy=symbol_policy,
+    )
+    _assign_part_b_missing_reasons(output, missing_reasons)
+
+    _assert_no_forbidden_outputs(output)
+    return output.reset_index(drop=True)
+
+
+def _part_b_raw_components(
+    *,
+    data: pd.DataFrame,
+    config: TrendVolFlowScoreWindows,
+    enough_history: pd.Series,
+    warmup_state: pd.Series,
+) -> tuple[dict[str, pd.Series], dict[str, pd.Series]]:
+    calculators = (
+        (
+            "donchian_breakout_distance_raw",
+            "donchian_breakout_distance_missing_reason",
+            _donchian_breakout_distance,
+        ),
+        (
+            "bollinger_width_squeeze_raw",
+            "bollinger_width_squeeze_missing_reason",
+            _bollinger_width_squeeze,
+        ),
+        ("cmf_confirmation_raw", "cmf_confirmation_missing_reason", _cmf_confirmation),
+        (
+            "efficiency_ratio_trend_raw",
+            "efficiency_ratio_trend_missing_reason",
+            _efficiency_ratio_trend,
+        ),
+    )
     raw_results: dict[str, pd.Series] = {}
     missing_reasons: dict[str, pd.Series] = {}
+    for raw_column, reason_column, calculator in calculators:
+        raw, reason = calculator(data, config, enough_history, warmup_state)
+        raw_results[raw_column] = raw
+        missing_reasons[reason_column] = reason
+    return raw_results, missing_reasons
 
-    raw, reason = _donchian_breakout_distance(data, config, enough_history, warmup_state)
-    raw_results["donchian_breakout_distance_raw"] = raw
-    missing_reasons["donchian_breakout_distance_missing_reason"] = reason
 
-    raw, reason = _bollinger_width_squeeze(data, config, enough_history, warmup_state)
-    raw_results["bollinger_width_squeeze_raw"] = raw
-    missing_reasons["bollinger_width_squeeze_missing_reason"] = reason
-
-    raw, reason = _cmf_confirmation(data, config, enough_history, warmup_state)
-    raw_results["cmf_confirmation_raw"] = raw
-    missing_reasons["cmf_confirmation_missing_reason"] = reason
-
-    raw, reason = _efficiency_ratio_trend(data, config, enough_history, warmup_state)
-    raw_results["efficiency_ratio_trend_raw"] = raw
-    missing_reasons["efficiency_ratio_trend_missing_reason"] = reason
-
+def _assign_part_b_results(
+    output: pd.DataFrame,
+    raw_results: Mapping[str, pd.Series],
+) -> None:
     for column in PART_B_RAW_SCORE_COLUMNS:
         output[column] = raw_results[column]
 
-    output["score_warmup_state"] = _aggregate_warmup_state(
-        warmup_state, list(missing_reasons.values())
-    )
+
+def _assign_part_b_missing_reasons(
+    output: pd.DataFrame,
+    missing_reasons: Mapping[str, pd.Series],
+) -> None:
+    for column in PART_B_MISSING_REASON_COLUMNS:
+        output[column] = missing_reasons[column]
+
+
+def _assign_part_b_metadata(
+    output: pd.DataFrame,
+    *,
+    data: pd.DataFrame,
+    warmup_state: pd.Series,
+    missing_reasons: Mapping[str, pd.Series],
+    symbol_policy: SymbolPolicy,
+) -> None:
+    reason_values = list(missing_reasons.values())
+    output["score_warmup_state"] = _aggregate_warmup_state(warmup_state, reason_values)
     output["score_coverage_status"] = _coverage_status(output, PART_B_RAW_SCORE_COLUMNS)
     output["score_data_quality_flag"] = _data_quality_flags(
         data=data,
         warmup_state=warmup_state,
-        missing_reasons=list(missing_reasons.values()),
+        missing_reasons=reason_values,
         symbol_policy=symbol_policy,
     )
-
-    for column in PART_B_MISSING_REASON_COLUMNS:
-        output[column] = missing_reasons[column]
-
-    _assert_no_forbidden_outputs(output)
-    return output.reset_index(drop=True)
 
 
 def _prepare_input(

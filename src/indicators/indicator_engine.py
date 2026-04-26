@@ -30,109 +30,12 @@ def calculate_technical_indicators(
     _require_ohlcv_columns(frame)
     data = _prepare_ohlcv(frame, as_of_date=as_of_date)
     _add_history_status(data, windows)
-    groups = data.groupby("ticker", group_keys=False, sort=False)
-
-    close = groups["close"]
-    high = groups["high"]
-    low = groups["low"]
-
-    data["return_1d"] = close.pct_change()
-    for window in windows.returns.values():
-        data[f"return_{window}d"] = close.pct_change(periods=window)
-
-    previous_close = close.shift(1)
-    data["true_range"] = pd.concat(
-        [
-            data["high"] - data["low"],
-            (data["high"] - previous_close).abs(),
-            (data["low"] - previous_close).abs(),
-        ],
-        axis=1,
-    ).max(axis=1)
-
-    atr_window = windows.volatility.get("atr")
-    if atr_window:
-        data[f"atr_{atr_window}"] = _rolling_mean_by_ticker(data, "true_range", atr_window)
-
-    realized_vol_window = windows.volatility.get("realized_vol")
-    if realized_vol_window:
-        data[f"realized_vol_{realized_vol_window}"] = groups["return_1d"].rolling(
-            realized_vol_window, min_periods=realized_vol_window
-        ).std().reset_index(level=0, drop=True)
-
-    vol_of_vol_window = windows.volatility.get("vol_of_vol")
-    if vol_of_vol_window and realized_vol_window:
-        data[f"vol_of_vol_{vol_of_vol_window}"] = _rolling_std_by_ticker(
-            data, f"realized_vol_{realized_vol_window}", vol_of_vol_window
-        )
-
-    rsi_window = windows.indicators.get("rsi")
-    if rsi_window:
-        data[f"rsi_{rsi_window}"] = _rsi(data, rsi_window)
-
-    stochastic_window = windows.indicators.get("stochastic")
-    if stochastic_window:
-        high_values = high.rolling(
-            stochastic_window, min_periods=stochastic_window
-        ).max().reset_index(level=0, drop=True)
-        low_values = low.rolling(
-            stochastic_window, min_periods=stochastic_window
-        ).min().reset_index(level=0, drop=True)
-        data[f"stochastic_k_{stochastic_window}"] = _safe_divide(
-            (data["close"] - low_values) * 100.0,
-            high_values - low_values,
-        )
-
-    cci_window = windows.indicators.get("cci")
-    if cci_window:
-        data[f"cci_{cci_window}"] = _cci(data, cci_window)
-
-    williams_window = windows.indicators.get("williams_r")
-    if williams_window:
-        high_values = high.rolling(
-            williams_window, min_periods=williams_window
-        ).max().reset_index(level=0, drop=True)
-        low_values = low.rolling(
-            williams_window, min_periods=williams_window
-        ).min().reset_index(level=0, drop=True)
-        data[f"williams_r_{williams_window}"] = _safe_divide(
-            (high_values - data["close"]) * -100.0,
-            high_values - low_values,
-        )
-
-    bollinger_window = windows.indicators.get("bollinger")
-    if bollinger_window:
-        mid_col = f"bollinger_mid_{bollinger_window}"
-        std_col = f"bollinger_std_{bollinger_window}"
-        data[mid_col] = _rolling_mean_by_ticker(data, "close", bollinger_window)
-        data[std_col] = _rolling_std_by_ticker(data, "close", bollinger_window)
-        data[f"bollinger_upper_{bollinger_window}"] = data[mid_col] + 2.0 * data[std_col]
-        data[f"bollinger_lower_{bollinger_window}"] = data[mid_col] - 2.0 * data[std_col]
-        data[f"bollinger_width_{bollinger_window}"] = _safe_divide(
-            data[f"bollinger_upper_{bollinger_window}"]
-            - data[f"bollinger_lower_{bollinger_window}"],
-            data[mid_col],
-        )
-
-    donchian_window = windows.indicators.get("donchian")
-    if donchian_window:
-        shifted_high = high.shift(1)
-        shifted_low = low.shift(1)
-        data[f"donchian_high_prior_{donchian_window}"] = shifted_high.groupby(
-            data["ticker"], group_keys=False, sort=False
-        ).rolling(donchian_window, min_periods=donchian_window).max().reset_index(
-            level=0, drop=True
-        )
-        data[f"donchian_low_prior_{donchian_window}"] = shifted_low.groupby(
-            data["ticker"], group_keys=False, sort=False
-        ).rolling(donchian_window, min_periods=donchian_window).min().reset_index(
-            level=0, drop=True
-        )
-
-    cmf_window = windows.indicators.get("cmf")
-    if cmf_window:
-        data[f"cmf_{cmf_window}"] = _cmf(data, cmf_window)
-
+    _add_return_indicators(data, windows)
+    _add_volatility_indicators(data, windows)
+    _add_momentum_indicators(data, windows)
+    _add_bollinger_indicators(data, windows)
+    _add_donchian_indicators(data, windows)
+    _add_cmf_indicator(data, windows)
     _add_macd(data, windows)
     _add_volume_indicators(data, windows)
     _add_statistics(data, windows)
@@ -220,6 +123,149 @@ def _rolling_std_by_ticker(data: pd.DataFrame, column: str, window: int) -> pd.S
     return data.groupby("ticker", group_keys=False, sort=False)[column].rolling(
         window, min_periods=window
     ).std().reset_index(level=0, drop=True)
+
+
+def _add_return_indicators(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    close = data.groupby("ticker", group_keys=False, sort=False)["close"]
+    data["return_1d"] = close.pct_change()
+    for window in windows.returns.values():
+        data[f"return_{window}d"] = close.pct_change(periods=window)
+
+
+def _add_volatility_indicators(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    close = data.groupby("ticker", group_keys=False, sort=False)["close"]
+    previous_close = close.shift(1)
+    data["true_range"] = pd.concat(
+        [
+            data["high"] - data["low"],
+            (data["high"] - previous_close).abs(),
+            (data["low"] - previous_close).abs(),
+        ],
+        axis=1,
+    ).max(axis=1)
+
+    atr_window = windows.volatility.get("atr")
+    if atr_window:
+        data[f"atr_{atr_window}"] = _rolling_mean_by_ticker(data, "true_range", atr_window)
+
+    realized_vol_window = windows.volatility.get("realized_vol")
+    if realized_vol_window:
+        data[f"realized_vol_{realized_vol_window}"] = data.groupby(
+            "ticker", group_keys=False, sort=False
+        )["return_1d"].rolling(
+            realized_vol_window, min_periods=realized_vol_window
+        ).std().reset_index(level=0, drop=True)
+
+    vol_of_vol_window = windows.volatility.get("vol_of_vol")
+    if vol_of_vol_window and realized_vol_window:
+        data[f"vol_of_vol_{vol_of_vol_window}"] = _rolling_std_by_ticker(
+            data, f"realized_vol_{realized_vol_window}", vol_of_vol_window
+        )
+
+
+def _add_momentum_indicators(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    _add_rsi_indicator(data, windows)
+    _add_stochastic_indicator(data, windows)
+    _add_cci_indicator(data, windows)
+    _add_williams_indicator(data, windows)
+
+
+def _add_rsi_indicator(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    rsi_window = windows.indicators.get("rsi")
+    if rsi_window:
+        data[f"rsi_{rsi_window}"] = _rsi(data, rsi_window)
+
+
+def _add_stochastic_indicator(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    stochastic_window = windows.indicators.get("stochastic")
+    if not stochastic_window:
+        return
+    high_values, low_values = _rolling_high_low(data, stochastic_window)
+    data[f"stochastic_k_{stochastic_window}"] = _safe_divide(
+        (data["close"] - low_values) * 100.0,
+        high_values - low_values,
+    )
+
+
+def _add_cci_indicator(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    cci_window = windows.indicators.get("cci")
+    if cci_window:
+        data[f"cci_{cci_window}"] = _cci(data, cci_window)
+
+
+def _add_williams_indicator(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    williams_window = windows.indicators.get("williams_r")
+    if not williams_window:
+        return
+    high_values, low_values = _rolling_high_low(data, williams_window)
+    data[f"williams_r_{williams_window}"] = _safe_divide(
+        (high_values - data["close"]) * -100.0,
+        high_values - low_values,
+    )
+
+
+def _rolling_high_low(data: pd.DataFrame, window: int) -> tuple[pd.Series, pd.Series]:
+    groups = data.groupby("ticker", group_keys=False, sort=False)
+    high = groups["high"]
+    low = groups["low"]
+    high_values = high.rolling(window, min_periods=window).max().reset_index(
+        level=0, drop=True
+    )
+    low_values = low.rolling(window, min_periods=window).min().reset_index(
+        level=0, drop=True
+    )
+    return high_values, low_values
+
+
+def _add_bollinger_indicators(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    bollinger_window = windows.indicators.get("bollinger")
+    if not bollinger_window:
+        return
+    mid_col = f"bollinger_mid_{bollinger_window}"
+    std_col = f"bollinger_std_{bollinger_window}"
+    data[mid_col] = _rolling_mean_by_ticker(data, "close", bollinger_window)
+    data[std_col] = _rolling_std_by_ticker(data, "close", bollinger_window)
+    data[f"bollinger_upper_{bollinger_window}"] = data[mid_col] + 2.0 * data[std_col]
+    data[f"bollinger_lower_{bollinger_window}"] = data[mid_col] - 2.0 * data[std_col]
+    data[f"bollinger_width_{bollinger_window}"] = _safe_divide(
+        data[f"bollinger_upper_{bollinger_window}"]
+        - data[f"bollinger_lower_{bollinger_window}"],
+        data[mid_col],
+    )
+
+
+def _add_donchian_indicators(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    donchian_window = windows.indicators.get("donchian")
+    if not donchian_window:
+        return
+    groups = data.groupby("ticker", group_keys=False, sort=False)
+    shifted_high = groups["high"].shift(1)
+    shifted_low = groups["low"].shift(1)
+    data[f"donchian_high_prior_{donchian_window}"] = _shifted_rolling_extreme(
+        shifted_high, data["ticker"], donchian_window, "max"
+    )
+    data[f"donchian_low_prior_{donchian_window}"] = _shifted_rolling_extreme(
+        shifted_low, data["ticker"], donchian_window, "min"
+    )
+
+
+def _shifted_rolling_extreme(
+    values: pd.Series,
+    tickers: pd.Series,
+    window: int,
+    method: str,
+) -> pd.Series:
+    rolling = values.groupby(tickers, group_keys=False, sort=False).rolling(
+        window, min_periods=window
+    )
+    result = rolling.max() if method == "max" else rolling.min()
+    return result.reset_index(level=0, drop=True)
+
+
+def _add_cmf_indicator(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    cmf_window = windows.indicators.get("cmf")
+    if cmf_window:
+        data[f"cmf_{cmf_window}"] = _cmf(data, cmf_window)
 
 
 def _safe_divide(numerator: pd.Series, denominator: pd.Series) -> pd.Series:
@@ -328,6 +374,14 @@ def _add_volume_indicators(data: pd.DataFrame, windows: IndicatorWindows) -> Non
 
 
 def _add_statistics(data: pd.DataFrame, windows: IndicatorWindows) -> None:
+    _add_return_autocorrelation(data, windows)
+    _add_abs_return_autocorrelation(data, windows)
+    _add_volume_return_correlation(data, windows)
+    _add_efficiency_ratio(data, windows)
+    _add_noise_ratio(data, windows)
+
+
+def _add_return_autocorrelation(data: pd.DataFrame, windows: IndicatorWindows) -> None:
     autocorr_window = windows.statistics.get("autocorrelation")
     if autocorr_window:
         data[f"return_autocorr_{autocorr_window}"] = data.groupby(
@@ -338,6 +392,8 @@ def _add_statistics(data: pd.DataFrame, windows: IndicatorWindows) -> None:
             level=0, drop=True
         )
 
+
+def _add_abs_return_autocorrelation(data: pd.DataFrame, windows: IndicatorWindows) -> None:
     abs_autocorr_window = windows.statistics.get("abs_return_autocorrelation")
     if abs_autocorr_window:
         data["abs_return_1d"] = data["return_1d"].abs()
@@ -349,6 +405,8 @@ def _add_statistics(data: pd.DataFrame, windows: IndicatorWindows) -> None:
             level=0, drop=True
         )
 
+
+def _add_volume_return_correlation(data: pd.DataFrame, windows: IndicatorWindows) -> None:
     volume_return_window = windows.statistics.get("volume_return_correlation")
     if volume_return_window:
         data["volume_change_1d"] = data.groupby("ticker", group_keys=False, sort=False)[
@@ -362,31 +420,30 @@ def _add_statistics(data: pd.DataFrame, windows: IndicatorWindows) -> None:
             ).corr(group["volume_change_1d"])
         ).reset_index(level=0, drop=True)
 
+
+def _add_efficiency_ratio(data: pd.DataFrame, windows: IndicatorWindows) -> None:
     efficiency_window = windows.statistics.get("efficiency_ratio")
     if efficiency_window:
-        endpoint_change = data.groupby("ticker", group_keys=False, sort=False)[
-            "close"
-        ].diff(efficiency_window).abs()
-        path_length = data.groupby("ticker", group_keys=False, sort=False)[
-            "close"
-        ].diff().abs().groupby(data["ticker"], group_keys=False, sort=False).rolling(
-            efficiency_window, min_periods=efficiency_window
-        ).sum().reset_index(level=0, drop=True)
+        endpoint_change, path_length = _path_change_components(data, efficiency_window)
         data[f"efficiency_ratio_{efficiency_window}"] = _safe_divide(
             endpoint_change, path_length
         )
 
+
+def _add_noise_ratio(data: pd.DataFrame, windows: IndicatorWindows) -> None:
     noise_window = windows.statistics.get("noise_ratio")
     if noise_window:
-        endpoint_change = data.groupby("ticker", group_keys=False, sort=False)[
-            "close"
-        ].diff(noise_window).abs()
-        path_length = data.groupby("ticker", group_keys=False, sort=False)[
-            "close"
-        ].diff().abs().groupby(data["ticker"], group_keys=False, sort=False).rolling(
-            noise_window, min_periods=noise_window
-        ).sum().reset_index(level=0, drop=True)
+        endpoint_change, path_length = _path_change_components(data, noise_window)
         data[f"noise_ratio_{noise_window}"] = _safe_divide(path_length, endpoint_change)
+
+
+def _path_change_components(data: pd.DataFrame, window: int) -> tuple[pd.Series, pd.Series]:
+    close_by_ticker = data.groupby("ticker", group_keys=False, sort=False)["close"]
+    endpoint_change = close_by_ticker.diff(window).abs()
+    path_length = close_by_ticker.diff().abs().groupby(
+        data["ticker"], group_keys=False, sort=False
+    ).rolling(window, min_periods=window).sum().reset_index(level=0, drop=True)
+    return endpoint_change, path_length
 
 
 def _assert_no_forbidden_columns(frame: pd.DataFrame) -> None:

@@ -52,6 +52,7 @@ DEFAULT_EXCLUDE_DIRS = {
     "venv",
     "node_modules",
     "samples",
+    "worktrees",
 }
 MAX_FUNCTION_LINES = 50
 BOUNDS_CHECK_LOOKBACK_LINES = 16
@@ -517,7 +518,7 @@ def iter_python_files(paths: Iterable[Path], exclude_dirs: set[str]) -> Iterable
             yield from (
                 child
                 for child in path.rglob("*.py")
-                if not any(part in exclude_dirs for part in child.parts)
+                if not any(part in exclude_dirs for part in child.relative_to(path).parts)
             )
         elif path.suffix == ".py":
             yield path

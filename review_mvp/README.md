@@ -6,6 +6,12 @@ Swift 기준 리뷰 프롬프트를 Python 기준으로 옮기고, 그 기준 �
 
 기본 리뷰는 가장 좁은 책임 범위를 가진 하위 프로젝트에서 시작합니다. `review_mvp`는 모든 작은 local change의 필수 병목이 아닙니다.
 
+수정 경계도 좁게 유지합니다. `review_mvp` 내부 작업은 기본적으로
+`review_mvp` 소유 파일만 수정합니다. 다른 하위 프로젝트나 루트 파일은
+해당 하위 프로젝트 또는 master/root가 코드리뷰 수정을 명시적으로 맡긴
+경우에만, 구체적인 리뷰 finding을 해결하는 최소 범위로 수정합니다.
+그 외에는 findings, handoff, TODO로 넘깁니다.
+
 자세한 호출 기준은 `../docs/review_mvp_policy.md`와 `../docs/review_flow.md`를 따릅니다.
 
 ## Python 코드 리뷰 기준
@@ -53,6 +59,10 @@ Swift 기준 리뷰 프롬프트를 Python 기준으로 옮기고, 그 기준 �
 
 ## 실행 방법
 
+`review_mvp` 내부 변경을 점검할 때는 `review_mvp` 디렉터리 안에서
+실행하고 현재 하위 프로젝트만 대상으로 둡니다. 이 local 명령은
+`Quant_mvp`, `chart_mvp`, `reserch_mvp`를 스캔하지 않습니다.
+
 기본 텍스트 리포트:
 
 ```bash
@@ -89,14 +99,18 @@ py -3 review.py . --exclude-dir generated --exclude-dir vendor
 py -3 -m unittest discover -s tests
 ```
 
-`master_mvp` 루트에서 실행할 때:
+`master_mvp` 루트에서 실행하는 specialist review:
 
 ```bash
 py -3 review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --exclude-dir samples --format markdown
 py -3 -m unittest discover -s review_mvp/tests -v
 ```
 
-좁은 local change는 responsible subproject의 local first review와 local tests/checks만으로 충분할 수 있습니다. 위 명령은 specialist review 호출 조건에 해당할 때 사용합니다.
+루트 명령은 `Quant_mvp`, `chart_mvp`, `reserch_mvp` 등 다른 하위
+프로젝트까지 검사할 수 있으므로, master/root가 명시적으로 요청한
+cross-project 또는 final-validation review에만 사용합니다. 좁은 local
+change는 responsible subproject의 local first review와 local
+tests/checks만으로 충분할 수 있습니다.
 
 ## `/review` 프롬프트 예시
 

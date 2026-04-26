@@ -194,6 +194,23 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual([], directory_result.findings)
         self.assertEqual(["hardcoded-secret"], [finding.rule for finding in explicit_file_result.findings])
 
+    def test_default_excludes_worktree_dirs_but_explicit_file_can_be_scanned(self) -> None:
+        worktrees_dir = self.temp_dir / "worktrees"
+        self.addCleanup(lambda: shutil.rmtree(worktrees_dir, ignore_errors=True))
+        nested_dir = worktrees_dir / "review_branch"
+        nested_dir.mkdir(parents=True, exist_ok=True)
+        nested_file = nested_dir / "vulnerable.py"
+        nested_file.write_text('token = "plain-text"\n', encoding="utf-8")
+
+        directory_result = review.run_review([self.temp_dir], review.DEFAULT_EXCLUDE_DIRS)
+        explicit_directory_result = review.run_review([nested_dir], review.DEFAULT_EXCLUDE_DIRS)
+        explicit_file_result = review.run_review([nested_file], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertNotIn(str(nested_file), directory_result.scanned_files)
+        self.assertEqual([], directory_result.findings)
+        self.assertEqual(["hardcoded-secret"], [finding.rule for finding in explicit_directory_result.findings])
+        self.assertEqual(["hardcoded-secret"], [finding.rule for finding in explicit_file_result.findings])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -25,8 +25,7 @@ recommendations, or backtest feedback. It collects:
 5. local Review Gate and on-demand review skill routing docs
 6. pre-freeze GUI extraction into `gui_mvp`
 7. approved MVP v0.1 pre-freeze readiness policy and symbol-contract refactors
-8. Quant-owned evaluation-only backtest GUI sidecar
-9. research-informed Quant candidate-governance notes and inactive config
+8. research-informed Quant candidate-governance notes and inactive config
    metadata
 
 ## Allowed Write Paths
@@ -42,7 +41,6 @@ recommendations, or backtest feedback. It collects:
 - Quant_mvp/reports/
 - Quant_mvp/agents/audit/AGENTS.md
 - Quant_mvp/agents/valuation/AGENTS.md
-- Quant_mvp/backtest_gui/
 - Quant_mvp/backtest_mvp/
 - chart_mvp/AGENTS.md
 - chart_mvp/README.md
@@ -80,7 +78,6 @@ recommendations, or backtest feedback. It collects:
 - tests/context/
 - tests/data_validation/
 - tests/gui_mvp/
-- tests/quant_backtest_gui/
 - tests/reports/
 - tests/scanner/
 - tests/validation/
@@ -129,7 +126,6 @@ recommendations, or backtest feedback. It collects:
 ## Required Validation
 
 - python -m pytest -q -p no:cacheprovider tests/gui_mvp chart_mvp/tests/test_gui_financials.py tests/backtest
-- python -m pytest -q -p no:cacheprovider tests/quant_backtest_gui tests/backtest
 - python -m pytest -q -p no:cacheprovider tests/backtest/test_conservative_backtest_core.py tests/data_validation/test_schema_validation_contract.py tests/reports/test_step16_security_detail_report.py tests/reports/test_step16_security_detail_report_contracts.py tests/scanner/test_latest_ranking_symbol_policy.py tests/test_step10_normalization_cross_sectional.py tests/test_step10_normalization_timeseries.py tests/test_step9_scores_part_a.py tests/test_step9_scores_part_b.py tests/validation/test_step15_latest_ranking_guardrails.py chart_mvp/tests/test_market_extensibility.py
 - python -c "import pathlib,tomllib; [tomllib.loads(pathlib.Path(p).read_text(encoding='utf-8')) for p in ('Quant_mvp/config/scores.toml','Quant_mvp/config/weights.toml')]"
 - python scripts/run_local_validation.py chart

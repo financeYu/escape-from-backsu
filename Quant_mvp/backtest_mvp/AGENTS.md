@@ -40,5 +40,5 @@ should import `Quant_mvp.backtest_mvp`.
 Preferred focused validation from the repository root:
 
 ```powershell
-python -m pytest -q tests/backtest tests/quant_backtest_gui tests/validation/test_step19_pipeline_guardrails.py
+python -m pytest -q tests/backtest tests/validation/test_step19_pipeline_guardrails.py
 ```

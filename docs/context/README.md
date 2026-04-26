@@ -28,6 +28,12 @@ Context docs are routing aids. They are not permission to bypass roadmap order, 
 - `domain/`: lightweight domain stubs that link to canonical docs instead of duplicating them.
 - `generated/`: packet examples or future generated packet outputs. Do not treat generated packets as authority overrides.
 
+## Tooling
+
+- `scripts/context/build_context_packet.py`: builds a compact routed packet for a task.
+- `scripts/context/check_context_staleness.py`: warns about obvious roadmap/checklist/context packet mismatches.
+- `scripts/context/check_context_conflicts.py`: flags suspicious forbidden claims in context docs.
+
 ## Pre-Step19 Boundary
 
 This Pre-Step19 context-routing work is planning/support only. It must not start Step 19 implementation, automatic execution, new market-data ingestion, KOSDAQ150 expansion, futures/options work, ranking/scoring/backtest changes, valuation scoring, or report semantic changes.

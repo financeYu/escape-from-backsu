@@ -7,8 +7,10 @@ from pathlib import Path
 import pytest
 
 from research_ingestion.cli import _update_source_health_from_collection, cmd_classify, cmd_normalize, main
+from research_ingestion.cli_collect import _fetch_source_page
 from research_ingestion.config import ProjectPaths, load_research_config
 from research_ingestion.persistence import read_jsonl, write_json, write_jsonl
+from research_ingestion.sources.http import SourceResponse
 
 
 def test_collect_dry_run_reports_guardrails(capsys, monkeypatch):
@@ -119,6 +121,34 @@ def test_collect_source_health_counts_accepted_and_rejected_items(sample_paper):
     assert health["arxiv"]["new_item_count"] == 1
     assert health["arxiv"]["manual_review_required_count"] == 0
     assert health["arxiv"]["reject_reason_counts"] == {"collection_exclude_keyword": 1}
+
+
+def test_fetch_source_page_returns_cache_metadata():
+    class FakeAdapter:
+        def fetch_search_response(self, query, start, max_results):
+            return SourceResponse(
+                url="https://export.arxiv.org/api/query",
+                body="<feed></feed>",
+                status=200,
+                headers={},
+                retry_count=0,
+            )
+
+    page = _fetch_source_page(
+        FakeAdapter(),
+        "arxiv",
+        "cat:q-fin.ST",
+        1,
+        0,
+        1,
+        cache=None,
+    )
+
+    assert page.response.status == 200
+    assert page.cache_status == "disabled"
+    assert page.cache_key is None
+    assert page.request_latency_ms >= 0.0
+    assert page.rate_limit_wait_seconds == 0.0
 
 
 def test_backtest_normalize_uses_run_and_lane_files_without_overwriting_global(sample_paper, workspace_tmp_path):

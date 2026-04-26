@@ -19,6 +19,12 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 LOCAL_TEMP_ROOT = REPO_ROOT / ".pytest_tmp" / "local_validation"
 
 PYTEST_SUITES: dict[str, tuple[str, ...]] = {
+    "smoke": (
+        "tests/context",
+        "tests/scanner/test_run_mvp_latest_ranking_cli.py",
+        "tests/scanner/test_step20_ranking_regression.py",
+        "tests/validation/test_step20_mvp_scope_guardrails.py",
+    ),
     "context": ("tests/context",),
     "reports-backtest": ("tests/reports", "tests/backtest"),
     "scanner-validation": ("tests/scanner", "tests/reports", "tests/validation"),

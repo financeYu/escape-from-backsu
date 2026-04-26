@@ -24,6 +24,16 @@ def test_pytest_suite_uses_workspace_local_basetemp() -> None:
     assert str(LOCAL_TEMP_ROOT / "context-manual" / "basetemp") in command
 
 
+def test_smoke_suite_covers_context_and_mvp_reproducibility_checks() -> None:
+    command = build_validation_command("smoke", python_executable="python")
+
+    assert "tests/context" in command
+    assert "tests/scanner/test_run_mvp_latest_ranking_cli.py" in command
+    assert "tests/scanner/test_step20_ranking_regression.py" in command
+    assert "tests/validation/test_step20_mvp_scope_guardrails.py" in command
+    assert str(LOCAL_TEMP_ROOT / "smoke-manual" / "basetemp") in command
+
+
 def test_unittest_suite_does_not_need_pytest_basetemp() -> None:
     command = build_validation_command("chart", python_executable="python")
 

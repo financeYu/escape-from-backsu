@@ -50,6 +50,7 @@ repository-local temp root를 강제하는 검증 실행기를 사용한다.
 
 ```powershell
 python scripts/run_local_validation.py context
+python scripts/run_local_validation.py smoke
 python scripts/run_local_validation.py reports-backtest
 python scripts/run_local_validation.py chart
 ```
@@ -60,6 +61,30 @@ python scripts/run_local_validation.py chart
 gate 문서가 우선한다.
 
 Step 종료나 master integration 맥락에서는 로드맵 문서의 현재 Step-end gate가 우선한다.
+
+## MVP v0.1 Latest Ranking Command
+
+MVP v0.1 canonical latest ranking은 `chart_mvp` legacy Top-N 산출물이 아니라
+루트 `src.scanner.latest_ranking` 경로가 소유한다. 로컬 CSV 입력이 준비된
+상태에서는 아래 명령으로 KOSPI200 technical-only latest ranking을 생성한다.
+
+```powershell
+python scripts/run_mvp_latest_ranking.py `
+  --normalized-scores data/processed/normalized_technical_scores.csv `
+  --adoption-synthesis reports/selection/adoption_synthesis.csv `
+  --as-of-date YYYY-MM-DD `
+  --max-allowed-date YYYY-MM-DD `
+  --output reports/selection/latest_ranking.csv `
+  --manifest-output reports/selection/latest_ranking_manifest.json
+```
+
+입력 CSV는 이미 생성된 normalized technical score rows와 Step 14 technical-only
+adoption synthesis table이어야 한다. 이 명령은 valuation/fundamental data,
+backtest output, KOSDAQ150/futures/options/overseas data를 입력으로 요구하지
+않으며, `final_composite_score`는 MVP v0.1 계약대로
+`technical_composite_score`와 동일하게 생성된다.
+재현성을 위해 `--as-of-date`와 `--max-allowed-date`는 필수이며, manifest에는
+입력 파일 hash, 실행 parameter, Python/pandas/numpy version이 기록된다.
 
 ## Review And Context Scripts
 

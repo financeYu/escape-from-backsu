@@ -4,12 +4,12 @@
 
 ## 현재 활성 단계
 
-Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expansion
+Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fundamental expansion implemented
 
-- Recently completed: Step 17 = 보수적 백테스트, COMPLETE
-- Recently completed before that: Step 16 = 종목별 상세 리포트 구현, COMPLETE
-- Carry-forward: Step 2 PIT financial availability follow-up is assigned to Step 18, not Step 9/10/11/12/13/14/15/16/17 technical or backtest work.
-- Current gate: Step 18 valuation/fundamental expansion remains deferred and must not start without explicit user/root assignment and PIT financial-data boundary validation.
+- Recently completed: Step 18 = 밸류에이션 확장 준비, COMPLETE
+- Recently completed before that: Step 17 = 보수적 백테스트, COMPLETE
+- Carry-forward resolved for this Step: Step 18 now defines candidate-only financial metadata schema, availability-date validation, metric registry, and leakage guardrails.
+- Current gate: Step 19 remains WAITING / not started. Step 18 candidate data is not activated in technical scoring, final ranking, or Step 17 backtest inputs.
 
 ## 병렬 Workspace 운영 메모
 
@@ -42,7 +42,7 @@ Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expans
 | Step 15 | COMPLETE |
 | Step 16 | COMPLETE |
 | Step 17 | COMPLETE |
-| Step 18 | DEFERRED / waiting for valuation expansion |
+| Step 18 | COMPLETE |
 | Step 19 | WAITING / not started |
 | Step 20 | WAITING / not started |
 
@@ -63,6 +63,21 @@ Step 18 = 밸류에이션 확장 준비, DEFERRED / waiting for valuation expans
 - ranking, latest ranking, composite score, backtest, valuation/fundamental scoring은 여전히 생성하지 않는다.
 
 ## 최근 완료 Step 요약
+
+### Step 18 = Valuation / Fundamental Expansion
+
+- Step 18 candidate-only valuation/fundamental contracts, metric registry, validation guardrails, candidate report, architecture boundary documentation, and tests are implemented.
+- Candidate metadata schema is canonicalized as `ticker`, `period`, `metric`, `value`, `filing_date`, `availability_date`, `disclosure_id` or `source_report_id`, `source_vendor`, and `collected_at`; legacy aliases are ingestion compatibility only.
+- `src/valuation/` defines candidate records and report helpers only; it does not create a valuation score, fundamental score, valuation-aware composite, trading signal, or ranking output.
+- `config/valuation_fundamental_metrics.toml` lists allowed candidate-only metric names and keeps `technical_composite_score`, `final_composite_score`, backtest integration, alpha validation, and external network calls disabled.
+- `src/validation/step18_valuation_fundamental_guardrails.py` validates candidate records, availability-date usage, required PIT metadata, reporting-lag/stale-data policy, candidate report notices, forbidden trading/predictive/score language, production-output leakage, and backtest availability boundaries.
+- `docs/architecture/step18_valuation_fundamental_boundary.md` documents the separation between technical scores, candidate valuation/fundamental data, final ranking scores, and Step 17 backtest inputs.
+- Latest master integration validation: `python -m pytest -q -p no:cacheprovider` = 651 passed, 4 skipped, 25 subtests passed.
+- Focused Step 18 master integration validation: `python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py` = 44 passed.
+- Related scanner/report/backtest/validation master integration validation: `python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation` = 229 passed.
+- Manual forbidden-language reproduction now rejects `buy recommendation and proven alpha` with `alpha proven, buy recommendation`.
+- `review_mvp` specialist static review command on Step 18 production/test paths returned 0 high and 0 medium findings; 3 low style/quality findings are non-blocking.
+- Cross-Step Conflict Checkpoint after post-fix validation: PASS. Packet regenerated with `python scripts/build_review_packet.py --step "Step 18" --stage "post-fix validation"`; manual checkpoint found no blocking roadmap/order, hard-stop, technical composite, final composite, Step 15 ranking, Step 17 backtest, generated-output, alpha-claim, trading-signal, or unrelated dirty-worktree issue. During master integration, `WORKSPACE_MANIFEST.md` was updated to reflect the Step 18 integration branch identity.
 
 ### Step 17 = Conservative Backtest
 
@@ -172,12 +187,12 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 
 ## 밸류에이션 상태
 
-- `valuation_status = deferred`
-- `financial_data_usage_now = inventory_only_or_gui_display_only`
-- `point_in_time_status = unverified`, unless separate disclosure or availability dates are validated later.
+- `valuation_status = candidate_only_not_activated`
+- `financial_data_usage_now = candidate_schema_and_synthetic_fixtures_only`
+- `point_in_time_status = availability_date_required_for_candidate_records`; live vendor PIT availability remains unverified until separately proven.
 - `financial_data_in_technical_score = false`
 - `financial_data_in_final_composite_score = false`
-- Step 18 owns point-in-time financial metadata schema and valuation/fundamental expansion preparation.
+- Step 18 candidate data remains separate from technical scoring, final ranking, and Step 17 backtest inputs.
 
 ## 활성 Guardrails
 
@@ -189,7 +204,7 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 - documented composite design 전 composite score implementation 금지
 - active Step이 명시적으로 허용하기 전에는 ranking generation 금지
 - Step 17 전 backtest 금지
-- valuation status가 deferred인 동안 valuation/fundamental scoring 금지
+- valuation status가 candidate-only인 동안 active valuation/fundamental scoring 금지
 - financial data를 `technical_composite_score`에 넣지 않는다
 - financial data를 `final_composite_score`에 넣지 않는다
 - price-only evidence에 valuation language 사용 금지

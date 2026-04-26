@@ -1,0 +1,120 @@
+[status]
+step = "Step 18"
+activation = "candidate_only"
+technical_composite_score_integration = false
+final_composite_score_integration = false
+backtest_integration = false
+alpha_validation = false
+external_network_calls = false
+
+[[metrics]]
+metric_name = "per"
+metric_category = "valuation"
+metric_unit = "ratio"
+numeric_required = true
+candidate_only = true
+notes = "Candidate explanatory valuation ratio only; not an active score."
+
+[[metrics]]
+metric_name = "pbr"
+metric_category = "valuation"
+metric_unit = "ratio"
+numeric_required = true
+candidate_only = true
+notes = "Candidate explanatory valuation ratio only; not an active score."
+
+[[metrics]]
+metric_name = "psr"
+metric_category = "valuation"
+metric_unit = "ratio"
+numeric_required = true
+candidate_only = true
+notes = "Candidate explanatory valuation ratio only; not an active score."
+
+[[metrics]]
+metric_name = "pcr"
+metric_category = "valuation"
+metric_unit = "ratio"
+numeric_required = true
+candidate_only = true
+notes = "Candidate explanatory valuation ratio only; not an active score."
+
+[[metrics]]
+metric_name = "dividend_yield"
+metric_category = "valuation"
+metric_unit = "percent"
+numeric_required = true
+candidate_only = true
+notes = "Candidate explanatory yield field only; not an active score."
+
+[[metrics]]
+metric_name = "roe"
+metric_category = "profitability"
+metric_unit = "percent"
+numeric_required = true
+candidate_only = true
+notes = "Candidate profitability field only; not an active score."
+
+[[metrics]]
+metric_name = "roa"
+metric_category = "profitability"
+metric_unit = "percent"
+numeric_required = true
+candidate_only = true
+notes = "Candidate profitability field only; not an active score."
+
+[[metrics]]
+metric_name = "operating_margin"
+metric_category = "profitability"
+metric_unit = "percent"
+numeric_required = true
+candidate_only = true
+notes = "Candidate profitability field only; not an active score."
+
+[[metrics]]
+metric_name = "net_margin"
+metric_category = "profitability"
+metric_unit = "percent"
+numeric_required = true
+candidate_only = true
+notes = "Candidate profitability field only; not an active score."
+
+[[metrics]]
+metric_name = "debt_to_equity"
+metric_category = "leverage"
+metric_unit = "ratio"
+numeric_required = true
+candidate_only = true
+notes = "Candidate leverage field only; not an active score."
+
+[[metrics]]
+metric_name = "current_ratio"
+metric_category = "quality"
+metric_unit = "ratio"
+numeric_required = true
+candidate_only = true
+notes = "Candidate balance-sheet quality field only; not an active score."
+
+[[metrics]]
+metric_name = "revenue_growth_yoy"
+metric_category = "growth"
+metric_unit = "percent"
+numeric_required = true
+candidate_only = true
+notes = "Candidate growth field only; not an active score."
+
+[[metrics]]
+metric_name = "operating_income_growth_yoy"
+metric_category = "growth"
+metric_unit = "percent"
+numeric_required = true
+candidate_only = true
+notes = "Candidate growth field only; not an active score."
+
+[[metrics]]
+metric_name = "eps_growth_yoy"
+metric_category = "growth"
+metric_unit = "percent"
+numeric_required = true
+candidate_only = true
+notes = "Candidate growth field only; not an active score."

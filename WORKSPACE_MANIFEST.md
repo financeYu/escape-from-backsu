@@ -1,84 +1,78 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: integration_step17_conservative_backtest_merge
-branch: integration/step17-conservative-backtest-merge
+workspace_id: integration_step18_valuation_fundamental_expansion_merge
+branch: integration/step18-valuation-fundamental-expansion-merge
 task_type: master_integration
-active_step: Step 17 conservative backtest
-owner_or_worker: Step 17 Integration Agent
-created_from_commit: 564db56
+active_step: Step 18 Valuation / Fundamental Expansion
+owner_or_worker: root master agent
+created_from_commit: e075ef3c31cef2bda64bb722c01d3e1f4f9e2417
 
 ## Purpose
 
-Merge Worker A and Worker B Step 17 branches, resolve integration conflicts,
-run validation, perform the Cross-Step Conflict Checkpoint, and update Step 17
-status only if the merged result passes the required gates.
+Merge the Step 18 implementation branch, validate candidate-only valuation/fundamental boundaries, run Step-end review gates, close Step 18, and refresh the compact local Quant project context.
 
-## Source branches
+## Source branch
 
-- codex/step17-backtest-core
-- codex/step17-backtest-guardrails
-
-## Scope
-
-Merge Worker A and Worker B, resolve integration conflicts, run validation, and
-update Step 17 status only if complete.
+- codex/step18-valuation-fundamental-expansion
 
 ## Allowed work
 
-- merge Worker A first, then Worker B
-- preserve Worker A ownership for backtest core paths
-- preserve Worker B ownership for Step 17 guardrail, report-boundary, and
-  backtest generated-output boundary paths
-- apply minimal deterministic compatibility fixes when validation requires them
-- run focused backtest and guardrail tests
-- run related scanner, report, validation, and full test suites
+- merge the Step 18 implementation branch into this integration branch
+- preserve Step 18 candidate-only valuation/fundamental scope
+- run full and focused pytest validation
+- run forbidden-scope searches for valuation, score, ranking, backtest, alpha, and trading-signal leakage
 - run the Cross-Step Conflict Checkpoint
-- update Step 17 roadmap/status docs only after all required validation passes
-- refresh the local project context after Step-end validation and commit
+- run required Step-end specialist review checks
+- apply minimal manifest, status, or documentation corrections required by the master integration gate
+- commit the validated merge result
+- refresh the latest local Quant project context snapshot after the Step commit
+
+## Read-only paths unless a validation gate requires a narrow correction
+
+- AGENTS.md
+- Quant_mvp/AGENTS.md
+- Quant_mvp/agents/valuation/AGENTS.md
+- docs/workspace_parallel_work_policy.md
+- docs/step2_financial_validation_summary.md
+- src/scanner/
+- src/backtest/
+- src/composite/
+- src/scores/
 
 ## Forbidden actions
 
-- new feature implementation
-- score formula changes
-- normalized score formula changes
-- ranking formula changes
-- composite score changes
-- valuation/fundamental scoring
-- PER, PBR, ROE, EPS, BPS, financial statement, or market-cap fundamental inputs
-- trading recommendation language
-- buy, sell, hold-as-recommendation, target price, expected return, or signal output
-- silent upstream schema rewrites
-- Step 15 ranking rewrite
-- Step 16 report rewrite beyond read-only compatibility
-- return feedback into scoring, adoption, ranking, or report logic
-- strategy optimization or parameter tuning from results
-- generated runtime report/cache commits unless explicitly promoted as fixtures
-- unrelated cleanup, reset, stash, or branch history rewrites
+- active valuation/fundamental scoring
+- valuation-aware composite scoring
+- financial/fundamental data in technical_composite_score or final_composite_score
+- ranking output changes beyond tests proving Step 18 exclusion
+- Step 17 backtest behavior changes beyond tests proving Step 18 exclusion
+- trading recommendations, target prices, expected returns, predictive alpha claims, or signal output
+- external financial data/network collection
+- Step 19 or later implementation
+- unrelated cleanup, reset, stash, or history rewrite
+- generated market-data, runtime report, cache, or chart commits unless explicitly promoted as review fixtures
 
 ## Expected output
 
-- integrated Step 17 source-controlled files
-- conservative conflict-resolution summary
-- focused and broad validation summary
+- integrated Step 18 candidate-only source-controlled files
+- validation and review summary
 - Cross-Step Conflict Checkpoint result
-- roadmap status update only if Step 17 passes
-- commit SHA when the final integrated Step state is committed
+- Step 18 COMPLETE roadmap/status update
+- merge commit SHA
+- post-commit context refresh result
 
 ## Required validation
 
-- git status / branch / recent log
-- python -m pytest -q tests/backtest
-- python -m pytest -q tests/validation/test_step17_backtest_guardrails.py
-- python -m pytest -q tests/reports if report tests exist
-- python -m pytest -q tests/scanner tests/reports tests/validation
-- python -m pytest -q
-- python scripts/build_review_packet.py --step "Step 17" --stage "post-merge integration validation"
-- Cross-Step Conflict Checkpoint using docs/cross_step_conflict_check.md and
-  the generated review packet
+- git status / changed-file manifest
+- python -m pytest -q -p no:cacheprovider
+- python -m pytest -q -p no:cacheprovider tests/valuation tests/validation/test_step18_valuation_fundamental_guardrails.py tests/scanner/test_step18_valuation_boundary.py tests/backtest/test_step18_backtest_boundary.py
+- python -m pytest -q -p no:cacheprovider tests/scanner tests/reports tests/backtest tests/validation
+- review_mvp static review on Step 18 changed production/test paths
+- forbidden-scope search
+- python scripts/build_review_packet.py --step "Step 18" --stage "master integration pre-commit"
+- Cross-Step Conflict Checkpoint using docs/cross_step_conflict_check.md and the generated review packet
 
 ## Handoff notes
 
-The master workspace at `C:\Users\jjaew\Project\master_mvp` contains Step 16
-completion-related dirty files that are intentionally excluded from this Step
-17 integration worktree. Do not copy, restore, stage, or absorb those changes
-into this branch.
+The implementation worktree remains `C:\Users\jjaew\Project\worktrees\step18_valuation_fundamental_expansion` on `codex/step18-valuation-fundamental-expansion`.
+The root workspace at `C:\Users\jjaew\Project\master_mvp` is used only for merge, validation, Step status, and context refresh.

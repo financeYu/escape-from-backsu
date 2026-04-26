@@ -9,8 +9,8 @@ from typing import Any
 
 import pandas as pd
 
-from src.backtest import BacktestConfig
-from src.backtest.contracts import (
+from Quant_mvp.backtest_mvp import BacktestConfig
+from Quant_mvp.backtest_mvp.contracts import (
     ALLOWED_MISSING_PRICE_POLICIES,
     ALLOWED_PRICE_POLICIES,
     ALLOWED_REBALANCE_FREQUENCIES,
@@ -26,7 +26,7 @@ from Quant_mvp.backtest_gui.service import (
 
 
 class BacktestGuiApp(tk.Tk):
-    """Local GUI shell that delegates all calculations to `src.backtest`."""
+    """Local GUI shell that delegates calculations to `Quant_mvp.backtest_mvp`."""
 
     def __init__(self) -> None:
         super().__init__()

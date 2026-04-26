@@ -1,0 +1,13 @@
+# Default search exclusions for context and validation scans.
+worktrees/**
+chart_mvp/worktrees/**
+**/.pytest_tmp/**
+tests/_tmp/**
+**/outputs/**
+
+# Generated runtime outputs that are not default context.
+reports/security/generated/**
+reports/backtest/generated/**
+reports/valuation/generated/**
+reports/pipeline/generated/**
+chart_mvp/outputs/**

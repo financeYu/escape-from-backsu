@@ -11,12 +11,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.backtest import (  # noqa: E402
+from Quant_mvp.backtest_mvp import (  # noqa: E402
     BacktestConfig,
     BacktestLimitationFlag,
     run_conservative_backtest,
 )
-from src.backtest.contracts import assert_ticker_strings  # noqa: E402
+from Quant_mvp.backtest_mvp.contracts import assert_ticker_strings  # noqa: E402
 from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY  # noqa: E402
 
 
@@ -109,7 +109,9 @@ def one_period_config(**overrides: object) -> BacktestConfig:
 
 
 def test_default_backtest_config_file_loads() -> None:
-    config = BacktestConfig.from_toml_file(PROJECT_ROOT / "config" / "backtest.toml")
+    config = BacktestConfig.from_toml_file(
+        PROJECT_ROOT / "Quant_mvp" / "backtest_mvp" / "config" / "backtest.toml"
+    )
 
     assert config.weight_method == "equal_weight"
     assert config.missing_price_policy == "flag_and_skip"

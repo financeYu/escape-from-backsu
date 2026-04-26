@@ -27,7 +27,7 @@ trusted by default.
 | 2. Naver I/O separation | Price refresh no longer refreshes financial statements by default; statement refresh remains opt-in through `refresh_financials=True` or dedicated financial-cache script. | `chart_mvp/src/stock_core/cache/csv_cache.py`, `chart_mvp/src/stock_core/providers/naver_price_provider.py`, `chart_mvp/tests/test_naver_finance.py` |
 | 3. Chart refetch avoidance | Chart rendering reuses already processed indicator rows when they cover the chart display window; it fetches only when processed rows are insufficient. | `chart_mvp/src/stock_core/pipeline/daily_update.py`, `chart_mvp/tests/test_pipeline.py` |
 | 4. Windows temp validation | Added local validation runner that sets `TMP`, `TEMP`, `PYTEST_DEBUG_TEMPROOT`, and pytest `--basetemp` under `.pytest_tmp/local_validation/`; shortened sandbox temp fixture names with a deterministic hash to avoid Windows path-length failures. | `scripts/run_local_validation.py`, `tests/context/test_local_validation_runner.py`, `docs/development_environment.md`, `conftest.py` |
-| 5. Step16/17 scaling overhead | Step16 bulk report generation prepares metadata once per call; Step17 price lookup uses binary search instead of full boolean scan. | `src/reports/security_detail_report.py`, `tests/reports/test_step16_security_detail_report.py`, `src/backtest/engine.py` |
+| 5. Step16/17 scaling overhead | Step16 bulk report generation prepares metadata once per call; Step17 price lookup uses binary search instead of full boolean scan. | `src/reports/security_detail_report.py`, `tests/reports/test_step16_security_detail_report.py`, `Quant_mvp/backtest_mvp/engine.py` |
 
 ## Validation To Run
 

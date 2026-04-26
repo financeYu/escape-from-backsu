@@ -20,7 +20,7 @@ waste, clear baseline trust, and no repetitive reuse of old Step summaries.
 
 ## Default GPT Context Shape
 
-Default GPT input = one generated brief only: `docs/context/gpt_context_quant.md`.
+Default GPT input = one generated brief only: `docs/context/gpt/gpt_context_quant.md`.
 The brief is built from compact baseline facts plus one active request packet.
 
 Use this shape:
@@ -34,8 +34,8 @@ Use this shape:
 Do not include a Step-by-Step roadmap table in default GPT context.
 Do not include this rules file, the budget policy, or the routing index in the
 GPT prompt body.
-Generate the submission brief directly as `docs/context/gpt_context_quant.md`,
-not under `docs/context/generated/`.
+Generate the submission brief directly as `docs/context/gpt/gpt_context_quant.md`,
+not under `docs/context/generated/` or the default `docs/context/` root.
 
 ## Maximum Size Rules
 

@@ -71,7 +71,8 @@ This packet is a routing aid, not an authority document. It does not override
 - `src/scoring/**`
 - `src/scanner/**`
 - `src/reports/**`
-- `src/backtest/**`
+- `Quant_mvp/backtest_mvp/**`
+- `src/backtest/**` compatibility facade only
 - `src/valuation/**`
 - `src/pipeline/**`
 

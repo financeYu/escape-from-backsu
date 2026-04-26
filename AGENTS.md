@@ -2,12 +2,22 @@
 
 ## Default Project References
 
-Before starting any task, read `docs/project_checklist.md` and `docs/roadmap_status.md`.
+Before starting any task, read the compact root start set:
+
+- `docs/root_hard_stops.md`
+- `docs/roadmap_status.md`
+
+Use `docs/project_checklist.md` as a root authority/reference file. Its long
+Step roadmap/checklist body is historical pre-freeze planning after the MVP
+v0.1 baseline, so read it only when a task needs roadmap-order, hard-stop,
+provenance, regression, or release-evidence detail not covered by the compact
+start set.
 
 Reference authority:
 
 - `AGENTS.md` controls global behavior and safety rules.
-- `docs/project_checklist.md` controls roadmap order.
+- `docs/project_checklist.md` controls roadmap order and root hard-stop policy,
+  with historical Step detail targeted/on-demand after MVP v0.1.
 - `docs/roadmap_status.md` controls current step status.
 - The user's latest explicit instruction wins if there is a conflict.
 
@@ -15,7 +25,7 @@ Reference authority:
 
 Do not read the full repository history at task start. Keep initial context to the smallest safe set:
 
-1. current root authority status and hard stops from `docs/project_checklist.md` and `docs/roadmap_status.md`
+1. current root authority status and hard stops from `docs/root_hard_stops.md` and `docs/roadmap_status.md`
 2. the relevant subproject `AGENTS.md`
 3. exactly one active context packet for the current task
 4. one needed domain context stub, when a domain is involved
@@ -138,6 +148,7 @@ Subprojects:
 
 - `reserch_mvp`: research-ingestion specification and upstream evidence workflow
 - `Quant_mvp`: quant score design, technical-review governance, valuation boundary, and config policy
+- `Quant_mvp/backtest_mvp`: Quant-dependent evaluation-only conservative backtest module
 - `chart_mvp`: executable KOSPI200 scanner, data cache, chart rendering, CLI, GUI, and tests
 - `review_mvp`: specialist code-review tooling, minimal repair policy, and optional final-validation support
 
@@ -168,6 +179,7 @@ Before changing files, classify the request into one of these work types:
 - `master_governance`: repository structure, Git policy, CI, project registry, release notes
 - `research_ingestion`: papers, metadata sources, EvidenceCards, Google Scholar discovery imports
 - `score_design`: score taxonomy, formulas, branches, config, technical review
+- `backtest_mvp`: evaluation-only conservative backtest contracts, config, runner, and generated-output boundary under `Quant_mvp/backtest_mvp`
 - `scanner_runtime`: data fetching, cache behavior, indicators, chart rendering, CLI, GUI
 - `valuation_review`: point-in-time fundamental review, valuation score availability, valuation verdicts
 - `code_review`: correctness, security, reliability, minimal repair, changed-file review
@@ -370,6 +382,7 @@ ACCEPT / HOLD / REJECT
 | Research source collection or paper evidence | `reserch_mvp` | `reserch_mvp/AGENTS.md`, `reserch_mvp/config/research_*.toml` |
 | Research EvidenceCard intake for score governance | `Quant_mvp` | `Quant_mvp/AGENTS.md`, `Quant_mvp/config/research_intake.toml`, `Quant_mvp/agents/research/AGENTS.md` |
 | Technical score definition or adoption review | `Quant_mvp` | `Quant_mvp/AGENTS.md`, `Quant_mvp/config/*.toml` |
+| Evaluation-only conservative backtest module | `Quant_mvp/backtest_mvp` | `Quant_mvp/backtest_mvp/AGENTS.md`, `docs/context/domain/backtest_context.md`, `docs/step17_conservative_backtest_core.md` |
 | Scope compliance audit / worker scope creep check | `Quant_mvp/agents/audit` | `Quant_mvp/agents/audit/AGENTS.md`, `docs/scope_audit_process.md` |
 | Valuation or fundamental score review | `Quant_mvp/agents/valuation` | `Quant_mvp/agents/valuation/AGENTS.md` |
 | Runnable scanner, data cache, charts, GUI | `chart_mvp` | `chart_mvp/AGENTS.md`, `chart_mvp/README.md` |

@@ -43,6 +43,7 @@ recommendations, or backtest feedback. It collects:
 - Quant_mvp/agents/audit/AGENTS.md
 - Quant_mvp/agents/valuation/AGENTS.md
 - Quant_mvp/backtest_gui/
+- Quant_mvp/backtest_mvp/
 - chart_mvp/AGENTS.md
 - chart_mvp/README.md
 - chart_mvp/TEMPORARY_TOP5_OVERRIDE.md

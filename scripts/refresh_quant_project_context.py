@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import subprocess
 import sys
 import tomllib
 from dataclasses import dataclass
@@ -63,11 +62,8 @@ def refresh_context(config: ContextConfig) -> ExportResult:
 
 
 def build_context(config: ContextConfig) -> str:
+    hard_stops = _read_optional(config.project_root / "docs/root_hard_stops.md")
     roadmap = _read_optional(config.project_root / "docs/roadmap_status.md")
-    checklist = _read_optional(config.project_root / "docs/project_checklist.md")
-    quant_agents = _read_optional(config.project_root / "Quant_mvp/AGENTS.md")
-    score_catalog = _read_optional(config.project_root / "Quant_mvp/docs/score_catalog.md")
-    family_map = _read_optional(config.project_root / "Quant_mvp/docs/family_map.md")
 
     sections = [
         "# Quant Project Current Context",
@@ -85,9 +81,10 @@ def build_context(config: ContextConfig) -> str:
         "",
         "1. User's latest explicit instruction",
         "2. Root `AGENTS.md`",
-        "3. `docs/project_checklist.md`",
+        "3. `docs/root_hard_stops.md`",
         "4. `docs/roadmap_status.md`",
-        "5. Related source, tests, docs, and config",
+        "5. `docs/project_checklist.md` for targeted root authority lookup",
+        "6. Related source, tests, docs, and config",
         "",
         "## Current Roadmap Position",
         "",
@@ -100,70 +97,45 @@ def build_context(config: ContextConfig) -> str:
             ),
         ),
         "",
-        "## Roadmap Verdicts",
+        "## Current Baseline",
         "",
         _compact_first_section(
             roadmap,
             (
-                ("## 전체 Step 판정", "## 현재 Baseline 핵심", 28),
-                ("## 전체 Step 판정", "## 최근 완료 Step 요약", 28),
-                ("## 현재 판정", "## Step 13 통합 완료 상태", 24),
-            ),
-        ),
-        "",
-        "## Most Recent Completed Step",
-        "",
-        _compact_first_section(
-            roadmap,
-            (
-                ("## 현재 Baseline 핵심", "## Research Ingestion 상태", 16),
-                ("## 최근 완료 Step 요약", "## 상세 이력 위치", 32),
-                ("## Step 13 통합 완료 상태", "## Step 11 통합 상태", 40),
+                ("## 현재 Baseline 핵심", "## Research Ingestion 상태", 6),
+                ("## 최근 완료 Step 요약", "## 상세 이력 위치", 8),
             ),
         ),
         "",
         "## Cross-Step Conflict Checkpoint",
         "",
-        _compact_first_section(
-            roadmap,
-            (
-                ("## Step 간 충돌 체크포인트", "## 밸류에이션 상태", 24),
-            ),
-        ),
+        "- Run `docs/cross_step_conflict_check.md` when a gate-critical stage ends or a Step closes.",
+        "- Use `scripts/build_review_packet.py` for compact review input.",
         "",
         "## Active Guardrails",
         "",
-        _compact_section(checklist, "## 7. Hard Stop Rules", next_heading=None, max_lines=18),
-        "",
-        "## Git Snapshot",
-        "",
-        _git_snapshot(config.project_root),
+        _compact_section(
+            hard_stops,
+            "## Forbidden Scope Without Explicit Approval",
+            next_heading="## Archive Read Gate",
+            max_lines=10,
+        ),
         "",
         "## Step-End Context Policy",
         "",
-        "- Refresh this file after Step-end validation, review, required fixes, rerun, and commit.",
-        "- Keep latest-only local retention: remove obsolete local context files listed in config.",
-        "- Do not include `.env`, API keys, local runtime caches, chart images, generated data caches, or secrets.",
+        "- Refresh after Step-end validation, review, required fixes, rerun, and commit.",
+        "- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.",
         "",
-        "## Next Allowed Work",
+        "## Route-Only References",
         "",
-        _infer_next_allowed_work(roadmap),
-        "",
-        "## Quant Agent Scope",
-        "",
-        _compact_section(quant_agents, "## Purpose", next_heading="## Multi-agent operating model", max_lines=28),
-        "",
-        "## Quant Adoption Synthesis Policy",
-        "",
-        _compact_section(quant_agents, "## Adoption synthesis policy", next_heading="### Suggested interpretation", max_lines=18),
-        "",
-        "## Score Catalog Snapshot",
-        "",
-        _compact_lines(score_catalog, include_markers=("| `",), max_lines=24),
-        "",
-        "## Family Map Snapshot",
-        "",
-        _compact_lines(family_map, include_markers=("| `", "| Volatility", "| Trend", "| Mean"), max_lines=20),
+        "- Root compact hard stops: `docs/root_hard_stops.md`.",
+        "- Current roadmap status: `docs/roadmap_status.md`.",
+        "- MVP baseline: `docs/context/MVP_V0_1_BASELINE.md`.",
+        "- MVP contracts: `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`.",
+        "- Quant agent scope: `Quant_mvp/AGENTS.md`.",
+        "- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).",
+        "- Family map: `Quant_mvp/docs/family_map.md` (on-demand only; not embedded).",
+        "- Archive lookup: `docs/context/ARCHIVE_INDEX.md`.",
         "",
     ]
     text = "\n".join(part for part in sections if part is not None)
@@ -229,85 +201,12 @@ def _compact_first_section(text: str, specs: tuple[tuple[str, str | None, int], 
     return "- unavailable"
 
 
-def _compact_lines(text: str, *, include_markers: tuple[str, ...], max_lines: int) -> str:
-    if not text:
-        return "- unavailable"
-    lines = []
-    for line in text.splitlines():
-        stripped = line.strip()
-        if stripped and any(marker in stripped for marker in include_markers):
-            lines.append(stripped)
-    return _format_limited_lines(lines, max_lines=max_lines)
-
-
 def _format_limited_lines(lines: list[str], *, max_lines: int) -> str:
     cleaned = [line.rstrip() for line in lines if line.strip()]
     limited = cleaned[:max_lines]
     if len(cleaned) > max_lines:
         limited.append(f"- omitted {len(cleaned) - max_lines} additional lines for compact context")
     return "\n".join(limited) if limited else "- unavailable"
-
-
-def _git_snapshot(project_root: Path) -> str:
-    branch = _run_git(project_root, "branch", "--show-current") or "unknown"
-    commit = _run_git(project_root, "rev-parse", "--short", "HEAD") or "unknown"
-    status = _run_git(project_root, "status", "--short") or "clean"
-    status_lines = status.splitlines()
-    if len(status_lines) > 40:
-        status = "\n".join(status_lines[:40] + [f"... omitted {len(status_lines) - 40} additional status lines"])
-    return f"- branch: `{branch}`\n- commit: `{commit}`\n- status:\n```text\n{status}\n```"
-
-
-def _run_git(project_root: Path, *args: str) -> str:
-    try:
-        completed = subprocess.run(
-            ["git", *args],
-            cwd=project_root,
-            check=False,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-        )
-    except OSError:
-        return ""
-    if completed.returncode != 0:
-        return ""
-    return completed.stdout.strip()
-
-
-def _infer_next_allowed_work(roadmap: str) -> str:
-    active_section = _compact_first_section(
-        roadmap,
-        (
-            ("## 현재 활성 단계", "## 전체 Step 판정", 12),
-            ("## 현재 활성 단계", "## 현재 판정", 12),
-        ),
-    )
-    if "Step 17 = 보수적 백테스트" in active_section or "| Step 17 | WAITING / not started |" in roadmap:
-        return (
-            "- Step 17 conservative backtest is the next roadmap step.\n"
-            "- Start Step 17 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.\n"
-            "- Step 18 valuation/fundamental scoring remains gated."
-        )
-    if "Step 16 = 종목별 상세 리포트 구현" in active_section or "| Step 16 | WAITING / branch setup required |" in roadmap:
-        return (
-            "- Step 16 per-security technical detail report is the next roadmap step.\n"
-            "- Start Step 16 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.\n"
-            "- Step 17 backtest and Step 18 valuation/fundamental scoring remain gated."
-        )
-    if "Step 15 = 최신 랭킹 출력 구현" in active_section or "| Step 15 | WAITING / branch setup required |" in roadmap:
-        return (
-            "- Step 15 latest ranking output is the next roadmap step.\n"
-            "- Start Step 15 from a new role branch/worktree with `WORKSPACE_MANIFEST.md` before file edits.\n"
-            "- Step 17 backtest and Step 18 valuation/fundamental scoring remain gated."
-        )
-    if "Step 14 = Adoption Synthesis" in active_section:
-        return (
-            "- Step 14 Adoption Synthesis is the next active roadmap step.\n"
-            "- Step 15 ranking, Step 17 backtest, and Step 18 valuation/fundamental scoring remain gated."
-        )
-    return "- Follow `docs/roadmap_status.md` and `docs/project_checklist.md` before starting the next Step."
 
 
 def _truncate_context(text: str, *, max_chars: int) -> str:

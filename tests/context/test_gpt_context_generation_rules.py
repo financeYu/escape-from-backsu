@@ -37,7 +37,7 @@ def test_context_budget_policy_has_gpt_specific_defaults() -> None:
     text = _read("docs/context/CONTEXT_BUDGET_POLICY.md")
 
     assert "Default GPT input = one generated brief only" in text
-    assert "docs/context/gpt_context_quant.md" in text
+    assert "docs/context/gpt/gpt_context_quant.md" in text
     assert "GPT receives the generated brief, not the internal rules files" in text
     assert "No Step-by-Step roadmap table in GPT default context" in text
     assert "No repeated Step completion summaries" in text
@@ -75,7 +75,7 @@ def test_generated_sample_gpt_brief_stays_small_and_avoids_history() -> None:
 
 
 def test_gpt_context_quant_is_the_submission_brief() -> None:
-    text = _read("docs/context/gpt_context_quant.md")
+    text = _read("docs/context/gpt/gpt_context_quant.md")
 
     assert len(text.splitlines()) <= 80
     assert "GPT Context Quant" in text

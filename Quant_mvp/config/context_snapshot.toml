@@ -5,5 +5,5 @@ output_path = "quant_project_reference_for_chatgpt_project_current.md"
 obsolete_local_paths = [
   "quant_project_reference_for_chatgpt_project_previous.md",
 ]
-max_chars = 14000
+max_chars = 3000
 local_latest_only = true

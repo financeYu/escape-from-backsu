@@ -37,6 +37,8 @@ reserch_mvp/AGENTS.md
 
 The directory name `reserch_mvp` is intentionally preserved for path compatibility. Do not rename it unless the user requests a dedicated migration.
 
+`reserch_mvp` is the upstream research and evidence lane under the broader Quant product umbrella. This is an organizational relationship only; it does not move canonical ownership of source policy, metadata adapters, seed lifecycle, EvidenceCard generation, or research-ingestion guardrails out of `reserch_mvp`.
+
 The main technical workflow remains technical-first and uses only:
 
 - `technical`
@@ -51,7 +53,7 @@ Valuation and fundamental review remains separated in:
 
 This agent may classify research as `technical`, `valuation`, `hybrid`, `diagnostic`, or `out_of_scope`, but it must not collapse those labels into the main technical `score_branch`.
 
-`Quant_mvp` is a downstream consumer of this project's EvidenceCards and handoff files. Quant may read research outputs through an explicit intake contract, but it must not own source collection policy, query expansion, metadata adapters, or EvidenceCard generation.
+`Quant_mvp` is a downstream consumer and coordinator for this project's EvidenceCards and handoff files. Quant may read research outputs through an explicit intake contract, but it is not the source collection owner and must not own source collection policy, query expansion, metadata adapters, or EvidenceCard generation.
 
 Allowed downstream routes:
 
@@ -793,6 +795,9 @@ Every candidate idea must be exported as an EvidenceCard before downstream revie
 EvidenceCards are not score definitions.
 EvidenceCards are not backtest results.
 EvidenceCards are not adoption decisions.
+EvidenceCards are not valuation verdicts.
+EvidenceCards must not activate score definition, score adoption, ranking, backtest, or valuation review behavior.
+Only technical candidates that satisfy the handoff contract may be routed to the Quant Score Architect.
 
 ```yaml
 EvidenceCard:

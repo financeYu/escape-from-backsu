@@ -60,6 +60,140 @@ If the preflight fails, master returns `HOLD` without doing full review. The res
 
 The preflight may pass with warnings only when the warning is explicitly copied into the master-up risk notes. A required watchdog audit or required Cross-Step Conflict Checkpoint with `not run`, `pending`, `NEEDS_CLARIFICATION`, or `BLOCKING_ISSUE` remains blocking.
 
+## Merge-Ready Handoff
+
+Purpose:
+Reduce root merge overhead without weakening root control.
+
+This is an additive route for branch-local subproject work that is already ready
+for root intake. It keeps the existing `root agent -> sub agent` process intact:
+sub agents may finish in `MERGE_READY`, but root still owns the merge decision
+and integration outcome.
+
+Rules:
+
+- Root owns: merge decision, integration/master update, final validation, remote push, protected behavior approval.
+- Sub owns: assigned branch/worktree edits, local diff, focused validation, local commit, compact `MERGE_READY` report.
+- Sub must not: fetch, pull, push, remote sync, merge into master/integration, edit out-of-scope files, change protected behavior, expand scope.
+
+Efficiency guard:
+
+- Use `MERGE_READY` only when root explicitly accepts compact merge intake for a branch-local task.
+- Do not use `MERGE_READY` for Level 3, protected-behavior, failed-validation, conflict, unclear-base, or remote-Git-dependent work.
+- Keep `[MREADY]` short: no long logs, archive/history bodies, generated output bodies, or repeated completed-Step history.
+- Root should not reconstruct the worker process. Review only base/head, changed paths, focused validation, forbidden-scope status, protected-behavior status, conflicts, and rollback.
+- If `validation: not-run` lacks a narrow docs-only or tooling-only reason, root returns `RETURN_TO_SUBPROJECT`.
+
+Sub exit requirements:
+
+- assigned branch/worktree only
+- allowed files only
+- forbidden scope untouched
+- protected behavior unchanged
+- focused validation run or skipped with reason
+- working tree clean
+- local commit created
+- no remote Git
+- compact `MERGE_READY` report provided
+
+Recommended merge mode:
+
+- docs/context-only: ff-or-squash
+- tests-only: squash
+- ordinary source: squash
+- protected/boundary-sensitive: manual
+- failed validation / conflict / scope uncertainty: return
+
+Root intake checks:
+
+- branch/base/head clear
+- tree clean
+- changed files allowed
+- forbidden scope untouched
+- protected behavior unchanged
+- validation sufficient
+- no conflict
+- no remote Git by sub
+
+Root decisions:
+
+- `QUICK_MERGE_OK`
+- `SQUASH_MERGE_OK`
+- `MANUAL_INTEGRATION_REQUIRED`
+- `RETURN_TO_SUBPROJECT`
+- `NO_GO`
+
+Stop conditions:
+
+- out-of-scope file needed
+- forbidden scope touched
+- protected behavior risk
+- valuation/data-ingestion/scoring/ranking/report/backtest semantics risk
+- universe expansion or new data source needed
+- trading/proven-alpha/expected-return claim needed
+- archive/history bulk lookup needed
+- validation failed
+- conflict
+- remote Git needed
+- base unclear
+- authority conflict
+
+Compact sub report:
+
+```text
+[MREADY]
+role:
+task:
+branch:
+base:
+head:
+files:
+scope_ok: y/n
+forbidden_ok: y/n
+protected_ok: y/n
+validation: pass/fail/not-run
+cmds:
+skip_reason:
+tree_clean: y/n
+local_commit: y/n
+remote_git: n
+merge_rec: ff/squash/manual/return
+risk:
+root_check:
+rollback:
+```
+
+Compact root report:
+
+```text
+[ROOT_MERGE]
+decision:
+mode:
+branch:
+head:
+files:
+scope_ok:
+forbidden_ok:
+protected_ok:
+validation:
+result:
+commit:
+push:
+risk:
+next:
+```
+
+Suggested root check commands:
+
+```powershell
+git status --short
+git branch --show-current
+git log --oneline -5
+git diff --stat <base>...HEAD
+git diff --name-only <base>...HEAD
+git diff <base>...HEAD -- <path>
+```
+
 ## Review output budget
 
 Default reviews should stay findings-first and compact:

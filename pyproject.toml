@@ -21,4 +21,4 @@ dev = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["src*"]
+include = ["src*", "Quant_mvp*"]

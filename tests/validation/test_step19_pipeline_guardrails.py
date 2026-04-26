@@ -64,7 +64,7 @@ def base_config() -> dict[str, object]:
                 "order": 40,
                 "enabled": False,
                 "optional": True,
-                "implementation_ref": "src.backtest.engine",
+                "implementation_ref": "Quant_mvp.backtest_mvp.engine",
                 "input_refs": ["Step 15 latest ranking snapshot"],
                 "output_refs": ["reports/backtest/generated/backtest.json"],
             },

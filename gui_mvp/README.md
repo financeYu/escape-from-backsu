@@ -17,6 +17,6 @@ Run the conservative backtest evaluation viewer:
 python -m gui_mvp backtest
 ```
 
-The backtest viewer is display-only. It calls `src.backtest` and keeps realized
+The backtest viewer is display-only. It calls `Quant_mvp.backtest_mvp` and keeps realized
 returns inside Step 17 result objects; it does not update scoring, ranking,
 reports, or configuration.

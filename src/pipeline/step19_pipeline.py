@@ -407,7 +407,7 @@ def _default_implementation_ref(stage_name: str) -> str:
         "composite_or_adoption_context": "src.selection.adoption_synthesis",
         "latest_ranking": "src.scanner.latest_ranking",
         "security_detail_reports": "src.reports.security_detail_report",
-        "conservative_backtest_optional": "src.backtest.engine",
+        "conservative_backtest_optional": "Quant_mvp.backtest_mvp.engine",
         "candidate_valuation_boundary_check_optional": "src.valuation.validation",
         "output_validation": "src.validation.step15/16/17/18 guardrails",
     }

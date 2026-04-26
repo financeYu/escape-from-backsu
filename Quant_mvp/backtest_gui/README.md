@@ -1,7 +1,7 @@
 # Quant Backtest GUI
 
 `Quant_mvp/backtest_gui` is a local, evaluation-only GUI sidecar for the
-existing conservative backtest engine in `src/backtest`.
+canonical conservative backtest engine in `Quant_mvp/backtest_mvp`.
 
 This is MVP v0.1 pre-freeze support work only. It does not open Step 21 or
 change the frozen Step 20 scoring/ranking boundary.

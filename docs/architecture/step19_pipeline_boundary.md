@@ -85,7 +85,7 @@ Step 19 records the existing module references for traceability:
 - `src.selection.adoption_synthesis`
 - `src.scanner.latest_ranking`
 - `src.reports.security_detail_report`
-- `src.backtest.engine`
+- `Quant_mvp.backtest_mvp.engine`
 - `src.valuation.validation`
 
 Those modules remain owners of their domain behavior. Step 19 validates the

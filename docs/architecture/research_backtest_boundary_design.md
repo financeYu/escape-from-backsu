@@ -288,7 +288,7 @@ Backtest config must not contain score formulas. Score config must not contain b
 Recommended future naming pattern:
 
 - scoring/ranking config: existing `Quant_mvp/config/*.toml` or Step 15-owned ranking config if approved.
-- future backtest config: a Step 17-owned config path such as `config/backtest.toml` or `src/backtest` adjacent config only after Step 17 begins.
+- future backtest config: a Step 17-owned config path such as `Quant_mvp/backtest_mvp/config/backtest.toml` only after Step 17 begins.
 
 ## 10. Forbidden Column and Language Policy
 
@@ -366,7 +366,7 @@ Do not implement this now. This is a logical boundary proposal based on actual r
 | Selection/review/adoption | `src/selection/technical_selection_*`, `src/selection/adoption_synthesis*` | Owns Step 13 review and Step 14 adoption synthesis material. Not final trading output. |
 | Future Step 15 ranking | Future `src/ranking/` or current equivalent selected by Step 15 owner | Should own latest ranking snapshot output only. It must consume fixed score/adoption inputs and avoid backtest metrics. |
 | Future Step 16 reports | Future `src/reports/` or current equivalent selected by Step 16 owner | Should explain current ranking/score state only. It must not include future returns, backtest results, realized performance, PnL attribution, trading wording, or valuation wording. |
-| Future Step 17 backtest | Future `src/backtest/` or Step 17-owned equivalent | Should own conservative historical simulation only. It consumes frozen snapshots or reproducible historical score outputs and writes backtest-specific outputs only. |
+| Future Step 17 backtest | `Quant_mvp/backtest_mvp/` | Should own conservative historical simulation only. It consumes frozen snapshots or reproducible historical score outputs and writes backtest-specific outputs only. |
 | Legacy/chart runtime | `chart_mvp/src/stock_core/ranking/**`, `chart_mvp/src/stock_core/pipeline/daily_scan.py`, `chart_mvp/outputs/**` | Must be reviewed before serving as Step 15 canonical ranking output or Step 17 input. Existing outputs are legacy/background material only. |
 | Research ingestion | `reserch_mvp/src/research_ingestion/**`, `reserch_mvp/config/research_*.toml`, `reserch_mvp/reports/research_ingestion/**` | Owns paper discovery and EvidenceCards only. It does not adopt scores or run backtests. |
 | Valuation/fundamental | `Quant_mvp/agents/valuation/**`, `Quant_mvp/reports/valuation_review/**` | Deferred to Step 18+. Must stay out of technical scoring and current ranking/backtest design. |

@@ -19,7 +19,7 @@ from Quant_mvp.backtest_gui.service import (  # noqa: E402
     export_result_bundle,
     run_backtest_from_csv,
 )
-from src.backtest import BacktestConfig  # noqa: E402
+from Quant_mvp.backtest_mvp import BacktestConfig  # noqa: E402
 
 
 def test_gui_module_imports_without_starting_event_loop() -> None:

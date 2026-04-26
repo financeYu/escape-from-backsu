@@ -12,22 +12,14 @@ from zoneinfo import ZoneInfo
 
 DEFAULT_ROUTING_PATH = Path("docs/context/context_routing.md")
 DEFAULT_OUTPUT_DIR = Path("docs/context/generated")
-DEFAULT_GPT_BRIEF_OUTPUT = Path("docs/context/gpt_context_quant.md")
+DEFAULT_GPT_BRIEF_OUTPUT = Path("docs/context/gpt/gpt_context_quant.md")
 GPT_BRIEF_ROUTE_REFS = (
     "docs/context/MVP_V0_1_BASELINE.md",
 )
 ALWAYS_READ_REFS = (
-    "AGENTS.md",
-    "docs/project_checklist.md",
-    "docs/roadmap_status.md",
-    "WORKSPACE_MANIFEST.md",
-    "docs/context/MVP_V0_1_BASELINE.md",
-    "docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md",
-    "docs/context/context_usage_policy.md",
     "docs/context/current_context.md",
-    "docs/context/context_index.md",
-    "docs/context/context_routing.md",
-    "docs/context/CONTEXT_BUDGET_POLICY.md",
+    "docs/context/MVP_V0_1_BASELINE.md",
+    "docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml",
 )
 AUTHORITY_WARNING = (
     "Generated context packets are routing aids, not authority documents. They do not override "
@@ -164,7 +156,7 @@ def build_gpt_brief(config: GptBriefConfig) -> str:
     request = config.request.strip() or "Replace this placeholder with the active user request."
     missing_refs = _missing_refs(root, GPT_BRIEF_ROUTE_REFS)
     sections = [
-        "# GPT Context Brief",
+        "# GPT Context Quant",
         "",
         "Status: routing aid, not an authority document.",
         "",
@@ -242,7 +234,12 @@ def load_routes(project_root: Path, routing_path: Path = DEFAULT_ROUTING_PATH) -
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build a compact context routing packet.")
-    parser.add_argument("--mode", choices=("packet", "gpt-brief"), default="packet")
+    parser.add_argument(
+        "--mode",
+        choices=("packet", "gpt-brief"),
+        default="packet",
+        help="Build mode. Use --mode gpt-brief only when a GPT submission brief is explicitly requested.",
+    )
     parser.add_argument("--project-root", default=".", help="Repository root. Defaults to current directory.")
     parser.add_argument("--routing", default=str(DEFAULT_ROUTING_PATH), help="Root-relative routing matrix path.")
     parser.add_argument("--task", help="Context task type, for example step19_pipeline.")
@@ -251,9 +248,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--request", help="Current request text for --mode gpt-brief.")
     parser.add_argument(
         "--output",
-        help="Output path. Defaults to docs/context/generated/<task>_packet.md or docs/context/gpt_context_quant.md.",
+        help="Output path. Defaults to docs/context/generated/<task>_packet.md or docs/context/gpt/gpt_context_quant.md.",
     )
     args = parser.parse_args(argv)
+
+    if args.mode != "gpt-brief" and args.request and not any((args.task, args.step, args.stage)):
+        parser.error(
+            "--request is for GPT submission briefs only when --mode gpt-brief is explicit. "
+            "Use: --mode gpt-brief --request \"...\""
+        )
 
     try:
         if args.mode == "gpt-brief":

@@ -2,6 +2,13 @@
 
 Use this checklist before sending a change to master-up.
 
+For Level 1 or docs-only changes that do not touch runtime behavior, contracts,
+schemas, generated-output boundaries, roadmap verdicts, scoring, ranking,
+reports, backtests, valuation, or data ingestion, submit
+`docs/short_handoff_template.md`. Use the full local checklist and
+`docs/master_up_template.md` for Step-end, Level 3, cross-project,
+failed-validation, or gate-critical work.
+
 The responsible subproject performs first-pass review for its own changes. It should not delegate ordinary local correctness review to master by default.
 
 ## Local First Checklist
@@ -47,4 +54,9 @@ or old Step detail was read, state the exact reason and the narrow file used.
 
 ## Required Master-up Summary
 
-Submit the final handoff with `docs/master_up_template.md`.
+Submit Level 1/docs-only handoffs with `docs/short_handoff_template.md`.
+Submit full master-up handoffs with `docs/master_up_template.md`.
+
+For branch-local work that root assigned as compact merge intake, the subproject
+may instead finish with the `MERGE_READY` report in
+`docs/review_flow.md#merge-ready-handoff`.

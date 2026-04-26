@@ -11,7 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.backtest import BacktestConfig, run_conservative_backtest  # noqa: E402
+from Quant_mvp.backtest_mvp import BacktestConfig, run_conservative_backtest  # noqa: E402
 from src.validation.step17_backtest_guardrails import validate_step17_backtest_input  # noqa: E402
 from src.validation.step18_valuation_fundamental_guardrails import (  # noqa: E402
     validate_step18_backtest_candidate_availability,

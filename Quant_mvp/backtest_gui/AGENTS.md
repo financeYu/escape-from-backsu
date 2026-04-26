@@ -2,8 +2,8 @@
 
 ## Purpose
 
-This sidecar owns local GUI execution and inspection for the existing
-evaluation-only conservative backtest engine.
+This sidecar owns local GUI execution and inspection for the canonical
+evaluation-only conservative backtest engine in `Quant_mvp/backtest_mvp`.
 
 This is MVP v0.1 pre-freeze support work. It must not be treated as Step 21
 entry or as a new backtest/scoring roadmap phase.
@@ -13,7 +13,7 @@ It may:
 - load user-selected ranking snapshot CSV files
 - load user-selected OHLCV price CSV files
 - adjust allowed `BacktestConfig` parameters through a GUI
-- run `src.backtest.run_conservative_backtest`
+- run `Quant_mvp.backtest_mvp.run_conservative_backtest`
 - display summary, period, security, and equity-curve views
 - export generated evaluation artifacts to a user-selected local directory
 

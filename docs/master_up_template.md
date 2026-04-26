@@ -2,6 +2,16 @@
 
 Use this template when a subproject asks master for integration review.
 
+For compact branch-local merge intake, use the `MERGE_READY` handoff in
+`docs/review_flow.md#merge-ready-handoff` instead of this full template when
+root has assigned or accepted that route.
+
+For Level 1 or docs-only changes that do not touch runtime behavior, contracts,
+schemas, generated-output boundaries, roadmap verdicts, scoring, ranking,
+reports, backtests, valuation, or data ingestion, use
+`docs/short_handoff_template.md` instead. Use this full template for Step-end,
+Level 3, cross-project, failed-validation, or gate-critical work.
+
 Master-up summary must prioritize:
 
 1. what was validated

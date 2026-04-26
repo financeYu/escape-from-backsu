@@ -13,7 +13,11 @@ from typing import Any
 
 import pandas as pd
 
-from src.backtest import BacktestConfig, ConservativeBacktestResult, run_conservative_backtest
+from Quant_mvp.backtest_mvp import (
+    BacktestConfig,
+    ConservativeBacktestResult,
+    run_conservative_backtest,
+)
 
 
 EVALUATION_ONLY_NOTICE = (

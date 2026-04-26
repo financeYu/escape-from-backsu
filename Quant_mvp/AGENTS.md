@@ -4,6 +4,16 @@
 
 If this project is used inside the parent `master_mvp` workspace, read the parent `../AGENTS.md` first. The parent master agent owns cross-project routing, Git policy, and handoff coordination. This `Quant_mvp` agent remains responsible for score governance, technical review, valuation boundaries, and quant-specific config policy.
 
+`Quant_mvp` may act as the product-line umbrella and score-governance
+coordinator for the separated research ingestion and scanner runtime lines.
+This coordination role is contract and handoff governance only: it does not
+move folders, transfer source-collection ownership from `../reserch_mvp`, or
+transfer chart runtime implementation ownership from `../chart_mvp`.
+
+This post-MVP documentation clarification preserves the MVP v0.1 baseline. It
+does not authorize score formula, adoption, ranking, report, backtest,
+valuation, data-ingestion, or runtime behavior changes.
+
 ---
 
 ## Subproject boundary approval gate
@@ -134,6 +144,12 @@ Workers must use the root `docs/scope_audit_process.md` when watchdog audit is r
 
 Research ingestion is intentionally separated into `../reserch_mvp`.
 The Quant-side `agents/research/AGENTS.md` is only a compatibility pointer and intake note. Quant may consume EvidenceCards and handoff files through `config/research_intake.toml`, but it must not collect sources, expand research query sets, own metadata adapters, generate EvidenceCards, adopt scores from EvidenceCards, run paper-derived backtests, claim alpha, or perform valuation review.
+
+EvidenceCards are upstream evidence objects, not score definitions, adoption
+decisions, ranking inputs, alpha evidence, or valuation verdicts. A chart
+runtime implementation must not start from an EvidenceCard alone; it requires a
+Quant-owned score specification, handoff contract, or explicit root/user
+assignment that defines the allowed technical or diagnostic behavior.
 
 Valuation / fundamental analysis is intentionally separated into `agents/valuation/AGENTS.md`.
 The main technical agent may reference valuation examples for teaching or handoff, but must not perform valuation review itself.

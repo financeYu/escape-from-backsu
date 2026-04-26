@@ -34,6 +34,8 @@ def test_refresh_context_keeps_only_latest_local_file() -> None:
     assert str(root) not in text
     assert "No paid API upload is performed" in text
     assert "Cross-Step Conflict Checkpoint" in text
+    assert "Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded)." in text
+    assert "`score_a` | test" not in text
 
 
 def test_build_context_respects_max_chars() -> None:
@@ -54,7 +56,7 @@ def _config(
     *,
     current: Path,
     previous: Path,
-    max_chars: int = 14000,
+    max_chars: int = 3000,
 ) -> module.ContextConfig:
     return module.ContextConfig(
         project_root=root,
@@ -70,6 +72,15 @@ def _config(
 def _write_minimal_project(root: Path, *, extra_roadmap_lines: int = 0) -> None:
     (root / "docs").mkdir(parents=True)
     (root / "Quant_mvp/docs").mkdir(parents=True)
+    (root / "docs/root_hard_stops.md").write_text(
+        "# Root Hard Stops\n\n"
+        "## Forbidden Scope Without Explicit Approval\n\n"
+        "- No score semantic changes.\n"
+        "- No valuation activation.\n\n"
+        "## Archive Read Gate\n\n"
+        "- Archive lookup is targeted only.\n",
+        encoding="utf-8",
+    )
     (root / "docs/project_checklist.md").write_text(
         "# Checklist\n\n## 7. Hard Stop Rules\n\n- Step 17 전에는 backtest 금지.\n",
         encoding="utf-8",

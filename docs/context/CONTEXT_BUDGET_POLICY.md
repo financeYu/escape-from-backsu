@@ -87,13 +87,13 @@ not paste archive bodies into active packets or ordinary planning answers.
 
 ## GPT-Facing Context Budget
 
-Default GPT input = one generated brief only: `docs/context/gpt_context_quant.md`.
+Default GPT input = one generated brief only: `docs/context/gpt/gpt_context_quant.md`.
 
 The generated brief is assembled from compact baseline facts plus one active
 request packet. This budget policy, `docs/context/GPT_CONTEXT_GENERATION_RULES.md`,
 and `docs/context/CONTEXT_ROUTING_INDEX.md` are internal rules and routing aids.
 Do not paste those internal files into GPT by default.
-Generate GPT submission context directly at `docs/context/gpt_context_quant.md`.
+Generate GPT submission context directly at `docs/context/gpt/gpt_context_quant.md`.
 
 Rules:
 

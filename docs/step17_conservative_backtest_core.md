@@ -6,6 +6,10 @@ Step 17 adds an evaluation-only conservative backtest core. It consumes
 already-generated Step 15 latest-ranking-compatible rows or Step 16
 detail-report-compatible context as read-only upstream input.
 
+Canonical implementation ownership now lives under the Quant-dependent
+subproject `Quant_mvp/backtest_mvp`. Legacy imports through `src.backtest`
+remain compatibility facades only.
+
 The core does not redefine score formulas, normalized score formulas,
 `technical_composite_score`, `final_composite_score`, adoption states, or
 ranking logic. It does not write generated reports by itself.
@@ -83,7 +87,9 @@ Execution and holding-period assumptions are config-owned:
 - `slippage_bps`
 - `missing_price_policy`
 
-The default config lives in `config/backtest.toml`.
+The canonical default config lives in
+`Quant_mvp/backtest_mvp/config/backtest.toml`. The root `config/backtest.toml`
+is retained only as a legacy compatibility copy.
 
 ## Return Calculation
 
@@ -122,7 +128,7 @@ before evaluation.
 
 ## Worker Boundary
 
-Worker A owns the core contracts, config, runner, result aggregation, focused
-tests, and this document. Worker B owns Step 17 guardrails, report validation,
+`Quant_mvp/backtest_mvp` owns the core contracts, config, runner, result
+aggregation, and focused tests. Step 17 guardrails, report validation,
 forbidden-language checks, generated-output boundary tests, and report/docs
-boundary material.
+boundary material remain integration-facing support files.

@@ -37,7 +37,8 @@ release-evidence check requires narrow archive lookup.
 - `EXTENSION_REGISTRY.toml`: route-only registry for disabled future extension ideas; pre-freeze readiness entries do not authorize Step 21 work.
 - `CHANGE_IMPACT_MATRIX.yml`: route-only change impact matrix.
 - `ARCHIVE_INDEX.md`: archive lookup index; do not read old Step history by default.
-- `gpt_context_quant.md`: single GPT submission brief generated for prompt improvement work.
+- `gpt/`: GPT-only context briefs, kept separate from default local context.
+- `gpt/gpt_context_quant.md`: single GPT submission brief generated only when explicitly requested.
 - `GPT_CONTEXT_GENERATION_RULES.md`: internal rules for generating short GPT briefs; do not paste into GPT by default.
 - `ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`: historical pre-freeze optimization
   packet; not default context.
@@ -61,6 +62,12 @@ results unless the task names an allowed archive lookup reason.
 ## Tooling
 
 - `scripts/context/build_context_packet.py`: builds a compact routed packet for a task.
+  - GPT submission brief, only when explicitly requested:
+    `python scripts/context/build_context_packet.py --mode gpt-brief --request "<current GPT task>"`
+    writes `docs/context/gpt/gpt_context_quant.md`; `--request` alone is intentionally not enough.
+  - Routed task packet:
+    `python scripts/context/build_context_packet.py --task "<task>" --step "<step>" --stage "<stage>"`
+    writes under `docs/context/generated/`.
 - `scripts/context/check_context_staleness.py`: warns about obvious roadmap/checklist/context packet mismatches.
 - `scripts/context/check_context_conflicts.py`: flags suspicious forbidden claims in context docs.
 

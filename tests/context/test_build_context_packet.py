@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
+
+import pytest
 
 
 SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "context" / "build_context_packet.py"
@@ -30,10 +33,11 @@ def test_packet_generation_for_step20_final_validation(tmp_path: Path) -> None:
     assert result.output_path == output
     assert "`step20_final_validation`" in text
     assert "`docs/context/MVP_V0_1_BASELINE.md` - FOUND" in text
-    assert "`docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md` - FOUND" in text
     assert "`docs/context/active_step20_packet.md` - FOUND" in text
     assert "`docs/context/current_context.md` - FOUND" in text
     assert "`docs/context/context_usage_policy.md` - FOUND" in text
+    assert "`docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml` - FOUND" in text
+    assert "`docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md` - FOUND" not in text
     assert "Generated context packets are routing aids, not authority documents" in text
     assert "Step 20 final-validation routing" in text
 
@@ -52,7 +56,7 @@ def test_packet_generation_for_planning_only(tmp_path: Path) -> None:
 
     assert "`planning_only`" in text
     assert "`docs/context/context_usage_policy.md` - FOUND" in text
-    assert "`docs/context/CONTEXT_BUDGET_POLICY.md` - FOUND" in text
+    assert "`docs/context/CONTEXT_BUDGET_POLICY.md` - FOUND" not in text
     assert "no more than three context facts" in text
 
 
@@ -117,7 +121,35 @@ def test_gpt_brief_default_output_is_project_context_doc(tmp_path: Path) -> None
     _write_minimal_context_project(tmp_path)
     output = module.DEFAULT_GPT_BRIEF_OUTPUT
 
-    assert str(output).replace("\\", "/") == "docs/context/gpt_context_quant.md"
+    assert str(output).replace("\\", "/") == "docs/context/gpt/gpt_context_quant.md"
+
+
+def test_request_only_cli_requires_explicit_gpt_brief_mode(tmp_path: Path, capsys) -> None:
+    _write_minimal_context_project(tmp_path)
+
+    with pytest.raises(SystemExit) as exc_info:
+        module.main(["--project-root", str(tmp_path), "--request", "Draft a GPT prompt."])
+
+    captured = capsys.readouterr()
+    output = tmp_path / "docs/context/gpt/gpt_context_quant.md"
+    assert exc_info.value.code == 2
+    assert not output.exists()
+    assert "--mode gpt-brief --request" in captured.err
+
+
+def test_explicit_gpt_brief_cli_writes_separate_context_path(tmp_path: Path, capsys) -> None:
+    _write_minimal_context_project(tmp_path)
+
+    exit_code = module.main(
+        ["--project-root", str(tmp_path), "--mode", "gpt-brief", "--request", "Draft a GPT prompt."]
+    )
+
+    captured = capsys.readouterr()
+    output = tmp_path / "docs/context/gpt/gpt_context_quant.md"
+    assert exit_code == 0
+    assert output.exists()
+    assert "Draft a GPT prompt." in output.read_text(encoding="utf-8")
+    assert Path(json.loads(captured.out)["output_path"]) == output
 
 
 def _write_minimal_context_project(tmp_path: Path, *, include_missing_route: bool = False) -> None:
@@ -125,6 +157,7 @@ def _write_minimal_context_project(tmp_path: Path, *, include_missing_route: boo
     (tmp_path / "docs/context/generated").mkdir(parents=True)
     (tmp_path / "docs/context/active_step20_packet.md").write_text("active", encoding="utf-8")
     (tmp_path / "docs/context/MVP_V0_1_BASELINE.md").write_text("baseline", encoding="utf-8")
+    (tmp_path / "docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml").write_text("status = \"routing_only\"", encoding="utf-8")
     (tmp_path / "docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md").write_text("active", encoding="utf-8")
     (tmp_path / "docs/context/current_context.md").write_text("current", encoding="utf-8")
     (tmp_path / "docs/context/context_usage_policy.md").write_text("usage", encoding="utf-8")

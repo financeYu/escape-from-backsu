@@ -20,17 +20,28 @@ No contrary repository evidence was found during Step 3 inspection.
 
 Child projects under the canonical root:
 
-- `chart_mvp`: current runnable scanner/runtime project
-- `Quant_mvp`: quant score governance, research intake, and config-policy project
-- `reserch_mvp`: canonical research-ingestion project
+- `Quant_mvp`: quant product umbrella, score governance, research intake,
+  and config-policy project
+  - `Quant_mvp/backtest_mvp`: Quant-dependent evaluation-only backtest
+    subproject
+- `reserch_mvp`: canonical upstream research-ingestion project and research
+  evidence lane for the Quant product umbrella
+- `chart_mvp`: current downstream runnable scanner/runtime project for
+  Quant-reviewed specs
 - `review_mvp`: specialist code-review and optional final-validation support project
 
 External sibling projects near the root:
 
 - `C:/Users/jjaew/Project/stock_mvp`: legacy or unknown prior stock project
-- `C:/Users/jjaew/Project/review_mvp`: empty leftover directory after `review_mvp` was moved under `master_mvp`
 
-Child and legacy logic must not be merged automatically. Any import, migration, or deletion requires an explicit reason and review.
+Only projects under the canonical root are active. Child and legacy logic must
+not be merged automatically. Any import, migration, or deletion requires an
+explicit reason and review.
+
+Logical Quant umbrella routing does not change the physical project layout.
+`reserch_mvp` and `chart_mvp` remain separate child projects until a dedicated
+post-MVP migration explicitly approves path moves, import updates, and
+generated-output boundary checks.
 
 ## Target Module Boundaries
 
@@ -55,6 +66,13 @@ Step 6 adds the canonical preprocessing entry point:
 - `src/preprocess/daily_ohlcv.py`
 
 This module prepares config-defined daily OHLCV processed data only. It does not implement Step 7 indicators, Step 9 scores, rankings, composites, valuation integration, or backtests.
+
+Backtest implementation ownership now lives under:
+
+- `Quant_mvp/backtest_mvp`
+
+The legacy `src/backtest` package is a compatibility facade and should not own
+new backtest behavior.
 
 ## Current Known Runtime Locations
 

@@ -1,7 +1,7 @@
 """Evaluation-only backtest GUI helpers.
 
-This module displays results from ``src.backtest``. It must not send realized
-returns back into scoring, ranking, or report generation.
+This module displays results from ``Quant_mvp.backtest_mvp``. It must not send
+realized returns back into scoring, ranking, or report generation.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from src.backtest import (  # noqa: E402
+from Quant_mvp.backtest_mvp import (  # noqa: E402
     STEP17_BACKTEST_NOTICE,
     BacktestConfig,
     ConservativeBacktestResult,

@@ -10,9 +10,8 @@ Status: GPT submission brief / routing aid, not an authority document.
 
 ## Current Request
 
-Use this brief to help write and improve future Codex prompts for this repository.
-The goal is better Codex behavior with less context load, less repetition, and
-clearer scope control.
+Use this brief only when the user explicitly asks for GPT-facing context.
+Replace this section with the active GPT request before submission.
 
 ## Do Not Repeat
 

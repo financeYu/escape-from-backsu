@@ -2,7 +2,8 @@
 
 ## Purpose
 
-`chart_mvp` is the executable scanner-runtime project.
+`chart_mvp` is the executable scanner-runtime project and the downstream
+runtime lane for Quant-reviewed product specifications.
 
 It owns the local KOSPI200 data-fetching pipeline, CSV cache behavior, technical indicator calculation, ranking output, chart rendering, command-line runner, GUI runner, and tests.
 
@@ -12,9 +13,16 @@ Read the workspace root `AGENTS.md` before making cross-project changes.
 
 ## Why this project exists
 
-This project turns reviewed quant ideas into runnable behavior.
+This project turns Quant-reviewed specs into runnable scanner behavior. It may
+operate under the Quant product umbrella, but it remains the downstream
+implementation lane rather than the owner of score definitions, adoption
+decisions, or valuation interpretation.
 
 It is intentionally separate from research and score-governance documents because scanner code produces runtime artifacts such as CSV caches, JSON outputs, and chart images. Those artifacts are useful locally, but they should not be confused with source-controlled project state.
+
+Even when chart runtime work supports a Quant product workflow,
+`chart_mvp/data`, `chart_mvp/outputs`, generated reports, chart images, and
+runtime caches are not Quant source-controlled state by default.
 
 ---
 
@@ -62,14 +70,16 @@ root/master permission before proceeding.
 
 This agent must not:
 
-- adopt new scores without a `Quant_mvp` score definition or explicit user request
+- adopt new scores without a documented `Quant_mvp` score definition, handoff
+  contract, or explicit root/user assignment
 - perform valuation review
 - infer valuation from price-only data
 - scrape or ingest papers
 - commit runtime cache files or chart outputs as source code
 - hardcode personal machine paths
 
-If a change requires score taxonomy, formula adoption, or valuation interpretation, route it to `Quant_mvp` first.
+If a change requires score taxonomy, score contract changes, formula adoption,
+or valuation interpretation, route it to `Quant_mvp` first.
 
 ---
 

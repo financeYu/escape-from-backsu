@@ -39,6 +39,8 @@ release-evidence check requires narrow archive lookup.
 - `ARCHIVE_INDEX.md`: archive lookup index; do not read old Step history by default.
 - `gpt/`: GPT-only context briefs, kept separate from default local context.
 - `gpt/gpt_context_quant.md`: single GPT submission brief generated only when explicitly requested.
+- `gpt/quant_project_reference_for_chatgpt_project_current.md`: local ChatGPT
+  project reference snapshot generated only when explicitly requested.
 - `GPT_CONTEXT_GENERATION_RULES.md`: internal rules for generating short GPT briefs; do not paste into GPT by default.
 - `ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md`: historical pre-freeze optimization
   packet; not default context.
@@ -63,8 +65,11 @@ results unless the task names an allowed archive lookup reason.
 
 - `scripts/context/build_context_packet.py`: builds a compact routed packet for a task.
   - GPT submission brief, only when explicitly requested:
-    `python scripts/context/build_context_packet.py --mode gpt-brief --request "<current GPT task>"`
+    `python scripts/context/build_context_packet.py --mode gpt-brief --user-requested --request "<current GPT task>"`
     writes `docs/context/gpt/gpt_context_quant.md`; `--request` alone is intentionally not enough.
+  - ChatGPT project reference snapshot, only when explicitly requested:
+    `python scripts/refresh_quant_project_context.py --user-requested`
+    writes `docs/context/gpt/quant_project_reference_for_chatgpt_project_current.md`.
   - Routed task packet:
     `python scripts/context/build_context_packet.py --task "<task>" --step "<step>" --stage "<stage>"`
     writes under `docs/context/generated/`.

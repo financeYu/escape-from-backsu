@@ -22,6 +22,10 @@ waste, clear baseline trust, and no repetitive reuse of old Step summaries.
 
 Default GPT input = one generated brief only: `docs/context/gpt/gpt_context_quant.md`.
 The brief is built from compact baseline facts plus one active request packet.
+The local ChatGPT project reference snapshot is
+`docs/context/gpt/quant_project_reference_for_chatgpt_project_current.md`.
+Both GPT-facing outputs are generated only when the user explicitly requests a
+GPT or ChatGPT context refresh.
 
 Use this shape:
 
@@ -155,6 +159,7 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 - `docs/context/GPT_CONTEXT_GENERATION_RULES.md` exists.
 - Rules include max 3 confirmed context facts.
 - Rules include default GPT input = compact baseline + one active request packet.
+- GPT-facing output refresh commands require `--user-requested`.
 - Rules include the mandatory anti-repetition phrase.
 - Rules mark Step 1-20 history as archive-only.
 - Rules forbid full validation logs in default context.

@@ -162,7 +162,7 @@ def build_gpt_brief(config: GptBriefConfig) -> str:
         "",
         "## Confirmed Context",
         "",
-        "- Step 20 is complete; KOSPI200 technical MVP v0.1 is freeze-ready but not yet frozen.",
+        "- Step 20 is complete; KOSPI200 technical MVP v0.1 is frozen.",
         "- MVP v0.1 is KOSPI200-only and technical-only.",
         "- Valuation/fundamental scoring, KOSDAQ150, futures/options, Nasdaq, and trading recommendation work remain outside the baseline unless a later routed task opens them.",
         "",
@@ -238,7 +238,7 @@ def main(argv: list[str] | None = None) -> int:
         "--mode",
         choices=("packet", "gpt-brief"),
         default="packet",
-        help="Build mode. Use --mode gpt-brief only when a GPT submission brief is explicitly requested.",
+        help="Build mode. Use --mode gpt-brief --user-requested only when a GPT submission brief is explicitly requested.",
     )
     parser.add_argument("--project-root", default=".", help="Repository root. Defaults to current directory.")
     parser.add_argument("--routing", default=str(DEFAULT_ROUTING_PATH), help="Root-relative routing matrix path.")
@@ -246,6 +246,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--step", help="Roadmap Step label.")
     parser.add_argument("--stage", help="Current stage label.")
     parser.add_argument("--request", help="Current request text for --mode gpt-brief.")
+    parser.add_argument(
+        "--user-requested",
+        action="store_true",
+        help="Required confirmation that the user explicitly requested a GPT brief refresh.",
+    )
     parser.add_argument(
         "--output",
         help="Output path. Defaults to docs/context/generated/<task>_packet.md or docs/context/gpt/gpt_context_quant.md.",
@@ -255,11 +260,16 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode != "gpt-brief" and args.request and not any((args.task, args.step, args.stage)):
         parser.error(
             "--request is for GPT submission briefs only when --mode gpt-brief is explicit. "
-            "Use: --mode gpt-brief --request \"...\""
+            "Use: --mode gpt-brief --user-requested --request \"...\""
         )
 
     try:
         if args.mode == "gpt-brief":
+            if not args.user_requested:
+                parser.error(
+                    "Refusing to refresh GPT brief without --user-requested. "
+                    "Run only after the user explicitly asks for this GPT context update."
+                )
             output = Path(args.output) if args.output else DEFAULT_GPT_BRIEF_OUTPUT
             result = write_gpt_brief(
                 GptBriefConfig(

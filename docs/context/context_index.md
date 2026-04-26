@@ -22,6 +22,7 @@ three confirmed context facts before moving to new reasoning.
 ## Domain Context
 
 - GPT submission brief: `docs/context/gpt/gpt_context_quant.md`
+- GPT project reference snapshot: `docs/context/gpt/quant_project_reference_for_chatgpt_project_current.md`
 - Internal GPT context generation rules: `docs/context/GPT_CONTEXT_GENERATION_RULES.md`
 - Post-MVP agent update source: `docs/context/post_mvp_agent_update_chatgpt_source.md`
 - Technical scoring: `docs/context/domain/technical_scoring_context.md`

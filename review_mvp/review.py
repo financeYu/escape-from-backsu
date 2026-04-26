@@ -55,6 +55,8 @@ DEFAULT_EXCLUDE_DIRS = {
     "worktrees",
 }
 MAX_FUNCTION_LINES = 50
+MAX_LINEAR_FUNCTION_LINES = 120
+SINGLE_RESPONSIBILITY_COMPLEXITY = 8
 BOUNDS_CHECK_LOOKBACK_LINES = 16
 DYNAMIC_EXECUTION_CALLS = {"eval", "exec"}
 EXTERNAL_INPUT_CALLS = {"input"}
@@ -79,6 +81,40 @@ NOISY_TEST_RULES = {
     "single-responsibility",
     "explicit-internal-api",
 }
+PUBLIC_CONVERSION_METHODS = {
+    "as_dict",
+    "from_dict",
+    "from_json",
+    "from_mapping",
+    "from_toml_file",
+    "to_dict",
+    "to_json",
+    "to_mapping",
+    "to_record",
+    "to_summary_dict",
+}
+PUBLIC_CONVERSION_SUFFIXES = (
+    "_dict",
+    "_frame",
+    "_json",
+    "_mapping",
+    "_record",
+    "_toml_file",
+)
+PUBLIC_HOOK_METHODS_BY_CLASS_SUFFIX = {
+    "Provider": {"load"},
+    "Scorer": {"score"},
+    "Policy": {"is_valid", "normalize"},
+    "Spec": {"is_valid", "normalize", "validate_size"},
+}
+PUBLIC_HOOK_PREFIXES_BY_CLASS_SUFFIX = {
+    "Adapter": ("build_", "fetch_", "parse_", "request_", "validate_"),
+    "Parser": ("handle_", "parse_"),
+}
+FRAMEWORK_OVERRIDE_METHODS_BY_BASE = {
+    "HTMLParser": {"handle_data", "handle_endtag", "handle_starttag"},
+}
+PUBLIC_RESULT_METHODS = {"raise_for_errors"}
 
 
 @dataclass(frozen=True)
@@ -261,13 +297,11 @@ class PythonReviewVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_For(self, node: ast.For) -> None:
-        if len(node.body) == 1 and isinstance(node.body[0], ast.Expr):
-            expr = node.body[0].value
-            if isinstance(expr, ast.Call) and self._call_name(expr.func).endswith(".append"):
-                self._add(
-                    node.lineno,
-                    "prefer-comprehension",
-                )
+        if self._is_prefer_comprehension_candidate(node):
+            self._add(
+                node.lineno,
+                "prefer-comprehension",
+            )
         self.generic_visit(node)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
@@ -286,7 +320,7 @@ class PythonReviewVisitor(ast.NodeVisitor):
 
     def _check_function(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> None:
         line_span = (node.end_lineno or node.lineno) - node.lineno + 1
-        if line_span > MAX_FUNCTION_LINES:
+        if self._is_single_responsibility_candidate(node, line_span):
             self._add(
                 node.lineno,
                 "single-responsibility",
@@ -309,6 +343,7 @@ class PythonReviewVisitor(ast.NodeVisitor):
             and not self._has_property_decorator(node)
             and not self._is_testcase_method(node)
             and self._is_nested_or_method(node)
+            and not self._is_intended_public_api(node)
         ):
             self._add(
                 node.lineno,
@@ -458,6 +493,8 @@ class PythonReviewVisitor(ast.NodeVisitor):
         if isinstance(node, ast.Attribute):
             root = self._call_name(node.value)
             return f"{root}.{node.attr}" if root else node.attr
+        if isinstance(node, ast.Subscript):
+            return self._call_name(node.value)
         return ""
 
     def _has_shell_true(self, node: ast.Call) -> bool:
@@ -481,6 +518,126 @@ class PythonReviewVisitor(ast.NodeVisitor):
         defaults = list(node.args.defaults) + list(node.args.kw_defaults)
         return any(isinstance(default, mutable_nodes) for default in defaults if default is not None)
 
+    def _is_single_responsibility_candidate(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        line_span: int,
+    ) -> bool:
+        if line_span <= MAX_FUNCTION_LINES:
+            return False
+        if line_span >= MAX_LINEAR_FUNCTION_LINES:
+            return True
+        return self._function_complexity(node) >= SINGLE_RESPONSIBILITY_COMPLEXITY
+
+    def _function_complexity(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> int:
+        score = 1
+        for child in self._iter_scope_nodes(node.body):
+            if isinstance(
+                child,
+                (
+                    ast.ExceptHandler,
+                    ast.For,
+                    ast.AsyncFor,
+                    ast.If,
+                    ast.Match,
+                    ast.Try,
+                    ast.While,
+                    ast.With,
+                    ast.AsyncWith,
+                ),
+            ):
+                score += 1
+            elif isinstance(child, ast.BoolOp):
+                score += max(0, len(child.values) - 1)
+            elif isinstance(child, (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)):
+                score += len(child.generators)
+        return score
+
+    def _is_prefer_comprehension_candidate(self, node: ast.For) -> bool:
+        if len(node.body) != 1 or not isinstance(node.body[0], ast.Expr):
+            return False
+        expr = node.body[0].value
+        if not isinstance(expr, ast.Call):
+            return False
+        target_name = self._append_target_name(expr)
+        if target_name is None:
+            return False
+        scope = self._enclosing_scope(node)
+        if scope is None:
+            return False
+        if not self._has_prior_empty_list_assignment(scope, target_name, node.lineno):
+            return False
+        return self._append_count_in_scope(scope, target_name) == 1
+
+    def _append_target_name(self, node: ast.Call) -> str | None:
+        if not isinstance(node.func, ast.Attribute) or node.func.attr != "append":
+            return None
+        if isinstance(node.func.value, ast.Name):
+            return node.func.value.id
+        return None
+
+    def _enclosing_scope(self, node: ast.AST) -> ast.FunctionDef | ast.AsyncFunctionDef | ast.Module | None:
+        current = node
+        while current in self.parents:
+            parent = self.parents[current]
+            if isinstance(parent, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Module)):
+                return parent
+            current = parent
+        return None
+
+    def _has_prior_empty_list_assignment(
+        self,
+        scope: ast.FunctionDef | ast.AsyncFunctionDef | ast.Module,
+        target_name: str,
+        line_no: int,
+    ) -> bool:
+        for node in self._iter_scope_nodes(scope.body):
+            if getattr(node, "lineno", line_no + 1) >= line_no:
+                continue
+            if self._is_empty_list_assignment_to(node, target_name):
+                return True
+        return False
+
+    def _append_count_in_scope(
+        self,
+        scope: ast.FunctionDef | ast.AsyncFunctionDef | ast.Module,
+        target_name: str,
+    ) -> int:
+        count = 0
+        for node in self._iter_scope_nodes(scope.body):
+            if isinstance(node, ast.Call) and self._append_target_name(node) == target_name:
+                count += 1
+        return count
+
+    def _is_empty_list_assignment_to(self, node: ast.AST, target_name: str) -> bool:
+        if isinstance(node, ast.Assign):
+            return self._is_empty_list_expr(node.value) and any(
+                isinstance(target, ast.Name) and target.id == target_name
+                for target in node.targets
+            )
+        if isinstance(node, ast.AnnAssign):
+            return (
+                isinstance(node.target, ast.Name)
+                and node.target.id == target_name
+                and node.value is not None
+                and self._is_empty_list_expr(node.value)
+            )
+        return False
+
+    def _is_empty_list_expr(self, node: ast.AST) -> bool:
+        if isinstance(node, ast.List) and not node.elts:
+            return True
+        return isinstance(node, ast.Call) and self._call_name(node.func) == "list" and not node.args and not node.keywords
+
+    def _iter_scope_nodes(self, body: list[ast.stmt]) -> Iterable[ast.AST]:
+        stack: list[ast.AST] = list(reversed(body))
+        while stack:
+            node = stack.pop()
+            yield node
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                continue
+            stack.extend(reversed(list(ast.iter_child_nodes(node))))
+
     def _is_nested_or_method(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
         parent = self.parents.get(node)
         return isinstance(parent, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef))
@@ -500,6 +657,105 @@ class PythonReviewVisitor(ast.NodeVisitor):
             or isinstance(base, ast.Name) and base.id == "TestCase"
             for base in parent.bases
         )
+
+    def _is_intended_public_api(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+        parent = self.parents.get(node)
+        if not isinstance(parent, ast.ClassDef):
+            return False
+        if self._is_conversion_method(node, parent):
+            return True
+        if self._is_framework_override(node, parent):
+            return True
+        if self._is_named_public_hook(node, parent):
+            return True
+        return self._is_abstract_hook(node, parent)
+
+    def _is_conversion_method(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parent: ast.ClassDef,
+    ) -> bool:
+        if node.name in PUBLIC_CONVERSION_METHODS:
+            return True
+        if node.name.startswith("to_") and node.name.endswith(PUBLIC_CONVERSION_SUFFIXES):
+            return True
+        return node.name.startswith("from_") and self._is_dataclass_like_class(parent)
+
+    def _is_dataclass_like_class(self, node: ast.ClassDef) -> bool:
+        if any(self._decorator_name(decorator).endswith("dataclass") for decorator in node.decorator_list):
+            return True
+        return node.name.endswith(
+            (
+                "Breakdown",
+                "Config",
+                "Contract",
+                "Notice",
+                "Record",
+                "Report",
+                "Result",
+                "Summary",
+            )
+        )
+
+    def _is_framework_override(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parent: ast.ClassDef,
+    ) -> bool:
+        base_names = self._class_base_names(parent)
+        return any(
+            node.name in methods
+            for base_name, methods in FRAMEWORK_OVERRIDE_METHODS_BY_BASE.items()
+            if base_name in base_names
+        )
+
+    def _is_named_public_hook(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parent: ast.ClassDef,
+    ) -> bool:
+        if node.name in PUBLIC_RESULT_METHODS and parent.name.endswith(("Result", "Report", "Summary")):
+            return True
+        for suffix, method_names in PUBLIC_HOOK_METHODS_BY_CLASS_SUFFIX.items():
+            if parent.name.endswith(suffix) and node.name in method_names:
+                return True
+        for suffix, prefixes in PUBLIC_HOOK_PREFIXES_BY_CLASS_SUFFIX.items():
+            if parent.name.endswith(suffix) and node.name.startswith(prefixes):
+                return True
+        return False
+
+    def _is_abstract_hook(
+        self,
+        node: ast.FunctionDef | ast.AsyncFunctionDef,
+        parent: ast.ClassDef,
+    ) -> bool:
+        base_names = self._class_base_names(parent)
+        if {"ABC", "Protocol"} & base_names:
+            return True
+        if len(node.body) != 1:
+            return False
+        only_statement = node.body[0]
+        if isinstance(only_statement, ast.Pass):
+            return True
+        if isinstance(only_statement, ast.Expr):
+            value = only_statement.value
+            return isinstance(value, ast.Constant) and value.value is Ellipsis
+        if isinstance(only_statement, ast.Raise) and isinstance(only_statement.exc, ast.Call):
+            return self._call_name(only_statement.exc.func) == "NotImplementedError"
+        return False
+
+    def _class_base_names(self, node: ast.ClassDef) -> set[str]:
+        names = set()
+        for base in node.bases:
+            name = self._call_name(base)
+            if name:
+                names.add(name.rsplit(".", 1)[-1])
+        return names
+
+    def _decorator_name(self, node: ast.AST) -> str:
+        if isinstance(node, ast.Call):
+            return self._call_name(node.func)
+        return self._call_name(node)
 
     def _add(
         self,

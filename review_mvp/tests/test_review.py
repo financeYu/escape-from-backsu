@@ -211,6 +211,140 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(["hardcoded-secret"], [finding.rule for finding in explicit_directory_result.findings])
         self.assertEqual(["hardcoded-secret"], [finding.rule for finding in explicit_file_result.findings])
 
+    def test_explicit_internal_api_allows_conversion_and_adapter_hooks(self) -> None:
+        target = self._write_temp_file(
+            """
+            from dataclasses import dataclass
+            from html.parser import HTMLParser
+
+            @dataclass
+            class Contract:
+                value: str
+
+                @classmethod
+                def from_mapping(cls, values):
+                    return cls(str(values.get("value", "")))
+
+                def to_dict(self):
+                    return {"value": self.value}
+
+            class SourceAdapter:
+                def build_search_url(self, query):
+                    return f"https://example.test?q={query}"
+
+                def fetch_search(self, query):
+                    return self.build_search_url(query)
+
+                def parse_response(self, payload):
+                    return [payload]
+
+            class AlertParser(HTMLParser):
+                def handle_data(self, data):
+                    self.last_data = data
+
+            class CsvProvider:
+                def load(self):
+                    return []
+
+            class StockScorer:
+                def score(self, rows, context):
+                    raise NotImplementedError()
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertNotIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
+    def test_explicit_internal_api_still_reports_plain_public_method(self) -> None:
+        target = self._write_temp_file(
+            """
+            class Helper:
+                def process(self):
+                    return "internal"
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("explicit-internal-api", {finding.rule for finding in result.findings})
+
+    def test_prefer_comprehension_reports_single_local_append_loop(self) -> None:
+        target = self._write_temp_file(
+            """
+            def names_for(users):
+                names = []
+                for user in users:
+                    names.append(user.name)
+                return names
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("prefer-comprehension", {finding.rule for finding in result.findings})
+
+    def test_prefer_comprehension_ignores_structured_accumulators(self) -> None:
+        target = self._write_temp_file(
+            """
+            def render_lines(items):
+                lines = []
+                lines.append("header")
+                for item in items:
+                    lines.append(str(item))
+                return "\\n".join(lines)
+
+            class Collector:
+                def collect(self, items):
+                    for item in items:
+                        self.items.append(item)
+            """
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertNotIn("prefer-comprehension", {finding.rule for finding in result.findings})
+
+    def test_single_responsibility_ignores_long_linear_function(self) -> None:
+        assignments = "\n".join(f"    value_{index} = {index}" for index in range(60))
+        target = self._write_temp_file(
+            "def build_values():\n"
+            f"{assignments}\n"
+            "    return value_59\n"
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertNotIn("single-responsibility", {finding.rule for finding in result.findings})
+
+    def test_single_responsibility_reports_long_complex_function(self) -> None:
+        padding = "\n".join("    total += 0" for _ in range(45))
+        target = self._write_temp_file(
+            "def classify_values(items):\n"
+            "    total = 0\n"
+            "    for item in items:\n"
+            "        if item > 0:\n"
+            "            total += item\n"
+            "        if item % 2:\n"
+            "            total += 1\n"
+            "        if item % 3:\n"
+            "            total += 1\n"
+            "        if item % 5:\n"
+            "            total += 1\n"
+            "        if item % 7:\n"
+            "            total += 1\n"
+            "        if item % 11:\n"
+            "            total += 1\n"
+            "        if item % 13:\n"
+            "            total += 1\n"
+            f"{padding}\n"
+            "    return total\n"
+        )
+
+        result = review.run_review([target], review.DEFAULT_EXCLUDE_DIRS)
+
+        self.assertIn("single-responsibility", {finding.rule for finding in result.findings})
+
 
 if __name__ == "__main__":
     unittest.main()

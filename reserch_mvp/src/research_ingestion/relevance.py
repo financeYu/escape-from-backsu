@@ -32,15 +32,7 @@ def assess_collection_relevance(
     abstract_available = bool((paper.get("abstract") or "").strip())
 
     if exclude_hits and policy.get("reject_on_exclude_keyword", True):
-        return {
-            "status": "rejected",
-            "positive_keyword_hits": positive_hits,
-            "exclude_keyword_hits": exclude_hits,
-            "required_keyword_group_hits": required_group_hits,
-            "abstract_available": abstract_available,
-            "manual_review_required": True,
-            "reason_ko": "query-set exclude keyword가 metadata/title/abstract에서 감지되어 downstream evidence 생성을 막았습니다.",
-        }
+        return _exclude_keyword_relevance_result(positive_hits, exclude_hits, required_group_hits, abstract_available)
 
     missing_required_groups = [
         group_name
@@ -48,32 +40,62 @@ def assess_collection_relevance(
         if not group_hits
     ]
     if missing_required_groups:
-        return {
-            "status": "rejected",
-            "positive_keyword_hits": positive_hits,
-            "exclude_keyword_hits": exclude_hits,
-            "required_keyword_group_hits": required_group_hits,
-            "abstract_available": abstract_available,
-            "manual_review_required": True,
-            "reason_ko": (
-                "필수 relevance keyword group이 충족되지 않아 제외했습니다: "
-                + ", ".join(missing_required_groups)
-            ),
-        }
+        return _missing_group_relevance_result(
+            positive_hits,
+            exclude_hits,
+            required_group_hits,
+            abstract_available,
+            missing_required_groups,
+        )
 
     min_hits = int(policy.get("min_positive_keyword_hits", 1))
     if len(positive_hits) < min_hits:
-        return {
-            "status": "rejected",
-            "positive_keyword_hits": positive_hits,
-            "exclude_keyword_hits": exclude_hits,
-            "required_keyword_group_hits": required_group_hits,
-            "abstract_available": abstract_available,
-            "manual_review_required": True,
-            "reason_ko": "query-set keyword와 충분히 일치하지 않아 metadata relevance gate에서 제외했습니다.",
-        }
+        return _insufficient_keyword_relevance_result(positive_hits, exclude_hits, required_group_hits, abstract_available)
 
     manual_review = bool(policy.get("manual_review_when_abstract_missing", True) and not abstract_available)
+    return _accepted_relevance_result(positive_hits, exclude_hits, required_group_hits, abstract_available, manual_review)
+
+
+def _exclude_keyword_relevance_result(positive_hits: list[str], exclude_hits: list[str], required_group_hits: dict[str, list[str]], abstract_available: bool) -> dict[str, Any]:
+    return {
+        "status": "rejected",
+        "positive_keyword_hits": positive_hits,
+        "exclude_keyword_hits": exclude_hits,
+        "required_keyword_group_hits": required_group_hits,
+        "abstract_available": abstract_available,
+        "manual_review_required": True,
+        "reason_ko": "query-set exclude keyword가 metadata/title/abstract에서 감지되어 downstream evidence 생성을 막았습니다.",
+    }
+
+
+def _missing_group_relevance_result(positive_hits: list[str], exclude_hits: list[str], required_group_hits: dict[str, list[str]], abstract_available: bool, missing_required_groups: list[str]) -> dict[str, Any]:
+    return {
+        "status": "rejected",
+        "positive_keyword_hits": positive_hits,
+        "exclude_keyword_hits": exclude_hits,
+        "required_keyword_group_hits": required_group_hits,
+        "abstract_available": abstract_available,
+        "manual_review_required": True,
+        "reason_ko": (
+            "필수 relevance keyword group이 충족되지 않아 제외했습니다: "
+            + ", ".join(missing_required_groups)
+        ),
+    }
+
+
+def _insufficient_keyword_relevance_result(positive_hits: list[str], exclude_hits: list[str], required_group_hits: dict[str, list[str]], abstract_available: bool) -> dict[str, Any]:
+    return {
+        "status": "rejected",
+        "positive_keyword_hits": positive_hits,
+        "exclude_keyword_hits": exclude_hits,
+        "required_keyword_group_hits": required_group_hits,
+        "abstract_available": abstract_available,
+        "manual_review_required": True,
+        "reason_ko": "query-set keyword와 충분히 일치하지 않아 metadata relevance gate에서 제외했습니다.",
+    }
+
+
+def _accepted_relevance_result(positive_hits: list[str], exclude_hits: list[str], required_group_hits: dict[str, list[str]], abstract_available: bool, manual_review: bool) -> dict[str, Any]:
     return {
         "status": "accepted",
         "positive_keyword_hits": positive_hits,

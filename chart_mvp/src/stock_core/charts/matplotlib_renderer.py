@@ -156,12 +156,7 @@ def add_price_summary(ax: plt.Axes, df: pd.DataFrame) -> None:
     ax.text(0.01, 0.955, indicator_text, transform=ax.transAxes, fontsize=8.8, color="#6b7280", va="bottom")
 
 
-def plot_stock_data(df: pd.DataFrame, stock_label: str, source_label: str, show: bool = True) -> plt.Figure:
-    """Display a trading-style three-panel chart."""
-
-    if df.empty:
-        raise ValueError("Cannot plot an empty DataFrame.")
-
+def _create_chart_axes() -> tuple[plt.Figure, plt.Axes, plt.Axes, plt.Axes]:
     fig, (ax_price, ax_volume, ax_rsi) = plt.subplots(
         3,
         1,
@@ -170,21 +165,15 @@ def plot_stock_data(df: pd.DataFrame, stock_label: str, source_label: str, show:
         gridspec_kw={"height_ratios": [4.2, 1.6, 1.9]},
     )
     fig.patch.set_facecolor(BG_COLOR)
+    for axis in (ax_price, ax_volume, ax_rsi):
+        style_axis(axis, y_right=True)
+    return fig, ax_price, ax_volume, ax_rsi
 
-    style_axis(ax_price, y_right=True)
-    style_axis(ax_volume, y_right=True)
-    style_axis(ax_rsi, y_right=True)
 
-    draw_candlesticks(ax_price, df)
-    ax_price.plot(df[DATE_COLUMN], df["MA5"], color=MA5_COLOR, linewidth=1.1, zorder=5)
-    ax_price.plot(df[DATE_COLUMN], df["MA20"], color=MA20_COLOR, linewidth=1.0, zorder=5)
-    ax_price.plot(df[DATE_COLUMN], df["BB_MID"], color="#9d4edd", linewidth=0.9, zorder=4)
-    ax_price.plot(df[DATE_COLUMN], df["BB_UPPER"], color=BB_COLOR, linewidth=0.9, zorder=4)
-    ax_price.plot(df[DATE_COLUMN], df["BB_LOWER"], color=BB_COLOR, linewidth=0.9, zorder=4)
-
+def _add_latest_close_marker(ax: plt.Axes, df: pd.DataFrame) -> None:
     latest_close = df.iloc[-1][CLOSE_COLUMN]
-    ax_price.axhline(latest_close, color=UP_COLOR, linestyle=":", linewidth=1.0, alpha=0.9)
-    ax_price.annotate(
+    ax.axhline(latest_close, color=UP_COLOR, linestyle=":", linewidth=1.0, alpha=0.9)
+    ax.annotate(
         f"{format_number(latest_close)}",
         xy=(df[DATE_COLUMN].iloc[-1], latest_close),
         xytext=(10, 0),
@@ -195,43 +184,41 @@ def plot_stock_data(df: pd.DataFrame, stock_label: str, source_label: str, show:
         bbox={"boxstyle": "round,pad=0.25", "fc": UP_COLOR, "ec": UP_COLOR},
     )
 
-    latest_date = df[DATE_COLUMN].max().strftime("%Y-%m-%d")
-    ax_price.text(
-        0.01,
-        1.08,
-        f"{stock_label} 일봉 차트",
-        transform=ax_price.transAxes,
-        fontsize=14,
-        fontweight="bold",
-        color="#1f2937",
-        va="bottom",
-    )
-    ax_price.text(
-        0.99,
-        1.08,
-        f"{source_label} · 최신일 {latest_date}",
-        transform=ax_price.transAxes,
-        fontsize=9.5,
-        color="#6b7280",
-        va="bottom",
-        ha="right",
-    )
-    add_price_summary(ax_price, df)
-    ax_price.set_ylabel("가격")
 
-    price_legend = [
+def _plot_price_panel(
+    ax: plt.Axes,
+    df: pd.DataFrame,
+    stock_label: str,
+    source_label: str,
+) -> list[Line2D]:
+    draw_candlesticks(ax, df)
+    ax.plot(df[DATE_COLUMN], df["MA5"], color=MA5_COLOR, linewidth=1.1, zorder=5)
+    ax.plot(df[DATE_COLUMN], df["MA20"], color=MA20_COLOR, linewidth=1.0, zorder=5)
+    ax.plot(df[DATE_COLUMN], df["BB_MID"], color="#9d4edd", linewidth=0.9, zorder=4)
+    ax.plot(df[DATE_COLUMN], df["BB_UPPER"], color=BB_COLOR, linewidth=0.9, zorder=4)
+    ax.plot(df[DATE_COLUMN], df["BB_LOWER"], color=BB_COLOR, linewidth=0.9, zorder=4)
+    _add_latest_close_marker(ax, df)
+
+    latest_date = df[DATE_COLUMN].max().strftime("%Y-%m-%d")
+    ax.text(0.01, 1.08, f"{stock_label} 일봉 차트", transform=ax.transAxes, fontsize=14, fontweight="bold", color="#1f2937", va="bottom")
+    ax.text(0.99, 1.08, f"{source_label} · 최신일 {latest_date}", transform=ax.transAxes, fontsize=9.5, color="#6b7280", va="bottom", ha="right")
+    add_price_summary(ax, df)
+    ax.set_ylabel("가격")
+    return [
         Line2D([0], [0], color=MA5_COLOR, linewidth=1.3, label="이동평균선 5"),
         Line2D([0], [0], color=MA20_COLOR, linewidth=1.3, label="이동평균선 20"),
         Line2D([0], [0], color=BB_COLOR, linewidth=1.1, label="볼린저 밴드"),
     ]
 
+
+def _plot_volume_panel(ax: plt.Axes, df: pd.DataFrame) -> None:
     up_day = df[CLOSE_COLUMN] >= df[OPEN_COLUMN]
     volume_colors = up_day.map({True: UP_COLOR, False: DOWN_COLOR})
-    ax_volume.bar(df[DATE_COLUMN], df[VOLUME_COLUMN], width=0.8, color=volume_colors, alpha=0.95, zorder=2)
-    ax_volume.plot(df[DATE_COLUMN], df["VOLUME_MA20"], color="#14b8a6", linewidth=1.2, zorder=3)
-    ax_volume.set_ylabel("거래량")
-    ax_volume.yaxis.set_major_formatter(mticker.FuncFormatter(format_volume_tick))
-    ax_volume.legend(
+    ax.bar(df[DATE_COLUMN], df[VOLUME_COLUMN], width=0.8, color=volume_colors, alpha=0.95, zorder=2)
+    ax.plot(df[DATE_COLUMN], df["VOLUME_MA20"], color="#14b8a6", linewidth=1.2, zorder=3)
+    ax.set_ylabel("거래량")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(format_volume_tick))
+    ax.legend(
         handles=[
             Rectangle((0, 0), 1, 1, facecolor=UP_COLOR, edgecolor=UP_COLOR, alpha=0.9, label="거래량"),
             Line2D([0], [0], color="#14b8a6", linewidth=1.5, label="거래량 20일선"),
@@ -243,16 +230,18 @@ def plot_stock_data(df: pd.DataFrame, stock_label: str, source_label: str, show:
         fontsize=9,
     )
 
-    ax_rsi.axhspan(30, 70, facecolor="#ede9fe", alpha=0.7, zorder=0)
-    ax_rsi.axhline(70, color="#94a3b8", linestyle="--", linewidth=0.9)
-    ax_rsi.axhline(50, color="#cbd5e1", linestyle="--", linewidth=0.8)
-    ax_rsi.axhline(30, color="#94a3b8", linestyle="--", linewidth=0.9)
-    ax_rsi.plot(df[DATE_COLUMN], df["RSI14"], color=RSI_COLOR, linewidth=1.1, zorder=3)
-    ax_rsi.plot(df[DATE_COLUMN], df["RSI_SIGNAL"], color=RSI_SIGNAL_COLOR, linewidth=1.0, zorder=3)
-    ax_rsi.set_ylim(20, 100)
-    ax_rsi.set_ylabel("RSI")
-    ax_rsi.set_yticks([20, 40, 60, 80])
-    ax_rsi.legend(
+
+def _plot_rsi_panel(ax: plt.Axes, df: pd.DataFrame) -> None:
+    ax.axhspan(30, 70, facecolor="#ede9fe", alpha=0.7, zorder=0)
+    ax.axhline(70, color="#94a3b8", linestyle="--", linewidth=0.9)
+    ax.axhline(50, color="#cbd5e1", linestyle="--", linewidth=0.8)
+    ax.axhline(30, color="#94a3b8", linestyle="--", linewidth=0.9)
+    ax.plot(df[DATE_COLUMN], df["RSI14"], color=RSI_COLOR, linewidth=1.1, zorder=3)
+    ax.plot(df[DATE_COLUMN], df["RSI_SIGNAL"], color=RSI_SIGNAL_COLOR, linewidth=1.0, zorder=3)
+    ax.set_ylim(20, 100)
+    ax.set_ylabel("RSI")
+    ax.set_yticks([20, 40, 60, 80])
+    ax.legend(
         handles=[
             Line2D([0], [0], color=RSI_COLOR, linewidth=1.3, label=f"RSI(14) {df['RSI14'].iloc[-1]:.2f}"),
             Line2D([0], [0], color=RSI_SIGNAL_COLOR, linewidth=1.3, label=f"시그널 {df['RSI_SIGNAL'].iloc[-1]:.2f}"),
@@ -264,6 +253,8 @@ def plot_stock_data(df: pd.DataFrame, stock_label: str, source_label: str, show:
         fontsize=9,
     )
 
+
+def _format_date_axes(ax_price: plt.Axes, ax_volume: plt.Axes, ax_rsi: plt.Axes) -> None:
     for axis in (ax_price, ax_volume, ax_rsi):
         axis.xaxis.set_major_locator(mdates.AutoDateLocator())
         axis.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
@@ -272,6 +263,19 @@ def plot_stock_data(df: pd.DataFrame, stock_label: str, source_label: str, show:
     ax_volume.tick_params(axis="x", labelbottom=False)
     ax_rsi.set_xlabel("날짜")
     plt.setp(ax_rsi.get_xticklabels(), rotation=35, ha="right")
+
+
+def plot_stock_data(df: pd.DataFrame, stock_label: str, source_label: str, show: bool = True) -> plt.Figure:
+    """Display a trading-style three-panel chart."""
+
+    if df.empty:
+        raise ValueError("Cannot plot an empty DataFrame.")
+
+    fig, ax_price, ax_volume, ax_rsi = _create_chart_axes()
+    price_legend = _plot_price_panel(ax_price, df, stock_label, source_label)
+    _plot_volume_panel(ax_volume, df)
+    _plot_rsi_panel(ax_rsi, df)
+    _format_date_axes(ax_price, ax_volume, ax_rsi)
 
     ax_price.legend(
         handles=price_legend,

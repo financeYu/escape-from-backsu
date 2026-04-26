@@ -77,12 +77,7 @@ def run_daily_scan(
     return 0
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Build a small CLI with a batch default and a single-stock mode."""
-
-    parser = argparse.ArgumentParser(description="Local stock analysis and configured-universe scan tool")
-    subparsers = parser.add_subparsers(dest="command")
-
+def _add_scan_parser(subparsers: argparse._SubParsersAction) -> None:
     scan_parser = subparsers.add_parser("scan", help="Run the daily configured-universe batch scan")
     scan_parser.add_argument("--pages", type=int, default=20, help="Number of provider daily pages to fetch per stock")
     scan_parser.add_argument(
@@ -123,6 +118,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Run only when the latest business-day 21:00 update is due or missed",
     )
 
+
+def _add_single_parser(subparsers: argparse._SubParsersAction) -> None:
     single_parser = subparsers.add_parser("single", help="Render a single-stock chart")
     single_parser.add_argument("--code", default="005930", help="Stock code")
     single_parser.add_argument("--pages", type=int, default=20, help="Number of provider daily pages to fetch")
@@ -131,6 +128,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Prepare the single-stock flow without opening the chart window",
     )
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build a small CLI with a batch default and a single-stock mode."""
+
+    parser = argparse.ArgumentParser(description="Local stock analysis and configured-universe scan tool")
+    subparsers = parser.add_subparsers(dest="command")
+
+    _add_scan_parser(subparsers)
+    _add_single_parser(subparsers)
 
     return parser
 

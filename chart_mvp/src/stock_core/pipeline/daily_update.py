@@ -323,6 +323,51 @@ def _process_universe_entry(
     )
 
 
+def _process_daily_update_entry(
+    entry: UniverseEntry,
+    pages: int,
+    runtime_policy: BatchRuntimePolicy,
+) -> DailyUpdateRow:
+    base_df = get_price_df(
+        entry.code,
+        pages=pages,
+        use_cache=True,
+        provider_spec=runtime_policy.price_provider_spec,
+        cache_policy=runtime_policy.cache_policy,
+    )
+    indicator_df = add_indicators(base_df)
+    latest = _select_latest_summary_row(indicator_df)
+    latest_change = _calculate_latest_change(indicator_df, latest)
+    return DailyUpdateRow(
+        code=entry.code,
+        name=entry.name,
+        score=score_stock(indicator_df),
+        latest_date=pd.Timestamp(latest[DATE_COLUMN]).strftime("%Y-%m-%d"),
+        latest_close=float(latest[CLOSE_COLUMN]),
+        latest_change=latest_change,
+        latest_volume=float(latest[VOLUME_COLUMN]),
+        rsi14=float(latest.get("RSI14", float("nan"))),
+        data_source="cache_or_fetch",
+        df=indicator_df,
+    )
+
+
+def _process_daily_update_entries(
+    universe: Iterable[UniverseEntry],
+    pages: int,
+    runtime_policy: BatchRuntimePolicy,
+) -> tuple[list[DailyUpdateRow], list[str]]:
+    rows: list[DailyUpdateRow] = []
+    failed_codes: list[str] = []
+    for entry in universe:
+        try:
+            rows.append(_process_daily_update_entry(entry, pages, runtime_policy))
+        except Exception as exc:
+            failed_codes.append(entry.code)
+            logger.warning("Failed to update %s (%s): %s", entry.name, entry.code, exc)
+    return rows, failed_codes
+
+
 def _apply_market_cap_leader_override(
     results_df: pd.DataFrame,
     top_n: int,
@@ -470,39 +515,7 @@ def run_daily_update(
         universe = universe[:limit]
 
     logger.info("Running daily update for %s stocks", len(universe))
-
-    rows: list[DailyUpdateRow] = []
-    failed_codes: list[str] = []
-
-    for entry in universe:
-        try:
-            base_df = get_price_df(
-                entry.code,
-                pages=pages,
-                use_cache=True,
-                provider_spec=runtime_policy.price_provider_spec,
-                cache_policy=runtime_policy.cache_policy,
-            )
-            indicator_df = add_indicators(base_df)
-            latest = _select_latest_summary_row(indicator_df)
-            latest_change = _calculate_latest_change(indicator_df, latest)
-            rows.append(
-                DailyUpdateRow(
-                    code=entry.code,
-                    name=entry.name,
-                    score=score_stock(indicator_df),
-                    latest_date=pd.Timestamp(latest[DATE_COLUMN]).strftime("%Y-%m-%d"),
-                    latest_close=float(latest[CLOSE_COLUMN]),
-                    latest_change=latest_change,
-                    latest_volume=float(latest[VOLUME_COLUMN]),
-                    rsi14=float(latest.get("RSI14", float("nan"))),
-                    data_source="cache_or_fetch",
-                    df=indicator_df,
-                )
-            )
-        except Exception as exc:
-            failed_codes.append(entry.code)
-            logger.warning("Failed to update %s (%s): %s", entry.name, entry.code, exc)
+    rows, failed_codes = _process_daily_update_entries(universe, pages, runtime_policy)
 
     if not rows:
         raise ValueError("No stocks were updated successfully.")
@@ -538,32 +551,15 @@ def run_daily_update(
     )
 
 
-def run_daily_top5_update(
-    pages: int = 20,
-    use_cache: bool = True,
-    refresh_universe: bool = False,
-    render_charts: bool = True,
-    max_workers: Optional[int] = None,
-    progress_callback: Optional[Callable[[int, int, int], None]] = None,
-    top_n: int = DEFAULT_TOP_N,
-    use_market_cap_override: bool = False,
-    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
-) -> tuple[pd.DataFrame, dict]:
-    """Run the configured universe batch and export the latest top-ranked artifacts."""
-
-    top_n = _resolve_top_n(top_n)
-    universe = _build_universe_entries(refresh_universe=refresh_universe, universe_spec=runtime_policy.universe_spec)
-    worker_count = _resolve_worker_count(max_workers)
-    logger.info(
-        "Running daily Top-N update for %s stocks (pages=%s, use_cache=%s, refresh_universe=%s, workers=%s, top_n=%s)",
-        len(universe),
-        pages,
-        use_cache,
-        refresh_universe,
-        worker_count,
-        top_n,
-    )
-
+def _process_topn_entries_parallel(
+    universe: list[UniverseEntry],
+    *,
+    pages: int,
+    use_cache: bool,
+    runtime_policy: BatchRuntimePolicy,
+    worker_count: int,
+    progress_callback: Optional[Callable[[int, int, int], None]],
+) -> tuple[list[DailyUpdateRow], list[str]]:
     rows: list[DailyUpdateRow] = []
     failed_codes: list[str] = []
     completed_count = 0
@@ -586,35 +582,68 @@ def run_daily_top5_update(
                 if progress_callback is not None:
                     progress_callback(completed_count, len(universe), len(failed_codes))
 
-    if not rows:
-        raise ValueError("No stocks were processed successfully.")
+    return rows, failed_codes
 
+
+def _select_daily_top_rankings(
+    rows: list[DailyUpdateRow],
+    *,
+    top_n: int,
+    use_market_cap_override: bool,
+    runtime_policy: BatchRuntimePolicy,
+) -> pd.DataFrame:
     results_df = _build_rankings_frame(rows, runtime_policy=runtime_policy)
     ordered_results = results_df.sort_values(
         by=["점수", "최신일", "종목코드"],
         ascending=[False, False, True],
     ).reset_index(drop=True)
     if use_market_cap_override:
-        top_df = _apply_market_cap_leader_override(ordered_results, top_n=top_n, runtime_policy=runtime_policy)
-    else:
-        top_df = select_top_stocks(ordered_results, top_n=top_n)
+        return _apply_market_cap_leader_override(ordered_results, top_n=top_n, runtime_policy=runtime_policy)
+    return select_top_stocks(ordered_results, top_n=top_n)
 
-    chart_paths: list[str] = []
-    chart_failed_codes: list[str] = []
-    if render_charts:
-        selected_codes = set(top_df["종목코드"].tolist())
-        chart_paths, chart_failed_codes = _render_selected_charts(
-            rows=rows,
-            selected_codes=selected_codes,
-            pages=pages,
-            use_cache=use_cache,
-            output_dir=OUTPUTS_CHARTS_DIR,
-            file_name_builder=lambda row: f"{row.code}.png",
-            runtime_policy=runtime_policy,
-        )
 
-    completed_at = datetime.now()
-    meta = {
+def _render_top_rankings_charts(
+    *,
+    top_df: pd.DataFrame,
+    rows: list[DailyUpdateRow],
+    pages: int,
+    use_cache: bool,
+    render_charts: bool,
+    runtime_policy: BatchRuntimePolicy,
+) -> tuple[list[str], list[str]]:
+    if not render_charts:
+        return [], []
+
+    selected_codes = set(top_df["종목코드"].tolist())
+    return _render_selected_charts(
+        rows=rows,
+        selected_codes=selected_codes,
+        pages=pages,
+        use_cache=use_cache,
+        output_dir=OUTPUTS_CHARTS_DIR,
+        file_name_builder=lambda row: f"{row.code}.png",
+        runtime_policy=runtime_policy,
+    )
+
+
+def _build_topn_meta(
+    *,
+    completed_at: datetime,
+    pages: int,
+    top_n: int,
+    use_market_cap_override: bool,
+    use_cache: bool,
+    refresh_universe: bool,
+    render_charts: bool,
+    worker_count: int,
+    universe: list[UniverseEntry],
+    rows: list[DailyUpdateRow],
+    failed_codes: list[str],
+    chart_paths: list[str],
+    chart_failed_codes: list[str],
+    runtime_policy: BatchRuntimePolicy,
+) -> dict:
+    return {
         "as_of": completed_at.strftime("%Y-%m-%d"),
         "completed_at": completed_at.isoformat(timespec="seconds"),
         "last_successful_update_date": completed_at.strftime("%Y-%m-%d"),
@@ -646,10 +675,145 @@ def run_daily_top5_update(
         "canonical_ranking_source": "root src.scanner.latest_ranking",
         "financial_refresh_with_price": runtime_policy.refresh_financials_with_price,
     }
+
+
+def _prepare_topn_run(
+    *,
+    top_n: int,
+    refresh_universe: bool,
+    max_workers: Optional[int],
+    pages: int,
+    use_cache: bool,
+    runtime_policy: BatchRuntimePolicy,
+) -> tuple[int, list[UniverseEntry], int]:
+    resolved_top_n = _resolve_top_n(top_n)
+    universe = _build_universe_entries(refresh_universe=refresh_universe, universe_spec=runtime_policy.universe_spec)
+    worker_count = _resolve_worker_count(max_workers)
+    logger.info(
+        "Running daily Top-N update for %s stocks (pages=%s, use_cache=%s, refresh_universe=%s, workers=%s, top_n=%s)",
+        len(universe),
+        pages,
+        use_cache,
+        refresh_universe,
+        worker_count,
+        resolved_top_n,
+    )
+    return resolved_top_n, universe, worker_count
+
+
+def _process_topn_or_raise(
+    universe: list[UniverseEntry],
+    *,
+    pages: int,
+    use_cache: bool,
+    runtime_policy: BatchRuntimePolicy,
+    worker_count: int,
+    progress_callback: Optional[Callable[[int, int, int], None]],
+) -> tuple[list[DailyUpdateRow], list[str]]:
+    rows, failed_codes = _process_topn_entries_parallel(
+        universe,
+        pages=pages,
+        use_cache=use_cache,
+        runtime_policy=runtime_policy,
+        worker_count=worker_count,
+        progress_callback=progress_callback,
+    )
+    if not rows:
+        raise ValueError("No stocks were processed successfully.")
+    return rows, failed_codes
+
+
+def _build_and_export_topn_outputs(
+    *,
+    rows: list[DailyUpdateRow],
+    failed_codes: list[str],
+    universe: list[UniverseEntry],
+    pages: int,
+    top_n: int,
+    use_market_cap_override: bool,
+    use_cache: bool,
+    refresh_universe: bool,
+    render_charts: bool,
+    worker_count: int,
+    runtime_policy: BatchRuntimePolicy,
+) -> tuple[pd.DataFrame, dict]:
+    top_df = _select_daily_top_rankings(
+        rows,
+        top_n=top_n,
+        use_market_cap_override=use_market_cap_override,
+        runtime_policy=runtime_policy,
+    )
+    chart_paths, chart_failed_codes = _render_top_rankings_charts(
+        top_df=top_df,
+        rows=rows,
+        pages=pages,
+        use_cache=use_cache,
+        render_charts=render_charts,
+        runtime_policy=runtime_policy,
+    )
+    meta = _build_topn_meta(
+        completed_at=datetime.now(),
+        pages=pages,
+        top_n=top_n,
+        use_market_cap_override=use_market_cap_override,
+        use_cache=use_cache,
+        refresh_universe=refresh_universe,
+        render_charts=render_charts,
+        worker_count=worker_count,
+        universe=universe,
+        rows=rows,
+        failed_codes=failed_codes,
+        chart_paths=chart_paths,
+        chart_failed_codes=chart_failed_codes,
+        runtime_policy=runtime_policy,
+    )
     _export_outputs(top_df, meta)
     logger.info("Exported latest top-ranked outputs to %s", OUTPUTS_DIR)
-
     return top_df, meta
+
+
+def run_daily_top5_update(
+    pages: int = 20,
+    use_cache: bool = True,
+    refresh_universe: bool = False,
+    render_charts: bool = True,
+    max_workers: Optional[int] = None,
+    progress_callback: Optional[Callable[[int, int, int], None]] = None,
+    top_n: int = DEFAULT_TOP_N,
+    use_market_cap_override: bool = False,
+    runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
+) -> tuple[pd.DataFrame, dict]:
+    """Run the configured universe batch and export the latest top-ranked artifacts."""
+
+    top_n, universe, worker_count = _prepare_topn_run(
+        top_n=top_n,
+        refresh_universe=refresh_universe,
+        max_workers=max_workers,
+        pages=pages,
+        use_cache=use_cache,
+        runtime_policy=runtime_policy,
+    )
+    rows, failed_codes = _process_topn_or_raise(
+        universe,
+        pages=pages,
+        use_cache=use_cache,
+        runtime_policy=runtime_policy,
+        worker_count=worker_count,
+        progress_callback=progress_callback,
+    )
+    return _build_and_export_topn_outputs(
+        rows=rows,
+        failed_codes=failed_codes,
+        universe=universe,
+        pages=pages,
+        top_n=top_n,
+        use_market_cap_override=use_market_cap_override,
+        use_cache=use_cache,
+        refresh_universe=refresh_universe,
+        render_charts=render_charts,
+        worker_count=worker_count,
+        runtime_policy=runtime_policy,
+    )
 
 
 def get_daily_top5_due_status() -> DailyUpdateDueStatus:

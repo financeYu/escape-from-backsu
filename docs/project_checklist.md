@@ -88,6 +88,7 @@ Parallel workspace rule:
 | Step 16 | 종목별 상세 리포트 구현 |
 | Step 17 | 보수적 백테스트 |
 | Step 18 | 밸류에이션 확장 준비 |
+| Pre-Step19 | Context Routing System / Step 19 준비용 컨텍스트 경량화 |
 | Step 19 | 자동 실행 파이프라인 구성 |
 | Step 20 | 최종 Done 검증 |
 
@@ -162,6 +163,27 @@ Step 15 이후에는 최신 랭킹, 차트 런타임, 리뷰 수정, 리서치 h
 - Master workspace는 merge, validation, Cross-Step Conflict Checkpoint, status-control, context refresh에만 사용한다.
 - 모든 하위 에이전트와 non-master worktree는 편집 전 role branch를 먼저 만들거나 선택하고, 루트 `WORKSPACE_MANIFEST.md`를 작성한 뒤 작업한다.
 - Minor/support branch는 final Step status, roadmap verdict, master integration policy를 수정하지 않는다. 필요한 변경은 handoff/TODO/risk note로 master에 올린다.
+
+
+## 4.6 Pre-Step19 Context Routing System 준비 기준
+
+Pre-Step19는 Step 19 구현이 아니라 Step 19+ 작업자의 context load를 줄이기 위한 문서/체크포인트 지원 단계다.
+
+허용 범위:
+
+- `docs/context/` 아래 context hierarchy, task routing, context budget, domain stub, packet sample 문서화
+- `docs/cross_step_conflict_check.md`와 workspace 정책에 context routing 사용 원칙 추가
+- Step 18 마무리와 충돌하지 않는 최소 roadmap/checkpoint note
+
+금지 범위:
+
+- Step 19 자동 실행 파이프라인 구현
+- scoring, ranking, backtest, valuation scoring, report semantics 변경
+- 새 market data source 추가
+- KOSDAQ150, futures, options 데이터 또는 로직 추가
+- Step 18 완료 증거 발명 또는 Step 18 최종 판정 덮어쓰기
+
+Step 19를 시작하려면 별도 명시 지시, 전용 Step 19 branch/worktree, root `WORKSPACE_MANIFEST.md`, routed context packet, Cross-Step Conflict Checkpoint가 필요하다.
 
 ## 5. 현재 상태
 

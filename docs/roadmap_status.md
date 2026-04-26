@@ -21,6 +21,15 @@ Step 18 = 밸류에이션 확장 준비, COMPLETE / candidate-only valuation-fun
 - 모든 non-master worktree는 루트의 `WORKSPACE_MANIFEST.md`를 포함해야 한다.
 - 이 운영 메모는 Step 상태를 변경하지 않는다.
 
+
+## Pre-Step19 Context Routing 준비 메모
+
+- Status: PLANNED / docs-only support, Step 19 not started.
+- Purpose: future Step 19+ workers should start from routed context instead of reading the full repository history.
+- Allowed now: context hierarchy/routing/budget docs and checkpoint policy notes that do not alter Step 18 verdicts.
+- Forbidden now: Step 19 automatic pipeline implementation, scoring/ranking/backtest/valuation scoring/report semantics changes, new market data sources, KOSDAQ150, futures, or options expansion.
+- Step 18 note: if Step 18 completion evidence is not yet reflected on the integration branch being edited, do not invent evidence; preserve the mismatch as an integration risk until the Step 18 branch is accepted.
+
 ## 전체 Step 판정
 
 | Step | Status |

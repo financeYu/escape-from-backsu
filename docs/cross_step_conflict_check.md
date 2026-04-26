@@ -40,6 +40,19 @@ Run this checkpoint whenever an important in-Step stage ends, including:
 | Generated-output boundary | Are runtime reports, caches, charts, or scan outputs excluded unless promoted as fixtures? | committing generated reports outside documented fixture paths |
 | Dirty worktree isolation | Are owned files separated from unrelated dirty files? | mixed unrelated edits in the planned commit |
 | Root-agent conflict stop | Was any root/master or protected-work conflict stopped and resolved before continuing? | continuing edits after a stop trigger without a resume decision |
+| Context routing boundary | Did the worker start from the routed context packet/index instead of reopening full history by default? | full-repo history reads, archive dumps, or generated-output embedding without a direct need |
+
+
+## Pre-Step19 Context Routing Check
+
+For Pre-Step19 or Step 19+ preparation work, add this lightweight check before implementation starts:
+
+- routed context: confirm the worker used `docs/context/context_index.md` and `docs/context/context_routing.md`, or an equivalent packet.
+- forbidden context: confirm archives, old review packets, generated outputs, caches, and large raw reports were not loaded by default.
+- Step 19 boundary: confirm the work did not implement automatic execution, add data sources, or alter scoring/ranking/backtest/valuation/report semantics.
+- Step 18 boundary: confirm Step 18 status evidence was not invented or overwritten while Step 18 finishing work was protected.
+
+This check is a routing aid only. It does not replace the normal Cross-Step Conflict Checkpoint before closing a major Step.
 
 ## Output
 

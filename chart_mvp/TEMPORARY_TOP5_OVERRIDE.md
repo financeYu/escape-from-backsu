@@ -2,6 +2,8 @@
 
 현재 Top-5 선택은 임시로 placeholder 점수 기준이 아니라 `시가총액 상위 5개 종목` 고정 선택으로 설정되어 있습니다.
 
+이 파일은 `chart_mvp` legacy chart runtime 안내입니다. 루트 Step 20 canonical latest ranking 산출물이나 score adoption evidence가 아닙니다.
+
 적용 일시:
 
 - 2026-04-20
@@ -23,4 +25,3 @@
 참고 소스:
 
 - CompaniesMarketCap South Korea largest companies by market cap
-

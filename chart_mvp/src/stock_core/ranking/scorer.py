@@ -1,15 +1,25 @@
-"""Placeholder ranking scorer."""
+"""Placeholder ranking scorer for the legacy chart runtime."""
 
 from __future__ import annotations
 
 import pandas as pd
 
 
-def score_stock(df: pd.DataFrame) -> float:
-    """Return a placeholder score for a stock.
+LEGACY_PLACEHOLDER_SCORE_NOTICE = (
+    "chart_mvp_legacy_placeholder_score_not_step20_canonical_ranking"
+)
 
-    The scoring algorithm is intentionally not implemented yet.
+
+def score_stock(df: pd.DataFrame) -> float:
+    """Return a placeholder score for the legacy chart runtime.
+
+    The canonical post-Step20 ranking path lives under the repository root
+    `src.scanner` modules. This function remains only for the local legacy
+    chart/Top-N runner and must not be treated as Step 20 ranking evidence.
     """
 
     _ = df
     return 0.0
+
+
+__all__ = ("LEGACY_PLACEHOLDER_SCORE_NOTICE", "score_stock")

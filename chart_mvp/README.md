@@ -8,7 +8,9 @@
 - 웹 UI 없음
 - 무거운 프레임워크 없음
 - `matplotlib` 기반 로컬 차트 렌더링 유지
-- 스코어링 알고리즘은 placeholder 상태 유지
+- `chart_mvp` 자체 Top-N 스코어링 알고리즘은 legacy placeholder 상태 유지
+  - canonical Step 20 latest ranking은 루트 `src.scanner.latest_ranking` 경로가 소유한다.
+  - `chart_mvp/outputs/latest_top*.csv|json`은 로컬 차트 런타임 산출물이며 Step 20 ranking evidence가 아니다.
 
 ## 구조
 
@@ -139,9 +141,12 @@ python main.py single --code 005930 --pages 20
 ### 캐시
 
 - 캐시는 자동 생성됩니다.
-- 현재 정책은 그대로 유지됩니다.
+- 현재 가격 캐시 정책은 그대로 유지됩니다.
   - 평일: 최신 데이터를 다시 가져옴
   - 주말: 기존 캐시가 있으면 재사용
+
+가격 캐시 갱신은 기본적으로 재무제표 캐시를 함께 새로고침하지 않습니다.
+재무제표 캐시는 가격 Top-N 배치와 분리해 필요할 때 아래 명령으로 갱신합니다.
 
 Step 2 재무제표 캐시 검증을 재현하려면:
 
@@ -224,6 +229,7 @@ cmd.exe
 ## 현재 placeholder 경계
 
 - `score_stock(df)`는 항상 `0.0`을 반환합니다.
+- 이 placeholder는 legacy chart runtime 전용입니다. 루트 Step 20 canonical ranking으로 사용하지 않습니다.
 - `fetch_kospi200_universe_live()`는 아직 stub입니다.
 - `trading_calendar`는 한국 휴장일을 반영하지 않고 평일/주말만 구분합니다.
 

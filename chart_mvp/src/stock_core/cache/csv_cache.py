@@ -35,6 +35,7 @@ class PriceCachePolicy:
 
 
 DEFAULT_PRICE_CACHE_POLICY = PriceCachePolicy()
+DEFAULT_REFRESH_FINANCIALS_WITH_PRICE = False
 
 
 def _safe_cache_part(value: str) -> str:
@@ -167,8 +168,14 @@ def refresh_stock_data(
     cache_policy: PriceCachePolicy = DEFAULT_PRICE_CACHE_POLICY,
     price_fetcher=None,
     financial_fetcher=None,
+    refresh_financials: bool = DEFAULT_REFRESH_FINANCIALS_WITH_PRICE,
 ) -> tuple[pd.DataFrame, str]:
-    """Refresh on weekdays, otherwise reuse the latest cached data if available."""
+    """Refresh price data when needed and optionally refresh statement cache.
+
+    Financial-statement crawling is intentionally opt-in here. The daily price
+    cache path should stay lightweight; dedicated financial refresh scripts own
+    bulk statement-cache updates.
+    """
 
     if price_fetcher is None:
         price_fetcher = crawl_stock_data
@@ -200,14 +207,15 @@ def refresh_stock_data(
             save_stock_data(final_df, code)
         else:
             save_stock_data(final_df, code, cache_policy=cache_policy)
-        try:
-            financial_statements_df = financial_fetcher(code=code)
-            if cache_policy == DEFAULT_PRICE_CACHE_POLICY:
-                save_financial_statements(financial_statements_df, code)
-            else:
-                save_financial_statements(financial_statements_df, code, cache_policy=cache_policy)
-        except Exception as exc:
-            logger.warning("Failed to refresh financial statements for %s: %s", code, exc)
+        if refresh_financials:
+            try:
+                financial_statements_df = financial_fetcher(code=code)
+                if cache_policy == DEFAULT_PRICE_CACHE_POLICY:
+                    save_financial_statements(financial_statements_df, code)
+                else:
+                    save_financial_statements(financial_statements_df, code, cache_policy=cache_policy)
+            except Exception as exc:
+                logger.warning("Failed to refresh financial statements for %s: %s", code, exc)
         return final_df, "fetched"
 
     logger.info("Loading cached stock data for %s", code)

@@ -328,9 +328,9 @@ def _price_location(
             ),
         }
 
-    dates = price_history["date"]
-    start_positions = np.flatnonzero(dates.ge(decision_ts).to_numpy())
-    if len(start_positions) == 0:
+    dates = price_history["date"].to_numpy()
+    start_index = int(np.searchsorted(dates, decision_ts.to_datetime64(), side="left"))
+    if start_index >= len(price_history):
         return {
             "execution_date": None,
             "exit_date": None,
@@ -342,7 +342,7 @@ def _price_location(
                 BacktestLimitationFlag.MISSING_EXIT_PRICE,
             ),
         }
-    execution_index = int(start_positions[0]) + config.execution_lag_days
+    execution_index = start_index + config.execution_lag_days
     if execution_index >= len(price_history):
         return {
             "execution_date": None,

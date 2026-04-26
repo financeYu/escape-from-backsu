@@ -1,9 +1,27 @@
-# Route-only registry for post-MVP extension ideas.
-# Entries here do not authorize implementation.
+# Route-only registry for future extension ideas.
+# Entries here do not authorize implementation or Step 21 entry.
 
 status = "routing_only"
 baseline = "docs/context/MVP_V0_1_BASELINE.md"
 archive_index = "docs/context/ARCHIVE_INDEX.md"
+
+[extension_readiness.market_policy_refactor]
+state = "contract_only"
+permission = "root/master approved MVP v0.1 pre-freeze readiness refactor; does not authorize implementation"
+context = "docs/extension/mvp_v0_1_prefreeze_market_readiness.md"
+allowed = [
+  "policy injection points",
+  "symbol validation policy",
+  "universe metadata preservation",
+  "deterministic synthetic tests",
+]
+forbidden = [
+  "live market data ingestion",
+  "new universe activation",
+  "futures/options pricing or chain logic",
+  "ranking across multiple universes",
+  "score or ranking semantic changes",
+]
 
 [extension.kosdaq150]
 state = "not_implemented"

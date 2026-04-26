@@ -25,6 +25,7 @@ from src.reports.security_detail_metadata import (
     safe_float,
     source_adoption_metadata,
 )
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 from src.reports.security_detail_report_contracts import (
     STEP16_SECURITY_DETAIL_REPORT_NOTICE,
     SecurityDetailReport,
@@ -51,6 +52,7 @@ def build_security_detail_report(
     diagnostic_metadata: pd.DataFrame | Iterable[Mapping[str, Any]] | None = None,
     registry: Sequence[CompositeInputSpec] = DEFAULT_COMPOSITE_INPUT_REGISTRY,
     boundary_notice: SecurityReportBoundaryNotice | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> SecurityDetailReport:
     """Build one Step 16 per-security detail report from loaded Step 15 output.
 
@@ -60,8 +62,8 @@ def build_security_detail_report(
     """
 
     frame = _coerce_frame(latest_ranking_output, context="Step 16 latest ranking input")
-    validate_step16_latest_ranking_input(frame)
-    ticker = _validate_ticker(ticker)
+    validate_step16_latest_ranking_input(frame, symbol_policy=symbol_policy)
+    ticker = _validate_ticker(ticker, symbol_policy=symbol_policy)
     matches = frame.loc[frame["ticker"].eq(ticker)]
     if matches.empty:
         raise ValueError(f"Step 16 latest ranking input does not contain ticker: {ticker}")
@@ -145,12 +147,13 @@ def build_security_detail_reports(
     diagnostic_metadata: pd.DataFrame | Iterable[Mapping[str, Any]] | None = None,
     registry: Sequence[CompositeInputSpec] = DEFAULT_COMPOSITE_INPUT_REGISTRY,
     boundary_notice: SecurityReportBoundaryNotice | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> tuple[SecurityDetailReport, ...]:
     """Build Step 16 reports for one or more tickers without reordering by score."""
 
     frame = _coerce_frame(latest_ranking_output, context="Step 16 latest ranking input")
-    validate_step16_latest_ranking_input(frame)
-    selected_tickers = _selected_tickers(frame, tickers)
+    validate_step16_latest_ranking_input(frame, symbol_policy=symbol_policy)
+    selected_tickers = _selected_tickers(frame, tickers, symbol_policy=symbol_policy)
     present = set(frame["ticker"].astype("string"))
     missing = [ticker for ticker in selected_tickers if ticker not in present]
     if missing:
@@ -202,20 +205,25 @@ def _coerce_frame(
     return frame
 
 
-def _validate_ticker(ticker: str) -> str:
+def _validate_ticker(ticker: str, *, symbol_policy: SymbolPolicy) -> str:
     if not isinstance(ticker, str) or not ticker.strip():
         raise ValueError("Step 16 ticker must be a non-empty string.")
-    if len(ticker) != 6 or not ticker.isdigit():
-        raise ValueError("Step 16 ticker must preserve six-digit string format.")
+    if not symbol_policy.is_valid(ticker):
+        raise ValueError(f"Step 16 ticker must preserve {symbol_policy.display_rule}.")
     return ticker
 
 
-def _selected_tickers(frame: pd.DataFrame, tickers: Sequence[str] | str | None) -> list[str]:
+def _selected_tickers(
+    frame: pd.DataFrame,
+    tickers: Sequence[str] | str | None,
+    *,
+    symbol_policy: SymbolPolicy,
+) -> list[str]:
     if tickers is None:
         return frame["ticker"].astype("string").tolist()
     if isinstance(tickers, str):
-        return [_validate_ticker(tickers)]
-    return [_validate_ticker(ticker) for ticker in tickers]
+        return [_validate_ticker(tickers, symbol_policy=symbol_policy)]
+    return [_validate_ticker(ticker, symbol_policy=symbol_policy) for ticker in tickers]
 
 
 def _prepare_metadata_by_score(

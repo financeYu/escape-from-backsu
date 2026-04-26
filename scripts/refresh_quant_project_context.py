@@ -94,6 +94,7 @@ def build_context(config: ContextConfig) -> str:
         _compact_first_section(
             roadmap,
             (
+                ("## 현재 로드맵 상태", "## 컨텍스트 운영 상태", 12),
                 ("## 현재 활성 단계", "## 전체 Step 판정", 12),
                 ("## 현재 활성 단계", "## 현재 판정", 12),
             ),
@@ -104,6 +105,7 @@ def build_context(config: ContextConfig) -> str:
         _compact_first_section(
             roadmap,
             (
+                ("## 전체 Step 판정", "## 현재 Baseline 핵심", 28),
                 ("## 전체 Step 판정", "## 최근 완료 Step 요약", 28),
                 ("## 현재 판정", "## Step 13 통합 완료 상태", 24),
             ),
@@ -114,6 +116,7 @@ def build_context(config: ContextConfig) -> str:
         _compact_first_section(
             roadmap,
             (
+                ("## 현재 Baseline 핵심", "## Research Ingestion 상태", 16),
                 ("## 최근 완료 Step 요약", "## 상세 이력 위치", 32),
                 ("## Step 13 통합 완료 상태", "## Step 11 통합 상태", 40),
             ),

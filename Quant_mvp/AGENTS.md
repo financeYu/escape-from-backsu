@@ -218,6 +218,14 @@ cross-project routing unless the concrete post-MVP task explicitly assigns that
 scope. If the task is blank or would cross those boundaries, stop and report the
 needed clarification or root/master approval.
 
+Root/master may separately assign MVP v0.1 pre-freeze readiness refactors that
+make market, universe, asset-class, symbol, and provider assumptions explicit
+without adopting new scores or changing ranking semantics. Quant workers must
+treat those changes as Step 20 closure/freeze preparation, not Step 21 entry,
+and keep them contract-only unless a later approved post-freeze Step explicitly
+assigns score definition, normalization, selection, ranking, backtest,
+valuation, or derivatives implementation work.
+
 Final reports must use the Korean sections defined in the packet.
 
 ---

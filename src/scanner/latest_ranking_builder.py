@@ -121,7 +121,7 @@ def build_latest_ranking_output(
         if top_n < 1:
             raise ValueError("Step 15 top_n must be at least 1 when provided.")
         output = output.head(top_n).reset_index(drop=True)
-    validate_step15_latest_ranking_output(output)
+    validate_step15_latest_ranking_output(output, policy=policy)
     return output
 
 

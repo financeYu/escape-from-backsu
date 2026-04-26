@@ -109,6 +109,14 @@ output policy unless the concrete post-MVP task explicitly assigns that scope.
 If the task is blank or would cross those boundaries, stop and report the needed
 clarification or root/master approval.
 
+When root/master explicitly assigns MVP v0.1 pre-freeze readiness work, chart
+workers may make KOSPI200/Naver/Korean ticker assumptions configurable through
+small policy objects and deterministic tests. This is Step 20 closure/freeze
+preparation only, not Step 21 entry: do not add live KOSDAQ, futures, options,
+NASDAQ/overseas providers, ticker lists, derivative pricing logic, or
+cross-universe comparison outputs unless a later approved post-freeze Step
+assigns that implementation scope.
+
 Final reports must use the Korean sections defined in the packet.
 
 ---

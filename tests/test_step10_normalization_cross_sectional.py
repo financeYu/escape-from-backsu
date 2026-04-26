@@ -18,6 +18,7 @@ from src.scores.normalization_cross_sectional import (
     normalize_cross_sectional_scores,
     robust_zscore_cross_sectional,
 )
+from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY
 
 
 RAW = "short_term_overreaction_raw"
@@ -136,8 +137,23 @@ def test_leading_zero_ticker_is_preserved_and_numeric_ticker_is_rejected() -> No
 
     bad = frame.astype({"ticker": object}).copy()
     bad.loc[0, "ticker"] = 5930
-    with pytest.raises(ValueError, match="six-character string"):
+    with pytest.raises(ValueError, match="six-digit string format"):
         normalize_cross_sectional_score(bad, RAW, config=config())
+
+
+def test_generic_symbol_policy_accepts_exchange_symbols() -> None:
+    frame = raw_frame({"2026-01-01": [1.0, 2.0, 3.0, 4.0, 5.0]})
+    frame["ticker"] = ["AAPL", "MSFT", "NVDA", "TSLA", "GOOGL"]
+
+    result = normalize_cross_sectional_score(
+        frame,
+        RAW,
+        config=config(),
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
+
+    assert result["ticker"].tolist() == ["AAPL", "MSFT", "NVDA", "TSLA", "GOOGL"]
+    assert str(result["ticker"].dtype) == "string"
 
 
 def test_duplicate_ticker_date_rows_are_rejected() -> None:

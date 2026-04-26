@@ -20,6 +20,7 @@ from src.scores.normalization_timeseries import (  # noqa: E402
     normalize_timeseries_scores,
     robust_zscore_expanding,
 )
+from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY  # noqa: E402
 
 
 RAW_COLUMN = "example_raw"
@@ -208,6 +209,18 @@ def test_leading_zero_ticker_is_preserved_as_string() -> None:
     result = normalize_timeseries_score(raw_frame([1.0, 2.0, 3.0], ticker="005930"), RAW_COLUMN, config=config())
 
     assert result.loc[0, "ticker"] == "005930"
+    assert str(result["ticker"].dtype) == "string"
+
+
+def test_generic_symbol_policy_accepts_exchange_symbol() -> None:
+    result = normalize_timeseries_score(
+        raw_frame([1.0, 2.0, 3.0], ticker="AAPL"),
+        RAW_COLUMN,
+        config=config(),
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
+
+    assert result.loc[0, "ticker"] == "AAPL"
     assert str(result["ticker"].dtype) == "string"
 
 

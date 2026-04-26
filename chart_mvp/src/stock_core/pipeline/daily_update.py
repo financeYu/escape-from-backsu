@@ -131,7 +131,22 @@ def _build_universe_entries(
     universe_spec: UniverseSpec = KOSPI200_UNIVERSE_SPEC,
 ) -> list[UniverseEntry]:
     constituents = get_universe_constituents(universe_spec, refresh=refresh_universe)
-    return [UniverseEntry(code=item["code"], name=item["name"]) for item in constituents]
+    entries: list[UniverseEntry] = []
+    for item in constituents:
+        metadata = {
+            key: str(value)
+            for key, value in item.items()
+            if key not in {"code", "name"} and pd.notna(value)
+        }
+        entries.append(
+            UniverseEntry(
+                code=item["code"],
+                name=item["name"],
+                asset_class=universe_spec.asset_class,
+                metadata=metadata,
+            )
+        )
+    return entries
 
 
 def load_latest_top5_snapshot() -> pd.DataFrame:

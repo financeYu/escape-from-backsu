@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.composite.contracts import DEFAULT_COMPOSITE_INPUT_REGISTRY  # noqa: E402
+from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY  # noqa: E402
 from src.selection.adoption_synthesis_contracts import (  # noqa: E402
     assert_no_forbidden_adoption_columns,
 )
@@ -222,6 +223,17 @@ def test_output_rank_and_ticker_values_must_be_stable() -> None:
     lost_leading_zero.loc[0, "ticker"] = "5930"
     with pytest.raises(ValueError, match="six-digit string"):
         validate_step15_latest_ranking_output(lost_leading_zero)
+
+
+def test_output_ticker_policy_can_be_supplied_for_future_extension_contracts() -> None:
+    frame = latest_ranking_frame()
+    frame.loc[0, "ticker"] = "AAPL"
+    frame.loc[1, "ticker"] = "MSFT"
+
+    validate_step15_latest_ranking_output(
+        frame,
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
 
 
 def test_blocked_output_rows_may_omit_rank_and_composite_scores() -> None:

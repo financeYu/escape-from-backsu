@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Mapping
 
 import pandas as pd
 
@@ -19,6 +20,8 @@ def _normalize_stock_code(value: object, symbol_policy: SymbolPolicy = KOREAN_EQ
 class UniverseEntry:
     code: str
     name: str
+    asset_class: str = KOSPI200_UNIVERSE_SPEC.asset_class
+    metadata: Mapping[str, str] = field(default_factory=dict)
 
 
 class CsvUniverseProvider:
@@ -43,7 +46,23 @@ class CsvUniverseProvider:
 
         self.universe_spec.validate_size(len(cleaned))
 
-        return [UniverseEntry(code=row.code, name=row.name) for row in cleaned.itertuples(index=False)]
+        entries: list[UniverseEntry] = []
+        metadata_columns = tuple(column for column in self.universe_spec.metadata_columns if column in cleaned.columns)
+        for _, row in cleaned.iterrows():
+            metadata = {
+                column: str(row[column]).strip()
+                for column in metadata_columns
+                if pd.notna(row[column]) and str(row[column]).strip()
+            }
+            entries.append(
+                UniverseEntry(
+                    code=str(row["code"]),
+                    name=str(row["name"]),
+                    asset_class=self.universe_spec.asset_class,
+                    metadata=metadata,
+                )
+            )
+        return entries
 
 
 class Kospi200UniverseProvider(CsvUniverseProvider):

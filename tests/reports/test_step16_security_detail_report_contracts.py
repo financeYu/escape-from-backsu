@@ -21,6 +21,7 @@ from src.reports.security_detail_report_contracts import (  # noqa: E402
     validate_step16_latest_ranking_input,
     validate_step16_metadata_table,
 )
+from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY  # noqa: E402
 
 
 def valid_latest_ranking_frame() -> pd.DataFrame:
@@ -159,3 +160,15 @@ def test_security_detail_report_to_dict_validates_structured_content() -> None:
     assert record["ticker"] == "005930"
     assert record["readonly_rank_fields"]["rank"] == 1
     assert record["boundary_notice"]["scope"] == STEP16_SECURITY_DETAIL_REPORT_NOTICE
+
+
+def test_latest_ranking_contract_can_use_generic_symbol_policy() -> None:
+    frame = valid_latest_ranking_frame()
+    frame["ticker"] = "AAPL"
+
+    validate_step16_latest_ranking_input(
+        frame,
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
+    with pytest.raises(ValueError, match="six-digit string format"):
+        validate_step16_latest_ranking_input(frame)

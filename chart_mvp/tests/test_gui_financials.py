@@ -8,14 +8,14 @@ import pandas as pd
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = PROJECT_ROOT.parent
 SRC_DIR = PROJECT_ROOT / "src"
-APP_DIR = PROJECT_ROOT / "app"
 
-for path in (SRC_DIR, APP_DIR):
+for path in (REPO_ROOT, SRC_DIR):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from run_gui import Top5App
+from gui_mvp.chart_topn import Top5App
 
 
 class GuiFinancialTests(unittest.TestCase):

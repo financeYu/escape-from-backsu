@@ -65,6 +65,12 @@ Top-5 목록을 보고, 항목을 더블클릭하거나 버튼을 눌러 개별 
 python -m app.run_gui
 ```
 
+이 경로는 기존 실행 호환을 위한 wrapper입니다. 저장소 checkout 루트에서는 새 공유 GUI 모듈로 직접 실행할 수 있습니다.
+
+```powershell
+python -m gui_mvp chart
+```
+
 GUI 기능:
 
 - Top-5 갱신 실행
@@ -77,6 +83,14 @@ GUI 기능:
 - 진행률 바 표시
 - 마지막 갱신 시각 표시
 - 자동 새로고침 설정 가능
+
+백테스트 평가는 `chart_mvp`가 아니라 새 `gui_mvp`의 별도 evaluation-only viewer에서 실행합니다.
+
+```powershell
+python -m gui_mvp backtest
+```
+
+이 백테스트 viewer는 `src.backtest` 결과를 표시만 하며, score/ranking/report 설정이나 산출물을 갱신하지 않습니다.
 
 안전한 경량 실행 예시:
 

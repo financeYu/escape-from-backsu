@@ -15,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.composite.contracts import DEFAULT_COMPOSITE_INPUT_REGISTRY  # noqa: E402
+from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY  # noqa: E402
 import src.reports.security_detail_report as report_module  # noqa: E402
 from src.reports.security_detail_report import (  # noqa: E402
     FINAL_COMPOSITE_TECHNICAL_ONLY_NOTE,
@@ -181,6 +182,25 @@ def test_multiple_ticker_report_generation_preserves_requested_order() -> None:
 
     assert [report.ticker for report in reports] == ["000660", "005930"]
     assert [report.readonly_rank_fields["rank"] for report in reports] == [2, 1]
+
+
+def test_report_builder_accepts_configured_exchange_symbols() -> None:
+    frame = latest_ranking_frame()
+    frame["ticker"] = ["AAPL", "MSFT", "NVDA"]
+
+    report = build_security_detail_report(
+        frame,
+        "AAPL",
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
+    records = build_security_detail_report_records(
+        frame,
+        tickers=["MSFT"],
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
+
+    assert report.ticker == "AAPL"
+    assert records[0]["ticker"] == "MSFT"
 
 
 def test_multiple_ticker_report_generation_merges_metadata_once(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -12,6 +12,33 @@ It may only add a valuation-aware review track when explicit point-in-time funda
 
 ---
 
+## Post-MVP v0.1 activation guard
+
+When root/master delegates post-Step20 work, accept the compact task packet in
+`../../../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+
+For valuation work, the packet authorizes review-only, candidate-only analysis
+unless the concrete post-MVP task explicitly assigns valuation/fundamental
+scoring activation.
+
+Without a separately approved post-MVP Step, verified point-in-time fundamental
+availability, reporting-lag and stale-data policy, and an explicit downstream
+adoption plan, the repository-level valuation state remains
+`candidate_only_not_activated`.
+
+This agent must not create or activate:
+
+- `valuation_score`
+- `fundamental_score`
+- valuation-aware `final_composite_score`
+- valuation-aware ranking or report semantics
+
+If the task is blank, lacks point-in-time evidence, or would cross into
+technical scoring, scanner runtime, root policy, or another subproject, stop
+and report the needed clarification or root/master approval.
+
+---
+
 ## Local first review responsibility
 
 This agent performs first-pass review for its own valuation-review changes before master-up through `Quant_mvp`.

@@ -34,7 +34,7 @@ release-evidence check requires narrow archive lookup.
 - `current_context.md`: latest-only default-read context.
 - `MVP_V0_1_BASELINE.md`: compact post-Step20 baseline.
 - `MVP_V0_1_CONTRACT_MANIFEST.toml`: route-only pointer to canonical MVP v0.1 contracts.
-- `EXTENSION_REGISTRY.toml`: route-only registry for disabled post-MVP extension ideas.
+- `EXTENSION_REGISTRY.toml`: route-only registry for disabled future extension ideas; pre-freeze readiness entries do not authorize Step 21 work.
 - `CHANGE_IMPACT_MATRIX.yml`: route-only change impact matrix.
 - `ARCHIVE_INDEX.md`: archive lookup index; do not read old Step history by default.
 - `gpt_context_quant.md`: single GPT submission brief generated for prompt improvement work.

@@ -5,6 +5,11 @@ frequency = "daily"
 timezone = "Asia/Seoul"
 base_currency = "KRW"
 
+[instrument_identity]
+asset_class = "equity"
+symbol_policy = "kospi200_korean_equity_6"
+extension_readiness_policy = "contract_only_no_activation"
+
 [communication]
 progress_language = "ko"
 status_language = "ko"

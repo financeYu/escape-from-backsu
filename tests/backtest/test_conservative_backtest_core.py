@@ -16,6 +16,8 @@ from src.backtest import (  # noqa: E402
     BacktestLimitationFlag,
     run_conservative_backtest,
 )
+from src.backtest.contracts import assert_ticker_strings  # noqa: E402
+from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY  # noqa: E402
 
 
 def ranking_rows(**overrides: object) -> pd.DataFrame:
@@ -233,6 +235,38 @@ def test_ticker_leading_zero_is_preserved() -> None:
     )
     with pytest.raises(ValueError, match="ticker values must be non-empty strings"):
         run_conservative_backtest(bad_ranking, price_rows(), config=one_period_config(top_n=1))
+
+
+def test_backtest_contract_can_use_generic_symbol_policy_for_extension_contracts() -> None:
+    tickers = pd.Series(["AAPL", "MSFT"], dtype="string")
+
+    assert_ticker_strings(
+        tickers,
+        context="extension contract",
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
+    with pytest.raises(ValueError, match="six-digit string format"):
+        assert_ticker_strings(tickers, context="default contract")
+
+
+def test_backtest_runner_can_use_generic_symbol_policy_for_extension_contracts() -> None:
+    ranking = ranking_rows()
+    ranking["ticker"] = ["AAPL", "MSFT", "NVDA"]
+    prices = price_rows()
+    prices["ticker"] = prices["ticker"].replace(
+        {"005930": "AAPL", "000660": "MSFT", "035420": "NVDA"}
+    )
+
+    result = run_conservative_backtest(
+        ranking,
+        prices,
+        config=one_period_config(),
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
+
+    assert selected_tickers(result) == ["AAPL", "MSFT"]
+    with pytest.raises(ValueError, match="six-digit string format"):
+        run_conservative_backtest(ranking, prices, config=one_period_config())
 
 
 def test_upstream_blocked_row_is_excluded_and_reported() -> None:

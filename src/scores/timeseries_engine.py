@@ -13,6 +13,8 @@ import re
 
 import pandas as pd
 
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
+
 from .normalization_common import (
     clip_series_to_bounds,
     clip_value_to_bounds,
@@ -50,7 +52,7 @@ TIME_SERIES_STATUSES = frozenset(
         STATUS_ZERO_SCALE,
     }
 )
-TICKER_PATTERN = re.compile(r"^[0-9A-Z]{6}$")
+TICKER_PATTERN = re.compile(KOSPI200_SYMBOL_POLICY.valid_pattern)
 
 
 def normalize_timeseries_scores(
@@ -58,6 +60,7 @@ def normalize_timeseries_scores(
     *,
     raw_score_columns: Sequence[str] | None = None,
     config: TimeSeriesNormalizationConfig | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     """Normalize one or more Step 9 raw score columns ticker-by-ticker.
 
@@ -89,7 +92,11 @@ def normalize_timeseries_scores(
     if not selected:
         raise ValueError("At least one raw score column is required for Step 10A normalization.")
 
-    data = _prepare_timeseries_input(frame, required_columns=selected)
+    data = _prepare_timeseries_input(
+        frame,
+        required_columns=selected,
+        symbol_policy=symbol_policy,
+    )
     output = data.loc[:, list(IDENTITY_COLUMNS)].copy()
     for raw_score_column in selected:
         score_output = _normalize_prepared_timeseries_score(
@@ -109,6 +116,7 @@ def normalize_timeseries_score(
     *,
     score_name: str | None = None,
     config: TimeSeriesNormalizationConfig | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     """Normalize a single raw score column using ticker-local history only.
 
@@ -117,7 +125,11 @@ def normalize_timeseries_score(
     ticker observations with `date <= current date`.
     """
 
-    data = _prepare_timeseries_input(frame, required_columns=(raw_score_column,))
+    data = _prepare_timeseries_input(
+        frame,
+        required_columns=(raw_score_column,),
+        symbol_policy=symbol_policy,
+    )
     return _normalize_prepared_timeseries_score(
         data,
         raw_score_column=raw_score_column,
@@ -384,6 +396,7 @@ def _prepare_timeseries_input(
     frame: pd.DataFrame,
     *,
     required_columns: Sequence[str],
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     require_columns(frame, (*IDENTITY_COLUMNS, *required_columns), context="Step 10A input")
     assert_no_forbidden_output_columns(frame, context="Step 10A input")
@@ -392,11 +405,11 @@ def _prepare_timeseries_input(
     data = frame.copy()
     data["ticker"] = data["ticker"].astype("string").str.strip()
     valid_ticker = data["ticker"].map(
-        lambda value: isinstance(value, str) and bool(TICKER_PATTERN.fullmatch(value)),
+        lambda value: isinstance(value, str) and symbol_policy.is_valid(value),
         na_action="ignore",
     ).fillna(False)
     if (~valid_ticker).any():
-        raise ValueError("Step 10A input ticker must be six-character string values.")
+        raise ValueError(f"Step 10A input ticker must preserve {symbol_policy.display_rule}.")
 
     data["date"] = pd.to_datetime(data["date"], errors="raise")
     if data.duplicated(list(IDENTITY_COLUMNS)).any():

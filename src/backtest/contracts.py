@@ -17,6 +17,7 @@ import tomllib
 
 import pandas as pd
 
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 from src.scores.schema import find_missing_columns, find_valuation_fundamental_columns
 
 
@@ -372,7 +373,11 @@ def coerce_frame(
     return frame
 
 
-def validate_backtest_ranking_input(frame: pd.DataFrame) -> tuple[str, str]:
+def validate_backtest_ranking_input(
+    frame: pd.DataFrame,
+    *,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
+) -> tuple[str, str]:
     """Validate Step 17 ranking snapshot input and return date/rank columns."""
 
     date_column = find_ranking_date_column(frame.columns)
@@ -389,12 +394,20 @@ def validate_backtest_ranking_input(frame: pd.DataFrame) -> tuple[str, str]:
             "Step 17 ranking input contains forbidden columns: "
             f"{', '.join(forbidden)}"
         )
-    assert_ticker_strings(frame["ticker"], context="Step 17 ranking input")
+    assert_ticker_strings(
+        frame["ticker"],
+        context="Step 17 ranking input",
+        symbol_policy=symbol_policy,
+    )
     pd.to_datetime(frame[date_column], errors="raise")
     return date_column, rank_column
 
 
-def validate_backtest_price_input(frame: pd.DataFrame) -> None:
+def validate_backtest_price_input(
+    frame: pd.DataFrame,
+    *,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
+) -> None:
     """Validate Step 17 OHLCV price input."""
 
     missing = find_missing_columns(frame.columns, PRICE_INPUT_COLUMNS)
@@ -407,7 +420,11 @@ def validate_backtest_price_input(frame: pd.DataFrame) -> None:
         raise ValueError(
             "Step 17 price input contains forbidden columns: " f"{', '.join(forbidden)}"
         )
-    assert_ticker_strings(frame["ticker"], context="Step 17 price input")
+    assert_ticker_strings(
+        frame["ticker"],
+        context="Step 17 price input",
+        symbol_policy=symbol_policy,
+    )
     pd.to_datetime(frame["date"], errors="raise")
     for column in ("open", "high", "low", "close", "volume"):
         values = pd.to_numeric(frame[column], errors="coerce")
@@ -450,15 +467,20 @@ def find_forbidden_backtest_input_columns(columns: Iterable[str]) -> list[str]:
     return sorted(forbidden)
 
 
-def assert_ticker_strings(series: pd.Series, *, context: str) -> None:
-    """Reject non-string tickers and enforce six-digit Korean stock-code strings."""
+def assert_ticker_strings(
+    series: pd.Series,
+    *,
+    context: str,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
+) -> None:
+    """Reject non-string tickers and enforce the configured symbol policy."""
 
     invalid = series.map(lambda value: not isinstance(value, str) or value.strip() == "")
     if invalid.any():
         raise ValueError(f"{context} ticker values must be non-empty strings.")
-    unsafe = series.map(lambda value: len(value) != 6 or not value.isdigit())
+    unsafe = series.map(lambda value: not symbol_policy.is_valid(value))
     if unsafe.any():
-        raise ValueError(f"{context} ticker values must preserve six-digit string format.")
+        raise ValueError(f"{context} ticker values must preserve {symbol_policy.display_rule}.")
 
 
 def is_upstream_blocked(row: pd.Series) -> bool:

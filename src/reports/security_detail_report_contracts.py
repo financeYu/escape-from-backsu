@@ -17,6 +17,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 from src.scores.schema import find_missing_columns, find_valuation_fundamental_columns
 
 
@@ -317,6 +318,7 @@ def assert_no_forbidden_step16_report_columns(
 def validate_step16_latest_ranking_input(
     frame: pd.DataFrame,
     *,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
     context: str = "Step 16 latest ranking input",
 ) -> None:
     """Validate the already-built Step 15 latest ranking table for reporting."""
@@ -325,7 +327,7 @@ def validate_step16_latest_ranking_input(
     if missing:
         raise ValueError(f"{context} missing required columns: {', '.join(missing)}")
     assert_no_forbidden_step16_report_columns(frame.columns, context=context)
-    _assert_tickers_are_safe_strings(frame, context=context)
+    _assert_tickers_are_safe_strings(frame, symbol_policy=symbol_policy, context=context)
     _assert_single_snapshot_date(frame, context=context)
     if frame.duplicated(["ticker"]).any():
         raise ValueError(f"{context} must contain at most one row per ticker.")
@@ -404,13 +406,18 @@ def validate_security_detail_report_content(
         )
 
 
-def _assert_tickers_are_safe_strings(frame: pd.DataFrame, *, context: str) -> None:
+def _assert_tickers_are_safe_strings(
+    frame: pd.DataFrame,
+    *,
+    symbol_policy: SymbolPolicy,
+    context: str,
+) -> None:
     invalid = frame["ticker"].map(lambda value: not isinstance(value, str) or value.strip() == "")
     if invalid.any():
         raise ValueError(f"{context} ticker values must be non-empty strings.")
-    unsafe = frame["ticker"].map(lambda value: len(value) != 6 or not value.isdigit())
+    unsafe = frame["ticker"].map(lambda value: not symbol_policy.is_valid(value))
     if unsafe.any():
-        raise ValueError(f"{context} ticker values must preserve six-digit string format.")
+        raise ValueError(f"{context} ticker values must preserve {symbol_policy.display_rule}.")
 
 
 def _assert_single_snapshot_date(frame: pd.DataFrame, *, context: str) -> None:

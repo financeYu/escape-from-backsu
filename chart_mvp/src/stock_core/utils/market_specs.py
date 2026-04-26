@@ -11,6 +11,11 @@ from dataclasses import dataclass
 import re
 
 
+EQUITY_ASSET_CLASS = "equity"
+FUTURES_ASSET_CLASS = "futures"
+OPTIONS_ASSET_CLASS = "options"
+
+
 @dataclass(frozen=True)
 class SymbolPolicy:
     """Normalization and validation rules for instrument identifiers."""
@@ -68,6 +73,8 @@ class UniverseSpec:
     packaged_filename: str
     snapshot_filename: str
     symbol_policy: SymbolPolicy
+    asset_class: str = EQUITY_ASSET_CLASS
+    metadata_columns: tuple[str, ...] = ()
     expected_size: int | None = None
     live_refresh_supported: bool = False
 
@@ -112,6 +119,7 @@ KOSPI200_UNIVERSE_SPEC = UniverseSpec(
     packaged_filename="kospi200.csv",
     snapshot_filename="kospi200_snapshot.csv",
     symbol_policy=KOREAN_EQUITY_SYMBOL_POLICY,
+    asset_class=EQUITY_ASSET_CLASS,
     expected_size=200,
     live_refresh_supported=False,
 )

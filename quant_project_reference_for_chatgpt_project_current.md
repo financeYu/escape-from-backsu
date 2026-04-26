@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-26T20:20:21+09:00
+Generated at: 2026-04-26T22:44:33+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -19,19 +19,10 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE / KOSPI200 technical MVP v0.1 freeze-ready
-- Active: no in-progress roadmap Step.
+No active roadmap Step is in progress. Step 20 is complete, and the KOSPI200
+technical MVP v0.1 baseline is freeze-ready.
 - Current baseline: Step 20 completed KOSPI200 MVP completeness hardening and final Done validation.
 - Current gate: future expansion needs a separately approved post-MVP Step, routed context packet, correct role branch/worktree, and conflict checkpoint when required.
-## 컨텍스트 운영 상태
-- 기본 시작점: `docs/context/current_context.md`, `docs/context/MVP_V0_1_BASELINE.md`, active packet 1개.
-- Targeted lookup: `docs/context/CONTEXT_ROUTING_INDEX.md`와 필요한 domain stub만 사용한다.
-- Archive lookup: conflict, regression, provenance, release-evidence 확인이 있을 때만 가장 좁은 파일을 읽는다.
-- 답변과 handoff는 confirmed context fact를 최대 3개만 반복하고 현재 판단, 변경, 검증, 남은 리스크를 중심으로 작성한다.
-- 완료 Step 1-20 산출물은 기본적으로 신뢰한다.
-## 병렬 Workspace 운영 메모
-- Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
-- omitted 4 additional lines for compact context
 
 ## Roadmap Verdicts
 
@@ -57,17 +48,14 @@ Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE 
 | Step 18 | COMPLETE |
 | Step 19 | COMPLETE |
 | Step 20 | COMPLETE / KOSPI200 MVP Completeness Hardening & Final Done Validation |
-## 현재 Baseline 핵심
+
+## Most Recent Completed Step
+
 - MVP universe는 KOSPI200 only다.
 - `technical_composite_score`는 technical-only이며 MVP v0.1에서 `final_composite_score`와 같다.
 - Valuation/fundamental data는 candidate-only이며 technical/final composite에 들어가지 않는다.
 - Backtest output은 evaluation-only이며 upstream scoring/ranking에 feedback하지 않는다.
 - Generated reports, runtime outputs, chart images, local caches, raw market data는 default context가 아니다.
-- omitted 41 additional lines for compact context
-
-## Most Recent Completed Step
-
-- unavailable
 
 ## Cross-Step Conflict Checkpoint
 
@@ -92,7 +80,7 @@ Completed Step artifacts are trusted by default. The checkpoint checks only whet
 ## Git Snapshot
 
 - branch: `codex/master-up-post20-pending`
-- commit: `868b548`
+- commit: `3deb52f`
 - status:
 ```text
 clean

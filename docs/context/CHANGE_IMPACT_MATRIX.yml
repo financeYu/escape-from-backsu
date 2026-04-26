@@ -44,3 +44,27 @@ impact_routes:
       - correct role branch/worktree
       - conflict checkpoint
       - targeted tests
+
+  extension_readiness_contract_refactor:
+    status: MVP v0.1 pre-freeze readiness hardening only; not Step 21 entry
+    allowed_paths:
+      - docs/extension/*.md
+      - docs/context/EXTENSION_REGISTRY.toml
+      - src/preprocess/
+      - src/scanner/
+      - src/validation/
+      - chart_mvp/src/stock_core/
+      - chart_mvp/tests/
+      - tests/data_validation/
+      - tests/scanner/
+      - tests/validation/
+      - Quant_mvp/config/
+    forbidden_changes:
+      - live market data providers for new markets
+      - new ticker lists or derivative contract chains
+      - score formula, normalization, ranking, report, backtest, or valuation semantics
+      - generated runtime outputs
+    validation:
+      - focused tests for changed code paths
+      - forbidden-scope search for activation language
+      - git diff --check

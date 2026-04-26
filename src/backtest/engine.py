@@ -30,6 +30,7 @@ from src.backtest.contracts import (
     validate_backtest_price_input,
     validate_backtest_ranking_input,
 )
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 
 
 def run_conservative_backtest(
@@ -37,6 +38,7 @@ def run_conservative_backtest(
     prices: pd.DataFrame | Iterable[Mapping[str, Any]],
     *,
     config: BacktestConfig | Mapping[str, Any] | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> ConservativeBacktestResult:
     """Run a deterministic, evaluation-only Step 17 backtest.
 
@@ -50,8 +52,11 @@ def run_conservative_backtest(
         context="Step 17 ranking snapshots",
     )
     price_frame = coerce_frame(prices, context="Step 17 OHLCV prices")
-    date_column, rank_column = validate_backtest_ranking_input(ranking_frame)
-    validate_backtest_price_input(price_frame)
+    date_column, rank_column = validate_backtest_ranking_input(
+        ranking_frame,
+        symbol_policy=symbol_policy,
+    )
+    validate_backtest_price_input(price_frame, symbol_policy=symbol_policy)
 
     prepared_rankings = _prepare_ranking_frame(
         ranking_frame,

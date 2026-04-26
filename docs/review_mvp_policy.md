@@ -4,6 +4,16 @@
 
 `review_mvp` is a specialist review project, not the default mandatory review bottleneck.
 
+For local/project-level Codex routing, run the Review Gate skill first:
+`.agents/skills/review_gate/SKILL.md`. Invoke the `review_mvp` specialist
+skill only when the gate sets `review_mvp_required: true` or when master/root
+explicitly requests it:
+`.agents/skills/review_mvp_specialist/SKILL.md`.
+
+This is not the GitHub-connected code-review feature. Do not use GitHub review
+trigger wording, configure automatic GitHub PR review, or require GitHub PR
+review usage for this local policy.
+
 `review_mvp` is invoked only for:
 
 - high-risk changes

@@ -15,6 +15,7 @@ from src.scores.mean_reversion_scores import (  # noqa: E402
     calculate_step9_part_a_raw_scores,
     load_part_a_score_config,
 )
+from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY  # noqa: E402
 from src.scores.schema import find_forbidden_output_columns  # noqa: E402
 from src.scores.score_contracts import PART_A_RAW_COLUMNS  # noqa: E402
 
@@ -112,6 +113,16 @@ class Step9PartAScoreTests(unittest.TestCase):
         result = calculate_step9_part_a_raw_scores(step7_frame([1.0, 2.0]), config=make_test_config())
 
         self.assertEqual(result.loc[0, "ticker"], "005930")
+        self.assertEqual(str(result["ticker"].dtype), "string")
+
+    def test_generic_symbol_policy_accepts_exchange_symbol(self) -> None:
+        result = calculate_step9_part_a_raw_scores(
+            step7_frame([1.0, 2.0, 3.0], ticker="AAPL"),
+            config=make_test_config(),
+            symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+        )
+
+        self.assertEqual(result.loc[0, "ticker"], "AAPL")
         self.assertEqual(str(result["ticker"].dtype), "string")
 
     def test_insufficient_history_and_warmup_are_not_filled_optimistically(self) -> None:

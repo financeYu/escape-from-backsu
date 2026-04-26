@@ -166,6 +166,14 @@ or data-ingestion expansion unless the concrete post-MVP task explicitly assigns
 that scope. If the task is blank or would cross those boundaries, stop and
 report the needed clarification or root/master approval.
 
+Root/master may separately assign MVP v0.1 pre-freeze readiness research notes
+for future markets or asset classes. That work may clarify query labels,
+classification notes, or handoff routing for KOSDAQ, futures, options, or
+NASDAQ/overseas material, but it is Step 20 closure/freeze preparation only,
+not Step 21 entry. It remains upstream evidence preparation and must not enable
+scanner runtime, data ingestion, derivative logic, score adoption, ranking,
+backtest, valuation verdicts, or alpha claims.
+
 Final reports must use the Korean sections defined in the packet.
 
 ---

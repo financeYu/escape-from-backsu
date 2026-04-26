@@ -17,7 +17,12 @@ if str(SRC_DIR) not in sys.path:
 from preprocess.schema_validator import validate_standard_price_schema
 from stock_core.cache.csv_cache import PriceCachePolicy, get_cache_path, get_financial_statement_cache_path
 from stock_core.providers.universe import CsvUniverseProvider
-from stock_core.utils.market_specs import GENERIC_EXCHANGE_SYMBOL_POLICY, KOREAN_EQUITY_SYMBOL_POLICY, UniverseSpec
+from stock_core.utils.market_specs import (
+    GENERIC_EXCHANGE_SYMBOL_POLICY,
+    KOREAN_EQUITY_SYMBOL_POLICY,
+    OPTIONS_ASSET_CLASS,
+    UniverseSpec,
+)
 
 
 class MarketExtensibilityTests(unittest.TestCase):
@@ -61,6 +66,48 @@ class MarketExtensibilityTests(unittest.TestCase):
             entries = CsvUniverseProvider(csv_path=Path("sample.csv"), universe_spec=universe_spec).load()
 
         self.assertEqual(entries[0].code, "005930")
+
+    def test_csv_universe_provider_preserves_declared_extension_metadata(self) -> None:
+        universe_spec = UniverseSpec(
+            universe_id="sample_options",
+            display_name="Sample Options",
+            packaged_filename="sample_options.csv",
+            snapshot_filename="sample_options_snapshot.csv",
+            symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+            asset_class=OPTIONS_ASSET_CLASS,
+            metadata_columns=("underlying", "expiry", "strike", "option_type"),
+            expected_size=1,
+        )
+
+        with patch(
+            "stock_core.providers.universe.pd.read_csv",
+            return_value=pd.DataFrame(
+                [
+                    {
+                        "code": "aapl_20260619_200c",
+                        "name": "AAPL Jun 2026 200 Call",
+                        "underlying": "AAPL",
+                        "expiry": "2026-06-19",
+                        "strike": "200",
+                        "option_type": "call",
+                        "ignored_column": "not-declared",
+                    }
+                ]
+            ),
+        ):
+            entries = CsvUniverseProvider(csv_path=Path("sample.csv"), universe_spec=universe_spec).load()
+
+        self.assertEqual(entries[0].asset_class, OPTIONS_ASSET_CLASS)
+        self.assertEqual(entries[0].code, "AAPL_20260619_200C")
+        self.assertEqual(
+            entries[0].metadata,
+            {
+                "underlying": "AAPL",
+                "expiry": "2026-06-19",
+                "strike": "200",
+                "option_type": "call",
+            },
+        )
 
     def test_korean_symbol_policy_keeps_legacy_embedded_code_extraction(self) -> None:
         self.assertEqual(KOREAN_EQUITY_SYMBOL_POLICY.normalize("\uc0bc\uc131\uc804\uc790*005930"), "005930")

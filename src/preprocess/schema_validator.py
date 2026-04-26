@@ -37,7 +37,53 @@ PRICE_COLUMN_ALIASES = {
     "collected_at": ("collected_at",),
 }
 
-TICKER_PATTERN = re.compile(r"^[0-9A-Z]{6}$")
+@dataclass(frozen=True)
+class SymbolPolicy:
+    """Validation policy for instrument identifiers.
+
+    The default remains the KOSPI200 six-character stock-code contract. Future
+    extension work can pass a different policy without weakening the MVP guard.
+    """
+
+    policy_id: str
+    valid_pattern: str
+    normalize_numeric_width: int | None = 6
+    leading_zero_check_enabled: bool = True
+    display_rule: str = "six-digit string format"
+
+    def is_valid(self, value: object) -> bool:
+        return bool(re.fullmatch(self.valid_pattern, str(value).strip().upper()))
+
+    def leading_zero_loss_candidates(self, values: pd.Series) -> int:
+        if not self.leading_zero_check_enabled or self.normalize_numeric_width is None:
+            return 0
+        ticker_text = values.astype(str).str.strip()
+        non_null = values.notna()
+        short_digit_tickers = (
+            non_null
+            & ticker_text.str.isdigit()
+            & (ticker_text.str.len() < self.normalize_numeric_width)
+        )
+        return int(short_digit_tickers.sum()) if short_digit_tickers.any() else 0
+
+
+KOSPI200_SYMBOL_POLICY = SymbolPolicy(
+    policy_id="kospi200_korean_equity_6",
+    valid_pattern=r"^[0-9]{6}$",
+    normalize_numeric_width=6,
+    leading_zero_check_enabled=True,
+    display_rule="six-digit string format",
+)
+
+GENERIC_EXCHANGE_SYMBOL_POLICY = SymbolPolicy(
+    policy_id="generic_exchange_symbol",
+    valid_pattern=r"^[0-9A-Z][0-9A-Z._-]{0,31}$",
+    normalize_numeric_width=None,
+    leading_zero_check_enabled=False,
+    display_rule="configured exchange symbol format",
+)
+
+TICKER_PATTERN = re.compile(KOSPI200_SYMBOL_POLICY.valid_pattern)
 PLAIN_NUMERIC_PATTERN = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$")
 COMMA_NUMERIC_PATTERN = re.compile(r"^[+-]?\d{1,3}(?:,\d{3})+(?:\.\d*)?$")
 
@@ -115,29 +161,44 @@ def _missing_ticker_checks(dataset: str) -> list[SchemaCheck]:
     ]
 
 
-def _ticker_quality_counts(ticker_values: pd.Series) -> tuple[bool, int, int]:
+def _ticker_quality_counts(
+    ticker_values: pd.Series,
+    *,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
+) -> tuple[bool, int, int]:
     ticker_text = ticker_values.astype(str).str.strip()
     non_null = ticker_values.notna()
     numeric_dtype = pd.api.types.is_numeric_dtype(ticker_values)
-    invalid_format = non_null & ~ticker_text.map(is_valid_ticker)
-    short_digit_tickers = non_null & ticker_text.str.isdigit() & (ticker_text.str.len() < 6)
+    invalid_format = non_null & ~ticker_text.map(lambda value: is_valid_ticker(value, symbol_policy=symbol_policy))
 
     format_failures = int(invalid_format.sum())
-    leading_zero_loss_candidates = int(short_digit_tickers.sum())
+    leading_zero_loss_candidates = symbol_policy.leading_zero_loss_candidates(ticker_values)
     if numeric_dtype:
-        leading_zero_loss_candidates = max(leading_zero_loss_candidates, int(non_null.sum()))
+        leading_zero_loss_candidates = (
+            max(leading_zero_loss_candidates, int(non_null.sum()))
+            if symbol_policy.leading_zero_check_enabled
+            else 0
+        )
     return numeric_dtype, format_failures, leading_zero_loss_candidates
 
 
-def validate_ticker_column(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
-    """Validate ticker dtype, six-character format, and likely leading-zero loss."""
+def validate_ticker_column(
+    frame: pd.DataFrame,
+    *,
+    dataset: str = "price",
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
+) -> list[SchemaCheck]:
+    """Validate ticker dtype, configured format, and likely leading-zero loss."""
 
     normalized = normalize_price_columns(frame)
     if "ticker" not in normalized.columns:
         return _missing_ticker_checks(dataset)
 
     ticker_values = normalized["ticker"]
-    numeric_dtype, format_failures, leading_zero_loss_candidates = _ticker_quality_counts(ticker_values)
+    numeric_dtype, format_failures, leading_zero_loss_candidates = _ticker_quality_counts(
+        ticker_values,
+        symbol_policy=symbol_policy,
+    )
 
     return [
         SchemaCheck(
@@ -343,6 +404,7 @@ def validate_standard_price_schema(
     *,
     dataset: str = "price",
     as_of_date: date | datetime | pd.Timestamp | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> list[SchemaCheck]:
     """Validate standard price schema presence and Step 3 safety checks."""
 
@@ -357,7 +419,7 @@ def validate_standard_price_schema(
             details=";".join(optional_present) if optional_present else "none",
         )
     )
-    checks.extend(validate_ticker_column(normalized, dataset=dataset))
+    checks.extend(validate_ticker_column(normalized, dataset=dataset, symbol_policy=symbol_policy))
     checks.extend(validate_date_parseability(normalized, dataset=dataset))
     checks.extend(validate_future_dates_absent(normalized, dataset=dataset, as_of_date=as_of_date))
     checks.extend(validate_numeric_columns_convertible(normalized, dataset=dataset))
@@ -371,12 +433,13 @@ def validate_standard_ohlcv_schema(
     *,
     dataset: str = "price",
     as_of_date: date | datetime | pd.Timestamp | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> list[SchemaCheck]:
     """Validate the canonical OHLCV schema without requiring runtime source metadata."""
 
     normalized = normalize_price_columns(frame)
     checks = validate_required_columns(normalized, CANONICAL_OHLCV_COLUMNS, dataset=dataset)
-    checks.extend(validate_ticker_column(normalized, dataset=dataset))
+    checks.extend(validate_ticker_column(normalized, dataset=dataset, symbol_policy=symbol_policy))
     checks.extend(validate_date_parseability(normalized, dataset=dataset))
     checks.extend(validate_future_dates_absent(normalized, dataset=dataset, as_of_date=as_of_date))
     checks.extend(validate_numeric_columns_convertible(normalized, dataset=dataset))
@@ -401,7 +464,11 @@ def infer_ticker_from_price_path(path: str | Path) -> str:
     return Path(path).stem
 
 
-def is_valid_ticker(value: object) -> bool:
-    """Return whether a value matches the project ticker convention."""
+def is_valid_ticker(
+    value: object,
+    *,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
+) -> bool:
+    """Return whether a value matches the configured ticker convention."""
 
-    return bool(TICKER_PATTERN.fullmatch(str(value).strip()))
+    return symbol_policy.is_valid(value)

@@ -344,11 +344,24 @@ Allowed language is conservative and evidence-bounded, such as `technical candid
 
 ### Forbidden output columns
 
-Block any production, report, data, fixture, schema, or exported output column that includes a forbidden output column unless it appears only in a guardrail list, policy text, test name, or negative example that explicitly rejects the column.
+Block any production, report, data, fixture, schema, or exported output column
+that includes a forbidden output column unless it appears only in a guardrail
+list, policy text, test name, negative example that explicitly rejects the
+column, or an approved MVP v0.1 contract output.
+
+MVP v0.1 contract exception:
+
+- `rank`, `technical_composite_score`, and `final_composite_score` are allowed
+  only when they conform to `docs/contracts/step20_ranking_contract.md` and
+  `docs/contracts/step20_composite_contract.md`.
+- They remain blocking if created before the roadmap allows them, changed
+  outside a separately approved post-MVP Step, wired to valuation/fundamental
+  data, fed by backtest results, or presented as a trading recommendation or
+  proven alpha.
+- If the context is unclear, use `NEEDS_CLARIFICATION`.
 
 Forbidden output columns include:
 
-- `rank`
 - `ranking`
 - `latest_rank`
 - `technical_composite_score`
@@ -365,7 +378,8 @@ Forbidden output columns include:
 - `cheap`
 - `bargain`
 
-If the context is unclear, use `NEEDS_CLARIFICATION`.
+Treat `technical_composite_score` and `final_composite_score` in the list above
+as forbidden only when the MVP v0.1 contract exception does not apply.
 
 ### Config integrity violations
 

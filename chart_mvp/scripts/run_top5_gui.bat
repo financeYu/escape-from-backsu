@@ -6,21 +6,22 @@ set "PYTHONUTF8=1"
 set "PYTHONIOENCODING=utf-8"
 
 set "SCRIPT_DIR=%~dp0"
-set "PROJECT_DIR=%SCRIPT_DIR%.."
+set "CHART_PROJECT_DIR=%SCRIPT_DIR%.."
+for %%I in ("%CHART_PROJECT_DIR%\..") do set "REPO_ROOT=%%~fI"
 
-pushd "%PROJECT_DIR%"
+pushd "%REPO_ROOT%"
 if defined PYTHON_EXE goto use_configured_python
 
 where python >nul 2>nul
 if %ERRORLEVEL% EQU 0 (
-    python -m app.run_gui
+    python -m gui_mvp chart
 ) else (
-    py -3 -m app.run_gui
+    py -3 -m gui_mvp chart
 )
 goto after_python
 
 :use_configured_python
-"%PYTHON_EXE%" -m app.run_gui
+"%PYTHON_EXE%" -m gui_mvp chart
 
 :after_python
 set "EXIT_CODE=%ERRORLEVEL%"

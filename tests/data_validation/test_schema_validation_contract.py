@@ -11,7 +11,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.preprocess.schema_validator import validate_standard_ohlcv_schema
+from src.preprocess.schema_validator import (
+    GENERIC_EXCHANGE_SYMBOL_POLICY,
+    validate_standard_ohlcv_schema,
+)
 
 
 AS_OF_DATE = date(2026, 4, 24)
@@ -57,6 +60,25 @@ class DataValidationContractTests(unittest.TestCase):
         statuses = self.statuses(data)
 
         self.assertEqual(statuses["duplicate_ticker_date_absent"], "fail")
+
+    def test_non_korean_symbol_policy_can_be_supplied_for_extension_contracts(self) -> None:
+        data = frame(ticker="AAPL")
+        checks = validate_standard_ohlcv_schema(
+            data,
+            as_of_date=AS_OF_DATE,
+            symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+        )
+        statuses = {check.check: check.status for check in checks}
+
+        self.assertEqual(statuses["ticker_six_char_format"], "pass")
+        self.assertEqual(statuses["ticker_leading_zero_preserved"], "pass")
+        self.assertEqual(statuses["schema_validation_summary"], "pass")
+
+    def test_default_kospi200_symbol_policy_stays_six_digit_numeric(self) -> None:
+        statuses = self.statuses(frame(ticker="AAPL"))
+
+        self.assertEqual(statuses["ticker_six_char_format"], "fail")
+        self.assertEqual(statuses["schema_validation_summary"], "fail")
 
 
 if __name__ == "__main__":

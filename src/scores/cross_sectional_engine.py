@@ -21,6 +21,8 @@ from collections.abc import Iterable, Sequence
 import numpy as np
 import pandas as pd
 
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
+
 from .cross_sectional_config import (
     CrossSectionalNormalizationConfig,
     load_cross_sectional_normalization_config,
@@ -184,6 +186,7 @@ def normalize_cross_sectional_score(
     score_name: str | None = None,
     config: CrossSectionalNormalizationConfig | None = None,
     as_of_date: str | pd.Timestamp | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     """Normalize one Step 9 raw score within each same-date cross-section.
 
@@ -197,6 +200,7 @@ def normalize_cross_sectional_score(
         frame,
         raw_score_columns=(raw_column,),
         as_of_date=as_of_date,
+        symbol_policy=symbol_policy,
     )
     active_config = config or load_cross_sectional_normalization_config()
     normalized_name = score_name or score_name_from_raw_column(raw_column)
@@ -248,6 +252,7 @@ def normalize_cross_sectional_scores(
     *,
     config: CrossSectionalNormalizationConfig | None = None,
     as_of_date: str | pd.Timestamp | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     """Normalize multiple Step 9 raw score columns by same-date cross-section.
 
@@ -266,6 +271,7 @@ def normalize_cross_sectional_scores(
         frame,
         raw_score_columns=selected_columns,
         as_of_date=as_of_date,
+        symbol_policy=symbol_policy,
     )
     combined = prepared.loc[:, [*IDENTITY_COLUMNS, *selected_columns, *SCORE_METADATA_COLUMNS]].copy()
     for raw_column in selected_columns:
@@ -274,6 +280,7 @@ def normalize_cross_sectional_scores(
             raw_column,
             config=active_config,
             as_of_date=as_of_date,
+            symbol_policy=symbol_policy,
         )
         prefix = f"{score_name_from_raw_column(raw_column)}_cross_sectional"
         for suffix in (
@@ -294,6 +301,7 @@ def prepare_cross_sectional_input_frame(
     *,
     raw_score_columns: Sequence[str],
     as_of_date: str | pd.Timestamp | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     """Validate and coerce Step 9 raw score input for Step 10B normalization."""
 
@@ -307,7 +315,7 @@ def prepare_cross_sectional_input_frame(
     )
 
     prepared = frame.loc[:, list(dict.fromkeys(required))].copy()
-    prepared["ticker"] = _coerce_ticker(prepared["ticker"])
+    prepared["ticker"] = _coerce_ticker(prepared["ticker"], symbol_policy=symbol_policy)
     parsed_dates = pd.to_datetime(prepared["date"], errors="coerce")
     if parsed_dates.isna().any():
         bad_count = int(parsed_dates.isna().sum())
@@ -385,18 +393,22 @@ def _present_step9_raw_columns(columns: Iterable[str]) -> tuple[str, ...]:
     return tuple(column for column in STEP9_RAW_SCORE_COLUMNS if column in present)
 
 
-def _coerce_ticker(series: pd.Series) -> pd.Series:
+def _coerce_ticker(
+    series: pd.Series,
+    *,
+    symbol_policy: SymbolPolicy,
+) -> pd.Series:
     invalid: list[object] = []
     coerced: list[str] = []
     for value in series:
-        if pd.isna(value) or not isinstance(value, str) or len(value) != 6:
+        if pd.isna(value) or not isinstance(value, str) or not symbol_policy.is_valid(value):
             invalid.append(value)
             coerced.append("")
         else:
             coerced.append(value)
     if invalid:
         raise ValueError(
-            "ticker must be a six-character string with leading zeros preserved."
+            f"ticker must preserve {symbol_policy.display_rule}."
         )
     return pd.Series(coerced, index=series.index, dtype="string")
 

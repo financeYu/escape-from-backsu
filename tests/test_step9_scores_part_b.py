@@ -18,6 +18,7 @@ from src.scores.trend_vol_flow_scores import (
     calculate_trend_vol_flow_raw_scores,
     load_part_b_score_windows,
 )
+from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY
 
 
 def part_b_windows(window: int = 3, minimum_history: int = 4) -> TrendVolFlowScoreWindows:
@@ -138,8 +139,19 @@ def test_part_b_preserves_ticker_leading_zero_string() -> None:
     assert str(result["ticker"].dtype) == "string"
 
 
+def test_part_b_generic_symbol_policy_accepts_exchange_symbol() -> None:
+    result = calculate_trend_vol_flow_raw_scores(
+        part_b_frame(ticker="AAPL"),
+        windows=part_b_windows(),
+        symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY,
+    )
+
+    assert result["ticker"].iloc[0] == "AAPL"
+    assert str(result["ticker"].dtype) == "string"
+
+
 def test_part_b_rejects_invalid_or_leading_zero_lost_ticker() -> None:
-    with pytest.raises(ValueError, match="ticker must be six-character"):
+    with pytest.raises(ValueError, match="six-digit string format"):
         calculate_trend_vol_flow_raw_scores(
             part_b_frame(ticker="5930"), windows=part_b_windows()
         )

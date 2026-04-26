@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 from src.selection.adoption_synthesis_contracts import Step14AdoptionState
 
 
@@ -74,6 +75,7 @@ class Step15RankingPolicy:
     final_score_policy: str = "technical_only_no_valuation"
     neutral_score_value: float = 0.0
     technical_only_notice: str = "kospi200_technical_only_mvp_no_valuation_or_fundamental_activation"
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY
 
     def __post_init__(self) -> None:
         if self.minimum_valid_score_count < 1:

@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 
 from src.composite.contracts import DEFAULT_COMPOSITE_INPUT_REGISTRY, CompositeInputSpec
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 from src.scores.schema import find_missing_columns, find_valuation_fundamental_columns
 from src.validation.common import column_names
 from src.validation.field_guardrails import find_forbidden_columns_by_rules
@@ -236,6 +237,7 @@ def validate_step15_latest_ranking_output(
     *,
     as_of_date: str | pd.Timestamp | None = None,
     registry: Iterable[CompositeInputSpec] = DEFAULT_COMPOSITE_INPUT_REGISTRY,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
     context: str = "Step 15 latest ranking output",
 ) -> None:
     """Validate a Step 15 latest ranking table without calculating rankings."""
@@ -243,7 +245,7 @@ def validate_step15_latest_ranking_output(
     validate_step15_output_columns(frame, registry=registry, context=context)
     _assert_required_prefix(frame.columns, context=context)
     _assert_single_latest_date(frame, as_of_date=as_of_date, context=context)
-    _assert_tickers_are_safe_strings(frame, context=context)
+    _assert_tickers_are_safe_strings(frame, symbol_policy=symbol_policy, context=context)
     _assert_no_duplicate_ticker_date(frame, context=context)
     _assert_rank_values_are_stable(frame, context=context)
     _assert_score_columns_are_finite(
@@ -499,13 +501,18 @@ def _assert_single_latest_date(
             raise ValueError(f"{context} contains future dates beyond as_of_date.")
 
 
-def _assert_tickers_are_safe_strings(frame: pd.DataFrame, *, context: str) -> None:
+def _assert_tickers_are_safe_strings(
+    frame: pd.DataFrame,
+    *,
+    symbol_policy: SymbolPolicy,
+    context: str,
+) -> None:
     invalid = frame["ticker"].map(lambda value: not isinstance(value, str) or value.strip() == "")
     if invalid.any():
         raise ValueError(f"{context} ticker values must be non-empty strings.")
-    lost_leading_zero = frame["ticker"].map(lambda value: len(value) < 6 or not value.isdigit())
-    if lost_leading_zero.any():
-        raise ValueError(f"{context} ticker values must preserve six-digit string format.")
+    unsafe = frame["ticker"].map(lambda value: not symbol_policy.is_valid(value))
+    if unsafe.any():
+        raise ValueError(f"{context} ticker values must preserve {symbol_policy.display_rule}.")
 
 
 def _assert_no_duplicate_ticker_date(frame: pd.DataFrame, *, context: str) -> None:

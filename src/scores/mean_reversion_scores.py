@@ -16,6 +16,8 @@ from typing import Mapping
 
 import pandas as pd
 
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
+
 from .schema import (
     IDENTITY_COLUMNS,
     SCORE_METADATA_COLUMNS,
@@ -34,7 +36,7 @@ from .score_contracts import (
 )
 
 
-TICKER_PATTERN = re.compile(r"^[0-9A-Z]{6}$")
+TICKER_PATTERN = re.compile(KOSPI200_SYMBOL_POLICY.valid_pattern)
 STEP7_REQUIRED_COLUMNS = (
     "ticker",
     "date",
@@ -98,11 +100,16 @@ def calculate_step9_part_a_raw_scores(
     *,
     config: PartAScoreConfig | None = None,
     as_of_date: date | datetime | pd.Timestamp | str | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     """Calculate Step 9 Part A raw score output from Step 7 indicator rows."""
 
     score_config = config or load_part_a_score_config()
-    data = _prepare_step7_indicator_input(frame, as_of_date=as_of_date)
+    data = _prepare_step7_indicator_input(
+        frame,
+        as_of_date=as_of_date,
+        symbol_policy=symbol_policy,
+    )
     output = data.loc[:, list(IDENTITY_COLUMNS)].copy()
 
     for contract in PART_A_SCORE_CONTRACTS:
@@ -377,6 +384,7 @@ def _prepare_step7_indicator_input(
     frame: pd.DataFrame,
     *,
     as_of_date: date | datetime | pd.Timestamp | str | None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     require_columns(frame, STEP7_REQUIRED_COLUMNS, context="Step 9 Part A input")
     assert_no_forbidden_output_columns(frame, context="Step 9 Part A input")
@@ -385,12 +393,12 @@ def _prepare_step7_indicator_input(
     data = frame.copy()
     data["ticker"] = data["ticker"].astype("string").str.strip()
     valid_ticker = data["ticker"].map(
-        lambda value: isinstance(value, str) and bool(TICKER_PATTERN.fullmatch(value)),
+        lambda value: isinstance(value, str) and symbol_policy.is_valid(value),
         na_action="ignore",
     ).fillna(False)
     invalid_ticker = ~valid_ticker
     if invalid_ticker.any():
-        raise ValueError("Step 9 Part A input ticker must be six-character string values.")
+        raise ValueError(f"Step 9 Part A input ticker must preserve {symbol_policy.display_rule}.")
 
     data["date"] = pd.to_datetime(data["date"], errors="raise")
     _assert_no_future_dates(data["date"], as_of_date=as_of_date)

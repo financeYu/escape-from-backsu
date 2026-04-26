@@ -30,7 +30,9 @@ def _normalize_universe_frame(frame: pd.DataFrame, universe_spec: UniverseSpec =
     if missing_columns:
         raise ValueError(f"Universe data is missing columns: {sorted(missing_columns)}")
 
-    normalized = normalized.loc[:, ["code", "name"]].dropna(subset=["code", "name"]).copy()
+    metadata_columns = [column for column in universe_spec.metadata_columns if column in normalized.columns]
+    selected_columns = ["code", "name", *metadata_columns]
+    normalized = normalized.loc[:, selected_columns].dropna(subset=["code", "name"]).copy()
     normalized["code"] = normalized["code"].map(universe_spec.symbol_policy.normalize)
     normalized["name"] = normalized["name"].astype(str).str.strip()
     normalized = normalized[normalized["name"] != ""]

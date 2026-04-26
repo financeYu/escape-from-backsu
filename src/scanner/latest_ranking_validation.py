@@ -120,13 +120,17 @@ def validate_step15_inputs(
         )
 
 
-def validate_step15_latest_ranking_output(frame: pd.DataFrame) -> None:
+def validate_step15_latest_ranking_output(
+    frame: pd.DataFrame,
+    *,
+    policy: Step15RankingPolicy = DEFAULT_STEP15_RANKING_POLICY,
+) -> None:
     """Validate Step 15 latest ranking output boundaries."""
 
     require_columns(frame, STEP15_BASE_OUTPUT_COLUMNS, context="Step 15 latest ranking output")
     assert_no_forbidden_step15_columns(frame.columns, context="Step 15 latest ranking output")
     _assert_single_latest_date(frame)
-    _assert_tickers_are_safe_strings(frame)
+    _assert_tickers_are_safe_strings(frame, policy=policy)
     _assert_unique_ticker_date(frame)
     _assert_allowed_output_status_values(frame)
     _assert_rank_order(frame)
@@ -173,13 +177,17 @@ def _assert_unique_ticker_date(frame: pd.DataFrame) -> None:
         raise ValueError("Step 15 latest ranking output contains duplicate ticker/date rows.")
 
 
-def _assert_tickers_are_safe_strings(frame: pd.DataFrame) -> None:
+def _assert_tickers_are_safe_strings(
+    frame: pd.DataFrame,
+    *,
+    policy: Step15RankingPolicy,
+) -> None:
     invalid = frame["ticker"].map(lambda value: not isinstance(value, str) or value.strip() == "")
     if invalid.any():
         raise ValueError("Step 15 ticker values must be non-empty strings.")
-    unsafe = frame["ticker"].map(lambda value: len(value) != 6 or not value.isdigit())
+    unsafe = frame["ticker"].map(lambda value: not policy.symbol_policy.is_valid(value))
     if unsafe.any():
-        raise ValueError("Step 15 ticker values must preserve six-digit string format.")
+        raise ValueError(f"Step 15 ticker values must preserve {policy.symbol_policy.display_rule}.")
 
 
 def _assert_allowed_output_status_values(frame: pd.DataFrame) -> None:

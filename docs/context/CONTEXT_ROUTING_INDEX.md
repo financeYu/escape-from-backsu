@@ -9,7 +9,7 @@ targeted lookup only; do not paste long file bodies into active context.
 - `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml` - route-only pointer to
   canonical MVP v0.1 contracts.
 - `docs/context/EXTENSION_REGISTRY.toml` - route-only registry for disabled
-  post-MVP extension ideas.
+  future post-freeze extension ideas.
 - `docs/context/CHANGE_IMPACT_MATRIX.yml` - route-only change impact matrix.
 - exactly one task-specific active packet when a task needs one.
 - `docs/context/CONTEXT_ROUTING_INDEX.md` - optional targeted lookup index.

@@ -33,6 +33,15 @@ For `chart_mvp`-scoped work, do not expand beyond the `chart_mvp` ownership boun
 
 For post-Step20 subproject delegation, use the compact packet in `docs/context/POST_MVP_AGENT_TASK_PACKET.md`. The packet is a sidecar routing aid for assigning current tasks while preserving the MVP v0.1 baseline; it does not authorize future extensions, scoring/ranking/report/backtest changes, valuation activation, or data-ingestion changes unless the user's concrete task explicitly assigns that scope.
 
+MVP v0.1 pre-freeze readiness refactors are allowed only when root/master
+assigns that concrete scope before freeze. These refactors may add policy
+objects, schemas, validators, tests, and routing notes that make
+KOSPI200/Naver/six-digit ticker assumptions explicit and injectable. They are
+part of Step 20 closure/freeze preparation, not Step 21 entry. They must not
+activate KOSDAQ, futures, options, NASDAQ/overseas ingestion, cross-universe
+comparison outputs, derivative pricing, new score semantics, valuation scoring,
+backtest feedback, or trading recommendations.
+
 ## Prompt Constraint Guard
 
 Before acting on a user prompt, check whether the requested action conflicts with this repository's hard stops, roadmap order, root boundary rules, protected concurrent work, Git hygiene, generated-output policy, valuation/financial-data boundary, or safety/security constraints.

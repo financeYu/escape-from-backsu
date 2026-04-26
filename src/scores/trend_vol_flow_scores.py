@@ -17,6 +17,8 @@ from typing import Iterable, Mapping
 
 import pandas as pd
 
+from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
+
 from .schema import (
     assert_no_forbidden_output_columns,
     assert_no_valuation_fundamental_columns,
@@ -39,7 +41,7 @@ PART_B_SCORE_NAMES = (
     "efficiency_ratio_trend",
 )
 IDENTITY_COLUMNS = ("ticker", "date")
-TICKER_PATTERN = re.compile(r"^[0-9A-Z]{6}$")
+TICKER_PATTERN = re.compile(KOSPI200_SYMBOL_POLICY.valid_pattern)
 METADATA_COLUMNS = (
     "score_warmup_state",
     "score_coverage_status",
@@ -115,6 +117,7 @@ def calculate_trend_vol_flow_raw_scores(
     *,
     windows: TrendVolFlowScoreWindows | None = None,
     as_of_date: date | datetime | pd.Timestamp | str | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     """Calculate Step 9 Part B raw scores from Step 7 indicator output.
 
@@ -123,7 +126,7 @@ def calculate_trend_vol_flow_raw_scores(
     """
 
     config = windows or load_part_b_score_windows()
-    data = _prepare_input(frame, as_of_date=as_of_date)
+    data = _prepare_input(frame, as_of_date=as_of_date, symbol_policy=symbol_policy)
     history_count = _score_history_count(data)
     group_size = data.groupby("ticker", sort=False)["date"].transform("size")
     enough_history = history_count.ge(config.minimum_history_required) & group_size.ge(
@@ -168,6 +171,7 @@ def calculate_trend_vol_flow_raw_scores(
         data=data,
         warmup_state=warmup_state,
         missing_reasons=list(missing_reasons.values()),
+        symbol_policy=symbol_policy,
     )
 
     for column in PART_B_MISSING_REASON_COLUMNS:
@@ -181,6 +185,7 @@ def _prepare_input(
     frame: pd.DataFrame,
     *,
     as_of_date: date | datetime | pd.Timestamp | str | None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
 ) -> pd.DataFrame:
     assert_no_forbidden_output_columns(frame, context="Step 9 Part B input")
     assert_no_valuation_fundamental_columns(frame, context="Step 9 Part B input")
@@ -192,11 +197,11 @@ def _prepare_input(
     data = frame.copy()
     data["ticker"] = data["ticker"].astype("string").str.strip()
     valid_ticker = data["ticker"].map(
-        lambda value: isinstance(value, str) and bool(TICKER_PATTERN.fullmatch(value)),
+        lambda value: isinstance(value, str) and symbol_policy.is_valid(value),
         na_action="ignore",
     ).fillna(False)
     if (~valid_ticker).any():
-        raise ValueError("Step 9 Part B input ticker must be six-character string values.")
+        raise ValueError(f"Step 9 Part B input ticker must preserve {symbol_policy.display_rule}.")
 
     data["date"] = pd.to_datetime(data["date"], errors="raise")
     _assert_no_future_dates(data["date"], as_of_date=as_of_date)
@@ -460,14 +465,15 @@ def _data_quality_flags(
     data: pd.DataFrame,
     warmup_state: pd.Series,
     missing_reasons: list[pd.Series],
+    symbol_policy: SymbolPolicy,
 ) -> pd.Series:
     row_reasons = pd.concat(missing_reasons, axis=1)
     flags: list[str] = []
     for row_index, row in row_reasons.iterrows():
         row_flags: set[str] = set()
         ticker = data.loc[row_index, "ticker"]
-        if pd.isna(ticker) or not TICKER_PATTERN.fullmatch(str(ticker)):
-            if re.fullmatch(r"\d{1,5}", str(ticker)):
+        if pd.isna(ticker) or not symbol_policy.is_valid(ticker):
+            if symbol_policy.leading_zero_check_enabled and re.fullmatch(r"\d{1,5}", str(ticker)):
                 row_flags.add("leading_zero_lost")
             else:
                 row_flags.add("invalid_ticker")

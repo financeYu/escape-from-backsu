@@ -121,6 +121,15 @@ The script refuses to start from a base ref that already tracks the shared root
 `WORKSPACE_MANIFEST.md` unless `-AllowTrackedManifest` is passed, because that
 case is likely to create a manifest merge conflict.
 
+
+## Context Routing Before Large Tasks
+
+For Step 19+ or other large tasks, workers should use `docs/context/context_index.md` and `docs/context/context_routing.md` before broad file reads.
+
+Worker prompts should name `required_context` and `forbidden_context` when a routed packet is available. The worker may still use targeted search when a direct contract, status, or boundary conflict is missing or unclear.
+
+Context routing reduces default context load; it does not weaken worktree separation, manifest scope, hard stops, generated-output boundaries, or the full Cross-Step Conflict Checkpoint required before closing major Steps.
+
 ## Branch-Local Commit Default
 
 After a role branch finishes its assigned work, commit the branch-local

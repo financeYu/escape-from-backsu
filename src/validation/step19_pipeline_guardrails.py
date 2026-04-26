@@ -13,6 +13,12 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
+from src.validation.common import string_tuple
+from src.validation.field_guardrails import (
+    find_forbidden_field_refs as _find_common_forbidden_field_refs,
+)
+from src.validation.text_guardrails import find_forbidden_pattern_labels
+
 
 STEP19_PIPELINE_NOTICE = (
     "Step 19 automatic execution pipeline summary only; no scoring, ranking, "
@@ -301,7 +307,7 @@ def validate_step19_pipeline_summary(
         if not status:
             errors.append(f"{stage_name or 'unknown stage'} is missing status")
         for key in ("input_refs", "output_refs"):
-            for ref in _string_tuple(stage.get(key, ())):
+            for ref in string_tuple(stage.get(key, ())):
                 forbidden_fields.update(_find_forbidden_field_refs((ref,)))
                 if key == "output_refs":
                     path_error = _generated_output_path_error(ref)
@@ -334,23 +340,21 @@ def validate_step19_generated_output_path(path: str, *, context: str = "Step 19 
 def find_step19_forbidden_language(text: str) -> list[str]:
     """Return forbidden Step 19 language labels in text."""
 
-    lowered = text.lower()
-    found: list[str] = []
-    for label, pattern in STEP19_FORBIDDEN_LANGUAGE_PATTERNS.items():
-        if _contains_forbidden_pattern(lowered, pattern):
-            found.append(label)
-    return sorted(found)
+    return find_forbidden_pattern_labels(
+        text,
+        STEP19_FORBIDDEN_LANGUAGE_PATTERNS,
+        is_allowed_match=_is_allowed_negated_match,
+    )
 
 
 def find_step20_completion_claims(text: str) -> list[str]:
     """Return Step 20 completion claim labels in text."""
 
-    lowered = text.lower()
-    found: list[str] = []
-    for label, pattern in STEP19_STEP20_COMPLETION_PATTERNS.items():
-        if _contains_forbidden_pattern(lowered, pattern):
-            found.append(label)
-    return sorted(found)
+    return find_forbidden_pattern_labels(
+        text,
+        STEP19_STEP20_COMPLETION_PATTERNS,
+        is_allowed_match=_is_allowed_negated_match,
+    )
 
 
 def _validate_stage_order(stages: Mapping[str, Any], errors: list[str]) -> None:
@@ -378,14 +382,14 @@ def _validate_stage_contracts(
 ) -> None:
     for stage_name, stage_values in stages.items():
         values = _mapping(stage_values)
-        output_fields = _string_tuple(values.get("output_fields", ()))
+        output_fields = string_tuple(values.get("output_fields", ()))
         forbidden_output_fields = _find_forbidden_field_refs(output_fields)
         if forbidden_output_fields:
             errors.append(
                 f"{stage_name} declares forbidden output fields: "
                 f"{', '.join(forbidden_output_fields)}"
             )
-        for ref in _string_tuple(values.get("output_refs", ())):
+        for ref in string_tuple(values.get("output_refs", ())):
             path_error = _generated_output_path_error(ref)
             if path_error:
                 errors.append(path_error)
@@ -402,8 +406,8 @@ def _validate_feedback_edges(stages: Mapping[str, Any], errors: list[str]) -> No
     report_outputs: set[str] = set()
     for stage_name, stage_values in stages.items():
         values = _mapping(stage_values)
-        outputs = set(_string_tuple(values.get("output_refs", ())))
-        outputs.update(_string_tuple(values.get("output_fields", ())))
+        outputs = set(string_tuple(values.get("output_refs", ())))
+        outputs.update(string_tuple(values.get("output_fields", ())))
         if stage_name in STEP19_BACKTEST_STAGES:
             backtest_outputs.update(outputs)
         if stage_name in STEP19_REPORT_STAGES:
@@ -411,8 +415,8 @@ def _validate_feedback_edges(stages: Mapping[str, Any], errors: list[str]) -> No
 
     for stage_name, stage_values in stages.items():
         values = _mapping(stage_values)
-        inputs = set(_string_tuple(values.get("input_refs", ())))
-        inputs.update(_string_tuple(values.get("input_fields", ())))
+        inputs = set(string_tuple(values.get("input_refs", ())))
+        inputs.update(string_tuple(values.get("input_fields", ())))
         return_fields = _find_return_feedback_refs(inputs)
         if stage_name in STEP19_UPSTREAM_STAGES and return_fields:
             errors.append(
@@ -437,32 +441,20 @@ def _find_config_forbidden_fields(stages: Mapping[str, Any]) -> list[str]:
     found: set[str] = set()
     for stage_values in stages.values():
         values = _mapping(stage_values)
-        found.update(_find_forbidden_field_refs(_string_tuple(values.get("output_fields", ()))))
+        found.update(_find_forbidden_field_refs(string_tuple(values.get("output_fields", ()))))
     return sorted(found)
 
 
 def _find_forbidden_field_refs(values: Iterable[str]) -> list[str]:
-    found: set[str] = set()
-    for value in values:
-        normalized = _normalize_field_ref(value)
-        if normalized in STEP19_FORBIDDEN_OUTPUT_FIELDS:
-            found.add(value)
-            continue
-        if any(normalized.endswith(f"_{field}") for field in STEP19_FORBIDDEN_OUTPUT_FIELDS):
-            found.add(value)
-    return sorted(found)
+    return _find_common_forbidden_field_refs(values, STEP19_FORBIDDEN_OUTPUT_FIELDS)
 
 
 def _find_return_feedback_refs(values: Iterable[str]) -> list[str]:
-    found: set[str] = set()
-    for value in values:
-        normalized = _normalize_field_ref(value)
-        if normalized in STEP19_RETURN_FEEDBACK_FIELDS:
-            found.add(value)
-            continue
-        if any(field in normalized for field in STEP19_RETURN_FEEDBACK_FIELDS):
-            found.add(value)
-    return sorted(found)
+    return _find_common_forbidden_field_refs(
+        values,
+        STEP19_RETURN_FEEDBACK_FIELDS,
+        match_mode="exact_or_contains",
+    )
 
 
 def _matching_refs(inputs: Iterable[str], outputs: Iterable[str]) -> list[str]:
@@ -530,21 +522,7 @@ def _is_forbidden_stage_name(stage_name: str) -> bool:
     return any(token in normalized for token in STEP19_FORBIDDEN_STAGE_TOKENS)
 
 
-def _normalize_field_ref(value: str) -> str:
-    normalized = str(value).strip().lower().replace("-", "_").replace(" ", "_")
-    normalized = normalized.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
-    return normalized
-
-
-def _contains_forbidden_pattern(lowered: str, pattern: str) -> bool:
-    for match in re.finditer(pattern, lowered, flags=re.IGNORECASE | re.DOTALL):
-        if _is_allowed_negated_match(lowered, match):
-            continue
-        return True
-    return False
-
-
-def _is_allowed_negated_match(lowered: str, match: re.Match[str]) -> bool:
+def _is_allowed_negated_match(lowered: str, match: re.Match[str], _label: str) -> bool:
     prefix = lowered[max(0, match.start() - 48) : match.start()]
     return any(
         marker in prefix
@@ -575,19 +553,6 @@ def _assert_false_flag(values: Mapping[str, Any], name: str, errors: list[str]) 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
-
-
-def _string_tuple(value: Any) -> tuple[str, ...]:
-    if value is None:
-        return ()
-    if isinstance(value, str):
-        return (value,)
-    if isinstance(value, Mapping):
-        return tuple(str(item) for item in value.keys())
-    try:
-        return tuple(str(item) for item in value)
-    except TypeError:
-        return (str(value),)
 
 
 def _json_text(value: Mapping[str, Any]) -> str:

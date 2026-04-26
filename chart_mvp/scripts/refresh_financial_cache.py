@@ -47,41 +47,30 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
+def _select_constituents(args: argparse.Namespace) -> list[dict[str, str]]:
     constituents = get_kospi200_constituents(refresh=False)
     if args.limit is not None:
         constituents = constituents[: max(args.limit, 0)]
+    return constituents
 
-    success: list[str] = []
-    skipped: list[str] = []
-    empty: list[str] = []
-    failures: list[tuple[str, str]] = []
 
-    for index, item in enumerate(constituents, start=1):
-        code = item["code"]
-        cache_path = get_financial_statement_cache_path(code)
-        if args.skip_existing and cache_path.exists() and cache_path.stat().st_size > 0:
-            skipped.append(code)
-            print(f"[{index:03d}/{len(constituents)}] skipped {code}: existing cache")
-            continue
+def _refresh_one_cache(code: str, *, skip_existing: bool) -> tuple[str, str]:
+    cache_path = get_financial_statement_cache_path(code)
+    if skip_existing and cache_path.exists() and cache_path.stat().st_size > 0:
+        return "skipped", "existing cache"
 
-        try:
-            frame = crawl_financial_statements(code=code)
-            save_financial_statements(frame, code)
-        except Exception as exc:  # pragma: no cover - live network and vendor HTML dependent
-            failures.append((code, str(exc)))
-            print(f"[{index:03d}/{len(constituents)}] failed {code}: {exc}")
-        else:
-            if frame.empty:
-                empty.append(code)
-            else:
-                success.append(code)
-            print(f"[{index:03d}/{len(constituents)}] saved {code}: rows={len(frame)}")
+    frame = crawl_financial_statements(code=code)
+    save_financial_statements(frame, code)
+    return ("empty", f"rows={len(frame)}") if frame.empty else ("success", f"rows={len(frame)}")
 
-        if args.sleep_seconds > 0:
-            time.sleep(args.sleep_seconds)
 
+def _print_summary(
+    *,
+    success: list[str],
+    skipped: list[str],
+    empty: list[str],
+    failures: list[tuple[str, str]],
+) -> None:
     print("SUMMARY")
     print(
         "success={success} skipped={skipped} empty={empty} failures={failures}".format(
@@ -97,6 +86,40 @@ def main() -> int:
         for code, error in failures:
             print(f"failure {code}: {error}")
     print("Boundary: refreshed caches remain inventory-only runtime artifacts.")
+
+
+def main() -> int:
+    args = parse_args()
+    constituents = _select_constituents(args)
+
+    success: list[str] = []
+    skipped: list[str] = []
+    empty: list[str] = []
+    failures: list[tuple[str, str]] = []
+
+    for index, item in enumerate(constituents, start=1):
+        code = item["code"]
+        try:
+            status, message = _refresh_one_cache(code, skip_existing=args.skip_existing)
+        except Exception as exc:  # pragma: no cover - live network and vendor HTML dependent
+            failures.append((code, str(exc)))
+            print(f"[{index:03d}/{len(constituents)}] failed {code}: {exc}")
+        else:
+            if status == "skipped":
+                skipped.append(code)
+                action = "skipped"
+            elif status == "empty":
+                empty.append(code)
+                action = "saved"
+            else:
+                success.append(code)
+                action = "saved"
+            print(f"[{index:03d}/{len(constituents)}] {action} {code}: {message}")
+
+        if args.sleep_seconds > 0:
+            time.sleep(args.sleep_seconds)
+
+    _print_summary(success=success, skipped=skipped, empty=empty, failures=failures)
 
     return 1 if failures else 0
 

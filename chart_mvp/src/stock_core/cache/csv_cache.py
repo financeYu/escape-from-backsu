@@ -169,6 +169,101 @@ def is_cache_coverage_sufficient(
     return len(df) >= required_rows
 
 
+def _resolve_refresh_fetchers(price_fetcher, financial_fetcher):
+    return (
+        crawl_stock_data if price_fetcher is None else price_fetcher,
+        crawl_financial_statements if financial_fetcher is None else financial_fetcher,
+    )
+
+
+def _save_price_cache(
+    df: pd.DataFrame,
+    code: str,
+    cache_policy: PriceCachePolicy,
+) -> None:
+    if cache_policy == DEFAULT_PRICE_CACHE_POLICY:
+        save_stock_data(df, code)
+    else:
+        save_stock_data(df, code, cache_policy=cache_policy)
+
+
+def _save_statement_cache(
+    df: pd.DataFrame,
+    code: str,
+    cache_policy: PriceCachePolicy,
+) -> None:
+    if cache_policy == DEFAULT_PRICE_CACHE_POLICY:
+        save_financial_statements(df, code)
+    else:
+        save_financial_statements(df, code, cache_policy=cache_policy)
+
+
+def _resolve_price_refresh_need(
+    code: str,
+    pages: int,
+    provider_spec: PriceProviderSpec,
+    cache_policy: PriceCachePolicy,
+) -> tuple[bool, Optional[pd.DataFrame], str]:
+    normalized_code = _normalize_code_for_cache(code, cache_policy)
+    cache_path = get_cache_path(normalized_code, cache_policy=cache_policy)
+
+    if not cache_path.exists():
+        return True, None, normalized_code
+
+    cached_df = load_cached_data(code, cache_policy=cache_policy)
+    if not is_cache_coverage_sufficient(cached_df, pages, provider_spec=provider_spec):
+        logger.info("Refreshing stock data for %s because cache coverage is shorter than requested pages=%s", normalized_code, pages)
+        return True, cached_df, normalized_code
+    if is_weekday() and not is_same_day_cache_available(code, cache_policy=cache_policy):
+        return True, cached_df, normalized_code
+    return False, cached_df, normalized_code
+
+
+def _refresh_statement_cache_if_requested(
+    code: str,
+    financial_fetcher,
+    cache_policy: PriceCachePolicy,
+    refresh_financials: bool,
+) -> None:
+    if not refresh_financials:
+        return
+
+    try:
+        financial_statements_df = financial_fetcher(code=code)
+        _save_statement_cache(financial_statements_df, code, cache_policy)
+    except Exception as exc:
+        logger.warning("Failed to refresh financial statements for %s: %s", code, exc)
+
+
+def _fetch_and_cache_price_data(
+    code: str,
+    pages: int,
+    provider_spec: PriceProviderSpec,
+    cache_policy: PriceCachePolicy,
+    price_fetcher,
+) -> pd.DataFrame:
+    logger.info("Refreshing stock data for %s from source", code)
+    raw_df = price_fetcher(code=code, pages=pages, sleep_seconds=provider_spec.request_sleep_seconds)
+    clean_df = clean_stock_data(raw_df)
+    final_df = add_indicators(clean_df)
+    _save_price_cache(final_df, code, cache_policy)
+    return final_df
+
+
+def _ensure_cached_indicators(
+    cached_df: pd.DataFrame,
+    code: str,
+    cache_policy: PriceCachePolicy,
+) -> pd.DataFrame:
+    if set(INDICATOR_COLUMNS).issubset(set(cached_df.columns)):
+        return cached_df
+
+    logger.info("Cached data for %s is missing indicators; recalculating", code)
+    refreshed_df = add_indicators(cached_df)
+    _save_price_cache(refreshed_df, code, cache_policy)
+    return refreshed_df
+
+
 def refresh_stock_data(
     code: str,
     pages: int,
@@ -186,56 +281,21 @@ def refresh_stock_data(
     bulk statement-cache updates.
     """
 
-    if price_fetcher is None:
-        price_fetcher = crawl_stock_data
-    if financial_fetcher is None:
-        financial_fetcher = crawl_financial_statements
-
-    normalized_code = _normalize_code_for_cache(code, cache_policy)
-    cache_path = get_cache_path(normalized_code, cache_policy=cache_policy)
-
-    should_fetch = False
-    cached_df: Optional[pd.DataFrame] = None
-
-    if not cache_path.exists():
-        should_fetch = True
-    else:
-        cached_df = load_cached_data(code, cache_policy=cache_policy)
-        if not is_cache_coverage_sufficient(cached_df, pages, provider_spec=provider_spec):
-            logger.info("Refreshing stock data for %s because cache coverage is shorter than requested pages=%s", normalized_code, pages)
-            should_fetch = True
-        elif is_weekday() and not is_same_day_cache_available(code, cache_policy=cache_policy):
-            should_fetch = True
+    price_fetcher, financial_fetcher = _resolve_refresh_fetchers(price_fetcher, financial_fetcher)
+    should_fetch, cached_df, normalized_code = _resolve_price_refresh_need(
+        code,
+        pages,
+        provider_spec,
+        cache_policy,
+    )
 
     # Preserve weekend cache reuse, and avoid repeated weekday refetches after a successful same-day refresh.
     if should_fetch:
-        logger.info("Refreshing stock data for %s from source", normalized_code)
-        raw_df = price_fetcher(code=normalized_code, pages=pages, sleep_seconds=provider_spec.request_sleep_seconds)
-        clean_df = clean_stock_data(raw_df)
-        final_df = add_indicators(clean_df)
-        if cache_policy == DEFAULT_PRICE_CACHE_POLICY:
-            save_stock_data(final_df, normalized_code)
-        else:
-            save_stock_data(final_df, normalized_code, cache_policy=cache_policy)
-        if refresh_financials:
-            try:
-                financial_statements_df = financial_fetcher(code=normalized_code)
-                if cache_policy == DEFAULT_PRICE_CACHE_POLICY:
-                    save_financial_statements(financial_statements_df, normalized_code)
-                else:
-                    save_financial_statements(financial_statements_df, normalized_code, cache_policy=cache_policy)
-            except Exception as exc:
-                logger.warning("Failed to refresh financial statements for %s: %s", normalized_code, exc)
+        final_df = _fetch_and_cache_price_data(normalized_code, pages, provider_spec, cache_policy, price_fetcher)
+        _refresh_statement_cache_if_requested(normalized_code, financial_fetcher, cache_policy, refresh_financials)
         return final_df, "fetched"
 
     logger.info("Loading cached stock data for %s", normalized_code)
     if cached_df is None:
         cached_df = load_cached_data(code, cache_policy=cache_policy)
-    if not set(INDICATOR_COLUMNS).issubset(set(cached_df.columns)):
-        logger.info("Cached data for %s is missing indicators; recalculating", code)
-        cached_df = add_indicators(cached_df)
-        if cache_policy == DEFAULT_PRICE_CACHE_POLICY:
-            save_stock_data(cached_df, code)
-        else:
-            save_stock_data(cached_df, code, cache_policy=cache_policy)
-    return cached_df, "cached"
+    return _ensure_cached_indicators(cached_df, code, cache_policy), "cached"

@@ -56,32 +56,19 @@ def load_standard_price_csv(path: str | Path, *, source: str = "cache") -> pd.Da
     return normalize_price_columns(frame, ticker=infer_ticker_from_price_path(csv_path), source=source)
 
 
-def validate_price_frame(
-    frame: pd.DataFrame,
-    *,
-    dataset_name: str = "price",
-    config: PriceValidationConfig | None = None,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Validate a standard or alias-compatible price DataFrame.
-
-    Returns ``(issues, per_ticker_summary, normalized_frame)``.
-    """
-
-    config = config or PriceValidationConfig()
-    normalized = normalize_price_columns(frame)
-    issues: list[dict[str, object]] = []
-
+def _validate_required_columns(normalized: pd.DataFrame, issues: list[dict[str, object]]) -> bool:
     missing_columns = [column for column in REQUIRED_PRICE_COLUMNS if column not in normalized.columns]
-    if missing_columns:
-        for column in missing_columns:
-            _issue(
-                issues,
-                check="required_column_existence",
-                severity="error",
-                message=f"Missing required column: {column}",
-            )
-        return pd.DataFrame(issues), pd.DataFrame(), normalized
+    for column in missing_columns:
+        _issue(
+            issues,
+            check="required_column_existence",
+            severity="error",
+            message=f"Missing required column: {column}",
+        )
+    return bool(missing_columns)
 
+
+def _coerce_validation_columns(normalized: pd.DataFrame, issues: list[dict[str, object]]) -> pd.DataFrame:
     normalized = normalized.copy()
     normalized["ticker"] = normalized["ticker"].astype(str).str.strip()
     normalized["date"] = pd.to_datetime(normalized["date"], errors="coerce")
@@ -106,20 +93,22 @@ def validate_price_frame(
             rows_affected=int(invalid_dates.sum()),
         )
 
-    numeric_columns = ["open", "high", "low", "close", "volume"]
-    for column in numeric_columns:
+    for column in ["open", "high", "low", "close", "volume"]:
         normalized[column] = pd.to_numeric(normalized[column], errors="coerce")
         invalid_numeric = normalized[column].isna()
         if invalid_numeric.any():
-            severity = "error" if column in {"close", "volume"} else "warning"
             _issue(
                 issues,
                 check=f"numeric_type:{column}",
-                severity=severity,
+                severity="error" if column in {"close", "volume"} else "warning",
                 message=f"{column} contains missing or non-numeric values.",
                 rows_affected=int(invalid_numeric.sum()),
             )
 
+    return normalized
+
+
+def _validate_duplicate_rows(normalized: pd.DataFrame, issues: list[dict[str, object]]) -> None:
     duplicates = normalized.duplicated(subset=["ticker", "date"], keep=False)
     if duplicates.any():
         _issue(
@@ -130,86 +119,152 @@ def validate_price_frame(
             rows_affected=int(duplicates.sum()),
         )
 
+
+def _validate_history_window(
+    issues: list[dict[str, object]],
+    *,
+    ticker: str,
+    row_count: int,
+    config: PriceValidationConfig,
+) -> None:
+    if row_count < config.min_history_length:
+        _issue(
+            issues,
+            check="minimum_history_length",
+            severity="warning",
+            message=f"History length {row_count} is below minimum {config.min_history_length}.",
+            ticker=ticker,
+            rows_affected=row_count,
+        )
+    if row_count < config.warmup_min_history_length:
+        _issue(
+            issues,
+            check="warmup_eligibility",
+            severity="warning",
+            message=f"History length {row_count} is below warmup minimum {config.warmup_min_history_length}.",
+            ticker=ticker,
+            rows_affected=row_count,
+        )
+
+
+def _validate_latest_coverage(
+    issues: list[dict[str, object]],
+    *,
+    ticker: str,
+    dates: pd.Series,
+    global_latest: pd.Timestamp,
+    config: PriceValidationConfig,
+) -> None:
+    valid_dates = dates.dropna()
+    if valid_dates.empty:
+        return
+
+    latest_date = valid_dates.max()
+    if pd.notna(global_latest) and (global_latest - latest_date).days > config.latest_coverage_lag_days:
+        _issue(
+            issues,
+            check="latest_date_coverage",
+            severity="warning",
+            message=f"Latest date {latest_date.date()} lags global latest {global_latest.date()}.",
+            ticker=ticker,
+            date=latest_date.date(),
+        )
+
+
+def _validate_return_jumps(
+    group: pd.DataFrame,
+    *,
+    ticker: str,
+    config: PriceValidationConfig,
+    issues: list[dict[str, object]],
+) -> None:
+    returns = group.sort_values("date")["close"].pct_change(fill_method=None).abs()
+    suspicious_jumps = returns > config.suspicious_return_threshold
+    if suspicious_jumps.any():
+        _issue(
+            issues,
+            check="suspicious_large_return_jumps",
+            severity="warning",
+            message=f"Absolute close-to-close return exceeds {config.suspicious_return_threshold:.0%}.",
+            ticker=ticker,
+            rows_affected=int(suspicious_jumps.sum()),
+        )
+
+
+def _validate_zero_volume(group: pd.DataFrame, *, ticker: str, issues: list[dict[str, object]]) -> None:
+    zero_volume = group["volume"] == 0
+    if zero_volume.any():
+        _issue(
+            issues,
+            check="suspended_like_zero_volume",
+            severity="info",
+            message="Rows with zero volume may indicate halted or stale trading.",
+            ticker=ticker,
+            rows_affected=int(zero_volume.sum()),
+        )
+
+
+def _validate_flat_ohlc(
+    group: pd.DataFrame,
+    *,
+    ticker: str,
+    config: PriceValidationConfig,
+    issues: list[dict[str, object]],
+) -> None:
+    flat_ohlc = group[["open", "high", "low", "close"]].nunique(axis=1) == 1
+    repeated_flat = flat_ohlc.rolling(config.flat_pattern_window, min_periods=config.flat_pattern_window).sum()
+    if (repeated_flat >= config.flat_pattern_window).any():
+        _issue(
+            issues,
+            check="suspended_like_repeated_flat_ohlc",
+            severity="info",
+            message=f"Repeated flat OHLC pattern reaches {config.flat_pattern_window} consecutive rows.",
+            ticker=ticker,
+        )
+
+
+def _validate_ticker_group(
+    group: pd.DataFrame,
+    *,
+    ticker: str,
+    global_latest: pd.Timestamp,
+    config: PriceValidationConfig,
+    issues: list[dict[str, object]],
+) -> None:
+    dates = group["date"]
+    if dates.notna().any() and not dates.dropna().is_monotonic_increasing:
+        _issue(
+            issues,
+            check="per_ticker_date_ordering",
+            severity="warning",
+            message="Dates are not monotonic increasing within ticker.",
+            ticker=ticker,
+        )
+
+    _validate_history_window(issues, ticker=ticker, row_count=int(len(group)), config=config)
+    _validate_latest_coverage(issues, ticker=ticker, dates=dates, global_latest=global_latest, config=config)
+    _validate_return_jumps(group, ticker=ticker, config=config, issues=issues)
+    _validate_zero_volume(group, ticker=ticker, issues=issues)
+    _validate_flat_ohlc(group, ticker=ticker, config=config, issues=issues)
+
+
+def _validate_per_ticker_groups(
+    normalized: pd.DataFrame,
+    config: PriceValidationConfig,
+    issues: list[dict[str, object]],
+) -> None:
+    global_latest = normalized["date"].max()
     for ticker, group in normalized.groupby("ticker", dropna=False, sort=False):
-        ticker_text = str(ticker)
-        dates = group["date"]
-        if dates.notna().any() and not dates.dropna().is_monotonic_increasing:
-            _issue(
-                issues,
-                check="per_ticker_date_ordering",
-                severity="warning",
-                message="Dates are not monotonic increasing within ticker.",
-                ticker=ticker_text,
-            )
+        _validate_ticker_group(
+            group,
+            ticker=str(ticker),
+            global_latest=global_latest,
+            config=config,
+            issues=issues,
+        )
 
-        row_count = int(len(group))
-        if row_count < config.min_history_length:
-            _issue(
-                issues,
-                check="minimum_history_length",
-                severity="warning",
-                message=f"History length {row_count} is below minimum {config.min_history_length}.",
-                ticker=ticker_text,
-                rows_affected=row_count,
-            )
-        if row_count < config.warmup_min_history_length:
-            _issue(
-                issues,
-                check="warmup_eligibility",
-                severity="warning",
-                message=f"History length {row_count} is below warmup minimum {config.warmup_min_history_length}.",
-                ticker=ticker_text,
-                rows_affected=row_count,
-            )
 
-        valid_dates = dates.dropna()
-        if not valid_dates.empty:
-            latest_date = valid_dates.max()
-            global_latest = normalized["date"].max()
-            if pd.notna(global_latest) and (global_latest - latest_date).days > config.latest_coverage_lag_days:
-                _issue(
-                    issues,
-                    check="latest_date_coverage",
-                    severity="warning",
-                    message=f"Latest date {latest_date.date()} lags global latest {global_latest.date()}.",
-                    ticker=ticker_text,
-                    date=latest_date.date(),
-                )
-
-        returns = group.sort_values("date")["close"].pct_change(fill_method=None).abs()
-        suspicious_jumps = returns > config.suspicious_return_threshold
-        if suspicious_jumps.any():
-            _issue(
-                issues,
-                check="suspicious_large_return_jumps",
-                severity="warning",
-                message=f"Absolute close-to-close return exceeds {config.suspicious_return_threshold:.0%}.",
-                ticker=ticker_text,
-                rows_affected=int(suspicious_jumps.sum()),
-            )
-
-        zero_volume = group["volume"] == 0
-        if zero_volume.any():
-            _issue(
-                issues,
-                check="suspended_like_zero_volume",
-                severity="info",
-                message="Rows with zero volume may indicate halted or stale trading.",
-                ticker=ticker_text,
-                rows_affected=int(zero_volume.sum()),
-            )
-
-        flat_ohlc = group[["open", "high", "low", "close"]].nunique(axis=1) == 1
-        repeated_flat = flat_ohlc.rolling(config.flat_pattern_window, min_periods=config.flat_pattern_window).sum()
-        if (repeated_flat >= config.flat_pattern_window).any():
-            _issue(
-                issues,
-                check="suspended_like_repeated_flat_ohlc",
-                severity="info",
-                message=f"Repeated flat OHLC pattern reaches {config.flat_pattern_window} consecutive rows.",
-                ticker=ticker_text,
-            )
-
+def _validate_row_level_price_rules(normalized: pd.DataFrame, issues: list[dict[str, object]]) -> None:
     row_checks = [
         ("non_positive_open", normalized["open"] <= 0),
         ("non_positive_high", normalized["high"] <= 0),
@@ -234,6 +289,8 @@ def validate_price_frame(
                 rows_affected=int(mask.sum()),
             )
 
+
+def _build_price_summary(normalized: pd.DataFrame, dataset_name: str, config: PriceValidationConfig) -> pd.DataFrame:
     summary = (
         normalized.groupby("ticker", dropna=False)
         .agg(
@@ -249,12 +306,37 @@ def validate_price_frame(
     summary["warmup_eligible"] = summary["rows"] >= config.warmup_min_history_length
     summary["history_length_ok"] = summary["rows"] >= config.min_history_length
     summary["dataset"] = dataset_name
+    return summary
+
+
+def validate_price_frame(
+    frame: pd.DataFrame,
+    *,
+    dataset_name: str = "price",
+    config: PriceValidationConfig | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Validate a standard or alias-compatible price DataFrame.
+
+    Returns ``(issues, per_ticker_summary, normalized_frame)``.
+    """
+
+    config = config or PriceValidationConfig()
+    normalized = normalize_price_columns(frame)
+    issues: list[dict[str, object]] = []
+
+    if _validate_required_columns(normalized, issues):
+        return pd.DataFrame(issues), pd.DataFrame(), normalized
+
+    normalized = _coerce_validation_columns(normalized, issues)
+    _validate_duplicate_rows(normalized, issues)
+    _validate_per_ticker_groups(normalized, config, issues)
+    _validate_row_level_price_rules(normalized, issues)
 
     issue_frame = pd.DataFrame(
         issues,
         columns=["check", "severity", "ticker", "date", "rows_affected", "message"],
     )
-    return issue_frame, summary, normalized
+    return issue_frame, _build_price_summary(normalized, dataset_name, config), normalized
 
 
 def validate_price_csvs(

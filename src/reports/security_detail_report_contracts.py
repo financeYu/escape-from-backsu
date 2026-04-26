@@ -27,12 +27,15 @@ STEP16_REQUIRED_LATEST_RANKING_COLUMNS: tuple[str, ...] = ("ticker", "date")
 STEP16_READONLY_RANK_FIELD_COLUMNS: tuple[str, ...] = (
     "rank",
     "coverage_metric",
+    "warmup_status",
     "coverage_status",
     "ranking_validity_flag",
     "valid_score_count",
     "expected_score_count",
+    "neutral_shrinkage_count",
     "review_routed_score_count",
     "final_score_policy",
+    "technical_only_notice",
 )
 
 STEP16_SCORE_SUMMARY_COLUMNS: tuple[str, ...] = (

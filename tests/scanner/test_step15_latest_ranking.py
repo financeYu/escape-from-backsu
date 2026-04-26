@@ -171,7 +171,10 @@ def test_latest_ranking_uses_latest_date_and_direct_adopted_scores_only() -> Non
     assert output.loc[0, "final_composite_score"] == pytest.approx(1.75)
     assert output["coverage_status"].tolist() == [Step15CoverageStatus.ADEQUATE.value] * 3
     assert output["ranking_validity_flag"].tolist() == [Step15ValidityFlag.VALID.value] * 3
+    assert output["warmup_status"].tolist() == ["ready", "ready", "ready"]
+    assert output["neutral_shrinkage_count"].tolist() == [0, 0, 0]
     assert output["review_routed_score_count"].tolist() == [5, 5, 5]
+    assert output["technical_only_notice"].str.contains("kospi200_technical_only").all()
 
 
 def test_as_of_date_and_top_n_are_explicit_and_deterministic() -> None:
@@ -206,7 +209,8 @@ def test_invalid_score_status_is_routed_to_partial_coverage_not_silent_acceptanc
     assert row["coverage_status"] == Step15CoverageStatus.PARTIAL.value
     assert row["ranking_validity_flag"] == Step15ValidityFlag.PARTIAL.value
     assert row["coverage_metric"] == pytest.approx(2 / 3)
-    assert row["trend_breakout_family_score"] == pytest.approx(2.0)
+    assert row["neutral_shrinkage_count"] == 1
+    assert row["trend_breakout_family_score"] == pytest.approx(1.0)
 
 
 def test_no_direct_adopted_technical_score_blocks_ranking() -> None:

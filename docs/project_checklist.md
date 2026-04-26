@@ -90,7 +90,7 @@ Parallel workspace rule:
 | Step 18 | 밸류에이션 확장 준비 |
 | Pre-Step19 | Context Routing System / Step 19 준비용 컨텍스트 경량화 |
 | Step 19 | 자동 실행 파이프라인 구성 |
-| Step 20 | 최종 Done 검증 |
+| Step 20 | KOSPI200 MVP Completeness Hardening & Final Done Validation |
 
 ## 4.1 Step 4 완료 기준
 
@@ -188,6 +188,40 @@ Pre-Step19는 Step 19 구현이 아니라 Step 19+ 작업자의 context load를 
 - Step 18 완료 증거 발명 또는 Step 18 최종 판정 덮어쓰기
 
 Step 19를 시작하려면 별도 명시 지시, 전용 Step 19 branch/worktree, root `WORKSPACE_MANIFEST.md`, routed context packet, Cross-Step Conflict Checkpoint가 필요하다.
+
+## 4.7 Step 20 MVP Completeness Hardening 기준
+
+Step 20은 단순 최종 검증이 아니라 KOSPI200 MVP v0.1 freeze readiness를
+확인하고 필요한 최소 하드닝을 수행하는 단계다.
+
+허용 범위:
+
+- KOSPI200 daily OHLCV technical multi-score scanner의 scoring/ranking 완성도 확인
+- score lineage manifest, composite contract, ranking contract, sanity report, release report 작성
+- 기존 KOSPI200 technical scoring, normalization, coverage/warmup, ranking, report consistency 버그의 최소 수정
+- deterministic toy fixtures와 focused tests 추가
+- MVP scope creep 방지 guardrail 추가
+
+금지 범위:
+
+- KOSDAQ150 구현, config, ticker list, data ingestion, universe schema 추가
+- futures/options 데이터 또는 로직 추가
+- multi-universe ranking 추가
+- valuation/fundamental scoring 활성화
+- `valuation_score`, `fundamental_score`, `undervalued_score`, `cheap_score`,
+  `target_price`, valuation-aware final ranking 추가
+- Step 17 backtest 결과를 이용한 score weight optimization 또는 upstream scoring/ranking feedback
+- buy/sell/hold language, trading recommendation, proven alpha claim
+- 새 external data ingestion 또는 network-dependent tests
+
+Step 20 완료 기준:
+
+- `docs/releases/step20_score_lineage_manifest.md`가 direct/context/diagnostic/rejected/blocked score lineage를 명시한다.
+- `docs/contracts/step20_composite_contract.md`가 raw, normalized, family, `technical_composite_score`, `final_composite_score` layer를 명시한다.
+- `docs/contracts/step20_ranking_contract.md`가 ranking date, tie handling, coverage/warmup, blocked row, output schema를 명시한다.
+- focused Step 20 tests와 관련 scanner/report/validation/integration tests가 통과한다.
+- KOSDAQ150, futures/options, valuation/fundamental scoring, backtest feedback, trading recommendation, proven alpha leakage가 없다.
+- final MVP validation report가 `COMPLETE`, `PARTIALLY COMPLETE`, 또는 `NEEDS FIX`를 명시한다.
 
 ## 5. 현재 상태
 
@@ -287,6 +321,14 @@ Step 19를 시작하려면 별도 명시 지시, 전용 Step 19 branch/worktree,
   - Related scanner/report/backtest/validation master integration validation: 239 passed.
   - `review_mvp` specialist static review found no medium-or-higher findings on Step 19 changed Python paths; `review_mvp` tests passed.
   - Cross-Step Conflict Checkpoint after post-review-fix validation: PASS; no blocking roadmap/order, hard-stop, score/composite, valuation, diagnostics, handoff, generated-output, dirty-worktree, root-conflict, or context-routing issue found.
+- Step 20 = COMPLETE
+  - KOSPI200 MVP completeness hardening, score lineage, composite/ranking contracts, fixture-based sanity report, final MVP report, and KOSPI200 v0.1 baseline manifest are implemented.
+  - `technical_composite_score` remains technical-only and `final_composite_score` equals `technical_composite_score` for MVP v0.1.
+  - Latest ranking output includes warmup status, neutral shrinkage count, technical-only notice, component scores, family scores, coverage, and validity fields needed for explainable ranking/detail context.
+  - Missing direct score inputs shrink to neutral `0.0`; blocked rows receive no rank; ties are deterministic by ticker ascending.
+  - Latest Step 20 validation: `python -m pytest -q tests/scanner tests/reports tests/validation` = 230 passed; `python -m pytest -q tests/integration` = 2 passed; `python -m pytest -q` = 696 passed, 4 skipped, 25 subtests passed.
+  - Context staleness/conflict checks passed; `review_mvp` specialist review found 0 high and 0 medium findings, with low style/quality notes treated as non-blocking.
+  - KOSDAQ150, futures/options, valuation/fundamental scoring activation, backtest feedback into upstream scoring/ranking, trading recommendation language, and proven alpha claims remain outside MVP.
 - Research ingestion scope expansion note:
   - `docs/research_ingestion_expansion.md` documents expanded paper query-set coverage, source expansion candidates, seed lifecycle, new-only run artifacts, and the separated `reserch_mvp` ownership boundary.
   - EvidenceCard is not a score definition.

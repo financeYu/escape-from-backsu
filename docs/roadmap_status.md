@@ -4,12 +4,13 @@
 
 ## 현재 활성 단계
 
-Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local orchestration pipeline implemented
+Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE / KOSPI200 technical MVP v0.1 freeze-ready
 
-- Recently completed: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
-- Recently completed before that: Step 18 = 밸류에이션 확장 준비, COMPLETE
+- Active: no in-progress roadmap Step. MVP v0.1 is freeze-ready pending integration branch merge.
+- Recently completed: Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation, COMPLETE
+- Recently completed before that: Step 19 = 자동 실행 파이프라인 구성, COMPLETE
 - Carry-forward preserved for this Step: Step 19 orchestrates existing approved stage contracts only; Step 15 ranking, Step 16 reports, Step 17 backtest, and Step 18 candidate-only valuation/fundamental boundaries remain unchanged.
-- Current gate: Step 20 remains WAITING / not started. Step 19 does not implement or complete final Done validation.
+- Current gate: Step 20 completed KOSPI200 MVP completeness hardening, contract clarity, sanity validation, and final Done validation. KOSDAQ150, futures/options, valuation/fundamental scoring activation, backtest-driven score optimization, and trading recommendations remain outside MVP scope.
 
 ## 병렬 Workspace 운영 메모
 
@@ -27,7 +28,7 @@ Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local o
 - Status: COMPLETE / docs-only support consumed by Step 19.
 - Purpose: Step 19+ workers should start from routed context instead of reading the full repository history.
 - Allowed now: context hierarchy/routing/budget docs and checkpoint policy notes that do not alter Step 18 verdicts.
-- Forbidden now: scoring/ranking/backtest/valuation scoring/report semantics changes, new market data sources, KOSDAQ150, futures, options expansion, or Step 20 final Done validation before explicit Step 20 start.
+- Forbidden now: new market data sources, KOSDAQ150, futures, options expansion, valuation/fundamental scoring activation, backtest feedback into upstream scoring/ranking, or trading recommendation language. Step 20 may perform only limited KOSPI200 MVP scoring/ranking completeness hardening needed for v0.1 freeze readiness.
 - Step 18 note: if Step 18 completion evidence is not yet reflected on the integration branch being edited, do not invent evidence; preserve the mismatch as an integration risk until the Step 18 branch is accepted.
 
 ## 전체 Step 판정
@@ -53,7 +54,7 @@ Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local o
 | Step 17 | COMPLETE |
 | Step 18 | COMPLETE |
 | Step 19 | COMPLETE |
-| Step 20 | WAITING / not started |
+| Step 20 | COMPLETE / KOSPI200 MVP Completeness Hardening & Final Done Validation |
 
 ## Research ingestion 범위 확장 상태
 
@@ -72,6 +73,17 @@ Step 19 = 자동 실행 파이프라인 구성, COMPLETE / deterministic local o
 - ranking, latest ranking, composite score, backtest, valuation/fundamental scoring은 여전히 생성하지 않는다.
 
 ## 최근 완료 Step 요약
+
+### Step 20 = KOSPI200 MVP Completeness Hardening & Final Done Validation
+
+- Step 19 completion was verified from repository status documents and artifacts; no status mismatch was found.
+- Step 20 documented score lineage, the composite contract, the ranking contract, a fixture-based ranking sanity report, the final MVP report, and the KOSPI200 v0.1 baseline manifest.
+- Latest ranking output now exposes warmup status, neutral shrinkage count, and a technical-only MVP notice so Step 16 detail/report context can explain ranking rows more clearly.
+- `technical_composite_score` remains technical-only and `final_composite_score` equals `technical_composite_score` for MVP v0.1.
+- Missing direct score inputs shrink to neutral `0.0`; deterministic ranking uses descending score and ticker ascending for ties.
+- Validation passed: `python -m pytest -q tests/scanner tests/reports tests/validation` = 230 passed; `python -m pytest -q tests/integration` = 2 passed; `python -m pytest -q` = 696 passed, 4 skipped, 25 subtests passed.
+- Context checks returned no staleness or conflict findings; `review_mvp` specialist review returned 0 high and 0 medium findings, with low style/quality notes treated as non-blocking.
+- KOSDAQ150 was not implemented; futures/options were not implemented; valuation/fundamental scoring remains inactive; Step 17 backtest outputs did not feed upstream scoring or ranking; no trading recommendation or proven alpha claim was introduced.
 
 ### Step 19 = Automatic Execution Pipeline
 

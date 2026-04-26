@@ -188,6 +188,9 @@ def _assert_tickers_are_safe_strings(
     unsafe = frame["ticker"].map(lambda value: not policy.symbol_policy.is_valid(value))
     if unsafe.any():
         raise ValueError(f"Step 15 ticker values must preserve {policy.symbol_policy.display_rule}.")
+    noncanonical = frame["ticker"].map(lambda value: str(value).strip() != policy.symbol_policy.normalize(value))
+    if noncanonical.any():
+        raise ValueError(f"Step 15 ticker values must preserve canonical {policy.symbol_policy.display_rule}.")
 
 
 def _assert_allowed_output_status_values(frame: pd.DataFrame) -> None:

@@ -15,6 +15,9 @@ OHLCV technical scanner.
   forward from older dates.
 - Ticker-level selection requires at most one row per `ticker` and selected
   `date`; duplicate ticker/date rows are rejected upstream.
+- Ticker strings follow the KOSPI200/Naver six-character uppercase
+  alphanumeric policy (`^[0-9A-Z]{6}$`); numeric-only codes must preserve
+  leading zeroes as strings.
 
 ## Rank Direction And Ties
 
@@ -22,7 +25,7 @@ OHLCV technical scanner.
 - Sort keys are deterministic:
   1. `final_composite_score` descending
   2. `ticker` ascending
-- Tied scores therefore sort by six-digit ticker string.
+- Tied scores therefore sort by policy-normalized ticker string.
 - Rank values are consecutive for rankable rows.
 - Blocked rows receive no rank and sort last.
 

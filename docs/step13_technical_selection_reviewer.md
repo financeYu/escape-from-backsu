@@ -1,5 +1,9 @@
 # Step 13 Technical Selection Reviewer
 
+> Historical Step document. Not current authority; use
+> `docs/roadmap_status.md` and `docs/context/ARCHIVE_INDEX.md` for current
+> routing.
+
 ## 1. Purpose
 
 Step 13 is **technical review material only**.

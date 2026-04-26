@@ -85,6 +85,9 @@ backtest output, KOSDAQ150/futures/options/overseas data를 입력으로 요구�
 `technical_composite_score`와 동일하게 생성된다.
 재현성을 위해 `--as-of-date`와 `--max-allowed-date`는 필수이며, manifest에는
 입력 파일 hash, 실행 parameter, Python/pandas/numpy version이 기록된다.
+`gui_mvp` chart Top-N viewer는 `chart_mvp/outputs/latest_score_top.csv`가
+없을 때 이 canonical `reports/selection/latest_ranking.csv`를 읽는다. 따라서
+루트 ranking 명령 결과를 GUI용 파일로 수동 복사하지 않아도 된다.
 
 ## Review And Context Scripts
 

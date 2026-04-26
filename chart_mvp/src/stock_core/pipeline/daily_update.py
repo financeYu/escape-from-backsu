@@ -25,6 +25,7 @@ from stock_core.utils.paths import DATA_DIR, OUTPUTS_CHARTS_DIR, OUTPUTS_DIR, RE
 
 
 logger = get_logger(__name__)
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
 MIN_CHART_PAGES = 7
 CHART_WARMUP_PAGES = 3
 KOSPI200_MARKET_CAP_LEADER_CODES = (
@@ -47,6 +48,7 @@ LEGACY_LATEST_TOP_CSV_NAME = "latest_top5.csv"
 LEGACY_LATEST_TOP_JSON_NAME = "latest_top5.json"
 ALGORITHM_RANKING_SOURCE = "root src.scanner.latest_ranking"
 ALGORITHM_RANKING_SNAPSHOT_SOURCE = "latest_score_top"
+CANONICAL_LATEST_RANKING_CSV_PATH = PROJECT_ROOT.parent / "reports" / "selection" / "latest_ranking.csv"
 
 
 @dataclass(frozen=True)
@@ -169,7 +171,11 @@ def _load_universe_name_map() -> dict[str, str]:
     }
 
 
-def _normalize_latest_algorithm_ranking_frame(frame: pd.DataFrame) -> pd.DataFrame:
+def _normalize_latest_algorithm_ranking_frame(
+    frame: pd.DataFrame,
+    *,
+    snapshot_source: str = ALGORITHM_RANKING_SNAPSHOT_SOURCE,
+) -> pd.DataFrame:
     """Map canonical algorithm ranking columns to the GUI-compatible shape."""
 
     normalized = frame.copy()
@@ -194,7 +200,7 @@ def _normalize_latest_algorithm_ranking_frame(frame: pd.DataFrame) -> pd.DataFra
         name_map = _load_universe_name_map()
         normalized["종목명"] = normalized["종목코드"].map(name_map).fillna(normalized["종목코드"])
 
-    normalized["ranking_snapshot_source"] = ALGORITHM_RANKING_SNAPSHOT_SOURCE
+    normalized["ranking_snapshot_source"] = snapshot_source
     normalized["canonical_ranking_source"] = ALGORITHM_RANKING_SOURCE
     if "runtime_boundary_notice" not in normalized.columns:
         if "technical_only_notice" in normalized.columns:
@@ -208,12 +214,22 @@ def _normalize_latest_algorithm_ranking_frame(frame: pd.DataFrame) -> pd.DataFra
 def load_latest_algorithm_ranking_snapshot() -> pd.DataFrame:
     """Load the canonical latest algorithm ranking snapshot when exported."""
 
-    latest_csv = OUTPUTS_DIR / LATEST_SCORE_TOP_CSV_NAME
-    if not latest_csv.exists():
+    candidate_paths = (
+        (OUTPUTS_DIR / LATEST_SCORE_TOP_CSV_NAME, ALGORITHM_RANKING_SNAPSHOT_SOURCE),
+        (CANONICAL_LATEST_RANKING_CSV_PATH, "reports/selection/latest_ranking.csv"),
+    )
+    latest_csv = None
+    snapshot_source = ALGORITHM_RANKING_SNAPSHOT_SOURCE
+    for path, source in candidate_paths:
+        if path.exists():
+            latest_csv = path
+            snapshot_source = source
+            break
+    if latest_csv is None:
         return pd.DataFrame()
 
     frame = pd.read_csv(latest_csv, dtype={"ticker": str, "종목코드": str})
-    return _normalize_latest_algorithm_ranking_frame(frame)
+    return _normalize_latest_algorithm_ranking_frame(frame, snapshot_source=snapshot_source)
 
 
 def load_latest_top5_snapshot(prefer_algorithm: bool = True) -> pd.DataFrame:

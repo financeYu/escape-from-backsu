@@ -57,6 +57,7 @@ def build_latest_ranking_output(
         as_of_date=as_of_date,
         max_allowed_date=max_allowed_date,
     )
+    latest_frame["ticker"] = latest_frame["ticker"].map(policy.symbol_policy.normalize)
     ranking_specs, review_routed_score_count = _direct_ranking_specs(
         adoption_frame,
         registry=registry,

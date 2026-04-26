@@ -17,7 +17,7 @@ must not be used for production scoring during Step 5.
 | `squeeze_expansion` | `bollinger_width_squeeze` | `technical` | setup/regime context | medium with volatility diagnostics | report as conditional context unless review supports ranking use |
 | `flow` | `cmf_confirmation` | `technical` | volume participation filter | medium with liquidity diagnostics | define linked score or filter role before direct use |
 | `oscillator_divergence` | `rsi_price_divergence` | `technical` | deferred reversal proxy | medium-high with mean reversion | defer unless deterministic proxy adds distinct information |
-| `volatility_regime` | `realized_vol_percentile` | `diagnostic` | risk/regime context | medium with squeeze and ATR scores | keep out of direct alpha ranking until reviewed |
+| `volatility_regime` | `realized_vol_percentile` | `diagnostic` | risk/regime context | medium with squeeze and ATR scores | keep out of direct ranking use until reviewed |
 | `trend_efficiency` | `efficiency_ratio_trend` | `technical` | limited trend-quality candidate | medium with breakout | signed versus unsigned role must be fixed; keep as the limited trend representative |
 
 ## Overlap Watchlist
@@ -71,6 +71,6 @@ Later composite design must:
 
 - aggregate within families only after diagnostics exist
 - shrink toward neutral when coverage is weak
-- keep `diagnostic` branch outputs out of direct alpha scoring unless explicitly
+- keep `diagnostic` branch outputs out of direct scoring use unless explicitly
   reclassified through technical review
 - exclude all financial and fundamental data while valuation status is deferred

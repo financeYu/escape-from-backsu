@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
+import pytest
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -59,3 +60,32 @@ def test_scanner_ranking_validator_accepts_explicit_non_korean_symbol_policy() -
     policy = Step15RankingPolicy(symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY)
 
     validate_step15_latest_ranking_output(frame, policy=policy)
+
+
+def test_scanner_ranking_validator_rejects_noncanonical_output_symbol() -> None:
+    frame = pd.DataFrame(
+        [
+            {
+                "ticker": "aapl",
+                "date": "2026-04-24",
+                "rank": 1,
+                "technical_composite_score": 2.0,
+                "final_composite_score": 2.0,
+                "coverage_metric": 1.0,
+                "data_quality_flag": "valid",
+                "warmup_status": "ready",
+                "coverage_status": "adequate",
+                "ranking_validity_flag": "valid",
+                "valid_score_count": 1,
+                "expected_score_count": 1,
+                "neutral_shrinkage_count": 0,
+                "review_routed_score_count": 0,
+                "final_score_policy": "technical_only_no_valuation",
+                "technical_only_notice": "extension_contract_test_no_activation",
+            },
+        ]
+    )
+    policy = Step15RankingPolicy(symbol_policy=GENERIC_EXCHANGE_SYMBOL_POLICY)
+
+    with pytest.raises(ValueError, match="canonical configured exchange symbol format"):
+        validate_step15_latest_ranking_output(frame, policy=policy)

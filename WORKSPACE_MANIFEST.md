@@ -1,7 +1,7 @@
 # WORKSPACE_MANIFEST
 
 workspace_id: master_up_post20_pending
-branch: codex/master-up-post20-pending
+branch: main
 role: root-master-integration
 task_type: master_up_integration_preparation
 active_step: Step 20 COMPLETE / MVP v0.1 pre-freeze hardening and readiness merge

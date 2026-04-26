@@ -31,6 +31,24 @@ from Quant_mvp.backtest_mvp import (  # noqa: E402
 )
 
 
+BACKTEST_SCREEN_NOTICE = (
+    "평가 전용 화면: 과거 데이터 점검용이며 운용 판단, 미래 성과 예측, "
+    "점수·랭킹 피드백에 사용하지 않습니다."
+)
+
+BACKTEST_DISPLAY_LABELS = {
+    "mean_period_return": "평가전용_평균기간변화율",
+    "cumulative_return": "평가전용_누적변화율",
+    "max_drawdown": "평가전용_최대낙폭",
+}
+
+BACKTEST_COLUMN_HEADINGS = {
+    "backtest_period_return": "평가전용_기간변화율",
+    "realized_holding_return": "평가전용_보유기간변화율",
+    "evaluation_return": "평가전용_평가변화율",
+}
+
+
 @dataclass(frozen=True)
 class BacktestCsvSelection:
     """CSV paths selected by the GUI."""
@@ -78,10 +96,10 @@ def summarize_backtest_result(result: ConservativeBacktestResult) -> list[tuple[
         ("selected_security_count", str(summary.selected_security_count)),
         ("valid_security_count", str(summary.valid_security_count)),
         ("skipped_security_count", str(summary.skipped_security_count)),
-        ("mean_period_return", format_percent(summary.mean_period_return)),
-        ("cumulative_return", format_percent(summary.cumulative_return)),
+        (BACKTEST_DISPLAY_LABELS["mean_period_return"], format_percent(summary.mean_period_return)),
+        (BACKTEST_DISPLAY_LABELS["cumulative_return"], format_percent(summary.cumulative_return)),
         ("average_turnover_proxy", format_percent(summary.average_turnover_proxy)),
-        ("max_drawdown", format_percent(summary.max_drawdown)),
+        (BACKTEST_DISPLAY_LABELS["max_drawdown"], format_percent(summary.max_drawdown)),
         ("limitation_flags", ", ".join(result.limitation_flags)),
     ]
 
@@ -207,6 +225,10 @@ class BacktestEvaluationApp:
         notebook.add(period_tab, text="기간별")
         notebook.add(security_tab, text="종목별")
 
+        self._add_boundary_notice(summary_tab)
+        self._add_boundary_notice(period_tab)
+        self._add_boundary_notice(security_tab)
+
         self.summary_tree = self._build_tree(summary_tab, ("항목", "값"), {"항목": 260, "값": 760})
         self.period_tree = self._build_tree(
             period_tab,
@@ -263,7 +285,7 @@ class BacktestEvaluationApp:
     ) -> ttk.Treeview:
         tree = ttk.Treeview(parent, columns=columns, show="headings")
         for column in columns:
-            tree.heading(column, text=column)
+            tree.heading(column, text=BACKTEST_COLUMN_HEADINGS.get(column, column))
             tree.column(column, width=widths[column], minwidth=min(widths[column], 120), anchor="center")
         y_scrollbar = ttk.Scrollbar(parent, orient=tk.VERTICAL, command=tree.yview)
         x_scrollbar = ttk.Scrollbar(parent, orient=tk.HORIZONTAL, command=tree.xview)
@@ -272,6 +294,13 @@ class BacktestEvaluationApp:
         x_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
         y_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         return tree
+
+    @staticmethod
+    def _add_boundary_notice(parent: ttk.Frame) -> None:
+        ttk.Label(parent, text=BACKTEST_SCREEN_NOTICE, foreground="#92400e").pack(
+            anchor="w",
+            pady=(0, 8),
+        )
 
     def _browse_ranking_csv(self) -> None:
         path = filedialog.askopenfilename(title="랭킹 CSV 선택", filetypes=[("CSV files", "*.csv"), ("All files", "*.*")])
@@ -333,7 +362,7 @@ class BacktestEvaluationApp:
 
         self._is_running = False
         self.run_button.state(["!disabled"])
-        self.status_var.set("평가 완료")
+        self.status_var.set("평가 전용 결과 표시 완료")
 
     def _fail_evaluation(self, error_text: str) -> None:
         self._is_running = False

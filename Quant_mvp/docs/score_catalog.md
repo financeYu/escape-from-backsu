@@ -32,7 +32,7 @@ valuation support.
 | `bollinger_width_squeeze` | `squeeze_expansion` | `technical` | regime context | context-only until directional link is defined | volatility compression and expansion setup |
 | `cmf_confirmation` | `flow` | `technical` | filter candidate | simplify to filter before direct use | price-volume participation evidence |
 | `rsi_price_divergence` | `oscillator_divergence` | `technical` | deferred pattern proxy | defer pending simple proxy review | oscillator divergence, with pattern-mining warning |
-| `realized_vol_percentile` | `volatility_regime` | `diagnostic` | regime diagnostic | keep out of direct alpha ranking until reviewed | risk/regime context and testing discipline |
+| `realized_vol_percentile` | `volatility_regime` | `diagnostic` | regime diagnostic | keep out of direct ranking use until reviewed | risk/regime context and testing discipline |
 | `efficiency_ratio_trend` | `trend_efficiency` | `technical` | limited trend-quality candidate | keep as the limited trend representative | smooth-trend versus noisy-trend proxy |
 
 ## Non-MVP Or Folded Ideas
@@ -42,9 +42,9 @@ valuation support.
 | `medium_term_relative_strength` | folded into trend/breakout review queue | Korea evidence is mixed and overlap with breakout, 52-week high, and trend return is high |
 | `moving_average_trend_structure` | folded into `efficiency_ratio_trend` or later trend review | high overlap with breakout and relative strength |
 | `price_near_52w_high` | folded into `donchian_breakout_distance` as longer-window alternative | concept is useful but redundant in first MVP set |
-| `time_series_trend_return` | folded into `efficiency_ratio_trend` review | too close to relative strength unless separate use is proven later |
+| `time_series_trend_return` | folded into `efficiency_ratio_trend` review | too close to relative strength unless a separate use is justified through later review |
 | `volume_participation_momentum_filter` | future conditional filter / diagnostic backlog | strict turnover may require shares outstanding; OHLCV proxy needs review |
-| `trading_activity_variability_penalty` | diagnostic backlog | risk/liquidity context, not first-pass ranking alpha |
+| `trading_activity_variability_penalty` | diagnostic backlog | risk/liquidity context, not a first-pass ranking input |
 | chart-pattern geometry | out of scope for MVP | subjective boundaries and high parameter-mining risk |
 
 ## Catalog Notes
@@ -55,7 +55,7 @@ valuation support.
 - The first MVP set intentionally keeps only one breakout candidate and one
   trend-efficiency candidate to avoid a cluster of near-duplicate trend signals.
 - `realized_vol_percentile` remains useful, but its Step 5 role is diagnostic or
-  regime context, not standalone stock-selection alpha.
+  regime context, not a standalone stock-selection input.
 - `rsi_price_divergence` is allowed only as a deterministic formula proxy. It
   must not become a subjective chart-pattern recognizer.
 - 2026-04-26 research-informed adjustment: provisional family weights now tilt

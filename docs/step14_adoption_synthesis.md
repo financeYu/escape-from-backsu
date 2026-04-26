@@ -1,5 +1,9 @@
 # Step 14 Adoption Synthesis
 
+> Historical Step document. Not current authority; use
+> `docs/roadmap_status.md` and `docs/context/ARCHIVE_INDEX.md` for current
+> routing.
+
 ## 1. Purpose
 
 Step 14 turns Step 13 Technical Selection Reviewer material into a documented

@@ -35,11 +35,33 @@ from stock_core.charts.matplotlib_renderer import plot_stock_data
 from stock_core.pipeline.daily_update import (
     MARKET_CAP_OVERRIDE_MESSAGE,
     get_daily_top5_due_status,
+    load_latest_algorithm_ranking_snapshot,
     load_latest_top5_snapshot,
     prepare_chart_dataframe,
     run_daily_top5_update,
 )
+from stock_core.providers.naver_price_provider import get_price_df
+from stock_core.utils.constants import CLOSE_COLUMN, DATE_COLUMN, PREV_DIFF_COLUMN, VOLUME_COLUMN
 from stock_core.utils.logging_utils import configure_logging
+
+from src.composite.contracts import DEFAULT_COMPOSITE_INPUT_REGISTRY
+from src.scanner.latest_ranking import build_latest_ranking_output
+from src.scores import calculate_all_raw_scores, normalize_cross_sectional_scores
+from src.selection.adoption_synthesis_contracts import Step14AdoptionState
+
+
+TECHNICAL_INDICATORS_PATH = REPO_ROOT / "data" / "processed" / "technical_indicators.csv"
+LATEST_SCORE_TOP_CSV_PATH = CHART_MVP_ROOT / "outputs" / "latest_score_top.csv"
+LATEST_SCORE_TOP_JSON_PATH = CHART_MVP_ROOT / "outputs" / "latest_score_top.json"
+LATEST_SCORE_TOP_META_PATH = CHART_MVP_ROOT / "outputs" / "latest_score_top_meta.json"
+TOPN_TECHNICAL_ONLY_NOTICE = (
+    "KOSPI200 기술지표 전용 Top N 표시입니다. 점수·랭킹은 재무/밸류에이션 "
+    "데이터를 반영하지 않습니다."
+)
+FINANCIAL_DISPLAY_NOTICE = (
+    "재무/밸류에이션 캐시 표시 전용입니다. candidate-only이며 Top N 점수·랭킹에 "
+    "반영되지 않습니다."
+)
 
 
 class Top5App:
@@ -156,7 +178,12 @@ class Top5App:
         if self.market_cap_override_var.get():
             notice.pack(fill=tk.X, pady=(0, 8))
 
-        table_frame = ttk.LabelFrame(container, text="Top N 결과", padding=8)
+        ttk.Label(container, text=TOPN_TECHNICAL_ONLY_NOTICE, foreground="#92400e").pack(
+            fill=tk.X,
+            pady=(0, 8),
+        )
+
+        table_frame = ttk.LabelFrame(container, text="Top N 기술지표 표시", padding=8)
         table_frame.pack(fill=tk.BOTH, expand=True)
 
         columns = ("순위", "종목코드", "종목명", "점수", "최신일", "유효성", "종가", "전일대비", "거래량")
@@ -173,7 +200,8 @@ class Top5App:
             "거래량": 150,
         }
         for column in columns:
-            self.tree.heading(column, text=column)
+            heading = "기술점수" if column == "점수" else column
+            self.tree.heading(column, text=heading)
             self.tree.column(
                 column,
                 width=column_widths[column],
@@ -208,7 +236,7 @@ class Top5App:
     def _load_latest_results(self) -> None:
         latest_df = load_latest_top5_snapshot()
         if latest_df.empty:
-            self.set_status("대기 중 - 저장된 Top N 결과 없음")
+            self.set_status("대기 중 - 저장된 Top N 기술지표 표시 없음")
             return
 
         records = latest_df.to_dict(orient="records")
@@ -246,6 +274,203 @@ class Top5App:
     def run_update(self) -> None:
         if self._is_running:
             return
+
+        if self._refresh_from_algorithm_snapshot():
+            return
+
+        self.set_status("알고리즘 랭킹 스냅샷 없음")
+        messagebox.showwarning(
+            "갱신 불가",
+            "점수 기반 latest_score_top.csv 또는 reports/selection/latest_ranking.csv가 없어 Top N을 갱신할 수 없습니다.\n"
+            "0점 placeholder 경로는 실행하지 않았습니다.",
+        )
+
+    def _refresh_from_algorithm_snapshot(self) -> bool:
+        top_n = self.top_n_var.get()
+        latest_df = load_latest_algorithm_ranking_snapshot()
+        if self._should_rebuild_algorithm_snapshot(latest_df, top_n=top_n):
+            latest_df = self._rebuild_algorithm_snapshot(top_n=top_n)
+        if latest_df.empty:
+            return False
+
+        records = latest_df.head(top_n).to_dict(orient="records")
+        records = self._enrich_records_with_latest_prices(records)
+        self._fill_tree(records)
+        latest_date = self._latest_display_date(records)
+        if latest_date:
+            self.last_updated_var.set(f"마지막 갱신: {latest_date}")
+        self.progress.configure(maximum=max(len(records), 1))
+        self.progress_var.set(len(records))
+        score_date = self._latest_score_date(records)
+        if score_date and latest_date and score_date != latest_date:
+            self.set_status(f"점수 기반 Top {top_n} 갱신 완료 (점수 {score_date}, 가격 {latest_date})")
+        else:
+            self.set_status(f"점수 기반 Top {top_n} 갱신 완료")
+        return True
+
+    @staticmethod
+    def _should_rebuild_algorithm_snapshot(latest_df: pd.DataFrame, *, top_n: int) -> bool:
+        if latest_df.empty or len(latest_df) < top_n:
+            return True
+        if not TECHNICAL_INDICATORS_PATH.exists() or not LATEST_SCORE_TOP_CSV_PATH.exists():
+            return False
+        try:
+            if TECHNICAL_INDICATORS_PATH.stat().st_mtime > LATEST_SCORE_TOP_CSV_PATH.stat().st_mtime:
+                return True
+            meta = json.loads(LATEST_SCORE_TOP_META_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            return False
+        return int(meta.get("top_n", 0) or 0) < top_n
+
+    def _rebuild_algorithm_snapshot(self, *, top_n: int) -> pd.DataFrame:
+        if not TECHNICAL_INDICATORS_PATH.exists():
+            return pd.DataFrame()
+
+        source = pd.read_csv(TECHNICAL_INDICATORS_PATH, dtype={"ticker": str})
+        raw_scores = calculate_all_raw_scores(source)
+        normalized_scores = normalize_cross_sectional_scores(raw_scores)
+        ranking = build_latest_ranking_output(
+            normalized_scores,
+            self._mvp_v0_1_adoption_synthesis_table(),
+            top_n=top_n,
+        )
+        self._export_algorithm_snapshot(ranking, source_rows=len(source), top_n=top_n)
+        return self._normalize_algorithm_display_frame(ranking)
+
+    @staticmethod
+    def _mvp_v0_1_adoption_synthesis_table() -> pd.DataFrame:
+        states = {
+            "short_term_overreaction": (Step14AdoptionState.CORE_ADOPTED.value, False),
+            "atr_adjusted_oversold_distance": (Step14AdoptionState.CONDITIONAL_ADOPTED.value, True),
+            "donchian_breakout_distance": (Step14AdoptionState.CORE_ADOPTED.value, False),
+            "bollinger_width_squeeze": (Step14AdoptionState.REGIME_ONLY.value, False),
+            "cmf_confirmation": (Step14AdoptionState.CONDITIONAL_ADOPTED.value, True),
+            "rsi_price_divergence": (Step14AdoptionState.CONDITIONAL_ADOPTED.value, True),
+            "realized_vol_percentile": (Step14AdoptionState.DIAGNOSTIC_ONLY.value, False),
+            "efficiency_ratio_trend": (Step14AdoptionState.TECHNICAL_ONLY.value, False),
+        }
+        rows: list[dict[str, object]] = []
+        for spec in DEFAULT_COMPOSITE_INPUT_REGISTRY:
+            adoption_state, manual_review_required = states[spec.score_name]
+            rows.append(
+                {
+                    "score_name": spec.score_name,
+                    "family": spec.family,
+                    "branch": spec.branch,
+                    "role": spec.role.value,
+                    "eligibility": spec.eligibility.value,
+                    "source_review_status": "adopt_candidate",
+                    "adoption_state": adoption_state,
+                    "adoption_reason": "Frozen MVP v0.1 technical-only GUI refresh.",
+                    "evidence_sources": "docs/releases/step20_score_lineage_manifest.md",
+                    "limitations": "GUI refresh preserves Step 20 direct-ranking boundaries.",
+                    "manual_review_required": manual_review_required,
+                    "normalized_score_column": spec.normalized_column,
+                    "score_input_column": spec.raw_column,
+                    "coverage_status": "ok",
+                    "redundancy_status": "ok",
+                    "complexity_status": "simple",
+                    "regime_fit_status": "broad",
+                    "downstream_usage_note": "Display-only Top N refresh; no valuation or backtest feedback.",
+                }
+            )
+        return pd.DataFrame(rows)
+
+    @staticmethod
+    def _export_algorithm_snapshot(ranking: pd.DataFrame, *, source_rows: int, top_n: int) -> None:
+        LATEST_SCORE_TOP_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+        ranking.to_csv(LATEST_SCORE_TOP_CSV_PATH, index=False, encoding="utf-8")
+        ranking.to_json(LATEST_SCORE_TOP_JSON_PATH, orient="records", force_ascii=False, indent=2)
+        meta = {
+            "top_n": top_n,
+            "ranking_date": str(ranking["date"].iloc[0]) if not ranking.empty else None,
+            "input": str(TECHNICAL_INDICATORS_PATH),
+            "output_csv": str(LATEST_SCORE_TOP_CSV_PATH),
+            "output_json": str(LATEST_SCORE_TOP_JSON_PATH),
+            "rows_in_input": source_rows,
+            "rows_in_output": len(ranking),
+            "technical_only_notice": "KOSPI200 technical-only scanner v0.1; no valuation/fundamental data.",
+        }
+        LATEST_SCORE_TOP_META_PATH.write_text(
+            json.dumps(meta, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+    @staticmethod
+    def _normalize_algorithm_display_frame(frame: pd.DataFrame) -> pd.DataFrame:
+        normalized = frame.copy()
+        if "ticker" in normalized.columns:
+            normalized["ticker"] = normalized["ticker"].astype(str).str.zfill(6)
+            normalized["종목코드"] = normalized["ticker"]
+        if "rank" in normalized.columns:
+            normalized["순위"] = normalized["rank"]
+        if "final_composite_score" in normalized.columns:
+            normalized["점수"] = normalized["final_composite_score"]
+        normalized["ranking_snapshot_source"] = "latest_score_top"
+        normalized["canonical_ranking_source"] = "root src.scanner.latest_ranking"
+        return normalized
+
+    def _enrich_records_with_latest_prices(self, records: list[dict]) -> list[dict]:
+        enriched: list[dict] = []
+        pages = max(self.pages_var.get(), 1)
+        for row in records:
+            updated = dict(row)
+            code = self._as_text(self._first_present(updated, ("종목코드", "ticker", "code"))).zfill(6)
+            if code:
+                updated["종목코드"] = code
+            try:
+                price = self._latest_price_snapshot(code=code, pages=pages, use_cache=self.use_cache_var.get())
+            except Exception:
+                price = {}
+            updated.update({key: value for key, value in price.items() if not self._is_blank(value)})
+            enriched.append(updated)
+        return enriched
+
+    @staticmethod
+    def _latest_price_snapshot(*, code: str, pages: int, use_cache: bool) -> dict[str, object]:
+        if not code:
+            return {}
+        frame = get_price_df(code=code, pages=max(pages, 1), use_cache=use_cache)
+        if frame.empty:
+            return {}
+        ordered = frame.sort_values(DATE_COLUMN).reset_index(drop=True)
+        latest = ordered.iloc[-1]
+        if float(latest.get(VOLUME_COLUMN, 0.0)) <= 0:
+            completed = ordered[pd.to_numeric(ordered[VOLUME_COLUMN], errors="coerce").fillna(0.0) > 0]
+            if not completed.empty:
+                latest = completed.iloc[-1]
+        position = int(latest.name)
+        latest_close = float(latest[CLOSE_COLUMN])
+        if PREV_DIFF_COLUMN in ordered.columns and not Top5App._is_blank(latest.get(PREV_DIFF_COLUMN)):
+            latest_change = float(latest[PREV_DIFF_COLUMN])
+        else:
+            previous_close = float(ordered.iloc[position - 1][CLOSE_COLUMN]) if position > 0 else latest_close
+            latest_change = latest_close - previous_close
+        return {
+            "최신일": pd.Timestamp(latest[DATE_COLUMN]).strftime("%Y-%m-%d"),
+            "종가": latest_close,
+            "전일대비": latest_change,
+            "거래량": float(latest[VOLUME_COLUMN]),
+        }
+
+    @classmethod
+    def _latest_display_date(cls, records: list[dict]) -> str:
+        for row in records:
+            value = cls._first_present(row, ("최신일", "date"))
+            if not cls._is_blank(value):
+                return str(value)
+        return ""
+
+    @classmethod
+    def _latest_score_date(cls, records: list[dict]) -> str:
+        for row in records:
+            value = cls._first_present(row, ("date",))
+            if not cls._is_blank(value):
+                return str(value)[:10]
+        return ""
+
+    def run_legacy_update(self) -> None:
+        """Run the legacy chart placeholder scorer for compatibility only."""
 
         self._is_running = True
         self.run_button.state(["disabled"])
@@ -451,7 +676,7 @@ class Top5App:
         chart_tab = ttk.Frame(notebook, padding=12)
         financial_tab = ttk.Frame(notebook, padding=12)
         notebook.add(chart_tab, text="차트")
-        notebook.add(financial_tab, text="재무제표")
+        notebook.add(financial_tab, text="재무제표(표시 전용)")
 
         canvas = FigureCanvasTkAgg(fig, master=chart_tab)
         canvas_widget = canvas.get_tk_widget()
@@ -476,6 +701,10 @@ class Top5App:
             anchor="w",
             pady=(4, 0),
         )
+        ttk.Label(header, text=FINANCIAL_DISPLAY_NOTICE, foreground="#92400e").pack(
+            anchor="w",
+            pady=(4, 0),
+        )
 
         try:
             raw_frame = load_financial_statements(code)
@@ -492,11 +721,11 @@ class Top5App:
             ttk.Label(parent, text="표시할 재무제표 데이터가 없습니다.").pack(anchor="w")
             return
 
-        summary_frame = ttk.LabelFrame(parent, text="주요 지표", padding=12)
+        summary_frame = ttk.LabelFrame(parent, text="표시 전용 주요 지표", padding=12)
         summary_frame.pack(fill=tk.X, pady=(0, 12))
         self._render_financial_summary_cards(summary_frame, raw_frame)
 
-        table_frame = ttk.LabelFrame(parent, text="재무제표 표", padding=8)
+        table_frame = ttk.LabelFrame(parent, text="재무제표 표 (점수 미반영)", padding=8)
         table_frame.pack(fill=tk.BOTH, expand=True)
         self._render_financial_statement_table(table_frame, raw_frame)
 

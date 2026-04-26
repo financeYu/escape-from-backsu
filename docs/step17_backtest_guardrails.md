@@ -1,5 +1,9 @@
 # Step 17 Conservative Backtest Guardrails
 
+> Historical Step document. Not current authority; use
+> `docs/roadmap_status.md` and `docs/context/ARCHIVE_INDEX.md` for current
+> routing.
+
 ## Purpose
 
 Step 17 opens conservative backtest evaluation for frozen technical-only

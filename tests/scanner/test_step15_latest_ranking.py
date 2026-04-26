@@ -274,3 +274,13 @@ def test_latest_ranking_accepts_kospi200_alphanumeric_ticker() -> None:
     output = build_latest_ranking_output(frame, adoption_synthesis_table())
 
     assert "0126Z0" in output["ticker"].tolist()
+
+
+def test_latest_ranking_outputs_policy_normalized_tickers() -> None:
+    frame = normalized_score_frame()
+    frame.loc[frame["ticker"].eq("005930"), "ticker"] = "0126z0"
+
+    output = build_latest_ranking_output(frame, adoption_synthesis_table())
+
+    assert "0126Z0" in output["ticker"].tolist()
+    assert "0126z0" not in output["ticker"].tolist()

@@ -16,7 +16,7 @@ if str(SRC_DIR) not in sys.path:
 
 from app.cli import main as cli_main
 from app.cli import run_single_stock
-from stock_core.pipeline.daily_update import DailyUpdateRow, _render_selected_charts
+from stock_core.pipeline.daily_update import DailyUpdateRow, _render_selected_charts, load_latest_top5_snapshot
 
 
 class CliTests(unittest.TestCase):
@@ -84,6 +84,81 @@ class CliTests(unittest.TestCase):
 
 
 class DailyUpdateTests(unittest.TestCase):
+    def test_latest_snapshot_prefers_algorithm_ranking_output(self) -> None:
+        legacy_frame = pd.DataFrame(
+            [
+                [
+                    1,
+                    "000080",
+                    "Legacy",
+                    0.0,
+                ]
+            ],
+            columns=["순위", "종목코드", "종목명", "점수"],
+        )
+        algorithm_frame = pd.DataFrame(
+            [
+                {
+                    "ticker": "005930",
+                    "date": "2026-04-20",
+                    "rank": 1,
+                    "technical_composite_score": 1.23,
+                    "final_composite_score": 1.23,
+                    "ranking_validity_flag": "valid",
+                    "technical_only_notice": "KOSPI200 technical-only scanner v0.1; no valuation/fundamental data.",
+                }
+            ]
+        )
+
+        def fake_exists(path: Path) -> bool:
+            return path.name in {"latest_score_top.csv", "latest_top.csv"}
+
+        def fake_read_csv(path: Path, **_kwargs: object) -> pd.DataFrame:
+            return algorithm_frame.copy() if path.name == "latest_score_top.csv" else legacy_frame.copy()
+
+        with (
+            patch("stock_core.pipeline.daily_update.OUTPUTS_DIR", Path("outputs")),
+            patch("pathlib.Path.exists", fake_exists),
+            patch("stock_core.pipeline.daily_update.pd.read_csv", side_effect=fake_read_csv),
+            patch(
+                "stock_core.pipeline.daily_update.get_universe_constituents",
+                return_value=[{"code": "005930", "name": "Samsung Electronics"}],
+            ),
+        ):
+            frame = load_latest_top5_snapshot()
+
+        self.assertEqual(frame.iloc[0]["종목코드"], "005930")
+        self.assertEqual(frame.iloc[0]["종목명"], "Samsung Electronics")
+        self.assertEqual(frame.iloc[0]["순위"], 1)
+        self.assertEqual(frame.iloc[0]["점수"], 1.23)
+        self.assertEqual(frame.iloc[0]["ranking_snapshot_source"], "latest_score_top")
+        self.assertEqual(frame.iloc[0]["canonical_ranking_source"], "root src.scanner.latest_ranking")
+
+    def test_latest_snapshot_can_fallback_to_legacy_output(self) -> None:
+        legacy_frame = pd.DataFrame(
+            [
+                {
+                    "순위": 1,
+                    "종목코드": "80",
+                    "종목명": "Legacy",
+                    "점수": 0.0,
+                }
+            ]
+        )
+
+        def fake_exists(path: Path) -> bool:
+            return path.name == "latest_top.csv"
+
+        with (
+            patch("stock_core.pipeline.daily_update.OUTPUTS_DIR", Path("outputs")),
+            patch("pathlib.Path.exists", fake_exists),
+            patch("stock_core.pipeline.daily_update.pd.read_csv", return_value=legacy_frame.copy()),
+        ):
+            frame = load_latest_top5_snapshot()
+
+        self.assertEqual(frame.iloc[0]["종목코드"], "000080")
+        self.assertEqual(frame.iloc[0]["종목명"], "Legacy")
+
     def test_chart_render_failure_does_not_abort_batch(self) -> None:
         rows = [
             DailyUpdateRow(

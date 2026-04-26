@@ -41,8 +41,12 @@ DEFAULT_BATCH_WORKERS = 8
 DEFAULT_TOP_N = 5
 LATEST_TOP_CSV_NAME = "latest_top.csv"
 LATEST_TOP_JSON_NAME = "latest_top.json"
+LATEST_SCORE_TOP_CSV_NAME = "latest_score_top.csv"
+LATEST_SCORE_TOP_JSON_NAME = "latest_score_top.json"
 LEGACY_LATEST_TOP_CSV_NAME = "latest_top5.csv"
 LEGACY_LATEST_TOP_JSON_NAME = "latest_top5.json"
+ALGORITHM_RANKING_SOURCE = "root src.scanner.latest_ranking"
+ALGORITHM_RANKING_SNAPSHOT_SOURCE = "latest_score_top"
 
 
 @dataclass(frozen=True)
@@ -149,8 +153,76 @@ def _build_universe_entries(
     return entries
 
 
-def load_latest_top5_snapshot() -> pd.DataFrame:
+def _load_universe_name_map() -> dict[str, str]:
+    """Return local KOSPI200 code-to-name metadata for display only."""
+
+    try:
+        constituents = get_universe_constituents(KOSPI200_UNIVERSE_SPEC, refresh=False)
+    except Exception as exc:
+        logger.warning("Could not load local KOSPI200 names for ranking display: %s", exc)
+        return {}
+
+    return {
+        str(item["code"]).zfill(6): str(item["name"])
+        for item in constituents
+        if item.get("code") and item.get("name")
+    }
+
+
+def _normalize_latest_algorithm_ranking_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Map canonical algorithm ranking columns to the GUI-compatible shape."""
+
+    normalized = frame.copy()
+    if "ticker" in normalized.columns:
+        normalized["ticker"] = normalized["ticker"].astype(str).str.zfill(6)
+    if "종목코드" in normalized.columns:
+        normalized["종목코드"] = normalized["종목코드"].astype(str).str.zfill(6)
+    elif "ticker" in normalized.columns:
+        normalized["종목코드"] = normalized["ticker"]
+
+    if "순위" not in normalized.columns and "rank" in normalized.columns:
+        normalized["순위"] = normalized["rank"]
+    if "최신일" not in normalized.columns and "date" in normalized.columns:
+        normalized["최신일"] = normalized["date"].astype(str).str.slice(0, 10)
+    if "점수" not in normalized.columns:
+        if "final_composite_score" in normalized.columns:
+            normalized["점수"] = normalized["final_composite_score"]
+        elif "technical_composite_score" in normalized.columns:
+            normalized["점수"] = normalized["technical_composite_score"]
+
+    if "종목명" not in normalized.columns and "종목코드" in normalized.columns:
+        name_map = _load_universe_name_map()
+        normalized["종목명"] = normalized["종목코드"].map(name_map).fillna(normalized["종목코드"])
+
+    normalized["ranking_snapshot_source"] = ALGORITHM_RANKING_SNAPSHOT_SOURCE
+    normalized["canonical_ranking_source"] = ALGORITHM_RANKING_SOURCE
+    if "runtime_boundary_notice" not in normalized.columns:
+        if "technical_only_notice" in normalized.columns:
+            normalized["runtime_boundary_notice"] = normalized["technical_only_notice"]
+        else:
+            normalized["runtime_boundary_notice"] = "KOSPI200 technical-only scanner v0.1; no valuation/fundamental data."
+
+    return normalized
+
+
+def load_latest_algorithm_ranking_snapshot() -> pd.DataFrame:
+    """Load the canonical latest algorithm ranking snapshot when exported."""
+
+    latest_csv = OUTPUTS_DIR / LATEST_SCORE_TOP_CSV_NAME
+    if not latest_csv.exists():
+        return pd.DataFrame()
+
+    frame = pd.read_csv(latest_csv, dtype={"ticker": str, "종목코드": str})
+    return _normalize_latest_algorithm_ranking_frame(frame)
+
+
+def load_latest_top5_snapshot(prefer_algorithm: bool = True) -> pd.DataFrame:
     """Load the most recent top-ranked output if available."""
+
+    if prefer_algorithm:
+        algorithm_frame = load_latest_algorithm_ranking_snapshot()
+        if not algorithm_frame.empty:
+            return algorithm_frame
 
     candidate_paths = [
         OUTPUTS_DIR / LATEST_TOP_CSV_NAME,

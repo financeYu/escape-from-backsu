@@ -51,3 +51,19 @@ def test_financial_statement_pivot_lives_in_gui_mvp() -> None:
 
     assert pivot.columns.tolist() == ["metric", "2023/12", "2024/12(E)"]
     assert pivot.iloc[0]["metric"] == "매출액"
+
+
+def test_algorithm_score_display_prefers_final_composite_score() -> None:
+    row = {
+        "technical_composite_score": 0.9,
+        "final_composite_score": 1.1292949962298064,
+    }
+
+    assert Top5App._format_score(row) == "1.1293"
+
+
+def test_chart_topn_number_formatters_tolerate_blank_values() -> None:
+    assert Top5App._format_plain_number("") == ""
+    assert Top5App._format_plain_number(pd.NA) == ""
+    assert Top5App._format_signed_number("") == ""
+    assert Top5App._format_signed_number(pd.NA) == ""

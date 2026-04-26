@@ -7,7 +7,6 @@ outputs to canonical ranking evidence.
 from __future__ import annotations
 
 import json
-import math
 from pathlib import Path
 import sys
 import threading
@@ -160,16 +159,18 @@ class Top5App:
         table_frame = ttk.LabelFrame(container, text="Top N 결과", padding=8)
         table_frame.pack(fill=tk.BOTH, expand=True)
 
-        columns = ("순위", "종목명", "점수", "최신일", "종가", "전일대비", "거래량")
+        columns = ("순위", "종목코드", "종목명", "점수", "최신일", "유효성", "종가", "전일대비", "거래량")
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=12)
         column_widths = {
             "순위": 60,
-            "종목명": 300,
-            "점수": 90,
+            "종목코드": 95,
+            "종목명": 240,
+            "점수": 110,
             "최신일": 110,
-            "종가": 140,
-            "전일대비": 140,
-            "거래량": 170,
+            "유효성": 90,
+            "종가": 120,
+            "전일대비": 120,
+            "거래량": 150,
         }
         for column in columns:
             self.tree.heading(column, text=column)
@@ -210,8 +211,12 @@ class Top5App:
             self.set_status("대기 중 - 저장된 Top N 결과 없음")
             return
 
-        self._fill_tree(latest_df.to_dict(orient="records"))
-        self.set_status("저장된 latest_top 결과를 먼저 표시했습니다.")
+        records = latest_df.to_dict(orient="records")
+        self._fill_tree(records)
+        if self._is_algorithm_snapshot(latest_df):
+            self.set_status("저장된 알고리즘 랭킹 결과를 먼저 표시했습니다.")
+        else:
+            self.set_status("저장된 latest_top 결과를 먼저 표시했습니다.")
 
     def _load_latest_meta(self) -> None:
         meta_path = CHART_MVP_ROOT / "outputs" / "last_run_meta.json"
@@ -312,43 +317,92 @@ class Top5App:
         messagebox.showerror("실행 실패", error_text)
 
     def _fill_tree(self, records: list[dict]) -> None:
+        self._current_top5 = records
         for item in self.tree.get_children():
             self.tree.delete(item)
 
         for row in records:
-            code = str(row.get("종목코드", ""))
+            code = self._as_text(self._first_present(row, ("종목코드", "ticker", "code")))
+            name = self._as_text(self._first_present(row, ("종목명", "name", "stock_name"))) or code
             iid = code or None
             self.tree.insert(
                 "",
                 tk.END,
                 iid=iid,
                 values=(
-                    row.get("순위", ""),
-                    row.get("종목명", ""),
-                    row.get("점수", ""),
-                    row.get("최신일", ""),
-                    self._format_plain_number(row.get("종가")),
-                    self._format_signed_number(row.get("전일대비")),
-                    self._format_plain_number(row.get("거래량")),
+                    self._as_text(self._first_present(row, ("순위", "rank"))),
+                    code,
+                    name,
+                    self._format_score(row),
+                    self._as_text(self._first_present(row, ("최신일", "date"))),
+                    self._as_text(self._first_present(row, ("ranking_validity_flag", "coverage_status", "data_quality_flag"))),
+                    self._format_plain_number(self._first_present(row, ("종가", "close"))),
+                    self._format_signed_number(self._first_present(row, ("전일대비", "change"))),
+                    self._format_plain_number(self._first_present(row, ("거래량", "volume"))),
                 ),
             )
 
     @staticmethod
-    def _format_plain_number(value: object) -> str:
+    def _is_algorithm_snapshot(frame: pd.DataFrame) -> bool:
+        return (
+            "final_composite_score" in frame.columns
+            or "technical_composite_score" in frame.columns
+            or frame.get("ranking_snapshot_source", pd.Series(dtype=object)).eq("latest_score_top").any()
+        )
+
+    @staticmethod
+    def _is_blank(value: object) -> bool:
         if value is None:
+            return True
+        try:
+            if pd.isna(value):
+                return True
+        except (TypeError, ValueError):
+            pass
+        return isinstance(value, str) and value.strip() == ""
+
+    @classmethod
+    def _first_present(cls, row: dict, keys: tuple[str, ...]) -> object:
+        for key in keys:
+            value = row.get(key)
+            if not cls._is_blank(value):
+                return value
+        return ""
+
+    @classmethod
+    def _as_text(cls, value: object) -> str:
+        if cls._is_blank(value):
             return ""
-        if isinstance(value, float) and math.isnan(value):
+        return str(value)
+
+    @classmethod
+    def _format_score(cls, row: dict) -> str:
+        value = cls._first_present(row, ("점수", "final_composite_score", "technical_composite_score"))
+        if cls._is_blank(value):
             return ""
-        return f"{float(value):,.0f}"
+        try:
+            return f"{float(value):.4f}"
+        except (TypeError, ValueError):
+            return str(value)
+
+    @staticmethod
+    def _format_plain_number(value: object) -> str:
+        if Top5App._is_blank(value):
+            return ""
+        try:
+            return f"{float(value):,.0f}"
+        except (TypeError, ValueError):
+            return str(value)
 
     @staticmethod
     def _format_signed_number(value: object) -> str:
-        if value is None:
-            return ""
-        if isinstance(value, float) and math.isnan(value):
+        if Top5App._is_blank(value):
             return ""
 
-        numeric = float(value)
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return str(value)
         if numeric > 0:
             return f"+{numeric:,.0f}"
         if numeric < 0:
@@ -361,14 +415,20 @@ class Top5App:
             messagebox.showinfo("선택 필요", "먼저 Top N 목록에서 종목을 선택해 주세요.")
             return
 
-        item = self.tree.item(selection[0])
-        values = item.get("values", [])
-        if len(values) < 2:
+        code = str(selection[0])
+        record = next(
+            (
+                row
+                for row in self._current_top5
+                if self._as_text(self._first_present(row, ("종목코드", "ticker", "code"))) == code
+            ),
+            {},
+        )
+        name = self._as_text(self._first_present(record, ("종목명", "name", "stock_name"))) or code
+        if not code or not name:
             messagebox.showerror("오류", "선택한 종목 정보를 읽을 수 없습니다.")
             return
 
-        code = str(selection[0])
-        name = str(values[1])
         self.set_status(f"{name} 차트 준비 중...")
         self._open_chart_window(code=code, name=name)
         self.set_status(f"{name} 차트 표시 완료")

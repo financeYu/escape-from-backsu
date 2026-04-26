@@ -19,7 +19,7 @@ from stock_core.utils.logging_utils import configure_logging
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run the modular daily stock update")
-    parser.add_argument("--pages", type=int, default=20, help="Number of Naver daily pages to fetch per stock")
+    parser.add_argument("--pages", type=int, default=20, help="Number of provider daily pages to fetch per stock")
     parser.add_argument("--top-n", type=int, default=5, help="Number of ranked stocks to keep and render")
     parser.add_argument("--limit", type=int, default=None, help="Optional universe limit for lightweight runs")
     parser.add_argument(

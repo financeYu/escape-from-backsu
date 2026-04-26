@@ -9,6 +9,8 @@ from typing import Iterable
 
 import pandas as pd
 
+from stock_core.utils.market_specs import KOREAN_EQUITY_SYMBOL_POLICY, NAVER_PRICE_PROVIDER_SPEC, SymbolPolicy
+
 
 CANONICAL_OHLCV_COLUMNS = ["ticker", "date", "open", "high", "low", "close", "volume"]
 NUMERIC_PRICE_COLUMNS = ["open", "high", "low", "close", "volume"]
@@ -31,7 +33,7 @@ PRICE_COLUMN_ALIASES = {
     "collected_at": ("collected_at",),
 }
 
-TICKER_PATTERN = re.compile(r"^[0-9A-Z]{6}$")
+TICKER_PATTERN = re.compile(KOREAN_EQUITY_SYMBOL_POLICY.valid_pattern)
 
 
 @dataclass(frozen=True)
@@ -59,7 +61,7 @@ def normalize_price_columns(
     *,
     ticker: str | None = None,
     source: str | None = None,
-    data_vendor: str | None = "naver_finance",
+    data_vendor: str | None = NAVER_PRICE_PROVIDER_SPEC.data_vendor,
 ) -> pd.DataFrame:
     """Return a copy with standard price schema column names when aliases exist."""
 
@@ -107,29 +109,39 @@ def _missing_ticker_checks(dataset: str) -> list[SchemaCheck]:
     ]
 
 
-def _ticker_quality_counts(ticker_values: pd.Series) -> tuple[bool, int, int]:
+def _ticker_quality_counts(
+    ticker_values: pd.Series,
+    symbol_policy: SymbolPolicy = KOREAN_EQUITY_SYMBOL_POLICY,
+) -> tuple[bool, int, int]:
     ticker_text = ticker_values.astype(str).str.strip()
     non_null = ticker_values.notna()
     numeric_dtype = pd.api.types.is_numeric_dtype(ticker_values)
-    invalid_format = non_null & ~ticker_text.map(is_valid_ticker)
-    short_digit_tickers = non_null & ticker_text.str.isdigit() & (ticker_text.str.len() < 6)
+    invalid_format = non_null & ~ticker_text.map(lambda value: is_valid_ticker(value, symbol_policy=symbol_policy))
 
     format_failures = int(invalid_format.sum())
-    leading_zero_loss_candidates = int(short_digit_tickers.sum())
+    leading_zero_loss_candidates = symbol_policy.leading_zero_loss_candidates(ticker_values)
     if numeric_dtype:
         leading_zero_loss_candidates = max(leading_zero_loss_candidates, int(non_null.sum()))
     return numeric_dtype, format_failures, leading_zero_loss_candidates
 
 
-def validate_ticker_column(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
-    """Validate ticker dtype, six-character format, and likely leading-zero loss."""
+def validate_ticker_column(
+    frame: pd.DataFrame,
+    *,
+    dataset: str = "price",
+    symbol_policy: SymbolPolicy = KOREAN_EQUITY_SYMBOL_POLICY,
+) -> list[SchemaCheck]:
+    """Validate ticker dtype, configured format, and likely leading-zero loss."""
 
     normalized = normalize_price_columns(frame)
     if "ticker" not in normalized.columns:
         return _missing_ticker_checks(dataset)
 
     ticker_values = normalized["ticker"]
-    numeric_dtype, format_failures, leading_zero_loss_candidates = _ticker_quality_counts(ticker_values)
+    numeric_dtype, format_failures, leading_zero_loss_candidates = _ticker_quality_counts(
+        ticker_values,
+        symbol_policy=symbol_policy,
+    )
 
     return [
         SchemaCheck(
@@ -256,7 +268,12 @@ def append_schema_validation_summary(checks: list[SchemaCheck], *, dataset: str 
     ]
 
 
-def validate_standard_price_schema(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
+def validate_standard_price_schema(
+    frame: pd.DataFrame,
+    *,
+    dataset: str = "price",
+    symbol_policy: SymbolPolicy = KOREAN_EQUITY_SYMBOL_POLICY,
+) -> list[SchemaCheck]:
     """Validate standard price schema presence and Step 3 safety checks."""
 
     normalized = normalize_price_columns(frame)
@@ -270,19 +287,24 @@ def validate_standard_price_schema(frame: pd.DataFrame, *, dataset: str = "price
             details=";".join(optional_present) if optional_present else "none",
         )
     )
-    checks.extend(validate_ticker_column(normalized, dataset=dataset))
+    checks.extend(validate_ticker_column(normalized, dataset=dataset, symbol_policy=symbol_policy))
     checks.extend(validate_date_parseability(normalized, dataset=dataset))
     checks.extend(validate_numeric_columns_convertible(normalized, dataset=dataset))
     checks.extend(validate_duplicate_ticker_date_absent(normalized, dataset=dataset))
     return append_schema_validation_summary(checks, dataset=dataset)
 
 
-def validate_standard_ohlcv_schema(frame: pd.DataFrame, *, dataset: str = "price") -> list[SchemaCheck]:
+def validate_standard_ohlcv_schema(
+    frame: pd.DataFrame,
+    *,
+    dataset: str = "price",
+    symbol_policy: SymbolPolicy = KOREAN_EQUITY_SYMBOL_POLICY,
+) -> list[SchemaCheck]:
     """Validate the canonical OHLCV schema without requiring runtime source metadata."""
 
     normalized = normalize_price_columns(frame)
     checks = validate_required_columns(normalized, CANONICAL_OHLCV_COLUMNS, dataset=dataset)
-    checks.extend(validate_ticker_column(normalized, dataset=dataset))
+    checks.extend(validate_ticker_column(normalized, dataset=dataset, symbol_policy=symbol_policy))
     checks.extend(validate_date_parseability(normalized, dataset=dataset))
     checks.extend(validate_numeric_columns_convertible(normalized, dataset=dataset))
     checks.extend(validate_duplicate_ticker_date_absent(normalized, dataset=dataset))
@@ -295,17 +317,17 @@ def schema_checks_to_frame(checks: Iterable[SchemaCheck]) -> pd.DataFrame:
     return pd.DataFrame([check.__dict__ for check in checks], columns=["dataset", "check", "status", "details"])
 
 
-def infer_ticker_from_price_path(path: str | Path) -> str:
+def infer_ticker_from_price_path(path: str | Path, *, price_suffix: str = "daily_prices") -> str:
     """Infer a ticker from the current cache file convention."""
 
     name = Path(path).name
-    suffix = "_daily_prices.csv"
+    suffix = f"_{price_suffix}.csv"
     if name.endswith(suffix):
         return name[: -len(suffix)]
     return Path(path).stem
 
 
-def is_valid_ticker(value: object) -> bool:
-    """Return whether a value matches the project ticker convention."""
+def is_valid_ticker(value: object, symbol_policy: SymbolPolicy = KOREAN_EQUITY_SYMBOL_POLICY) -> bool:
+    """Return whether a value matches the configured ticker convention."""
 
-    return bool(TICKER_PATTERN.fullmatch(str(value).strip()))
+    return symbol_policy.is_valid(value)

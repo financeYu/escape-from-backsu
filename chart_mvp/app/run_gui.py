@@ -42,7 +42,7 @@ class Top5App:
 
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
-        self.root.title("KOSPI200 Top-N Viewer")
+        self.root.title("Configured Universe Top-N Viewer")
         self.root.geometry("1240x720")
         self.root.minsize(1020, 640)
         self.root.resizable(True, True)

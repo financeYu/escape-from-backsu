@@ -28,8 +28,8 @@ def _configure_stdio_for_utf8() -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run the local KOSPI200 Top-N daily batch")
-    parser.add_argument("--pages", type=int, default=20, help="Number of Naver daily pages to fetch per stock")
+    parser = argparse.ArgumentParser(description="Run the local configured-universe Top-N daily batch")
+    parser.add_argument("--pages", type=int, default=20, help="Number of provider daily pages to fetch per stock")
     parser.add_argument("--top-n", type=int, default=5, help="Number of ranked stocks to keep and render")
     parser.add_argument(
         "--market-cap-override",

@@ -1,4 +1,4 @@
-"""Shared constants for Korean stock price analysis."""
+"""Shared column constants for the current local price-analysis runtime."""
 
 DATE_COLUMN = "날짜"
 CLOSE_COLUMN = "종가"

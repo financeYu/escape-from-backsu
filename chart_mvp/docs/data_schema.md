@@ -8,7 +8,7 @@ Required columns:
 
 | column | type | description |
 | --- | --- | --- |
-| `ticker` | string | Six-character Korean market ticker. Digits and uppercase letters are allowed because preferred-share codes may contain letters. |
+| `ticker` | string | Instrument identifier validated by the active `SymbolPolicy`. The default KOSPI200 policy keeps the existing six-character Korean equity ticker rule. |
 | `date` | date | Trading date, parseable by `pandas.to_datetime`. |
 | `open` | numeric | Daily open price. |
 | `high` | numeric | Daily high price. |
@@ -23,12 +23,12 @@ Optional columns:
 | --- | --- | --- |
 | `name` | string | Security name when available. |
 | `market` | string | Market segment when available. |
-| `data_vendor` | string | Vendor identifier, currently `naver_finance` for Naver Finance data. |
+| `data_vendor` | string | Vendor identifier from the active `PriceProviderSpec`; the default provider remains `naver_finance`. |
 | `collected_at` | datetime | Collector runtime timestamp when available. |
 
 ## Current Naver Price Cache Mapping
 
-The current Naver price loader stores Korean column names in `data/<code>_daily_prices.csv`.
+The default Naver price loader stores Korean column names in the legacy-compatible cache path `data/<code>_daily_prices.csv`. Non-legacy cache policies may namespace files by provider and universe.
 
 | current column | standard column |
 | --- | --- |

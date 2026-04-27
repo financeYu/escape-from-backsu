@@ -67,6 +67,32 @@ The subproject must not delegate ordinary local correctness review to master by 
 
 The subproject must submit a master-up summary using the required template in the workspace root `docs/master_up_template.md`.
 
+## Codex skill-gated task intake
+
+Root/master remains responsible for assigning sub-agent tasks and selecting the
+matching Codex skill gate before execution.
+
+Every delegated packet must include:
+
+- current task
+- allowed scope
+- forbidden scope
+- required output
+- validation commands
+- Korean final report format
+- selected Codex skill gate
+
+Quant sub-agents must not expand beyond the selected skill gate. Candidate ML
+probability work uses `../.agents/skills/quant-candidate-ml-gate/SKILL.md`.
+Completion acceptance uses `../.agents/skills/quant-review-gate/SKILL.md`. If no
+narrower execution skill matches, use `../.agents/skills/quant-review-gate/SKILL.md`
+as the minimal default review gate rather than inventing broad permission.
+
+Git finalization is not part of ordinary sub-agent execution. Use
+`../.agents/skills/quant-git-finalize/SKILL.md` only after review gate `PASS`.
+Do not push when review is `NEEDS FIX`, forbidden scope changed, validation
+failed, or root has not explicitly confirmed remote finalization.
+
 ---
 
 ## Purpose

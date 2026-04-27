@@ -15,6 +15,10 @@ Route local `master_mvp` tasks to the narrowest required review path. This skill
 is a dispatcher only. It must not perform technical, valuation, adoption, code,
 backtest, or final-validation review itself.
 
+Completion acceptance review lives in
+`.agents/skills/quant-review-gate/SKILL.md`. Use that gate after the selected
+execution/review path finishes, and before any Git finalization.
+
 These are project-local Codex skill instructions under `.agents/skills/`.
 They are not globally installed Codex skills and are not GitHub PR review
 configuration.
@@ -23,6 +27,7 @@ configuration.
 
 Use this skill before deciding whether to invoke:
 
+- `.agents/skills/quant-review-gate/SKILL.md`
 - `.agents/skills/technical_review/SKILL.md`
 - `.agents/skills/valuation_review/SKILL.md`
 - `.agents/skills/review_mvp_specialist/SKILL.md`
@@ -115,6 +120,9 @@ are docs/context-only, do not alter score, ranking, report, backtest, valuation,
 schema, generated-output, roadmap verdict, or guardrail semantics, and focused
 checks are clean.
 
+For `light_policy_check_only`, route completion acceptance to
+`.agents/skills/quant-review-gate/SKILL.md` rather than broad specialist review.
+
 Typo fixes, link-only context routing updates, and reminders that valuation is
 unavailable or technical-only are normally non-triggers unless they weaken a
 hard stop or introduce risky claims.
@@ -127,7 +135,7 @@ Return YAML:
 gate_result: review_not_required | light_policy_check_only | technical_review_required | valuation_review_required | adoption_review_required | full_review_required
 reason: "<one short Korean sentence>"
 next_skills:
-  - "none | .agents/skills/technical_review/SKILL.md | .agents/skills/valuation_review/SKILL.md | .agents/skills/review_mvp_specialist/SKILL.md"
+  - "none | .agents/skills/quant-review-gate/SKILL.md | .agents/skills/technical_review/SKILL.md | .agents/skills/valuation_review/SKILL.md | .agents/skills/review_mvp_specialist/SKILL.md"
 review_mvp_required: true | false
 minimum_validation_profile: "<focused docs/config/schema/tests/check profile>"
 ```

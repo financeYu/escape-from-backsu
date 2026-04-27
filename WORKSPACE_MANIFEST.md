@@ -20,6 +20,18 @@ This task must not be treated as broad Step 21 entry. It does not activate new
 markets, production ranking, valuation scoring, new data ingestion, trading
 recommendations, `final_composite_score` replacement, or backtest feedback.
 
+## Route Gate Workflow Addendum
+
+This root/master integration workspace also owns route-only Codex skill
+contract maintenance for sub-agent execution gating, completion review gating,
+and local-first Git finalization gating.
+
+Allowed workflow edits are limited to root/subproject routing instructions,
+`.agents/skills/` gate contracts, and lightweight validator scripts. This does
+not authorize quant score formula changes, runtime ranking/report behavior
+changes, candidate ML implementation, valuation/fundamental activation, universe
+expansion, or market data ingestion.
+
 ## Allowed Write Paths
 
 - WORKSPACE_MANIFEST.md
@@ -115,6 +127,8 @@ recommendations, `final_composite_score` replacement, or backtest feedback.
 - compact context and status docs updated from freeze-ready to frozen
 - future work routed to separately approved post-MVP versions/Steps
 - focused validation summary
+- skill-gated sub-agent routing contract, review gate result, and Git
+  finalization gate result when those route contracts change
 - latest local Quant project context snapshot refresh only when explicitly requested by the user
 - remaining risk summary for root/master final merge
 

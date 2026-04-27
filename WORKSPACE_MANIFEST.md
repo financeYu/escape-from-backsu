@@ -1,141 +1,92 @@
 # WORKSPACE_MANIFEST
 
-workspace_id: mvp_v0_1_freeze
-branch: main
-role: root-master-integration
-task_type: release_freeze_status_control
-active_step: MVP v0.1 frozen baseline / no active roadmap Step
-owner_or_worker: root master agent
-created_from_commit: f7c3734
+workspace_id: quant_v0_2_predictive_probability_impl
+branch: quant/v0-2-predictive-probability-impl
+role: quant-score-implementation
+task_type: post_mvp_v0_2_predictive_probability_candidate
+active_step: post-MVP v0.2 predictive probability implementation
+owner_or_worker: Codex
+created_from_commit: 4f2b349
 
 ## Purpose
 
-Record the MVP v0.1 freeze decision from the root/master integration workspace.
-This is release/status-control work only. It preserves the Step 20 KOSPI200
-technical-only baseline as frozen and routes any future semantic change to a
-separately approved post-MVP version/Step.
+Implement the approved `prob_up_1d_candidate` candidate-only predictive
+probability path in a separate role worktree. The implementation covers a
+feature table, label-separated training/evaluation pipeline, candidate
+probability output, and validation tests.
 
-This task must not be treated as Step 21 entry. It does not activate new
-markets, valuation scoring, new data ingestion, trading recommendations, or
-backtest feedback.
+This work must keep the MVP v0.1 production ranking and composite semantics
+unchanged. The output is a candidate probability artifact only.
+
+## Approved User Scope
+
+- Build `prob_up_1d_candidate` so higher values mean higher modeled probability
+  that `adjusted_close[t+1] > adjusted_close[t]`.
+- Keep old technical scores as optional feature inputs, not as production
+  ranking replacements.
+- Keep labels separated from feature rows and exclude the current row when the
+  next-day label is unavailable.
+- Add validation tests for no-lookahead, forbidden inputs, output schema, and
+  pipeline behavior.
 
 ## Allowed Write Paths
 
 - WORKSPACE_MANIFEST.md
-- AGENTS.md
-- .agents/skills/
-- .github/workflows/
-- Quant_mvp/__init__.py
-- Quant_mvp/AGENTS.md
+- src/scores/
+- tests/
 - Quant_mvp/config/
 - Quant_mvp/docs/
-- Quant_mvp/reports/
-- Quant_mvp/agents/audit/AGENTS.md
-- Quant_mvp/agents/valuation/AGENTS.md
-- Quant_mvp/backtest_mvp/
-- chart_mvp/AGENTS.md
-- chart_mvp/README.md
-- chart_mvp/TEMPORARY_TOP5_OVERRIDE.md
-- chart_mvp/app/run_gui.py
-- chart_mvp/scripts/run_top5_gui.bat
-- chart_mvp/src/stock_core/
-- chart_mvp/tests/
-- config/
-- docs/config_policy.md
-- docs/contracts/quant_umbrella_handoff_contract.md
-- docs/context/
-- docs/development_environment.md
 - docs/extension/
-- docs/release/
-- docs/releases/
-- docs/roadmap_status.md
-- docs/root_hard_stops.md
-- docs/project_checklist.md
-- docs/review_mvp_policy.md
-- gui_mvp/
-- quant_project_reference_for_chatgpt_project_current.md
-- reports/validation/
-- reserch_mvp/AGENTS.md
-- reserch_mvp/config/
-- reserch_mvp/reports/research_ingestion/
-- reserch_mvp/research_ingestion/
-- reserch_mvp/src/research_ingestion/
-- reserch_mvp/tests/research_ingestion/
-- review_mvp/
-- scripts/
-- src/backtest/
-- src/preprocess/
-- src/reports/
-- src/scanner/
-- src/scores/
-- src/validation/
-- src/valuation/
-- tests/backtest/
-- tests/context/
-- tests/data_validation/
-- tests/gui_mvp/
-- tests/reports/
-- tests/scanner/
-- tests/validation/
-- tests/valuation/
-- tests/test_step9_scores_part_a.py
-- tests/test_step9_scores_part_b.py
-- tests/test_step10_normalization_cross_sectional.py
-- tests/test_step10_normalization_timeseries.py
-- tests/test_step11_composite_schema.py
 
 ## Read-Only Paths
 
-- completed Step artifacts except targeted handoff, context, config, and
-  validation references needed by the collected support branches
-- generated market caches
-- generated runtime report roots except explicit validation/handoff reports
-- secrets and local environment files
+- AGENTS.md
+- docs/root_hard_stops.md
+- docs/roadmap_status.md
+- docs/context/POST_MVP_AGENT_TASK_PACKET.md
+- docs/context/EXTENSION_REGISTRY.toml
+- docs/context/CHANGE_IMPACT_MATRIX.yml
+- docs/contracts/
+- chart_mvp/
+- reserch_mvp/
+- review_mvp/
+- generated reports, caches, raw data, chart images, and runtime outputs
 
 ## Forbidden Actions
 
-- KOSDAQ150, futures, options, NASDAQ/overseas, or multi-universe activation
-- new external market-data source ingestion
-- score formula, score weight, score adoption, normalization, ranking, report,
-  backtest, or valuation semantic changes beyond the reviewed support-branch
-  patches
-- `technical_composite_score` or `final_composite_score` semantic changes
-- valuation/fundamental scoring activation or financial/fundamental data in
-  technical/final composite scoring
-- backtest-driven score optimization or return feedback into upstream ranking
-- trading recommendations, buy/sell/hold wording, or proven-alpha claims
-- committing raw local market caches, chart images, secrets, `.env` files, or
-  nested worktree artifacts
-- unrelated cleanup, reset, history rewrite, or broad refactor
+- Do not activate production ranking.
+- Do not create trading, buy, sell, hold, expected-return, or proven-alpha
+  recommendation outputs.
+- Do not replace or redefine `technical_composite_score` or
+  `final_composite_score`.
+- Do not use valuation, fundamental, PER, PBR, ROE, accounting, filing, or
+  point-in-time financial data.
+- Do not use backtest metrics, realized returns, paper backtest results, or
+  evaluation diagnostics as model features.
+- Do not add data ingestion, external vendor assumptions, new markets, KOSDAQ,
+  derivatives, NASDAQ, or overseas universe support.
+- Do not commit generated reports, market caches, chart images, secrets, `.env`
+  files, or nested worktree artifacts.
 
 ## Expected Handoff Output
 
-- source-controlled MVP v0.1 freeze record
-- compact context and status docs updated from freeze-ready to frozen
-- future work routed to separately approved post-MVP versions/Steps
-- focused validation summary
-- latest local Quant project context snapshot refresh only when explicitly requested by the user
-- remaining risk summary for root/master final merge
+- Candidate feature table builder with explicit feature/label separation.
+- Candidate training/evaluation pipeline with no production ranking side
+  effects.
+- Candidate probability output containing `prob_up_1d_candidate` and optional
+  diagnostics only.
+- Focused validation tests and a master-up summary.
 
 ## Required Validation
 
-- python -m pytest -q -p no:cacheprovider tests/gui_mvp chart_mvp/tests/test_gui_financials.py tests/backtest
-- python -m pytest -q -p no:cacheprovider tests/backtest/test_conservative_backtest_core.py tests/data_validation/test_schema_validation_contract.py tests/reports/test_step16_security_detail_report.py tests/reports/test_step16_security_detail_report_contracts.py tests/scanner/test_latest_ranking_symbol_policy.py tests/test_step10_normalization_cross_sectional.py tests/test_step10_normalization_timeseries.py tests/test_step9_scores_part_a.py tests/test_step9_scores_part_b.py tests/validation/test_step15_latest_ranking_guardrails.py chart_mvp/tests/test_market_extensibility.py
-- python -c "import pathlib,tomllib; [tomllib.loads(pathlib.Path(p).read_text(encoding='utf-8')) for p in ('Quant_mvp/config/scores.toml','Quant_mvp/config/weights.toml')]"
-- python scripts/run_local_validation.py chart
-- python scripts/run_local_validation.py context
-- python scripts/run_local_validation.py reports-backtest
-- python -m pytest -q -p no:cacheprovider reserch_mvp/tests/research_ingestion
-- python -m pytest -q -p no:cacheprovider tests/context tests/test_step11_composite_schema.py
-- python -m unittest discover -s review_mvp/tests -v
-- python scripts/context/check_context_staleness.py
-- python scripts/context/check_context_conflicts.py
-- python scripts/build_review_packet.py --step "Step20-MVP-v0.1-freeze" --stage "master-up-pending"
-- python scripts/refresh_quant_project_context.py --user-requested (only when explicitly requested by the user)
+- python -m pytest -q -p no:cacheprovider <focused v0.2 probability tests>
+- python -m pytest -q -p no:cacheprovider tests/test_step9_scores_integration.py tests/test_step11_composite_schema.py
 - git diff --check
+- targeted forbidden-scope grep for ranking activation, trading wording,
+  valuation/fundamental inputs, and backtest feature leakage
 
 ## Handoff Notes
 
-This workspace records the root/master MVP v0.1 freeze decision. Root/master
-may inspect focused freeze evidence first and avoid repeating completed Step
-1-20 history unless validation or conflict checks point to a specific risk.
+This branch implements a candidate-only probability pipeline. It does not adopt
+the candidate into production ranking, reports, composite scores, GUI behavior,
+or trading workflows.

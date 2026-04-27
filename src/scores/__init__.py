@@ -25,22 +25,36 @@ from .normalization_timeseries import (
     normalize_timeseries_scores,
     robust_zscore_expanding,
 )
+from .prob_up_1d_candidate import (
+    PROBABILITY_COLUMN,
+    ProbUp1DConfig,
+    build_prob_up_1d_dataset,
+    fit_prob_up_1d_candidate_model,
+    predict_prob_up_1d_candidate,
+    run_prob_up_1d_candidate_pipeline,
+)
 from .technical_scores import calculate_all_raw_scores
 
 __all__ = (
     "CrossSectionalNormalizationConfig",
+    "PROBABILITY_COLUMN",
+    "ProbUp1DConfig",
     "TimeSeriesNormalizationConfig",
     "apply_clipping",
     "apply_winsorization",
     "build_normalization_diagnostics",
+    "build_prob_up_1d_dataset",
     "calculate_all_raw_scores",
+    "fit_prob_up_1d_candidate_model",
     "load_cross_sectional_normalization_config",
     "load_timeseries_normalization_config",
     "normalize_cross_sectional_score",
     "normalize_cross_sectional_scores",
     "normalize_timeseries_score",
     "normalize_timeseries_scores",
+    "predict_prob_up_1d_candidate",
     "robust_zscore_cross_sectional",
     "robust_zscore_expanding",
+    "run_prob_up_1d_candidate_pipeline",
     "summarize_normalization_coverage",
 )

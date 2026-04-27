@@ -1,59 +1,85 @@
 # Root Hard Stops
 
-Latest-only root summary for task start. Routing aid only; it does not replace
-`AGENTS.md`, `docs/project_checklist.md`, or `docs/roadmap_status.md`.
+This is the current project authority document. `AGENTS.md` is only the compact
+router/constitution, and `docs/roadmap_status.md` is only the current route
+state. Use `docs/project_checklist.md` only for named historical roadmap-order,
+provenance, regression, hard-stop, or release-evidence questions not answered
+here.
 
 ## Authority Order
 
 1. User's latest explicit instruction.
-2. `AGENTS.md`.
-3. `docs/project_checklist.md` for root policy and roadmap-order authority.
-4. `docs/roadmap_status.md` for current latest-only status.
-5. Active packet, affected subproject `AGENTS.md`, and targeted files.
+2. `AGENTS.md` for the always-on router.
+3. `docs/root_hard_stops.md` for active project authority and hard stops.
+4. `docs/roadmap_status.md` for current route state.
+5. A triggered Codex skill, affected subproject `AGENTS.md`, one active packet,
+   one needed domain stub, and targeted files.
 
-`docs/project_checklist.md` has historical pre-freeze Step detail. Read its
-long body only for named roadmap, hard-stop, provenance, regression, or release
-evidence questions.
+The user's prompt defines only this gate's concrete goal and requested
+deliverables. Do not move reusable process, guardrail, or validation policy into
+the prompt.
 
 ## Current Baseline
 
 - Step 20 is complete; KOSPI200 technical MVP v0.1 is frozen.
-- Post-MVP `v0.2 predictive probability score route` Step is active for the
-  approved candidate-only implementation of `prob_up_1d_candidate` in a
-  separate role branch/worktree.
-- The active Step authorizes only the scoped feature table, label-separated
-  training/evaluation pipeline, candidate probability output, and validation
-  tests. It does not authorize production ranking activation, report behavior
-  changes, trading recommendations, `final_composite_score` replacement,
-  backtest metrics as model features, valuation/fundamental scoring, data
-  ingestion changes, or universe expansion.
+- The active route is post-MVP `v0.2 predictive probability score route`.
+- The only approved active candidate ML output is `prob_up_1d_candidate`.
+- Use `.agents/skills/quant-candidate-ml-gate/SKILL.md` for candidate ML gate
+  work and `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`
+  for repeatable contract checks.
+
+## Authorized Active Scope
+
+The active route authorizes only:
+
+- scoped feature table work for `prob_up_1d_candidate`
+- label-separated training/evaluation pipeline work
+- candidate probability output
+- validation tests and contract checks
+- work in the approved separate role branch/worktree
 
 ## Forbidden Scope Without Explicit Approval
 
 - KOSDAQ150, futures, options, Nasdaq/overseas, or multi-universe activation.
 - New market-data ingestion or live vendor assumptions.
-- Runtime score formula, weight, adoption, normalization, ranking, report,
-  backtest, or valuation semantic changes outside the approved
-  `prob_up_1d_candidate` candidate-only implementation scope.
+- Production ranking activation or ranking generation unless the active route
+  explicitly authorizes it.
+- Report behavior changes or runtime score semantic changes outside the active
+  candidate ML gate.
+- `final_composite_score` replacement or silent score redefinition.
 - Financial/fundamental data in `technical_composite_score` or
   `final_composite_score`.
-- Backtest feedback into scoring/ranking or model feature construction.
-- Trading recommendations, buy/sell/hold, proven-alpha, or expected-return wording.
+- Valuation/fundamental scoring activation.
+- Backtest metrics as model features.
+- Backtest feedback into scoring, ranking, or model feature construction.
+- Trading recommendations, buy/sell/hold, proven-alpha, or expected-return
+  wording.
 
-## Archive Read Gate
+## Context Boundary
 
-Completed Step 1-20 outputs are trusted. Read archives, old Step detail, logs,
-generated packets, raw data, caches, charts, or runtime reports only for named
-conflict, regression, provenance, or release/freeze verification. Start from
-`docs/context/ARCHIVE_INDEX.md`.
+Completed Step 1-20 outputs are trusted by default. Do not read archives, old
+Step detail, validation logs, generated packets, raw data, caches, charts, or
+runtime reports unless a named conflict, regression, provenance question, or
+release/freeze verification requires it. Start such lookup from
+`docs/context/ARCHIVE_INDEX.md` and read the narrowest file needed.
+
+Default task context is:
+
+1. this file
+2. `docs/roadmap_status.md`
+3. triggered skill from `.agents/skills`
+4. affected subproject `AGENTS.md`
+5. one active packet
+6. one domain stub only when needed
+7. targeted files
 
 ## Generated Output Boundary
 
-Generated reports, runtime outputs, charts, caches, raw data, `.env`, and
-secrets are not default context or source-controlled unless promoted as small
-review fixtures.
+Generated reports, runtime outputs, chart images, caches, raw market data,
+`.env`, and secrets are not default context and are not source-controlled unless
+explicitly promoted as small review fixtures.
 
-## Step-End Status
+## Gate-End Status
 
 At the end of a Step or assigned gate, report exactly one of:
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quant Candidate ML Gate"
+  short_description: "Guard and validate the candidate-only probability route."
+  default_prompt: "Use the quant candidate ML gate workflow for this task."

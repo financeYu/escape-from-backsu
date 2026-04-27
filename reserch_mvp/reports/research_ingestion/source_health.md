@@ -1,36 +1,138 @@
 # Source Health
 
-## Scope
+- run_id: `refresh_20260427`
+- API key 값은 redaction 대상이며 이 보고서에 노출되면 안 됩니다.
+- rate-limit / 403 / 429 이벤트는 보수적 retry 또는 수동 검토가 필요합니다.
 
-이번 보완 작업에서는 research ingestion 운영 최적화 검증을 위해 opt-in live smoke test를 실행했다.
-
-실행 명령:
-
-```powershell
-$env:RUN_LIVE_RESEARCH_API_TESTS='1'; python -m pytest -q -p no:cacheprovider reserch_mvp\tests\research_ingestion\live
-```
-
-## Reviewed Source Channels
-
-- local code/tests: yes
-- live arXiv API smoke: passed
-- live OpenAlex API smoke: passed
-- live Crossref API smoke: passed
-- live Semantic Scholar API smoke: skipped without `SEMANTIC_SCHOLAR_API_KEY`
-- Google Scholar direct requests: 0
-- PDF fulltext downloads: 0
-- paywalled publisher scraping: 0
-- local Scholar seed imports: 0
-
-## Result
-
-- live smoke validation: 3 passed, 1 skipped
-- Semantic Scholar public mode was previously observed as unavailable in this environment; live smoke now requires explicit `SEMANTIC_SCHOLAR_API_KEY`.
-- API keys were not printed or stored in reports.
-- No Google Scholar live request was performed.
-- No PDF fulltext download was performed.
-
-## Notes
-
-- source adapter rate-limit enforcement is covered by non-live unit tests.
-- source health counts should be regenerated only by an explicit live or offline CLI run.
+## arxiv
+- source: arxiv
+- adapter_version: research_ingestion.v1
+- query_set: None
+- status: ok
+- request_count: 7
+- rate_limit_wait_count: 4
+- rate_limit_wait_seconds: 12.762
+- request_latency_ms: 17307.243
+- parse_ms: 1.685
+- dedupe_ms: 0.0
+- classification_ms: 0.0
+- success_count: 7
+- failure_count: 0
+- http_status_summary: {'200': 7}
+- http_429_count: 0
+- parse_error_count: 0
+- schema_error_count: 0
+- dedup_ratio: 0.0
+- new_item_count: 4
+- candidate_route_counts: {'hybrid_split_required': 2, 'technical_score_architect': 2}
+- reject_reason_counts: {}
+- relevance_reject_reason_counts: {'collection_exclude_keyword': 1}
+- manual_review_required_count: 2
+- request_cache_hit_count: 0
+- request_cache_miss_count: 7
+- request_cache_stale_count: 0
+- unresolved_seed_count: 0
+- pdf_download_attempt_count: 0
+- rate_limit_observations: []
+- missing_api_key_note_ko: None
+- skipped_source_reason: None
+- child_runs: ['refresh_20260427_technical_breakout', 'refresh_20260427_technical_mean_reversion', 'refresh_20260427_technical_momentum']
+## crossref
+- source: crossref
+- adapter_version: research_ingestion.v1
+- query_set: None
+- status: ok
+- request_count: 3
+- rate_limit_wait_count: 0
+- rate_limit_wait_seconds: 0.0
+- request_latency_ms: 3130.302
+- parse_ms: 1.585
+- dedupe_ms: 0.0
+- classification_ms: 0.0
+- success_count: 3
+- failure_count: 0
+- http_status_summary: {'200': 3}
+- http_429_count: 0
+- parse_error_count: 0
+- schema_error_count: 0
+- dedup_ratio: 0.0
+- new_item_count: 7
+- candidate_route_counts: {'technical_score_architect': 7}
+- reject_reason_counts: {}
+- relevance_reject_reason_counts: {'collection_required_keyword_group_missing': 7, 'collection_exclude_keyword': 1}
+- manual_review_required_count: 7
+- request_cache_hit_count: 0
+- request_cache_miss_count: 3
+- request_cache_stale_count: 0
+- unresolved_seed_count: 0
+- pdf_download_attempt_count: 0
+- rate_limit_observations: []
+- missing_api_key_note_ko: CROSSREF_MAILTO가 없어 기본 User-Agent로 실행합니다. 가능하면 polite email을 설정하세요.
+- skipped_source_reason: None
+- child_runs: ['refresh_20260427_technical_breakout', 'refresh_20260427_technical_mean_reversion', 'refresh_20260427_technical_momentum']
+## semantic_scholar
+- source: semantic_scholar
+- adapter_version: research_ingestion.v1
+- query_set: None
+- status: failed
+- request_count: 6
+- rate_limit_wait_count: 5
+- rate_limit_wait_seconds: 4.929
+- request_latency_ms: 50801.89
+- parse_ms: 0.0
+- dedupe_ms: 0.0
+- classification_ms: 0.0
+- success_count: 0
+- failure_count: 6
+- http_status_summary: {'429': 6}
+- http_429_count: 6
+- parse_error_count: 0
+- schema_error_count: 0
+- dedup_ratio: None
+- new_item_count: 0
+- candidate_route_counts: {}
+- reject_reason_counts: {}
+- relevance_reject_reason_counts: {}
+- manual_review_required_count: 0
+- request_cache_hit_count: 0
+- request_cache_miss_count: 6
+- request_cache_stale_count: 0
+- unresolved_seed_count: 0
+- pdf_download_attempt_count: 0
+- rate_limit_observations: ['HTTP 429 observed for technical_momentum:semantic_scholar:0:page1', 'HTTP 429 observed for technical_momentum:semantic_scholar:1:page1', 'HTTP 429 observed for technical_mean_reversion:semantic_scholar:0:page1', 'HTTP 429 observed for technical_mean_reversion:semantic_scholar:1:page1', 'HTTP 429 observed for technical_breakout:semantic_scholar:0:page1', 'HTTP 429 observed for technical_breakout:semantic_scholar:1:page1']
+- missing_api_key_note_ko: SEMANTIC_SCHOLAR_API_KEY가 없어 public mode로 실행합니다.
+- skipped_source_reason: None
+- child_runs: ['refresh_20260427_technical_breakout', 'refresh_20260427_technical_mean_reversion', 'refresh_20260427_technical_momentum']
+- last_raw_snapshot_ref: C:\Users\jjaew\Project\master_mvp\reserch_mvp\data\research\raw\semantic_scholar\refresh_20260427_technical_breakout\65ab993d12c5c2cc.json
+## periodic_refresh_pipeline
+- source: periodic_refresh_pipeline
+- adapter_version: research_ingestion.v1
+- query_set: None
+- status: ok
+- request_count: 0
+- rate_limit_wait_count: 0
+- rate_limit_wait_seconds: 17.691
+- request_latency_ms: 71239.435
+- parse_ms: 3.27
+- dedupe_ms: 0.633
+- classification_ms: 46.092
+- success_count: 0
+- failure_count: 0
+- http_status_summary: {}
+- http_429_count: 0
+- parse_error_count: 0
+- schema_error_count: 0
+- dedup_ratio: None
+- new_item_count: 0
+- candidate_route_counts: {}
+- reject_reason_counts: {}
+- relevance_reject_reason_counts: {'collection_exclude_keyword': 2, 'collection_required_keyword_group_missing': 7}
+- manual_review_required_count: 0
+- request_cache_hit_count: 0
+- request_cache_miss_count: 0
+- request_cache_stale_count: 0
+- unresolved_seed_count: 0
+- pdf_download_attempt_count: 0
+- rate_limit_observations: []
+- missing_api_key_note_ko: None
+- skipped_source_reason: None

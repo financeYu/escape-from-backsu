@@ -1,12 +1,12 @@
 # Scholar Discovery Report
 
-## Scope
+- run_id: `refresh_20260427`
+- Google Scholar는 discovery-only입니다.
+- 로컬 파일 입력만 처리하며 scholar.google.com live request는 금지됩니다.
+- Scholar snippet은 EvidenceCard evidence_snippets_short에 사용하지 않습니다.
 
-이번 보완 작업에서는 Google Scholar discovery import를 실행하지 않았다.
+## status counts
+- 없음
 
-Google Scholar는 discovery-only이며, scholar.google.com live request는 금지된다. 이번 작업에서도 direct request, scraping, browser automation, PDF download를 수행하지 않았다.
-
-## Status Counts
-
-- 새 Scholar seed: 없음
-- unresolved seeds: 없음
+## unresolved seeds
+- 없음

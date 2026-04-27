@@ -17,6 +17,7 @@ DEFAULT_CONFIG_PATH = Path("Quant_mvp/config/context_snapshot.toml")
 class ContextConfig:
     project_root: Path
     output_path: Path
+    output_paths: tuple[Path, ...]
     obsolete_local_paths: tuple[Path, ...]
     max_chars: int
     project_label: str
@@ -27,6 +28,7 @@ class ContextConfig:
 @dataclass(frozen=True)
 class ExportResult:
     output_path: Path
+    output_paths: tuple[Path, ...]
     removed_local_paths: tuple[Path, ...]
     char_count: int
 
@@ -35,9 +37,17 @@ def load_config(project_root: Path, config_path: Path) -> ContextConfig:
     resolved_root = project_root.resolve()
     raw = tomllib.loads((resolved_root / config_path).read_text(encoding="utf-8"))
     context = raw["context"]
+    output_path = _root_path(resolved_root, context["output_path"])
+    output_paths = tuple(
+        _root_path(resolved_root, path)
+        for path in context.get("output_paths", [context["output_path"]])
+    )
+    if output_path not in output_paths:
+        output_paths = (output_path, *output_paths)
     return ContextConfig(
         project_root=resolved_root,
-        output_path=_root_path(resolved_root, context["output_path"]),
+        output_path=output_path,
+        output_paths=tuple(dict.fromkeys(output_paths)),
         obsolete_local_paths=tuple(_root_path(resolved_root, path) for path in context.get("obsolete_local_paths", [])),
         max_chars=int(context.get("max_chars", 14000)),
         project_label=str(context["project_label"]),
@@ -48,8 +58,9 @@ def load_config(project_root: Path, config_path: Path) -> ContextConfig:
 
 def refresh_context(config: ContextConfig) -> ExportResult:
     text = build_context(config)
-    config.output_path.parent.mkdir(parents=True, exist_ok=True)
-    config.output_path.write_text(text, encoding="utf-8", newline="\n")
+    for output_path in config.output_paths:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(text, encoding="utf-8", newline="\n")
 
     removed: list[Path] = []
     if config.local_latest_only:
@@ -58,7 +69,12 @@ def refresh_context(config: ContextConfig) -> ExportResult:
                 obsolete_path.unlink()
                 removed.append(obsolete_path)
 
-    return ExportResult(output_path=config.output_path, removed_local_paths=tuple(removed), char_count=len(text))
+    return ExportResult(
+        output_path=config.output_path,
+        output_paths=config.output_paths,
+        removed_local_paths=tuple(removed),
+        char_count=len(text),
+    )
 
 
 def build_context(config: ContextConfig) -> str:
@@ -126,15 +142,22 @@ def build_context(config: ContextConfig) -> str:
         "- Refresh only when the user explicitly requests this ChatGPT reference update.",
         "- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.",
         "",
+        "## Current v0.1n Work",
+        "",
+        "- `v0.1n` is the experimental candidate line for future `v0.2`; it does not modify MVP v0.1 behavior.",
+        "- Current candidate semantic: `prob_up_1d_candidate` means calibrated probability for `adjusted_close[t+1] > adjusted_close[t]`.",
+        "- Stage A is approved as doc-contract only: `APPROVE_STAGE_A_DOC_CONTRACT_ONLY`; runtime approval is false and overall implementation approval remains `HOLD`.",
+        "- Stage A docs: `docs/extension/v0_1n_implementation_approval_packet.md`, `docs/extension/v0_1n_strategy_composition_v0_2_plan.md`, `Quant_mvp/docs/v0_1n_strategy_signal_schema.md`, `Quant_mvp/docs/v0_1n_strategy_registry_contract.md`, `Quant_mvp/docs/next_horizon_up_probability_score_design.md`.",
+        "- Future runtime work still needs a separate approved scope, branch/worktree, validation plan, review/audit gate, and cross-step conflict checkpoint.",
+        "",
         "## Route-Only References",
         "",
         "- Root compact hard stops: `docs/root_hard_stops.md`.",
         "- Current roadmap status: `docs/roadmap_status.md`.",
         "- MVP baseline: `docs/context/MVP_V0_1_BASELINE.md`.",
         "- MVP contracts: `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`.",
+        "- Extension registry: `docs/context/EXTENSION_REGISTRY.toml`.",
         "- Quant agent scope: `Quant_mvp/AGENTS.md`.",
-        "- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).",
-        "- Family map: `Quant_mvp/docs/family_map.md` (on-demand only; not embedded).",
         "- Archive lookup: `docs/context/ARCHIVE_INDEX.md`.",
         "",
     ]
@@ -167,6 +190,7 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(
             {
                 "output_path": str(result.output_path),
+                "output_paths": [str(path) for path in result.output_paths],
                 "removed_local_paths": [str(path) for path in result.removed_local_paths],
                 "char_count": result.char_count,
                 "mode": "local_only_no_paid_upload",

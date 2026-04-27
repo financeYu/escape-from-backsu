@@ -1,7 +1,11 @@
 [context]
 project_label = "current_quant_project"
 context_key = "quant_project_current_context"
-output_path = "quant_project_reference_for_chatgpt_project_current.md"
+output_path = "docs/context/gpt/quant_project_reference_for_chatgpt_project_current.md"
+output_paths = [
+  "docs/context/gpt/quant_project_reference_for_chatgpt_project_current.md",
+  "docs/context/gpt/gpt_context_quant.md",
+]
 obsolete_local_paths = [
   "quant_project_reference_for_chatgpt_project_previous.md",
 ]

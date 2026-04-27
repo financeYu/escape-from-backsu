@@ -39,7 +39,7 @@ valuation support.
 
 | upstream idea | Step 5 routing | reason |
 | --- | --- | --- |
-| `next_horizon_up_probability_score` | post-MVP candidate-only design in `Quant_mvp/docs/next_horizon_up_probability_score_design.md` | parameterized `N거래일 뒤 상승확률 후보`; default `horizon_trading_days = 1`, while non-default horizons remain disabled until later review because longer overlapping labels require additional leakage guardrails |
+| `prob_up_1d_candidate` / `next_horizon_up_probability_score` | post-MVP v0.1n candidate-only design in `Quant_mvp/docs/next_horizon_up_probability_score_design.md` and `docs/extension/v0_1n_strategy_composition_v0_2_plan.md` | future v0.2 semantic candidate for calibrated 1-day-ahead adjusted-close up probability; strategy-composition design only, not MVP v0.1 ranking, backtest, or GUI activation |
 | `medium_term_relative_strength` | folded into trend/breakout review queue | Korea evidence is mixed and overlap with breakout, 52-week high, and trend return is high |
 | `moving_average_trend_structure` | folded into `efficiency_ratio_trend` or later trend review | high overlap with breakout and relative strength |
 | `price_near_52w_high` | folded into `donchian_breakout_distance` as longer-window alternative | concept is useful but redundant in first MVP set |

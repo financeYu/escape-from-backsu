@@ -56,3 +56,31 @@ forbidden_during_mvp_v0_1 = [
   "backtest feedback into scoring or ranking",
   "valuation/fundamental data in technical_composite_score or final_composite_score",
 ]
+
+[extension.v0_1n_strategy_composition]
+state = "planning_design_only"
+permission = "post-MVP candidate planning line only; does not authorize implementation, production scoring, ranking, backtest optimization, or v0.2 freeze"
+context = "docs/extension/v0_1n_strategy_composition_v0_2_plan.md"
+approval_packet = "docs/extension/v0_1n_implementation_approval_packet.md"
+candidate_line = "v0.1n"
+target_release_line = "v0.2"
+stage_a_status = "approved_doc_contract_only"
+stage_a_runtime_approval = false
+allowed = [
+  "candidate schemas",
+  "base strategy registry design",
+  "strategy composition feature table design",
+  "walk-forward validation design",
+  "calibration diagnostics design",
+  "evaluation-only backtest boundary design",
+  "implementation approval checklist preparation",
+]
+forbidden = [
+  "MVP v0.1 score, ranking, report, or backtest contract changes",
+  "production activation of prob_up_1d_candidate",
+  "KOSDAQ150, futures/options, overseas, or multi-universe activation",
+  "new market data sources",
+  "backtest feedback into score formula or model selection for the same period",
+  "opaque ML pipeline without inspectable base strategy inputs",
+  "trading recommendations, proven-alpha, expected-return, or guaranteed-superiority claims",
+]

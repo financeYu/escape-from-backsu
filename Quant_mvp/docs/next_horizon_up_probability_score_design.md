@@ -10,10 +10,16 @@ This document does not implement model training, create runtime ranking output,
 change `technical_composite_score`, change `final_composite_score`, activate
 backtest feedback, or add valuation/fundamental inputs.
 
-The repository includes evaluation-only helpers for this candidate in
-`src/features/up_probability.py`. Those helpers create the 1-trading-day default
-label and map an already calibrated probability input to a 0-100 candidate
-score. They do not train a model or activate ranking.
+Earlier evaluation-only helper work may exist in `src/features/up_probability.py`,
+but this document does not rely on, modify, or approve helper implementation.
+This planning note defines candidate semantics only; it does not train a model
+or activate ranking.
+
+The post-MVP planning line for the future v0.2 semantic is `v0.1n`. The root
+extension design lives in
+`docs/extension/v0_1n_strategy_composition_v0_2_plan.md`. Until a future v0.2
+freeze gate passes, this score family remains `v0.1n_candidate` and must not
+replace MVP v0.1 scoring, ranking, reports, or backtests.
 
 ## Candidate Score
 
@@ -22,20 +28,22 @@ This design uses one parameterized score instead of hardcoded 1-day, 1-week, or
 
 | field | value |
 | --- | --- |
-| `score_name` | `next_horizon_up_probability_score` |
-| `display_column` | `next_horizon_up_probability_score` |
+| `score_name` | `prob_up_1d_candidate` for the first v0.1n candidate semantic |
+| `display_column` | `prob_up_1d_candidate_score_0_100` |
 | `horizon_parameter` | `horizon_trading_days` |
 | `default_horizon_trading_days` | `1` |
 | `user_facing_label_template` | `{horizon_trading_days}거래일 뒤 상승확률 후보` |
 | `default_user_facing_label` | `1거래일 뒤 상승확률 후보` |
-| `label_template` | `close[t + horizon_trading_days] / close[t] - 1 > 0` |
-| `usage_status` | `primary_candidate_for_default_1_trading_day_horizon` |
+| `label_template` | `adjusted_close[t+1] > adjusted_close[t]` for the first 1-day candidate |
+| `usage_status` | `v0.1n_candidate_for_future_v0.2_review` |
 
 The score family is:
 
 - `score_family`: `directional_probability`
 - `score_branch`: `technical`
 - `status`: `candidate_only`
+- `candidate_line`: `v0.1n`
+- `target_release_line`: `v0.2`
 - `runtime_enabled`: `false`
 - `ranking_integration`: `not_allowed_without_later_adoption_step`
 
@@ -54,17 +62,21 @@ Initial operating selection:
 ## Prediction Timing
 
 For an as-of date `t`, the prediction must be made after the market close of
-`t` using only data available at or before `close[t]`.
+`t` using only data available at or before the adjusted close for `t`.
 
 Allowed input cutoff:
 
 ```text
-input_cutoff = close_t
+feature_cutoff_time <= decision_time
+decision_time <= execution_time
+execution_time < label_availability_time
+label_time <= label_availability_time
 ```
 
 Forbidden inputs:
 
 ```text
+adjusted_close[t+1]
 close[t+h]
 high[t+h]
 low[t+h]
@@ -81,15 +93,14 @@ valuation_fields
 
 ## Label Definitions
 
-For each stock and date:
+For the first v0.1n candidate, each stock/date label is:
 
 ```text
-forward_return_h = close[t+h] / close[t] - 1
-target_h = 1 if forward_return_h > 0 else 0
+label_up_1d_candidate = adjusted_close[t+1] > adjusted_close[t]
 ```
 
-where `h = horizon_trading_days`. The default first-pass value is `h = 1`.
-Calendar days must not be used as a substitute for trading-day horizons.
+The default first-pass value remains `horizon_trading_days = 1`. Calendar days
+must not be used as a substitute for trading-day horizons.
 
 Rows without a complete future label are excluded from supervised training and
 evaluation for that horizon. They must not be filled with `0`, neutral values,
@@ -97,11 +108,11 @@ or inferred outcomes.
 
 ## Score Scale
 
-The model output should be a calibrated probability. For GUI display, use a
-0-100 scale:
+The candidate meta-model output should be a calibrated probability. For display,
+use a separate 0-100 transform:
 
 ```text
-display_score_h = calibrated_probability_h * 100
+prob_up_1d_candidate_score_0_100 = prob_up_1d_candidate * 100
 ```
 
 Interpretation:
@@ -178,23 +189,50 @@ Probability calibration is required before displaying values as probabilities.
 Uncalibrated model scores must use `model_score`, not `probability`, in their
 column names.
 
-## Output Columns
+## Candidate Tables
 
-Candidate output tables should use explicit horizon-specific names:
+Prediction/display tables must be separate from label and evaluation tables.
+The prediction/display table should use explicit horizon-specific names:
 
 ```text
+candidate_line
+candidate_status
+production_enabled
+ranking_enabled
+run_id
+registry_version
+config_version
+input_data_snapshot_id
 ticker
-date
-next_horizon_up_probability_score
-next_horizon_probability_bucket
+decision_date
+decision_time
+execution_time
+feature_cutoff_time
+prediction_time
+prob_up_1d_candidate
+prob_up_1d_candidate_score_0_100
 horizon_trading_days
-horizon_usage_status
-probability_model_version
-prediction_asof
-input_cutoff
-label_horizon_set
-candidate_validity_flag
+model_version
+calibration_method
+feature_table_version
+prediction_validity_flag
 evaluation_only_notice
+```
+
+The label/evaluation table may contain realized future fields, but it must not
+be joined into model inputs before `label_availability_time`:
+
+```text
+candidate_line
+run_id
+ticker
+decision_date
+label_time
+label_availability_time
+adjusted_close_t
+adjusted_close_t_plus_1
+label_up_1d_candidate
+label_validity_flag
 ```
 
 Suggested notice:
@@ -212,8 +250,8 @@ These candidates must remain separate from the MVP v0.1 ranking contract.
 - Do not use these scores for production ranking without a later adoption step.
 - Do not compare them as valuation signals.
 - Do not feed backtest diagnostics into the score definition.
-- Use `next_horizon_up_probability_score` with `horizon_trading_days = 1` as the
-  only first-pass main candidate.
+- Use `prob_up_1d_candidate` with `horizon_trading_days = 1` as the only
+  first-pass v0.1n candidate semantic.
 - Keep non-default horizons disabled until a later review step explicitly
   enables them.
 
@@ -234,8 +272,14 @@ current `점수` column.
 
 ## Required Next Steps Before Implementation
 
-1. Add calibrated-probability model training outside the ranking path.
-2. Run walk-forward validation for the default 1-trading-day horizon first.
-3. Review calibration, class balance, and leakage diagnostics.
-4. Submit technical review and adoption review before any ranking or GUI
+1. Approve a separate post-MVP implementation scope before adding helpers,
+   configs, model training, tests, reports, GUI display, or backtest code.
+2. Freeze the v0.1n base strategy registry, composition feature table, label
+   table, prediction table, lineage fields, and timing contract.
+3. Add calibrated-probability model training outside the ranking path only
+   after the implementation scope is approved.
+4. Run walk-forward validation for the default 1-trading-day horizon first.
+5. Review calibration, class balance, leakage diagnostics, and simulation
+   contract boundaries.
+6. Submit technical review and adoption review before any ranking or GUI
    integration.

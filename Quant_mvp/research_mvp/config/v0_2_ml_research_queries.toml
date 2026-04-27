@@ -1,0 +1,166 @@
+# v0.2 candidate-only ML research query pack.
+# This file is a research/reference config only. It does not implement API clients,
+# paper downloading, model training, scoring, ranking, or report behavior.
+
+[metadata]
+contract_version = "v0_2_ml_research_queries.v1"
+owner = "Quant_mvp"
+upstream_research_owner = "Quant_mvp/research_mvp"
+route = "prob_up_1d_candidate"
+status = "reference_query_pack_only"
+
+[guardrails]
+candidate_only = true
+live_collection_implemented = false
+pdf_downloader_implemented = false
+model_training_implemented = false
+production_rank_activation = false
+replace_technical_composite_score = false
+replace_final_composite_score = false
+backtest_feedback_to_training = false
+backtest_metric_as_feature = false
+allow_trading_language = false
+
+[source_names]
+preferred = [
+  "arxiv",
+  "ssrn",
+  "nber",
+  "openalex",
+  "crossref",
+  "semantic_scholar",
+  "official_docs",
+  "academic_publisher",
+]
+background_only = ["low_quality_trading_blog"]
+
+[evidence_levels]
+allowed = [
+  "metadata_only",
+  "abstract_reviewed",
+  "license_verified_pdf_collected",
+  "full_text_reviewed",
+  "project_validated",
+]
+implementation_gate_minimum = ["full_text_reviewed", "project_validated"]
+metadata_only_use = "discovery_only"
+
+[implementation_readiness]
+allowed = [
+  "discovery_only",
+  "contract_reference_candidate",
+  "implementation_reference_candidate",
+  "requires_license_review",
+  "requires_full_text_review",
+  "requires_project_validation",
+]
+
+[allowed_use_values]
+allowed = [
+  "reference_only",
+  "validation_method_candidate",
+  "label_design_reference",
+  "calibration_reference",
+  "model_candidate_reference",
+  "architecture_reference",
+]
+
+[forbidden_use_values]
+forbidden = [
+  "direct_feature_input",
+  "production_ranking_activation",
+  "final_composite_score_change",
+  "backtest_metric_as_feature",
+  "backtest_feedback_to_training",
+  "trading_claim",
+  "expected_return_claim",
+  "buy_sell_hold_recommendation",
+]
+
+[[query_sets]]
+id = "labeling_no_lookahead"
+taxonomy_tags = ["labeling_no_lookahead"]
+allowed_use = ["label_design_reference", "reference_only"]
+source_names = ["arxiv", "ssrn", "openalex", "crossref", "semantic_scholar", "academic_publisher"]
+terms = [
+  "fixed horizon label financial machine learning",
+  "triple barrier method financial machine learning",
+  "meta labeling financial machine learning",
+  "label availability time no lookahead financial time series",
+  "decision time execution time label time leakage financial machine learning",
+]
+
+[[query_sets]]
+id = "time_series_validation"
+taxonomy_tags = ["time_series_validation", "labeling_no_lookahead"]
+allowed_use = ["validation_method_candidate", "reference_only"]
+source_names = ["arxiv", "ssrn", "openalex", "crossref", "semantic_scholar", "official_docs"]
+terms = [
+  "walk forward validation financial time series machine learning",
+  "expanding window validation financial time series",
+  "rolling window validation financial machine learning",
+  "purged k-fold cross validation embargo financial machine learning",
+  "time series split gap validation",
+]
+
+[[query_sets]]
+id = "backtest_overfitting_prevention"
+taxonomy_tags = ["backtest_overfitting_prevention"]
+allowed_use = ["validation_method_candidate", "reference_only"]
+source_names = ["ssrn", "nber", "openalex", "crossref", "semantic_scholar", "academic_publisher"]
+terms = [
+  "probability of backtest overfitting CSCV",
+  "deflated Sharpe ratio multiple testing",
+  "reality check data snooping trading rules",
+  "model selection bias financial machine learning",
+  "strategy selection bias financial backtest",
+]
+
+[[query_sets]]
+id = "probability_calibration"
+taxonomy_tags = ["probability_calibration"]
+allowed_use = ["calibration_reference", "reference_only"]
+source_names = ["arxiv", "openalex", "crossref", "semantic_scholar", "official_docs", "academic_publisher"]
+terms = [
+  "probability calibration Brier score classifier",
+  "log loss calibration curve classifier",
+  "sigmoid calibration isotonic calibration classifier",
+  "calibrated classifier cross validation",
+  "calibration of modern neural networks temperature scaling",
+]
+
+[[query_sets]]
+id = "model_candidates"
+taxonomy_tags = ["model_candidates"]
+allowed_use = ["model_candidate_reference", "reference_only"]
+source_names = ["arxiv", "openalex", "crossref", "semantic_scholar", "official_docs", "academic_publisher"]
+terms = [
+  "logistic regression probabilistic classifier baseline",
+  "random forest probability calibration financial tabular",
+  "extra trees classifier tabular probability",
+  "XGBoost scalable tree boosting system",
+  "LightGBM gradient boosting decision tree",
+]
+
+[[query_sets]]
+id = "cross_sectional_equity_ml"
+taxonomy_tags = ["cross_sectional_equity_ml", "model_candidates"]
+allowed_use = ["model_candidate_reference", "reference_only"]
+source_names = ["nber", "ssrn", "openalex", "crossref", "semantic_scholar", "academic_publisher"]
+terms = [
+  "empirical asset pricing machine learning cross sectional equity",
+  "cross sectional stock return prediction machine learning technical indicators",
+  "volatility liquidity momentum features cross sectional machine learning",
+  "equity return prediction machine learning tabular features",
+]
+
+[[query_sets]]
+id = "reference_architecture"
+taxonomy_tags = ["reference_architecture"]
+allowed_use = ["architecture_reference", "reference_only"]
+source_names = ["arxiv", "openalex", "crossref", "semantic_scholar", "official_docs"]
+terms = [
+  "Qlib AI-oriented quantitative investment platform",
+  "quant machine learning pipeline data handler dataset model recorder evaluator",
+  "financial machine learning workflow data processor dataset splitter recorder",
+]

@@ -45,6 +45,9 @@ metadata, Semantic Scholar metadata를 사용한다. scikit-learn, XGBoost,
 LightGBM, Microsoft Qlib 같은 official project documentation은
 implementation reference 후보로 사용할 수 있다.
 
+Reusable query strings and taxonomy mappings for this candidate-only route live
+in `Quant_mvp/research_mvp/config/v0_2_ml_research_queries.toml`.
+
 Google Scholar는 discovery-only seed channel이다. Scholar ranking,
 snippet, citation count는 evidence strength가 아니며 unresolved Scholar-only
 seed에서 EvidenceCard를 만들지 않는다.
@@ -82,7 +85,7 @@ PDF 원천 수집 금지는 폐기한다. 다만 PDF / full-text 수집은 라�
 - PDF collection은 local-only가 기본이다.
 - PDF는 root/master가 별도 artifact-storage task를 승인하지 않는 한 Git에
   commit하지 않는다.
-- PDF cache를 만들 경우 `reserch_mvp/data/research/fulltext/pdf_cache/`
+- PDF cache를 만들 경우 `Quant_mvp/research_mvp/data/research/fulltext/pdf_cache/`
   같은 local path를 쓰고 `.gitignore` 또는 동등한 exclusion을 먼저 확인한다.
 - PDF를 paid API 또는 외부 서비스에 업로드하지 않는다.
 - 수집한 PDF를 재배포하지 않는다.
@@ -110,6 +113,9 @@ Creative Commons BY-NC는 noncommercial use와 attribution requirement를
 이번 reference package 작성에서는 PDF를 수집하지 않았다. 중요한 문헌은 먼저
 `abstract_reviewed` 또는 `metadata_only`로 카드화하고, 라이선스 검증 후에만
 `license_verified_pdf_collected`로 올린다.
+
+Reference별 license/full-text 상태와 local risk burn-down은
+`docs/extension/v0_2_ml_reference_review_manifest.md`를 따른다.
 
 ## Research Taxonomy
 

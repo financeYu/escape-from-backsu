@@ -4,13 +4,20 @@
 
 ## 현재 로드맵 상태
 
-No active roadmap Step is in progress. Step 20 is complete, and the KOSPI200
-technical MVP v0.1 baseline is frozen.
+Post-MVP `v0.2 predictive probability score route` Step is open for the
+approved candidate-only implementation of `prob_up_1d_candidate` in a separate
+role branch/worktree. Step 20 is complete, and the KOSPI200 technical MVP v0.1
+baseline is frozen.
 
 - Current baseline: MVP v0.1 frozen KOSPI200 technical-only scanner baseline.
-- Current gate: future expansion or semantic changes need a separately approved
-  post-MVP version/Step, routed context packet, correct role branch/worktree,
-  and conflict checkpoint when required.
+- Current active Step: post-MVP `v0.2 predictive probability score route`.
+- Current gate: this Step authorizes only the scoped implementation of
+  `prob_up_1d_candidate` feature table, label-separated training/evaluation
+  pipeline, candidate probability output, and validation tests in the approved
+  role branch/worktree. It does not authorize production ranking activation,
+  trading recommendations, `final_composite_score` replacement, report behavior
+  changes, backtest metrics as model features, valuation/fundamental data, data
+  ingestion changes, or universe expansion.
 
 ## 컨텍스트 운영 상태
 
@@ -29,6 +36,8 @@ technical MVP v0.1 baseline is frozen.
 - Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리한다.
 - 모든 하위 에이전트는 파일 편집 전에 role branch/worktree를 만들거나 선택하고 루트 `WORKSPACE_MANIFEST.md`를 작성해야 한다.
 - `C:\Users\jjaew\Project\master_mvp`는 integration / verification / status-control 전용 workspace로 유지한다.
+- 현재 root/master status-control 범위는 post-MVP `v0.2 predictive probability`
+  승인 기록, 구현 branch/worktree 분리 확인, review/audit gate 관리다.
 - 이 운영 메모는 Step 상태를 변경하지 않는다.
 
 ## 전체 Step 판정
@@ -55,6 +64,7 @@ technical MVP v0.1 baseline is frozen.
 | Step 18 | COMPLETE |
 | Step 19 | COMPLETE |
 | Step 20 | COMPLETE / KOSPI200 MVP Completeness Hardening & Final Done Validation |
+| post-MVP v0.2 predictive probability score route | ACTIVE / candidate-only implementation approved in separate role branch/worktree |
 
 ## 현재 Baseline 핵심
 

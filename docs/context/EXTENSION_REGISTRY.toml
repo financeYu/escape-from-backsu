@@ -44,13 +44,20 @@ permission = "requires separately approved post-MVP step and point-in-time avail
 context = "docs/context/domain/valuation_context.md"
 
 [extension.scoring_v0_2]
-state = "not_implemented"
-permission = "requires separately approved post-MVP step, score contract, validation profile, and conflict checkpoint"
+state = "superseded_by_predictive_probability_route"
+permission = "superseded as primary v0.2 direction; old technical scores may be old_score_features only"
 context = "docs/context/domain/technical_scoring_context.md"
 approval_packet = "docs/extension/v0_2_score_revision_approval_packet.md"
 candidate_score_list = "docs/extension/v0_2_candidate_score_list.md"
+candidate_score_list_state = "frozen_technical_diagnostic_set"
+candidate_specification_summary_state = "frozen_score_architect_layer"
 score_specification_schema = "docs/extension/v0_2_score_specification_schema.md"
-goal = "score set or score semantics revision after approval"
+score_specification_schema_state = "approved_for_candidate_spec_authoring"
+raw_feature_lineage_contract = "docs/extension/v0_2_raw_feature_lineage_contract.md"
+raw_feature_lineage_contract_state = "frozen"
+goal = "old technical scores become candidate old_score_features for prob_up_1d_candidate"
+active_step = "post-MVP v0.2 predictive probability score route"
+active_step_scope = "candidate-only predictive probability implementation approved in separate role branch/worktree"
 forbidden_during_mvp_v0_1 = [
   "score formula changes",
   "normalization changes",
@@ -61,9 +68,35 @@ forbidden_during_mvp_v0_1 = [
   "valuation/fundamental data in technical_composite_score or final_composite_score",
 ]
 
+[extension.predictive_probability_v0_2]
+state = "active_candidate_implementation_step"
+permission = "post-MVP v0.2 predictive probability score route is approved for candidate-only prob_up_1d_candidate implementation in a separate role branch/worktree; production ranking, trading recommendations, final_composite_score replacement, valuation/fundamental data, and backtest metrics as model features remain forbidden"
+context = "docs/extension/v0_2_predictive_probability_route.md"
+label_contract = "docs/extension/v0_2_prob_up_1d_label_contract.md"
+old_score_feature_boundary = "docs/extension/v0_2_old_score_feature_boundary.md"
+probability_output_contract = "docs/extension/v0_2_probability_output_contract.md"
+model_input_handoff_contract = "docs/extension/v0_2_model_input_handoff_contract.md"
+diagnostic_output_schema = "docs/extension/v0_2_diagnostic_output_schema.md"
+generated_output_boundary = "docs/extension/v0_2_generated_output_boundary.md"
+validation_profile = "docs/extension/v0_2_predictive_validation_profile.md"
+config_ownership_contract = "docs/extension/v0_2_config_ownership_contract.md"
+review_audit_route = "docs/extension/v0_2_review_audit_route.md"
+rollback_deactivation_rule = "docs/extension/v0_2_rollback_deactivation_rule.md"
+candidate_output = "prob_up_1d_candidate"
+candidate_score = "prob_up_1d_score"
+candidate_label = "adjusted_close[t+1] > adjusted_close[t]"
+forbidden = [
+  "runtime model implementation outside the approved prob_up_1d_candidate candidate-only scope",
+  "production ranking activation",
+  "backtest result metrics as model input features",
+  "future labels as live scoring inputs",
+  "trading recommendation language",
+  "valuation/fundamental data in technical_composite_score or final_composite_score",
+]
+
 [extension.v0_1n_candidate_ml]
-state = "approval_prep_only"
-permission = "candidate-only experimental line for future v0.2; does not authorize implementation or production adoption"
+state = "superseded_by_predictive_probability_v0_2"
+permission = "folded into post-MVP v0.2 predictive probability score route as prob_up_1d_candidate; implementation is allowed only through the approved predictive_probability_v0_2 candidate scope and does not authorize production adoption"
 context = "docs/extension/v0_1n_implementation_approval_packet.md"
 candidate_output = "prob_up_1d_candidate"
 candidate_label = "adjusted_close[t+1] > adjusted_close[t]"

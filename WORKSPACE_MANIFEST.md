@@ -4,20 +4,21 @@ workspace_id: mvp_v0_1_freeze
 branch: main
 role: root-master-integration
 task_type: release_freeze_status_control
-active_step: MVP v0.1 frozen baseline / no active roadmap Step
+active_step: post-MVP v0.2 predictive probability score route / candidate-only implementation approved
 owner_or_worker: root master agent
 created_from_commit: f7c3734
 
 ## Purpose
 
-Record the MVP v0.1 freeze decision from the root/master integration workspace.
-This is release/status-control work only. It preserves the Step 20 KOSPI200
-technical-only baseline as frozen and routes any future semantic change to a
-separately approved post-MVP version/Step.
+Record the MVP v0.1 freeze decision and manage the post-MVP `v0.2 predictive
+probability score route` Step from the root/master integration workspace. This
+is release/status-control, approval-record, and review/audit coordination work
+only. It preserves the Step 20 KOSPI200 technical-only baseline as frozen and
+routes `prob_up_1d_candidate` implementation to a separate role branch/worktree.
 
-This task must not be treated as Step 21 entry. It does not activate new
-markets, valuation scoring, new data ingestion, trading recommendations, or
-backtest feedback.
+This task must not be treated as broad Step 21 entry. It does not activate new
+markets, production ranking, valuation scoring, new data ingestion, trading
+recommendations, `final_composite_score` replacement, or backtest feedback.
 
 ## Allowed Write Paths
 
@@ -96,9 +97,9 @@ backtest feedback.
 
 - KOSDAQ150, futures, options, NASDAQ/overseas, or multi-universe activation
 - new external market-data source ingestion
-- score formula, score weight, score adoption, normalization, ranking, report,
-  backtest, or valuation semantic changes beyond the reviewed support-branch
-  patches
+- runtime score formula, score weight, score adoption, normalization, ranking,
+  report, backtest, or valuation semantic implementation outside the approved
+  `prob_up_1d_candidate` candidate-only implementation scope
 - `technical_composite_score` or `final_composite_score` semantic changes
 - valuation/fundamental scoring activation or financial/fundamental data in
   technical/final composite scoring

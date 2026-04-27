@@ -18,19 +18,26 @@ evidence questions.
 ## Current Baseline
 
 - Step 20 is complete; KOSPI200 technical MVP v0.1 is frozen.
-- No roadmap Step is currently active.
-- Any post-freeze change to scoring, ranking, report, backtest, valuation,
-  ingestion, or universe behavior needs a separately versioned post-MVP Step,
-  routed packet, correct branch/worktree, and conflict checkpoint.
+- Post-MVP `v0.2 predictive probability score route` Step is active for the
+  approved candidate-only implementation of `prob_up_1d_candidate` in a
+  separate role branch/worktree.
+- The active Step authorizes only the scoped feature table, label-separated
+  training/evaluation pipeline, candidate probability output, and validation
+  tests. It does not authorize production ranking activation, report behavior
+  changes, trading recommendations, `final_composite_score` replacement,
+  backtest metrics as model features, valuation/fundamental scoring, data
+  ingestion changes, or universe expansion.
 
 ## Forbidden Scope Without Explicit Approval
 
 - KOSDAQ150, futures, options, Nasdaq/overseas, or multi-universe activation.
 - New market-data ingestion or live vendor assumptions.
-- Score formula, weight, adoption, normalization, ranking, report, backtest, or valuation semantic changes.
+- Runtime score formula, weight, adoption, normalization, ranking, report,
+  backtest, or valuation semantic changes outside the approved
+  `prob_up_1d_candidate` candidate-only implementation scope.
 - Financial/fundamental data in `technical_composite_score` or
   `final_composite_score`.
-- Backtest feedback into scoring/ranking.
+- Backtest feedback into scoring/ranking or model feature construction.
 - Trading recommendations, buy/sell/hold, proven-alpha, or expected-return wording.
 
 ## Archive Read Gate

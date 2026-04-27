@@ -10,6 +10,12 @@ This packet drafts the approval requirements for a future `v0.2` score revision
 line. It exists to decide whether a separately approved post-MVP implementation
 Step may be opened later.
 
+The intended `v0.2` product goal is to change the score set or score semantics
+after approval. This draft separates that goal from activation: score changes
+are the target of the future line, but no score change is approved or active
+until the required architecture, testing, selection, audit, and implementation
+gates pass.
+
 The frozen MVP v0.1 baseline remains unchanged:
 
 - KOSPI200-only.

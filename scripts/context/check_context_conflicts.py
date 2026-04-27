@@ -21,6 +21,7 @@ NEGATION_MARKERS = (
     "rejects",
     "must never",
     "must stay out",
+    "may have entered",
     "without",
     "금지",
     "허용하지",

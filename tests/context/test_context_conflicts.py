@@ -60,6 +60,19 @@ def test_conflict_checker_ignores_negated_guardrails(tmp_path: Path) -> None:
     assert findings == ()
 
 
+def test_conflict_checker_ignores_risk_condition_wording(tmp_path: Path) -> None:
+    context_dir = tmp_path / "docs/context"
+    context_dir.mkdir(parents=True)
+    (context_dir / "safe.md").write_text(
+        "- financial data may have entered `technical_composite_score` or `final_composite_score`",
+        encoding="utf-8",
+    )
+
+    findings = module.check_conflicts(tmp_path)
+
+    assert findings == ()
+
+
 def test_conflict_checker_allows_step20_complete_after_roadmap_closure(tmp_path: Path) -> None:
     context_dir = tmp_path / "docs/context"
     context_dir.mkdir(parents=True)

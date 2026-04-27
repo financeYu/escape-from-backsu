@@ -34,18 +34,31 @@ def test_smoke_suite_covers_context_and_mvp_reproducibility_checks() -> None:
     assert str(LOCAL_TEMP_ROOT / "smoke-manual" / "basetemp") in command
 
 
-def test_unittest_suite_does_not_need_pytest_basetemp() -> None:
+def test_chart_suite_covers_runtime_and_gui_compatibility() -> None:
     command = build_validation_command("chart", python_executable="python")
 
-    assert command == [
-        "python",
-        "-m",
-        "unittest",
-        "discover",
-        "-s",
-        "chart_mvp/tests",
-        "-v",
-    ]
+    assert command[:6] == ["python", "-m", "pytest", "-q", "-p", "no:cacheprovider"]
+    assert "chart_mvp/tests" in command
+    assert "tests/gui_mvp/test_chart_gui_compat.py" in command
+    assert "--basetemp" in command
+    assert str(LOCAL_TEMP_ROOT / "chart-manual" / "basetemp") in command
+
+
+def test_gui_suite_covers_chart_and_backtest_viewers() -> None:
+    command = build_validation_command("gui", python_executable="python")
+
+    assert "tests/gui_mvp" in command
+    assert "chart_mvp/tests/test_gui_financials.py" in command
+    assert str(LOCAL_TEMP_ROOT / "gui-manual" / "basetemp") in command
+
+
+def test_backtest_suite_covers_core_gui_and_pipeline_guardrails() -> None:
+    command = build_validation_command("backtest", python_executable="python")
+
+    assert "tests/backtest" in command
+    assert "tests/gui_mvp/test_backtest_viewer.py" in command
+    assert "tests/validation/test_step19_pipeline_guardrails.py" in command
+    assert str(LOCAL_TEMP_ROOT / "backtest-manual" / "basetemp") in command
 
 
 def test_validation_env_routes_global_temp_to_workspace() -> None:

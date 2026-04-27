@@ -32,12 +32,27 @@ validation_profiles:
     applies_to:
       - src/** runtime logic
       - chart_mvp/src/** runtime logic
+      - gui_mvp/** GUI runtime helpers that call chart, scanner, or backtest APIs
       - reusable validators, scanners, scoring, ranking, or report builders
     validation:
       - affected unit tests for changed code paths
       - focused integration check when ranking, reports, or pipeline outputs can change
+      - GUI compatibility checks when chart or backtest behavior is displayed through gui_mvp
       - forbidden-scope search for new universe, valuation, or backtest-feedback activation
       - git diff --check
+
+  gui:
+    applies_to:
+      - gui_mvp/**
+      - tests/gui_mvp/**
+      - chart_mvp/app/run_gui.py compatibility wrapper
+      - chart_mvp runtime changes consumed by the chart GUI
+      - Quant_mvp/backtest_mvp changes consumed by the backtest GUI
+    validation:
+      - python scripts/run_local_validation.py gui
+      - confirm GUI display remains read-only over existing chart, scanner, and backtest APIs
+      - confirm chart runtime latest_top* outputs are not treated as canonical Step 20 ranking evidence
+      - confirm backtest viewer output remains display-only and does not feed upstream scoring or ranking
 
   data_ingestion:
     applies_to:
@@ -54,9 +69,10 @@ validation_profiles:
     applies_to:
       - Quant_mvp/backtest_mvp/**
       - src/backtest/** compatibility facade
+      - gui_mvp/backtest_viewer.py display-only consumer
       - Step 17 backtest guardrails and tests
     validation:
-      - focused backtest boundary tests
+      - python scripts/run_local_validation.py backtest
       - confirm backtest outputs remain evaluation-only
       - confirm no backtest output updates score, ranking, adoption, or optimization inputs
       - forbidden valuation/fundamental input-column check
@@ -117,9 +133,11 @@ impact_routes:
       - src/preprocess/
       - src/scanner/
       - src/validation/
+      - gui_mvp/
       - chart_mvp/src/stock_core/
       - chart_mvp/tests/
       - tests/data_validation/
+      - tests/gui_mvp/
       - tests/scanner/
       - tests/validation/
       - Quant_mvp/config/

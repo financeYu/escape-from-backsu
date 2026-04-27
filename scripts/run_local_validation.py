@@ -25,7 +25,20 @@ PYTEST_SUITES: dict[str, tuple[str, ...]] = {
         "tests/scanner/test_step20_ranking_regression.py",
         "tests/validation/test_step20_mvp_scope_guardrails.py",
     ),
+    "chart": (
+        "chart_mvp/tests",
+        "tests/gui_mvp/test_chart_gui_compat.py",
+    ),
     "context": ("tests/context",),
+    "gui": (
+        "tests/gui_mvp",
+        "chart_mvp/tests/test_gui_financials.py",
+    ),
+    "backtest": (
+        "tests/backtest",
+        "tests/gui_mvp/test_backtest_viewer.py",
+        "tests/validation/test_step19_pipeline_guardrails.py",
+    ),
     "reports-backtest": ("tests/reports", "tests/backtest"),
     "scanner-validation": ("tests/scanner", "tests/reports", "tests/validation"),
     "integration": ("tests/integration",),
@@ -33,7 +46,6 @@ PYTEST_SUITES: dict[str, tuple[str, ...]] = {
 }
 
 UNITTEST_SUITES: dict[str, tuple[str, ...]] = {
-    "chart": ("chart_mvp/tests",),
     "review-mvp": ("review_mvp/tests",),
 }
 

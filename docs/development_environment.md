@@ -51,14 +51,21 @@ repository-local temp root를 강제하는 검증 실행기를 사용한다.
 ```powershell
 python scripts/run_local_validation.py context
 python scripts/run_local_validation.py smoke
-python scripts/run_local_validation.py reports-backtest
 python scripts/run_local_validation.py chart
+python scripts/run_local_validation.py gui
+python scripts/run_local_validation.py backtest
+python scripts/run_local_validation.py reports-backtest
 ```
 
 이 실행기는 `.pytest_tmp/local_validation/` 아래에 `TMP`, `TEMP`,
 `PYTEST_DEBUG_TEMPROOT`, pytest `--basetemp`를 맞춰 global Temp 권한 문제를
 우회한다. 검증 의미를 바꾸지 않으며, Step 완료 판정은 여전히 해당 Step의
 gate 문서가 우선한다.
+
+`chart` 검증은 `chart_mvp/tests`와 chart GUI 호환 테스트를 함께 실행한다.
+`gui` 검증은 chart viewer와 backtest viewer 연결을 함께 확인한다.
+`backtest` 검증은 `Quant_mvp/backtest_mvp` core, GUI backtest viewer, Step 19
+pipeline guardrail 연결을 함께 확인한다.
 
 Step 종료나 master integration 맥락에서는 로드맵 문서의 현재 Step-end gate가 우선한다.
 

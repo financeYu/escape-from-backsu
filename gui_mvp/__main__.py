@@ -26,8 +26,6 @@ def main(argv: list[str] | None = None) -> int:
         from gui_mvp.chart_topn import main as chart_main
 
         return chart_main()
-    if target in {"backtest", "bt"}:
-        from gui_mvp.backtest_viewer import main as backtest_main
 
         return backtest_main()
 

@@ -46,13 +46,13 @@ or production score activation.
 - MVP v0.1 frozen baseline changes
 - `technical_composite_score` changes
 - `final_composite_score` changes
-- production ranking activation
+- production ranking behavior changes
 - report behavior changes
 - backtest feedback loops
 - valuation/fundamental activation
 - new market data ingestion
 - KOSDAQ150, futures/options, Nasdaq, or overseas universe activation
-- buy/sell/hold recommendations
+- trading direction recommendations
 - proven-alpha, profitability, superior-strategy, or expected-return claims
 - model training, inference, ranking generation, or runtime code
 

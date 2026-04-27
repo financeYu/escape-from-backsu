@@ -15,7 +15,7 @@ Clarifications:
 
 - This is a candidate-only ML ranking artifact.
 - It does not replace `final_composite_score`.
-- It does not activate production ranking.
+- It leaves production ranking behavior unchanged.
 - It does not change existing reports.
 - It does not create trading recommendations.
 - It preserves the frozen MVP v0.1 KOSPI200 technical-only baseline.
@@ -28,7 +28,7 @@ Clarifications:
 - allowed range: `0.0` to `1.0`
 - status: candidate-only
 - production status: not a production score
-- signal boundary: not a buy/sell/hold signal
+- signal boundary: not a trading direction signal
 - return boundary: not a return-forecast field or profitability claim
 
 ## Label Contract

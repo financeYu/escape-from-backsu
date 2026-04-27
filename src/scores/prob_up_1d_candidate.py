@@ -13,7 +13,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date, datetime
+import json
 import math
+from pathlib import Path
 from typing import Mapping
 
 import numpy as np
@@ -47,6 +49,12 @@ EXECUTION_TIME_COLUMN = "execution_time"
 LABEL_TIME_COLUMN = "label_time"
 LABEL_AVAILABILITY_TIME_COLUMN = "label_availability_time"
 CANDIDATE_SIDECAR_RANK_COLUMN = "prob_up_1d_candidate_sidecar_rank"
+FEATURE_SET_VERSION_COLUMN = "feature_set_version"
+LABEL_CONTRACT_VERSION_COLUMN = "label_contract_version"
+DEFAULT_FEATURE_SET_VERSION = "v0_2_candidate_ml_score"
+DEFAULT_LABEL_CONTRACT_VERSION = "adjusted_close_up_1d_v0_2"
+DEFAULT_SIDECAR_FILENAME_TEMPLATE = "prob_up_1d_candidate_candidate_only_sidecar_{as_of_date}.csv"
+DEFAULT_SIDECAR_MANIFEST_TEMPLATE = "prob_up_1d_candidate_candidate_only_sidecar_{as_of_date}.manifest.json"
 
 DEFAULT_OLD_SCORE_FEATURE_COLUMNS = ALL_STEP9_RAW_SCORE_COLUMNS
 
@@ -100,6 +108,11 @@ class ProbUp1DConfig:
     learning_rate: float = 0.1
     l2: float = 1e-3
     tolerance: float = 1e-8
+    feature_set_version: str = DEFAULT_FEATURE_SET_VERSION
+    label_contract_version: str = DEFAULT_LABEL_CONTRACT_VERSION
+    sidecar_output_root: str | Path | None = None
+    sidecar_filename_template: str = DEFAULT_SIDECAR_FILENAME_TEMPLATE
+    sidecar_manifest_template: str = DEFAULT_SIDECAR_MANIFEST_TEMPLATE
 
 
 @dataclass(frozen=True)
@@ -129,11 +142,20 @@ class ProbUp1DTrainingResult:
 
 
 @dataclass(frozen=True)
+class ProbUp1DSidecarExportResult:
+    sidecar_path: Path
+    manifest_path: Path
+    as_of_date: str
+    row_count: int
+
+
+@dataclass(frozen=True)
 class ProbUp1DPipelineResult:
     dataset: ProbUp1DDataset
     training_result: ProbUp1DTrainingResult
     candidate_output: pd.DataFrame
     candidate_sidecar_ranking: pd.DataFrame
+    sidecar_export: ProbUp1DSidecarExportResult | None = None
 
 
 def build_prob_up_1d_dataset(
@@ -223,6 +245,8 @@ def predict_prob_up_1d_candidate(
     *,
     sample_roles: Mapping[tuple[str, pd.Timestamp], str] | None = None,
     label_table: pd.DataFrame | None = None,
+    feature_set_version: str = DEFAULT_FEATURE_SET_VERSION,
+    label_contract_version: str = DEFAULT_LABEL_CONTRACT_VERSION,
 ) -> pd.DataFrame:
     """Emit candidate probability output without ranking or composite columns."""
 
@@ -254,6 +278,9 @@ def predict_prob_up_1d_candidate(
             role = sample_roles.get(key)
             if role is not None:
                 output.at[index, PROBABILITY_SAMPLE_ROLE_COLUMN] = role
+
+    output[FEATURE_SET_VERSION_COLUMN] = pd.Series(feature_set_version, index=output.index, dtype="string")
+    output[LABEL_CONTRACT_VERSION_COLUMN] = pd.Series(label_contract_version, index=output.index, dtype="string")
 
     assert_no_forbidden_output_columns(output, context="v0.2 probability candidate output")
     validate_v0_2_candidate_artifact_columns(
@@ -287,7 +314,7 @@ def build_prob_up_1d_candidate_sidecar_ranking(
     data[PROBABILITY_COLUMN] = _numeric_series(data[PROBABILITY_COLUMN], column=PROBABILITY_COLUMN)
     data = data.loc[data[PROBABILITY_COLUMN].notna()].copy()
     if data.empty:
-        sidecar = data.loc[:, list(IDENTITY_COLUMNS) + [PROBABILITY_COLUMN]].copy()
+        sidecar = data.copy()
         sidecar[CANDIDATE_SIDECAR_RANK_COLUMN] = pd.Series(dtype="Int64")
         return sidecar
 
@@ -300,6 +327,75 @@ def build_prob_up_1d_candidate_sidecar_ranking(
     ).reset_index(drop=True)
     sidecar[CANDIDATE_SIDECAR_RANK_COLUMN] = pd.Series(range(1, len(sidecar) + 1), dtype="Int64")
     return sidecar
+
+
+def export_prob_up_1d_candidate_sidecar(
+    sidecar: pd.DataFrame,
+    *,
+    output_root: str | Path,
+    as_of_date: date | datetime | pd.Timestamp | str | None = None,
+    filename_template: str = DEFAULT_SIDECAR_FILENAME_TEMPLATE,
+    manifest_template: str = DEFAULT_SIDECAR_MANIFEST_TEMPLATE,
+) -> ProbUp1DSidecarExportResult:
+    """Persist a candidate-only sidecar CSV and manifest without production outputs."""
+
+    required_columns = (
+        *IDENTITY_COLUMNS,
+        DECISION_TIME_COLUMN,
+        EXECUTION_TIME_COLUMN,
+        LABEL_TIME_COLUMN,
+        LABEL_AVAILABILITY_TIME_COLUMN,
+        PROBABILITY_COLUMN,
+        PROBABILITY_STATUS_COLUMN,
+        PROBABILITY_SAMPLE_ROLE_COLUMN,
+        FEATURE_SET_VERSION_COLUMN,
+        LABEL_CONTRACT_VERSION_COLUMN,
+        CANDIDATE_SIDECAR_RANK_COLUMN,
+    )
+    require_columns(sidecar, required_columns, context="v0.2 probability sidecar export")
+    assert_no_forbidden_output_columns(sidecar, context="v0.2 probability sidecar export")
+    validate_v0_2_candidate_artifact_columns(
+        sidecar.columns,
+        context="v0.2 probability sidecar export",
+    )
+
+    data = sidecar.copy()
+    data["date"] = pd.to_datetime(data["date"], errors="raise")
+    target_date = _resolve_sidecar_export_date(data, as_of_date=as_of_date)
+    if not data.empty:
+        mismatched = data["date"].dt.normalize().ne(target_date)
+        if mismatched.any():
+            raise ValueError("v0.2 probability sidecar export contains rows outside the requested as_of_date.")
+
+    output_dir = Path(output_root)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    date_token = target_date.strftime("%Y%m%d")
+    sidecar_path = output_dir / filename_template.format(as_of_date=date_token)
+    manifest_path = output_dir / manifest_template.format(as_of_date=date_token)
+    data.to_csv(sidecar_path, index=False)
+
+    manifest = {
+        "artifact_type": "sidecar_candidate_only",
+        "candidate_output": PROBABILITY_COLUMN,
+        "as_of_date": date_token,
+        "row_count": int(len(data)),
+        "schema": list(data.columns),
+        "feature_set_versions": _unique_string_values(data, FEATURE_SET_VERSION_COLUMN),
+        "label_contract_versions": _unique_string_values(data, LABEL_CONTRACT_VERSION_COLUMN),
+        "production_rank_activation": False,
+        "feeds_production_ranking": False,
+        "feeds_reports": False,
+        "feeds_composite_scores": False,
+        "replace_technical_composite_score": False,
+        "replace_final_composite_score": False,
+    }
+    manifest_path.write_text(json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8")
+    return ProbUp1DSidecarExportResult(
+        sidecar_path=sidecar_path,
+        manifest_path=manifest_path,
+        as_of_date=date_token,
+        row_count=int(len(data)),
+    )
 
 
 def run_prob_up_1d_candidate_pipeline(
@@ -333,16 +429,28 @@ def run_prob_up_1d_candidate_pipeline(
         training_result.model,
         sample_roles=sample_roles,
         label_table=dataset.label_table,
+        feature_set_version=active_config.feature_set_version,
+        label_contract_version=active_config.label_contract_version,
     )
     candidate_sidecar_ranking = build_prob_up_1d_candidate_sidecar_ranking(
         candidate_output,
         as_of_date=as_of_date,
     )
+    sidecar_export = None
+    if active_config.sidecar_output_root is not None:
+        sidecar_export = export_prob_up_1d_candidate_sidecar(
+            candidate_sidecar_ranking,
+            output_root=active_config.sidecar_output_root,
+            as_of_date=as_of_date,
+            filename_template=active_config.sidecar_filename_template,
+            manifest_template=active_config.sidecar_manifest_template,
+        )
     return ProbUp1DPipelineResult(
         dataset=dataset,
         training_result=training_result,
         candidate_output=candidate_output,
         candidate_sidecar_ranking=candidate_sidecar_ranking,
+        sidecar_export=sidecar_export,
     )
 
 
@@ -536,7 +644,7 @@ def _attach_candidate_timing_fields(
 ) -> pd.DataFrame:
     timed = output.copy()
     timed[DECISION_TIME_COLUMN] = pd.to_datetime(timed["date"], errors="raise")
-    timed[EXECUTION_TIME_COLUMN] = timed[DECISION_TIME_COLUMN]
+    timed[EXECUTION_TIME_COLUMN] = timed[DECISION_TIME_COLUMN] + pd.Timedelta(days=1)
     timed[LABEL_TIME_COLUMN] = pd.NaT
     timed[LABEL_AVAILABILITY_TIME_COLUMN] = pd.NaT
     if label_table is None:
@@ -616,6 +724,24 @@ def _assert_no_probability_leakage_columns(columns: pd.Index | tuple[str, ...] |
         raise ValueError(f"{context} contains label, future-return, or backtest/evaluation leakage columns: {', '.join(flagged)}")
 
 
+def _resolve_sidecar_export_date(
+    data: pd.DataFrame,
+    *,
+    as_of_date: date | datetime | pd.Timestamp | str | None,
+) -> pd.Timestamp:
+    if as_of_date is not None:
+        return pd.Timestamp(as_of_date).normalize()
+    if data.empty:
+        raise ValueError("v0.2 probability sidecar export requires as_of_date when the sidecar has no rows.")
+    return data["date"].dt.normalize().max()
+
+
+def _unique_string_values(data: pd.DataFrame, column: str) -> list[str]:
+    if column not in data.columns or data.empty:
+        return []
+    return sorted(str(value) for value in data[column].dropna().unique())
+
+
 def _validate_training_config(config: ProbUp1DConfig) -> None:
     if config.min_train_rows <= 0 or config.min_eval_rows <= 0:
         raise ValueError("v0.2 probability train/evaluation minimum rows must be positive.")
@@ -649,14 +775,20 @@ def _assert_no_future_dates(
 __all__ = (
     "CANDIDATE_SIDECAR_RANK_COLUMN",
     "DECISION_TIME_COLUMN",
+    "DEFAULT_FEATURE_SET_VERSION",
+    "DEFAULT_LABEL_CONTRACT_VERSION",
     "DEFAULT_OLD_SCORE_FEATURE_COLUMNS",
     "DEFAULT_PRICE_COLUMN",
+    "DEFAULT_SIDECAR_FILENAME_TEMPLATE",
+    "DEFAULT_SIDECAR_MANIFEST_TEMPLATE",
     "EXECUTION_TIME_COLUMN",
+    "FEATURE_SET_VERSION_COLUMN",
     "FEATURE_STATUS_COLUMN",
     "FEATURE_VALID_COUNT_COLUMN",
     "LABEL_AVAILABLE_COLUMN",
     "LABEL_AVAILABILITY_TIME_COLUMN",
     "LABEL_COLUMN",
+    "LABEL_CONTRACT_VERSION_COLUMN",
     "LABEL_TIME_COLUMN",
     "PROBABILITY_COLUMN",
     "PROBABILITY_SAMPLE_ROLE_COLUMN",
@@ -665,9 +797,11 @@ __all__ = (
     "ProbUp1DDataset",
     "ProbUp1DModel",
     "ProbUp1DPipelineResult",
+    "ProbUp1DSidecarExportResult",
     "ProbUp1DTrainingResult",
     "build_prob_up_1d_candidate_sidecar_ranking",
     "build_prob_up_1d_dataset",
+    "export_prob_up_1d_candidate_sidecar",
     "fit_prob_up_1d_candidate_model",
     "predict_prob_up_1d_candidate",
     "run_prob_up_1d_candidate_pipeline",

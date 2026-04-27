@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -15,10 +16,12 @@ from src.scores.prob_up_1d_candidate import (  # noqa: E402
     CANDIDATE_SIDECAR_RANK_COLUMN,
     DECISION_TIME_COLUMN,
     EXECUTION_TIME_COLUMN,
+    FEATURE_SET_VERSION_COLUMN,
     FEATURE_STATUS_COLUMN,
     LABEL_AVAILABILITY_TIME_COLUMN,
     LABEL_AVAILABLE_COLUMN,
     LABEL_COLUMN,
+    LABEL_CONTRACT_VERSION_COLUMN,
     LABEL_TIME_COLUMN,
     PROBABILITY_COLUMN,
     PROBABILITY_SAMPLE_ROLE_COLUMN,
@@ -156,9 +159,11 @@ def test_pipeline_outputs_candidate_probabilities_without_ranking_or_composites(
         output["ticker"].eq("005930") & output["date"].eq(pd.Timestamp("2026-01-06"))
     ].iloc[0]
     assert latest[DECISION_TIME_COLUMN] == pd.Timestamp("2026-01-06")
-    assert latest[EXECUTION_TIME_COLUMN] == pd.Timestamp("2026-01-06")
+    assert latest[EXECUTION_TIME_COLUMN] == pd.Timestamp("2026-01-07")
     assert pd.isna(latest[LABEL_TIME_COLUMN])
     assert pd.isna(latest[LABEL_AVAILABILITY_TIME_COLUMN])
+    assert latest[FEATURE_SET_VERSION_COLUMN] == "v0_2_candidate_ml_score"
+    assert latest[LABEL_CONTRACT_VERSION_COLUMN] == "adjusted_close_up_1d_v0_2"
 
     forbidden = {
         "rank",
@@ -189,6 +194,40 @@ def test_as_of_date_latest_rows_are_candidate_inference_without_labels() -> None
     assert latest_rows[LABEL_AVAILABILITY_TIME_COLUMN].isna().all()
     assert result.candidate_sidecar_ranking["date"].eq(pd.Timestamp("2026-01-06")).all()
     assert CANDIDATE_SIDECAR_RANK_COLUMN in result.candidate_sidecar_ranking.columns
+
+
+def test_pipeline_can_export_candidate_only_sidecar_and_manifest(tmp_path: Path) -> None:
+    config = ProbUp1DConfig(
+        feature_columns=FEATURE_COLUMNS,
+        min_train_rows=6,
+        min_eval_rows=2,
+        eval_fraction=0.30,
+        max_iter=300,
+        learning_rate=0.15,
+        sidecar_output_root=tmp_path,
+    )
+
+    result = run_prob_up_1d_candidate_pipeline(
+        probability_frame(),
+        config=config,
+        as_of_date="2026-01-06",
+    )
+
+    assert result.sidecar_export is not None
+    assert result.sidecar_export.sidecar_path.exists()
+    assert result.sidecar_export.manifest_path.exists()
+    exported = pd.read_csv(result.sidecar_export.sidecar_path)
+    manifest = json.loads(result.sidecar_export.manifest_path.read_text(encoding="utf-8"))
+
+    assert exported["date"].eq("2026-01-06").all()
+    assert CANDIDATE_SIDECAR_RANK_COLUMN in exported.columns
+    assert "technical_composite_score" not in exported.columns
+    assert "final_composite_score" not in exported.columns
+    assert manifest["artifact_type"] == "sidecar_candidate_only"
+    assert manifest["candidate_output"] == PROBABILITY_COLUMN
+    assert manifest["production_rank_activation"] is False
+    assert manifest["feeds_composite_scores"] is False
+    assert manifest["row_count"] == len(exported)
 
 
 def test_candidate_sidecar_ranking_orders_probability_then_ticker_for_ties() -> None:

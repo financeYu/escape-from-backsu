@@ -432,10 +432,13 @@ Recommended MVP implementation order:
 2. OpenAlex
 3. Crossref
 4. Semantic Scholar
+5. NBER
 
 Google Scholar is not an approved direct metadata source. It may be used only as a discovery-only channel through allowed local inputs.
 
-For the first MVP implementation, fully implementing arXiv and OpenAlex is acceptable. Crossref and Semantic Scholar may be added as enrichment adapters later.
+For the first MVP implementation, fully implementing arXiv and OpenAlex is acceptable. Crossref, Semantic Scholar, and NBER may be added as enrichment or metadata adapters later.
+
+For explicitly noncommercial research use, licensed metadata/abstract candidates may be collected when the license clearly allows noncommercial use, such as CC BY-NC family licenses. This does not authorize PDF/fulltext download, paywalled access, score adoption, valuation review, backtest, or alpha claims.
 
 Every source adapter must have:
 
@@ -489,6 +492,7 @@ A Scholar-derived item must be resolved through at least one approved metadata s
 - OpenAlex
 - Crossref
 - Semantic Scholar
+- NBER
 
 Rules:
 
@@ -564,6 +568,20 @@ Rules:
 - Store raw JSON response snapshots.
 - Do not use Semantic Scholar as unrestricted fulltext source.
 - Do not treat citation count or influential citation count as proof of alpha.
+
+### NBER
+
+Use the official NBER working papers and chapters metadata files for metadata-only collection.
+
+Rules:
+
+- Use the public metadata dump formats only, such as TSV files under the NBER metadata endpoint.
+- NBER is not a fulltext source in MVP.
+- Do not download working paper PDFs or HTML fulltext by default.
+- Store raw combined metadata response snapshots.
+- Parse NBER paper ID, title, abstract, authors, issue date, DOI, JEL codes, programs, publication note, and canonical paper URL when available.
+- Do not infer NBER fulltext copyright/license from metadata availability.
+- Do not use NBER metadata as proof of alpha or implementation readiness.
 
 ---
 
@@ -1119,7 +1137,7 @@ Conservative expansion rules:
 
 Source expansion candidates are documented in root `docs/research_ingestion_expansion.md`.
 
-No new external source adapter is allowed until source policy, official access method, rate limits, metadata license, raw snapshot policy, redaction behavior, and dedup mapping are reviewed.
+No additional external source adapter beyond the approved configured list is allowed until source policy, official access method, rate limits, metadata license, raw snapshot policy, redaction behavior, and dedup mapping are reviewed.
 
 ---
 
@@ -1137,6 +1155,8 @@ The MVP implementation must include tests for:
 - OpenAlex retraction flag handling
 - Crossref DOI enrichment parsing
 - Semantic Scholar field parsing
+- NBER TSV metadata parsing
+- NBER rate limiter behavior
 - Scholar Alerts local email parsing
 - Scholar BibTeX manual export parsing
 - Scholar EndNote manual export parsing
@@ -1153,6 +1173,7 @@ The MVP implementation must include tests for:
 - normalized metadata mapping
 - DOI deduplication
 - arXiv ID deduplication
+- NBER ID deduplication
 - title/year/first-author fuzzy deduplication
 - classification branch assignment
 - downstream route assignment

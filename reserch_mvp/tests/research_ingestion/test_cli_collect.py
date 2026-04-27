@@ -52,6 +52,32 @@ def test_collect_dry_run_reports_guardrails(capsys, monkeypatch):
     assert "Google Scholar live request는 수행하지 않습니다." in payload["guardrails_ko"]
 
 
+def test_collect_dry_run_accepts_nber_source(capsys):
+    result = main(
+        [
+            "collect",
+            "--dry-run",
+            "--sources",
+            "nber",
+            "--query-set",
+            "technical_momentum",
+            "--run-id",
+            "nber_dry_test",
+            "--max-results",
+            "2",
+            "--page-size",
+            "1",
+            "--no-pdf",
+        ]
+    )
+
+    assert result == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["planned_sources"][0]["source"] == "nber"
+    assert payload["planned_sources"][0]["output_raw_dir"].replace("\\", "/").endswith("data/research/raw/nber/nber_dry_test")
+    assert "비상업 연구 목적에서는 CC BY-NC 계열 license도 metadata/abstract 후보 수집을 허용합니다." in payload["guardrails_ko"]
+
+
 def test_source_tree_module_cli_runs_without_pythonpath():
     root = Path(__file__).resolve().parents[2]
     env = dict(os.environ)

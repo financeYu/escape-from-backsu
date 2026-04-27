@@ -11,6 +11,7 @@ from .config import ProjectPaths, get_source_config
 from .persistence import store_raw_response
 from .sources.arxiv_adapter import ArxivAdapter
 from .sources.crossref_adapter import CrossrefAdapter
+from .sources.nber_adapter import NberAdapter
 from .sources.openalex_adapter import OpenAlexAdapter
 from .sources.semantic_scholar_adapter import SemanticScholarAdapter
 
@@ -114,6 +115,8 @@ def _adapter_for_source(source: str, config: dict[str, Any], adapter_registry: d
         return CrossrefAdapter(get_source_config(config, "crossref"))
     if source == "semantic_scholar":
         return SemanticScholarAdapter(get_source_config(config, "semantic_scholar"))
+    if source == "nber":
+        return NberAdapter(get_source_config(config, "nber"))
     raise ValueError(f"승인되지 않은 research metadata source입니다: {source}")
 
 
@@ -122,7 +125,7 @@ def _source_adapter_registry(config: dict[str, Any], sources: list[str]) -> dict
 
 
 def _validate_sources(sources: list[str], config: dict[str, Any]) -> None:
-    approved = {"arxiv", "openalex", "crossref", "semantic_scholar"}
+    approved = {"arxiv", "openalex", "crossref", "semantic_scholar", "nber"}
     unknown = [source for source in sources if source not in approved]
     if unknown:
         raise ValueError(f"승인되지 않은 source입니다: {', '.join(unknown)}. 사용 가능: {', '.join(sorted(approved))}")

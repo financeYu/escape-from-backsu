@@ -23,6 +23,23 @@ def test_scholar_seed_resolution_by_doi(sample_paper):
     assert resolved["manual_review_required"] is False
 
 
+def test_scholar_seed_resolution_by_nber_id(sample_paper):
+    paper = sample_paper(doi=None, nber_id="w12345", source_adapter="nber")
+    seed = make_discovery_seed(
+        source_channel="google_scholar_manual_title_list",
+        raw_title="Daily momentum and reversal in equity returns",
+        raw_year=2024,
+        candidate_nber_id="12345",
+        local_input_path="titles.csv",
+    )
+
+    resolved = resolve_seed(seed, {"nber": [paper]})
+
+    assert resolved["canonical_lookup_status"] == "matched_nber"
+    assert resolved["canonical_resolution_status"] == "matched_nber"
+    assert resolved["manual_review_required"] is False
+
+
 def test_unresolved_scholar_seed_reporting(workspace_tmp_path):
     seed = make_discovery_seed(
         source_channel="google_scholar_manual_title_list",

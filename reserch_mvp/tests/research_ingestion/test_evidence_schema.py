@@ -29,6 +29,14 @@ def test_evidence_card_schema_and_hard_guardrails(sample_paper):
     assert card["backtest_context"]["paper_reported_backtest_treatment"] == "diagnostic_note_only"
 
 
+def test_evidence_card_preserves_nber_identifier(sample_paper):
+    paper = sample_paper(doi=None, nber_id="w12345", source_adapter="nber")
+    config = load_research_config(Path(__file__).resolve().parents[2])
+    classification = classify_paper(paper, config["classification"], config["policy"])
+    card = generate_evidence_card(paper, classification, "run")
+    assert card["paper"]["nber_id"] == "w12345"
+
+
 def test_scholar_snippet_is_not_used_as_evidence(sample_paper):
     paper = dict(sample_paper())
     paper["scholar_snippet"] = "This Scholar-only snippet must not appear."

@@ -19,6 +19,14 @@ def test_dedupe_by_arxiv(sample_paper):
     assert len(deduplicate_papers([left, right])) == 1
 
 
+def test_dedupe_by_nber_id(sample_paper):
+    left = sample_paper(doi=None, nber_id="w12345", title="NBER momentum paper", source_adapter="nber")
+    right = sample_paper(doi=None, nber_id="12345", title="NBER momentum paper updated", source_adapter="openalex")
+    merged = deduplicate_papers([left, right])
+    assert len(merged) == 1
+    assert merged[0]["nber_id"] == "w12345"
+
+
 def test_dedupe_by_title_year_first_author(sample_paper):
     left = sample_paper(doi=None, title="Daily momentum in stocks", authors=["Jane Doe"], publication_year=2024)
     right = sample_paper(doi=None, title="Daily Momentum in Stocks!", authors=["Jane Doe"], publication_year=2024, source_adapter="openalex")

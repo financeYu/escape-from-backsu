@@ -1,5 +1,5 @@
 [policy_metadata]
-policy_version = "research_policy.v2"
+policy_version = "research_policy.v3"
 evidence_schema_version = "evidence_card.v1"
 
 [guardrails]
@@ -18,6 +18,27 @@ allow_pdf = false
 explicit_confirmation_required = true
 confirmation_phrase = "I confirm OA/license/source policy for PDF use"
 
+[license_policy]
+intended_use = "noncommercial_research"
+allow_metadata_without_license = true
+allow_noncommercial_licenses = true
+manual_review_when_license_unknown = false
+fulltext_download_remains_disabled = true
+allowed_open_license_tokens = [
+  "cc0",
+  "publicdomain",
+  "publicdomainmark",
+  "cc-by",
+  "cc-by-sa",
+  "cc-by-nd",
+]
+allowed_noncommercial_license_tokens = [
+  "cc-by-nc",
+  "cc-by-nc-sa",
+  "cc-by-nc-nd",
+]
+notes_ko = "비상업 연구 목적에서는 CC BY-NC 계열 license도 metadata/abstract 후보 수집을 허용한다. PDF/fulltext 다운로드는 계속 비활성화한다."
+
 [outputs]
 normalized_jsonl = "data/research/normalized/papers.jsonl"
 evidence_jsonl = "data/research/evidence/evidence_cards.jsonl"
@@ -30,7 +51,7 @@ stale_after_days = 21
 default_profile = "fast_refresh"
 source_parallelism_enabled = true
 source_parallelism = 4
-default_sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+default_sources = ["arxiv", "openalex", "crossref", "semantic_scholar", "nber"]
 default_query_sets = [
   "technical_momentum",
   "technical_mean_reversion",
@@ -67,7 +88,7 @@ fundamental_valuation_refresh = "opt_in_only"
 
 [request_cache]
 enabled = true
-policy_version = "research_policy.v2"
+policy_version = "research_policy.v3"
 default_ttl_days = 14
 key_fields = ["source", "query", "page_or_offset", "page_size", "policy_version"]
 
@@ -89,7 +110,7 @@ valuation_fundamental = "excluded"
 [refresh_profiles.full_refresh]
 description_ko = "주 1회 또는 수동 실행용 전체 research-ingestion refresh."
 cadence = "weekly_or_manual"
-sources = ["arxiv", "openalex", "crossref", "semantic_scholar"]
+sources = ["arxiv", "openalex", "crossref", "semantic_scholar", "nber"]
 query_sets = [
   "technical_momentum",
   "technical_mean_reversion",
@@ -124,7 +145,7 @@ valuation_fundamental = "excluded"
 [refresh_profiles.diagnostic_refresh]
 description_ko = "methodology, bias, cost, redundancy 전용 refresh."
 cadence = "weekly_or_manual"
-sources = ["openalex", "crossref", "semantic_scholar"]
+sources = ["openalex", "crossref", "semantic_scholar", "nber"]
 query_sets = [
   "technical_correlation_redundancy",
   "technical_rank_stability_diagnostics",
@@ -141,7 +162,7 @@ valuation_fundamental = "excluded"
 [refresh_profiles.regional_refresh]
 description_ko = "Korea/APAC/EM context 전용 refresh."
 cadence = "weekly_or_manual"
-sources = ["openalex", "crossref", "semantic_scholar"]
+sources = ["openalex", "crossref", "semantic_scholar", "nber"]
 query_sets = [
   "korea_kospi_context",
   "korea_kospi_expanded",
@@ -154,7 +175,7 @@ valuation_fundamental = "excluded"
 [refresh_profiles.valuation_fundamental_opt_in]
 description_ko = "valuation/fundamental 문헌 수집은 명시 opt-in 전용이다. scoring이나 valuation verdict를 만들지 않는다."
 cadence = "manual_only"
-sources = ["openalex", "crossref", "semantic_scholar"]
+sources = ["openalex", "crossref", "semantic_scholar", "nber"]
 query_sets = ["fundamental_valuation"]
 request_cache_ttl_days = 28
 valuation_fundamental = "requires_cli_include_valuation"

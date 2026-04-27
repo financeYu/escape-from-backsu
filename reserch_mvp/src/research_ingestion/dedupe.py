@@ -3,10 +3,10 @@ from __future__ import annotations
 from difflib import SequenceMatcher
 from typing import Any
 
-from .normalize import canonical_id, first_author, normalize_arxiv_id, normalize_doi, normalize_title, utc_now_iso, validate_normalized_paper
+from .normalize import canonical_id, first_author, normalize_arxiv_id, normalize_doi, normalize_nber_id, normalize_title, utc_now_iso, validate_normalized_paper
 
 
-IDENTIFIER_FIELDS = ["doi", "arxiv_id", "openalex_id", "semantic_scholar_id"]
+IDENTIFIER_FIELDS = ["doi", "arxiv_id", "nber_id", "openalex_id", "semantic_scholar_id"]
 MERGED_LIST_FIELDS = [
     "authors",
     "source_adapters",
@@ -55,6 +55,7 @@ class PaperDedupeIndex:
     def __init__(self, papers: list[dict[str, Any]] | None = None):
         self.doi: dict[str, int] = {}
         self.arxiv_id: dict[str, int] = {}
+        self.nber_id: dict[str, int] = {}
         self.openalex_id: dict[str, int] = {}
         self.semantic_scholar_id: dict[str, int] = {}
         self.title_buckets: dict[tuple[int | None, str], list[int]] = {}
@@ -73,6 +74,7 @@ class PaperDedupeIndex:
     def rebuild(self, papers: list[dict[str, Any]]) -> None:
         self.doi.clear()
         self.arxiv_id.clear()
+        self.nber_id.clear()
         self.openalex_id.clear()
         self.semantic_scholar_id.clear()
         self.title_buckets.clear()
@@ -142,6 +144,7 @@ def merge_papers(primary: dict[str, Any], secondary: dict[str, Any]) -> dict[str
     merged["canonical_paper_id"] = canonical_id(
         doi=merged.get("doi"),
         arxiv_id=merged.get("arxiv_id"),
+        nber_id=merged.get("nber_id"),
         semantic_scholar_id=merged.get("semantic_scholar_id"),
         openalex_id=merged.get("openalex_id"),
         title=merged.get("title"),
@@ -181,9 +184,16 @@ def _find_duplicate_index(existing: list[dict[str, Any]], paper: dict[str, Any])
 
 
 def _is_duplicate(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    left_ids = left.get("source_ids", {}) or {}
+    right_ids = right.get("source_ids", {}) or {}
     if _same_nonempty(normalize_doi(left.get("doi")), normalize_doi(right.get("doi"))):
         return True
     if _same_nonempty(normalize_arxiv_id(left.get("arxiv_id")), normalize_arxiv_id(right.get("arxiv_id"))):
+        return True
+    if _same_nonempty(
+        normalize_nber_id(left.get("nber_id") or left_ids.get("nber_id")),
+        normalize_nber_id(right.get("nber_id") or right_ids.get("nber_id")),
+    ):
         return True
     if _same_nonempty(left.get("semantic_scholar_id"), right.get("semantic_scholar_id")):
         return True
@@ -217,12 +227,15 @@ def _identifier_keys(paper: dict[str, Any]) -> list[tuple[str, str]]:
     keys: list[tuple[str, str]] = []
     doi = normalize_doi(paper.get("doi") or source_ids.get("doi"))
     arxiv_id = normalize_arxiv_id(paper.get("arxiv_id") or source_ids.get("arxiv_id"))
+    nber_id = normalize_nber_id(paper.get("nber_id") or source_ids.get("nber_id"))
     openalex_id = paper.get("openalex_id") or source_ids.get("openalex_id")
     semantic_scholar_id = paper.get("semantic_scholar_id") or source_ids.get("semantic_scholar_id")
     if doi:
         keys.append(("doi", doi))
     if arxiv_id:
         keys.append(("arxiv_id", arxiv_id))
+    if nber_id:
+        keys.append(("nber_id", nber_id))
     if openalex_id:
         keys.append(("openalex_id", str(openalex_id)))
     if semantic_scholar_id:

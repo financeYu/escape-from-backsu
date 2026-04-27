@@ -9,6 +9,7 @@ from time import perf_counter
 from typing import Any
 
 from .config import ProjectPaths, get_query_set
+from .license_policy import annotate_license_policy
 from .persistence import write_jsonl
 from .relevance import apply_collection_relevance_gate
 from .request_cache import RequestCache, request_cache_from_config
@@ -57,7 +58,14 @@ def cmd_collect(args: argparse.Namespace, config: dict[str, Any], paths: Project
         health[source] = result["health"]
         raw_counts[source] += int(result["raw_count"])
         papers.extend(result["papers"])
-    papers = [_annotate_collection_lane(paper, args.query_set, query_set, args.run_id) for paper in papers]
+    license_policy = config.get("policy", {}).get("license_policy", {})
+    papers = [
+        annotate_license_policy(
+            _annotate_collection_lane(paper, args.query_set, query_set, args.run_id),
+            license_policy,
+        )
+        for paper in papers
+    ]
     accepted_papers, rejected_papers = apply_collection_relevance_gate(
         papers,
         query_set,
@@ -476,6 +484,8 @@ def _fetch_source_response(
         return adapter.fetch_search_response(query, rows=page_size, offset=offset)
     if source == "semantic_scholar":
         return adapter.fetch_search_response(query, limit=page_size, offset=offset)
+    if source == "nber":
+        return adapter.fetch_search_response(query, limit=page_size, offset=offset)
     raise ValueError(f"지원하지 않는 source입니다: {source}")
 
 
@@ -511,6 +521,8 @@ def _parse_source_response(adapter: Any, source: str, body: str, raw_snapshot_re
         return adapter.parse_works_json(payload, raw_snapshot_ref=raw_snapshot_ref)
     if source == "semantic_scholar":
         return adapter.parse_search_json(payload, raw_snapshot_ref=raw_snapshot_ref)
+    if source == "nber":
+        return adapter.parse_dump_json(payload, raw_snapshot_ref=raw_snapshot_ref)
     raise ValueError(f"지원하지 않는 source입니다: {source}")
 
 
@@ -711,6 +723,7 @@ def _collection_output_paths(args: argparse.Namespace, paths: ProjectPaths, quer
 def _collection_guardrails() -> list[str]:
     return [
         "PDF fulltext 수집은 기본 비활성화입니다.",
+        "비상업 연구 목적에서는 CC BY-NC 계열 license도 metadata/abstract 후보 수집을 허용합니다.",
         "Google Scholar live request는 수행하지 않습니다.",
         "EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
         "backtest, adoption decision, valuation scoring은 수행하지 않습니다.",

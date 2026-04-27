@@ -5,12 +5,12 @@ from pathlib import Path
 from typing import Any
 
 from .schema import validate_discovery_seed
-from ..normalize import normalize_arxiv_id, normalize_doi, normalize_title
+from ..normalize import normalize_arxiv_id, normalize_doi, normalize_nber_id, normalize_title
 from ..persistence import write_jsonl
 from ..redaction import assert_no_scholar_request
 
 
-APPROVED_RESOLUTION_SOURCES = {"openalex", "crossref", "arxiv", "semantic_scholar"}
+APPROVED_RESOLUTION_SOURCES = {"openalex", "crossref", "arxiv", "semantic_scholar", "nber"}
 
 
 def assert_approved_resolution_url(url: str) -> None:
@@ -104,6 +104,7 @@ def _find_matches(
 ) -> list[tuple[str, dict[str, Any], str]]:
     seed_doi = normalize_doi(seed.get("candidate_doi"))
     seed_arxiv = normalize_arxiv_id(seed.get("candidate_arxiv_id"))
+    seed_nber = normalize_nber_id(seed.get("candidate_nber_id"))
     raw_title = normalize_title(seed.get("raw_title"))
     raw_year = seed.get("raw_year")
     first_author = normalize_title(_first_raw_author(seed.get("raw_authors")))
@@ -114,6 +115,8 @@ def _find_matches(
             if seed_doi and seed_doi == normalize_doi(paper.get("doi")):
                 matches.append((source, paper, "high"))
             elif seed_arxiv and seed_arxiv == normalize_arxiv_id(paper.get("arxiv_id")):
+                matches.append((source, paper, "high"))
+            elif seed_nber and seed_nber == normalize_nber_id(paper.get("nber_id") or paper.get("source_ids", {}).get("nber_id")):
                 matches.append((source, paper, "high"))
             elif paper.get("source_ids", {}).get("openalex_id") and seed.get("candidate_openalex_id") == paper["source_ids"]["openalex_id"]:
                 matches.append((source, paper, "high"))
@@ -138,7 +141,7 @@ def _title_year_author_match(title: str, year: int | None, first_author_value: s
 
 def _best_match(matches: list[tuple[str, dict[str, Any], str]]) -> tuple[str, dict[str, Any], str]:
     priority = {"high": 0, "medium": 1, "low": 2}
-    source_priority = {"crossref": 0, "arxiv": 1, "openalex": 2, "semantic_scholar": 3}
+    source_priority = {"crossref": 0, "arxiv": 1, "nber": 2, "openalex": 3, "semantic_scholar": 4}
     best = min(matches, key=lambda match: _match_sort_key(match, priority, source_priority), default=None)
     if best is None:
         raise ValueError("_best_match requires at least one match.")

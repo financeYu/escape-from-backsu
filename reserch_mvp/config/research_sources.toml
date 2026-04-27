@@ -51,6 +51,21 @@ polite_email_env_var = "CROSSREF_MAILTO"
 plus_api_token_env_var = "CROSSREF_PLUS_API_TOKEN"
 pdf_download_enabled = false
 
+[sources.nber]
+enabled = true
+base_url = "https://data.nber.org/nber_paper_chapter_metadata/tsv"
+paper_url_template = "https://www.nber.org/papers/{paper}"
+timeout_seconds = 20
+max_retries = 2
+retry_backoff_seconds = 2.0
+min_interval_seconds = 1.0
+max_concurrency = 1
+default_max_results = 50
+files = ["ref", "abs", "auth", "auths", "title", "jel", "prog", "published"]
+metadata_license = "nber_public_metadata"
+metadata_license_note = "NBER public metadata dump; fulltext copyright/license is not inferred."
+pdf_download_enabled = false
+
 [sources.semantic_scholar]
 enabled = true
 base_url = "https://api.semanticscholar.org/graph/v1/paper/search"

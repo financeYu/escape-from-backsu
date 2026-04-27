@@ -12,6 +12,9 @@ def test_config_loading_from_project_root():
     validate_policy(config)
     assert get_source_config(config, "arxiv")["min_interval_seconds"] >= 3.0
     assert get_source_config(config, "openalex")["anonymous_allowed"] is False
+    assert get_source_config(config, "nber")["pdf_download_enabled"] is False
+    assert "nber" in config["policy"]["refresh_policy"]["default_sources"]
+    assert config["policy"]["license_policy"]["allow_noncommercial_licenses"] is True
     technical_query = get_query_set(config, "technical_momentum")
     assert technical_query["queries"]
     assert technical_query["management_lane"] == "quant_algorithm"
@@ -53,7 +56,7 @@ def test_expanded_query_sets_have_routing_metadata():
         assert query_set["name"] == query_set_name
         assert query_set["branch_hint"] == branch
         assert query_set["downstream_route"] == route
-        assert query_set["allowed_sources"] == ["arxiv", "openalex", "crossref", "semantic_scholar"]
+        assert query_set["allowed_sources"] == ["arxiv", "openalex", "crossref", "semantic_scholar", "nber"]
         assert query_set["region_scope"]
         assert query_set["required_input_policy"]
         assert query_set["refresh_cadence_days"] >= 14
@@ -97,6 +100,8 @@ def test_refresh_profiles_split_operational_modes_and_keep_valuation_opt_in():
     assert profiles["fast_refresh"]["sources"] == ["openalex"]
     assert 5 <= len(profiles["fast_refresh"]["query_sets"]) <= 6
     assert len(profiles["full_refresh"]["query_sets"]) == 26
+    assert "nber" in profiles["full_refresh"]["sources"]
+    assert "nber" in profiles["diagnostic_refresh"]["sources"]
     assert "fundamental_valuation" not in profiles["full_refresh"]["query_sets"]
     assert "technical_correlation_redundancy" in profiles["diagnostic_refresh"]["query_sets"]
     assert "methodology_publication_bias" in profiles["diagnostic_refresh"]["query_sets"]

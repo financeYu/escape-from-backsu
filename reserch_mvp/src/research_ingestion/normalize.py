@@ -13,6 +13,7 @@ NORMALIZED_REQUIRED_FIELDS = [
     "arxiv_id",
     "openalex_id",
     "semantic_scholar_id",
+    "nber_id",
     "title",
     "title_normalized",
     "authors",
@@ -127,6 +128,17 @@ def normalize_arxiv_id(arxiv_id: str | None) -> str | None:
     return value or None
 
 
+def normalize_nber_id(nber_id: str | None) -> str | None:
+    if not nber_id:
+        return None
+    value = nber_id.strip().lower()
+    value = re.sub(r"^nber:", "", value, flags=re.IGNORECASE)
+    value = re.sub(r"^https?://(?:www\.)?nber\.org/papers/", "", value, flags=re.IGNORECASE)
+    if value.isdigit():
+        value = f"w{value}"
+    return value or None
+
+
 def first_author(authors: list[str] | None) -> str | None:
     if not authors:
         return None
@@ -137,6 +149,7 @@ def canonical_id(
     *,
     doi: str | None = None,
     arxiv_id: str | None = None,
+    nber_id: str | None = None,
     semantic_scholar_id: str | None = None,
     openalex_id: str | None = None,
     title: str | None = None,
@@ -146,6 +159,8 @@ def canonical_id(
         return f"doi:{normalize_doi(doi)}"
     if arxiv_id:
         return f"arxiv:{normalize_arxiv_id(arxiv_id)}"
+    if nber_id:
+        return f"nber:{normalize_nber_id(nber_id)}"
     if semantic_scholar_id:
         return f"semantic_scholar:{semantic_scholar_id}"
     if openalex_id:
@@ -159,7 +174,7 @@ def make_normalized_paper(
     title: str,
     source_adapter: str,
     authors: list[str] | None = None, doi: str | None = None,
-    arxiv_id: str | None = None, openalex_id: str | None = None,
+    arxiv_id: str | None = None, nber_id: str | None = None, openalex_id: str | None = None,
     semantic_scholar_id: str | None = None, crossref_id: str | None = None,
     publication_year: int | None = None, publication_date: str | None = None,
     updated_date: str | None = None, venue: str | None = None,
@@ -206,6 +221,7 @@ def _make_normalized_paper_from_values(values: dict[str, Any]) -> dict[str, Any]
     extra = values.pop("extra")
     values["doi"] = normalize_doi(values["doi"])
     values["arxiv_id"] = normalize_arxiv_id(values["arxiv_id"])
+    values["nber_id"] = normalize_nber_id(values["nber_id"])
     values["now"] = utc_now_iso()
     paper = _normalized_paper_payload(values)
     paper.update(extra)
@@ -214,10 +230,10 @@ def _make_normalized_paper_from_values(values: dict[str, Any]) -> dict[str, Any]
 
 
 def _normalized_paper_payload(values: dict[str, Any]) -> dict[str, Any]:
-    source_ids = _source_ids(**_pick(values, ["doi", "arxiv_id", "openalex_id", "semantic_scholar_id", "crossref_id"]))
+    source_ids = _source_ids(**_pick(values, ["doi", "arxiv_id", "openalex_id", "semantic_scholar_id", "crossref_id", "nber_id"]))
     paper_id = _paper_id_from_values(values)
     return {
-        **_identity_fields(source_ids=source_ids, paper_id=paper_id, **_pick(values, ["title", "authors", "doi", "arxiv_id", "openalex_id", "semantic_scholar_id"])),
+        **_identity_fields(source_ids=source_ids, paper_id=paper_id, **_pick(values, ["title", "authors", "doi", "arxiv_id", "openalex_id", "semantic_scholar_id", "nber_id"])),
         **_metadata_fields(**_pick(values, _METADATA_FIELD_KEYS)),
         **_source_context_from_values(values, paper_id),
         **_access_guardrail_fields(**_pick(values, _ACCESS_GUARDRAIL_KEYS)),
@@ -231,6 +247,7 @@ def _paper_id_from_values(values: dict[str, Any]) -> str:
     return canonical_id(
         doi=values["doi"],
         arxiv_id=values["arxiv_id"],
+        nber_id=values["nber_id"],
         semantic_scholar_id=values["semantic_scholar_id"],
         openalex_id=values["openalex_id"],
         title=values["title"],
@@ -249,6 +266,7 @@ def _source_context_from_values(values: dict[str, Any], paper_id: str) -> dict[s
         source_record_id=values["source_record_id"] or _default_source_record_id(
             doi=values["doi"],
             arxiv_id=values["arxiv_id"],
+            nber_id=values["nber_id"],
             openalex_id=values["openalex_id"],
             semantic_scholar_id=values["semantic_scholar_id"],
             crossref_id=values["crossref_id"],
@@ -262,6 +280,7 @@ def _source_context_from_values(values: dict[str, Any], paper_id: str) -> dict[s
         resolution_confidence=values["resolution_confidence"] or _default_resolution_confidence(
             doi=values["doi"],
             arxiv_id=values["arxiv_id"],
+            nber_id=values["nber_id"],
             openalex_id=values["openalex_id"],
             semantic_scholar_id=values["semantic_scholar_id"],
         ),
@@ -282,6 +301,7 @@ def _source_ids(
     openalex_id: str | None,
     semantic_scholar_id: str | None,
     crossref_id: str | None,
+    nber_id: str | None,
 ) -> dict[str, str | None]:
     return {
         "doi": doi,
@@ -289,6 +309,7 @@ def _source_ids(
         "openalex_id": openalex_id,
         "semantic_scholar_id": semantic_scholar_id,
         "crossref_id": crossref_id,
+        "nber_id": nber_id,
     }
 
 
@@ -302,6 +323,7 @@ def _identity_fields(
     arxiv_id: str | None,
     openalex_id: str | None,
     semantic_scholar_id: str | None,
+    nber_id: str | None,
 ) -> dict[str, Any]:
     return {
         "canonical_paper_id": paper_id,
@@ -310,6 +332,7 @@ def _identity_fields(
         "arxiv_id": arxiv_id,
         "openalex_id": openalex_id,
         "semantic_scholar_id": semantic_scholar_id,
+        "nber_id": nber_id,
         "title": clean_text(title) or "",
         "title_normalized": normalize_title(title),
         "authors": [clean_text(author) for author in (authors or []) if clean_text(author)],
@@ -446,10 +469,12 @@ def _apply_backward_compatible_defaults(paper: dict[str, Any]) -> None:
         "source_record_id",
         paper.get("doi")
         or paper.get("arxiv_id")
+        or paper.get("nber_id")
         or paper.get("openalex_id")
         or paper.get("semantic_scholar_id")
         or source_ids.get("doi")
         or source_ids.get("arxiv_id")
+        or source_ids.get("nber_id")
         or source_ids.get("openalex_id")
         or source_ids.get("semantic_scholar_id")
         or source_ids.get("crossref_id"),
@@ -460,7 +485,8 @@ def _apply_backward_compatible_defaults(paper: dict[str, Any]) -> None:
     paper.setdefault("seed_origin_type", "scholar_local_seed" if paper.get("discovered_from_scholar_seed") else "metadata_api")
     paper.setdefault("seed_origin_is_evidence", False)
     paper.setdefault("canonical_resolution_status", "resolved" if not paper.get("discovered_from_scholar_seed") else "unresolved")
-    paper.setdefault("resolution_confidence", "high" if paper.get("doi") or paper.get("arxiv_id") or paper.get("openalex_id") or paper.get("semantic_scholar_id") else "medium")
+    paper.setdefault("nber_id", paper.get("nber_id") or source_ids.get("nber_id"))
+    paper.setdefault("resolution_confidence", "high" if paper.get("doi") or paper.get("arxiv_id") or paper.get("nber_id") or paper.get("openalex_id") or paper.get("semantic_scholar_id") else "medium")
     paper.setdefault("dedup_key", paper.get("canonical_paper_id"))
     paper.setdefault("duplicate_of", None)
     paper.setdefault("metadata_license", paper.get("license"))
@@ -474,18 +500,20 @@ def _default_source_record_id(
     *,
     doi: str | None,
     arxiv_id: str | None,
+    nber_id: str | None,
     openalex_id: str | None,
     semantic_scholar_id: str | None,
     crossref_id: str | None,
 ) -> str | None:
-    return doi or arxiv_id or openalex_id or semantic_scholar_id or crossref_id
+    return doi or arxiv_id or nber_id or openalex_id or semantic_scholar_id or crossref_id
 
 
 def _default_resolution_confidence(
     *,
     doi: str | None,
     arxiv_id: str | None,
+    nber_id: str | None,
     openalex_id: str | None,
     semantic_scholar_id: str | None,
 ) -> str:
-    return "high" if any([doi, arxiv_id, openalex_id, semantic_scholar_id]) else "medium"
+    return "high" if any([doi, arxiv_id, nber_id, openalex_id, semantic_scholar_id]) else "medium"

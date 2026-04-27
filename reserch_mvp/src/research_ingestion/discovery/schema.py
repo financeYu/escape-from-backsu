@@ -25,6 +25,7 @@ ALLOWED_LOOKUP_STATUSES = {
     "matched_crossref",
     "matched_arxiv",
     "matched_semantic_scholar",
+    "matched_nber",
     "ambiguous",
     "rejected",
 }
@@ -66,6 +67,7 @@ def make_discovery_seed(
     notes_ko: str | None = None,
     candidate_doi: str | None = None,
     candidate_arxiv_id: str | None = None,
+    candidate_nber_id: str | None = None,
 ) -> dict[str, Any]:
     if source_channel not in ALLOWED_SOURCE_CHANNELS:
         raise ValueError(f"Unsupported DiscoverySeed source_channel: {source_channel}")
@@ -92,6 +94,7 @@ def make_discovery_seed(
         "notes_ko": notes_ko or "Google Scholar 기반 로컬 discovery seed입니다. 정식 EvidenceCard가 아니며 canonical metadata resolution이 필요합니다.",
         "candidate_doi": clean_text(candidate_doi),
         "candidate_arxiv_id": clean_text(candidate_arxiv_id),
+        "candidate_nber_id": clean_text(candidate_nber_id),
         "seed_origin_type": source_channel,
         "seed_origin_is_evidence": False,
         "guardrails": {

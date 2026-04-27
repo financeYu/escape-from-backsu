@@ -71,6 +71,7 @@ def _build_paper_section(paper: dict[str, Any]) -> dict[str, Any]:
         "canonical_paper_id": paper["canonical_paper_id"],
         "doi": paper.get("doi"),
         "arxiv_id": paper.get("arxiv_id"),
+        "nber_id": paper.get("nber_id"),
         "openalex_id": paper.get("openalex_id"),
         "semantic_scholar_id": paper.get("semantic_scholar_id"),
         "title": paper.get("title"),

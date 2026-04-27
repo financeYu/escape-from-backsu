@@ -15,7 +15,7 @@ allowed_inputs = [
   "user_provided_doi_list",
 ]
 require_canonical_resolution = true
-must_resolve_via = ["openalex", "crossref", "arxiv", "semantic_scholar"]
+must_resolve_via = ["openalex", "crossref", "arxiv", "semantic_scholar", "nber"]
 use_as_evidence_source = false
 snippets_are_evidence = false
 rankings_are_evidence = false

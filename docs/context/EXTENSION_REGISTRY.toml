@@ -48,6 +48,8 @@ state = "not_implemented"
 permission = "requires separately approved post-MVP step, score contract, validation profile, and conflict checkpoint"
 context = "docs/context/domain/technical_scoring_context.md"
 approval_packet = "docs/extension/v0_2_score_revision_approval_packet.md"
+candidate_score_list = "docs/extension/v0_2_candidate_score_list.md"
+score_specification_schema = "docs/extension/v0_2_score_specification_schema.md"
 goal = "score set or score semantics revision after approval"
 forbidden_during_mvp_v0_1 = [
   "score formula changes",

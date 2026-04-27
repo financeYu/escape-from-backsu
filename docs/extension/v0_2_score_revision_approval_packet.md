@@ -16,6 +16,11 @@ are the target of the future line, but no score change is approved or active
 until the required architecture, testing, selection, audit, and implementation
 gates pass.
 
+Supporting draft artifacts:
+
+- `docs/extension/v0_2_candidate_score_list.md`
+- `docs/extension/v0_2_score_specification_schema.md`
+
 The frozen MVP v0.1 baseline remains unchanged:
 
 - KOSPI200-only.

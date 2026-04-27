@@ -1,0 +1,25 @@
+# Candidate-only next-horizon up-probability score settings.
+# This file does not enable production ranking, GUI score replacement,
+# backtest feedback, valuation scoring, or final composite integration.
+
+[up_probability_score]
+score_name = "next_horizon_up_probability_score"
+horizon_trading_days = 1
+user_facing_label_template = "{horizon_trading_days}거래일 뒤 상승확률 후보"
+input_cutoff = "close_t"
+status = "candidate_only"
+runtime_enabled = false
+production_ranking_enabled = false
+gui_score_replacement_enabled = false
+technical_composite_integration = false
+final_composite_integration = false
+valuation_fundamental_inputs_allowed = false
+requires_calibrated_probability_input = true
+evaluation_only_notice = "KOSPI200 technical-only candidate up-probability score; evaluation-only, no trading recommendation."
+
+[up_probability_score.columns]
+probability = "next_horizon_up_probability"
+score = "next_horizon_up_probability_score"
+label = "next_horizon_up_label"
+observed_return = "observed_horizon_close_return"
+bucket = "next_horizon_probability_bucket"

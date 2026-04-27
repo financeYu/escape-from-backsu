@@ -1,5 +1,6 @@
 # Candidate-only v0.2 ML score configuration.
 # This config defines contract semantics only; it does not activate production ranking.
+# Gate 1 is contract freeze only; it does not train a model or generate sidecar files.
 
 [candidate_score]
 name = "prob_up_1d_candidate"
@@ -12,6 +13,15 @@ production_rank_activation = false
 replace_technical_composite_score = false
 replace_final_composite_score = false
 allow_trading_recommendations = false
+
+[adjusted_close_source]
+label_source_field = "adjusted_close"
+repo_availability_status = "BLOCKER_UNTIL_CONFIRMED_ADJUSTED_CLOSE_SOURCE"
+known_optional_aliases = ["adj_close"]
+require_canonical_adjusted_close = true
+allow_close_fallback = false
+allow_new_market_data_ingestion = false
+must_validate_before_label_construction = true
 
 [universe]
 baseline = "MVP_v0_1_frozen"
@@ -30,6 +40,9 @@ label_field = "up_1d_label"
 label_definition = "adjusted_close[t+1] > adjusted_close[t]"
 exclude_unlabeled_current_row_from_training = true
 require_features_available_at_or_before_decision_time = true
+require_execution_time_after_decision_time = true
+require_label_time_after_decision_time = true
+require_label_availability_after_decision_time = true
 allow_future_data = false
 allow_lookahead = false
 
@@ -57,7 +70,9 @@ forbidden_production_fields_to_write = [
 ]
 
 [sidecar_ranking]
-enabled = true
+enabled = false
+contract_defined = true
+implementation_status = "not_implemented_gate_1"
 artifact_type = "sidecar_candidate_only"
 sort_fields = ["prob_up_1d_candidate", "ticker"]
 sort_directions = ["desc", "asc"]
@@ -67,8 +82,36 @@ feeds_reports = false
 feeds_gui = false
 feeds_composite_scores = false
 
+[sidecar_output_path]
+root = "reports/v0_2_predictive_probability/candidate_sidecar"
+filename_template = "prob_up_1d_candidate_candidate_only_sidecar_{as_of_date}.csv"
+manifest_template = "prob_up_1d_candidate_candidate_only_sidecar_{as_of_date}.manifest.json"
+as_of_date_format = "YYYYMMDD"
+generation_implemented_in_gate_1 = false
+required_schema = [
+  "ticker",
+  "date",
+  "decision_time",
+  "execution_time",
+  "prob_up_1d_candidate",
+  "prob_up_1d_candidate_status",
+  "prob_up_1d_candidate_sample_role",
+  "feature_set_version",
+  "label_contract_version",
+]
+forbidden_schema_fields = [
+  "technical_composite_score",
+  "final_composite_score",
+  "rank",
+  "production_rank",
+  "recommendation_text",
+  "forecasted_return",
+  "valuation_signal",
+]
+
 [features]
 allow_existing_technical_scores = true
+allow_production_composite_scores = false
 allow_daily_ohlcv_derived_features = true
 allow_missing_data_indicators = true
 allow_warmup_coverage_flags = true
@@ -79,13 +122,50 @@ allow_evaluation_outputs = false
 allow_realized_future_returns = false
 allow_label_columns_as_features = false
 
+[feature_allowlist]
+mode = "default_deny"
+allowed_source_fields = [
+  "ticker",
+  "date",
+  "decision_time",
+  "execution_time",
+  "source_data_availability_time",
+  "feature_construction_time",
+  "open",
+  "high",
+  "low",
+  "close",
+  "volume",
+  "adjusted_close",
+]
+allowed_feature_families = [
+  "trailing_ohlcv_return",
+  "trailing_range_volatility",
+  "technical_indicator_component",
+  "missing_data_indicator",
+  "warmup_coverage_flag",
+  "static_non_fundamental_join_key",
+  "same_date_kospi200_cross_sectional_technical",
+]
+
 [forbidden_feature_patterns]
 contains_any = [
   "label",
+  "target",
+  "future",
+  "forward_return",
+  "next_day_return",
+  "next_adjusted_close",
   "future_return",
   "realized_return",
   "backtest",
   "evaluation",
+  "generated_report",
+  "report_output",
+  "ranking_output",
+  "candidate_sidecar",
+  "technical_composite_score",
+  "final_composite_score",
   "pnl",
   "sharpe",
   "alpha",
@@ -98,6 +178,24 @@ contains_any = [
   "valuation",
   "filing",
   "accounting",
+]
+
+[no_lookahead_validation]
+required_time_fields = [
+  "decision_time",
+  "execution_time",
+  "label_time",
+  "label_availability_time",
+]
+feature_time_must_be_lte_decision_time = true
+source_availability_must_be_lte_decision_time = true
+label_time_must_be_after_decision_time = true
+label_availability_must_be_after_decision_time = true
+latest_candidate_row_may_be_unlabeled = true
+label_fields_forbidden_from_features = [
+  "up_1d_label",
+  "label_time",
+  "label_availability_time",
 ]
 
 [feedback_boundary]
@@ -115,11 +213,8 @@ allowed_terms = [
   "candidate-only",
 ]
 forbidden_terms = [
-  "buy",
-  "sell",
-  "hold",
-  "trading recommendation",
-  "expected-return",
-  "proven-alpha",
+  "direct_trading_recommendation",
+  "performance_claim",
+  "forecasted_return_claim",
   "production ranking replacement",
 ]

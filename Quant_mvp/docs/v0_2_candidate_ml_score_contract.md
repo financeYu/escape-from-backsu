@@ -5,7 +5,7 @@
 `prob_up_1d_candidate` is a post-MVP v0.2 candidate-only modeled probability
 field. It is allowed only as a sidecar research artifact and must not replace,
 redefine, weight, or feed `technical_composite_score`, `final_composite_score`,
-production rank, production report order, GUI order, or trading language.
+production rank, production report order, GUI order, or recommendation language.
 
 Confirmed baseline:
 
@@ -30,9 +30,28 @@ Confirmed baseline:
 | `prob_up_1d_candidate_status` | yes | Candidate output status such as `candidate_probability` or `missing_features`. |
 | `prob_up_1d_candidate_sample_role` | yes | Training/evaluation/inference role metadata. The latest unlabeled row remains `candidate_unlabeled`. |
 
+## Gate 1 Availability Preconditions
+
+- The label definition remains `adjusted_close[t+1] > adjusted_close[t]`.
+- The current repo has optional `adj_close`-style OHLCV fields in
+  `Quant_mvp/config/data.toml`, but the frozen MVP v0.1 canonical OHLCV schema
+  does not expose a canonical `adjusted_close` column.
+- Gate 1 therefore treats canonical adjusted-close availability as
+  `BLOCKER_UNTIL_CONFIRMED_SOURCE`.
+- A future implementation must normalize an approved source or alias to the
+  canonical `adjusted_close` field before label construction.
+- It must not reinterpret `close` as adjusted close and must not add new
+  market-data ingestion to satisfy this gate.
+
 ## Timing And No-Lookahead Rules
 
 - Feature rows must be built from data available at or before `decision_time`.
+- `decision_time` is the point where all candidate features are frozen.
+- `execution_time` is the next simulated actionable timestamp after
+  `decision_time`; it is metadata only and must not imply execution guidance.
+- `label_time` is the timestamp represented by `adjusted_close[t+1]`.
+- `label_availability_time` is when the next-day label can be known, and for
+  labeled rows it must be after `decision_time`.
 - The next-day label uses `adjusted_close[t+1] > adjusted_close[t]` and is
   valid only after `t+1` close is available.
 - Rows whose next-day label is unavailable must be excluded from
@@ -44,13 +63,25 @@ Confirmed baseline:
 
 ## Allowed Inputs
 
-Allowed feature families are candidate-only and must remain explainable:
+Allowed feature families are candidate-only and must remain explainable. The
+implementation gate uses default-deny: every feature must trace to the
+allowlist in `Quant_mvp/config/v0_2_candidate_ml_score.toml` or to this
+contract before implementation begins.
 
-- existing technical score columns as optional feature inputs
+- pre-composite technical indicator or component columns that trace back to
+  allowed OHLCV-derived sources
 - daily OHLCV-derived indicators available at or before `decision_time`
 - conservative missing-data, coverage, and warmup indicators
 - static non-fundamental identifiers needed for joins, when they do not encode
   future outcomes
+
+Excluded even when present in a table:
+
+- `technical_composite_score`
+- `final_composite_score`
+- production `rank`
+- generated report, generated sidecar, cache, chart, backtest, evaluation, and
+  realized-outcome fields
 
 ## Forbidden Inputs
 
@@ -88,8 +119,8 @@ Allowed wording:
 
 Forbidden wording:
 
-- buy, sell, hold, trading recommendation
-- expected-return, proven-alpha, robust-alpha
+- direct trading recommendation wording
+- forecasted-return, performance-proof, or robustness-overclaim wording
 - valuation support or cheap/expensive based on price-only evidence
 - production ranking replacement
 

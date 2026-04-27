@@ -52,7 +52,7 @@ Do not use this skill to authorize or implement:
 - backtest feedback into scoring, ranking, or model construction
 - new market-data ingestion
 - KOSDAQ150, futures, options, Nasdaq/overseas, or multi-universe expansion
-- trading recommendations, buy/sell/hold, proven-alpha, or expected-return
+- trading recommendations, performance-proof claims, or forecasted-return
   wording
 
 ## Gate Contract
@@ -64,6 +64,13 @@ Allowed scope:
 - label-separated training/evaluation pipeline
 - validation tests and contract checks
 - docs or config that preserve candidate-only semantics
+
+Gate 1 contract-freeze work must keep these four surfaces aligned:
+
+- `adjusted_close` availability and fail-fast label construction
+- default-deny feature allowlist and exclusions
+- no-lookahead timing validation
+- candidate-only sidecar output path and schema
 
 Require explicit separation between:
 
@@ -80,6 +87,8 @@ Block or flag:
 - leakage through cache, report, or generated output reuse
 - target leakage through backtest result fields
 - silent score redefinition after validation
+- missing canonical `adjusted_close` source before label construction
+- ambiguous feature allowlist or sidecar output schema
 
 ## Workflow
 
@@ -100,7 +109,7 @@ Block or flag:
 5. Inspect only targeted files. Do not read archives or generated outputs unless
    the prompt names a conflict, regression, provenance, or release-evidence
    need.
-6. Keep implementation config-first when changing windows, weights, thresholds,
+6. Keep implementation config-first when changing windows, weights, limits,
    paths, or toggles.
 7. Route review through existing review gate rules if the change touches code,
    tests, config, schemas, generated-output boundaries, cross-project handoffs,

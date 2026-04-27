@@ -42,7 +42,9 @@ Narrow verification found:
 
 Because `adjusted_close` is not part of the current MVP v0.1 canonical OHLCV
 contract, the future v0.2 implementation must validate an explicit
-`adjusted_close` source before constructing labels. It must not reinterpret the
+`adjusted_close` source before constructing labels. `Quant_mvp/config/data.toml`
+currently lists optional `adj_close`-style OHLCV fields, but this is not yet a
+canonical `adjusted_close` implementation contract. It must not reinterpret the
 existing `close` column as adjusted close.
 
 ## `adjusted_close` Availability Contract
@@ -50,13 +52,18 @@ existing `close` column as adjusted close.
 Canonical label source:
 
 ```text
-label_up_1d = adjusted_close[t+1] > adjusted_close[t]
+up_1d_label = adjusted_close[t+1] > adjusted_close[t]
 ```
 
 Frozen rules:
 
 - `adjusted_close` is required for label construction.
-- `label_up_1d` is the recommended label column for the future implementation.
+- `up_1d_label` is the label column for the future implementation.
+- Current repo availability verdict:
+  `BLOCKER_UNTIL_CONFIRMED_ADJUSTED_CLOSE_SOURCE`.
+- The only narrow repo evidence found is optional `adj_close` support in
+  `Quant_mvp/config/data.toml`; implementation must first normalize an approved
+  source or alias to canonical `adjusted_close`.
 - `adjusted_close[t+1]` and `adjusted_close[t]` must come from the approved
   adjusted-close source for the same ticker and trading calendar.
 - Missing `adjusted_close` must fail fast before label construction.
@@ -69,10 +76,10 @@ Frozen rules:
   returns, generated outputs, backtest results, reports, or rankings.
 - `label_availability_time` is the canonical label-availability timestamp for
   this gate.
-- A labeled training/evaluation row must not expose `label_up_1d`,
+- A labeled training/evaluation row must not expose `up_1d_label`,
   `adjusted_close[t+1]`, or any label-derived value as a feature.
 - As-of-date candidate inference must be possible without known
-  `label_up_1d`, `adjusted_close[t+1]`, or `label_availability_time`.
+  `up_1d_label`, `adjusted_close[t+1]`, or `label_availability_time`.
 
 Fail-fast examples for future implementation:
 
@@ -89,6 +96,9 @@ Fail-fast examples for future implementation:
 Default policy:
 
 - Any feature not explicitly allowlisted in this section is disallowed.
+- The config allowlist in `Quant_mvp/config/v0_2_candidate_ml_score.toml` is
+  the machine-readable Gate 1 source for allowed source fields, allowed feature
+  families, and forbidden feature patterns.
 - Every feature must be available at or before `decision_time`.
 - Every feature must be technical-only under the MVP v0.1 baseline.
 - Every rolling or cross-sectional feature must have documented source fields,
@@ -155,7 +165,7 @@ The following are disallowed as model features by default:
 - future prices, including `adjusted_close[t+1]` and `next_adjusted_close`
 - future returns, forward returns, target returns, realized future returns, and
   label returns
-- `label_up_1d`, `up_1d_label`, and all label-derived columns
+- `up_1d_label` and all label-derived columns
 - backtest metrics, evaluation outputs, paper backtest results, diagnostics
   derived from realized outcomes, and performance summaries
 - generated rankings, production `rank`, latest ranking outputs, generated
@@ -166,10 +176,20 @@ The following are disallowed as model features by default:
 - new market-data vendor fields or live vendor assumptions not already approved
   by the project route
 - KOSDAQ150, futures/options, Nasdaq, overseas, or multi-universe inputs
-- trading recommendation, buy/sell/hold, target-price, expected-return,
-  position-size, alpha, or strategy-superiority fields
+- recommendation, target-price, forecasted-return, position-size, alpha, or
+  strategy-superiority fields
 - any feature whose availability timestamp is after `decision_time`
 - any feature filled from missing/warmup state with optimistic values
+
+## Timing Field Definitions
+
+- `decision_time`: timestamp when candidate features are frozen; no feature may
+  depend on values unavailable at or before this time.
+- `execution_time`: next simulated actionable timestamp after `decision_time`;
+  it is metadata only and does not authorize execution guidance.
+- `label_time`: timestamp represented by `adjusted_close[t+1]`.
+- `label_availability_time`: timestamp when `up_1d_label` can be known. For
+  labeled training/evaluation rows, this must be after `decision_time`.
 
 ## No-Lookahead Validation And Test Contract
 
@@ -181,7 +201,7 @@ Required static/schema checks:
 - reject missing `adjusted_close` before label construction
 - reject any attempt to substitute `close` for missing `adjusted_close`
 - reject feature columns not in the allowlist
-- reject `label_up_1d`, `up_1d_label`, `next_adjusted_close`, and label-derived
+- reject `up_1d_label`, `next_adjusted_close`, and label-derived
   columns from feature inputs
 - reject backtest/evaluation/generated-output/report/ranking fields from
   feature inputs
@@ -191,6 +211,8 @@ Required static/schema checks:
 
 Required timing checks:
 
+- validate `decision_time`, `execution_time`, `label_time`, and
+  `label_availability_time` fields exist in training/evaluation contract rows
 - validate every feature timestamp is `<= decision_time`
 - validate every source row used for a feature has
   `source_data_availability_time <= decision_time`
@@ -263,13 +285,15 @@ Minimum future sidecar columns:
 - `ticker`
 - `date`
 - `decision_time`
+- `execution_time`
 - `prob_up_1d_candidate`
-- `candidate_only_status`
+- `prob_up_1d_candidate_status`
+- `prob_up_1d_candidate_sample_role`
 - `feature_set_version`
 - `label_contract_version`
 
 The sidecar must not include production `rank`, `technical_composite_score`,
-`final_composite_score`, trading recommendation fields, expected-return fields,
+`final_composite_score`, trading recommendation fields, forecasted-return fields,
 or valuation/fundamental fields.
 
 ## Gate 1 Validation Profile

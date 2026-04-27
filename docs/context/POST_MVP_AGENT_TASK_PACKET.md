@@ -6,7 +6,7 @@ override `AGENTS.md`, `docs/project_checklist.md`, `docs/roadmap_status.md`, or
 the user's latest explicit instruction.
 
 Use this packet when root/master delegates post-MVP work to `Quant_mvp`,
-`reserch_mvp`, `chart_mvp`, `review_mvp`, or a scoped support worker.
+`Quant_mvp/research_mvp`, `chart_mvp`, `review_mvp`, or a scoped support worker.
 
 ## Packet Template
 

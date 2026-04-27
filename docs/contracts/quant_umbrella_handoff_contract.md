@@ -5,9 +5,10 @@
 This contract records the post-MVP logical routing model for the KOSPI200
 technical quant system.
 
-`Quant_mvp` acts as the product umbrella and score-governance coordinator.
-`reserch_mvp` and `chart_mvp` remain separate physical subprojects with their
-own local boundaries, tests, generated-output rules, and master-up duties.
+`Quant_mvp` acts as the product umbrella and owns the research-ingestion lane in
+`Quant_mvp/research_mvp`. `chart_mvp` remains a separate scanner/runtime
+subproject with its own local boundaries, tests, generated-output rules, and
+master-up duties.
 
 ## Confirmed Baseline
 
@@ -15,13 +16,13 @@ own local boundaries, tests, generated-output rules, and master-up duties.
 - MVP v0.1 remains KOSPI200-only and technical-only.
 - This contract changes governance and handoff language only. It does not
   change score formulas, ranking behavior, report behavior, backtest behavior,
-  valuation status, data ingestion, cache semantics, or folder layout.
+  valuation status, data-ingestion behavior, or cache semantics.
 
 ## Lanes
 
 ### Research Evidence Lane
 
-Owner: `reserch_mvp`
+Owner: `Quant_mvp/research_mvp`
 
 Responsibilities:
 
@@ -55,8 +56,8 @@ Responsibilities:
 
 Hard boundary:
 
-- Quant may consume EvidenceCards, but it does not own source collection,
-  metadata adapters, or EvidenceCard generation.
+- Quant score governance may consume EvidenceCards, but it must not treat them
+  as score definitions or adoption decisions.
 - Financial/fundamental data must not enter `technical_composite_score` or
   `final_composite_score`.
 - Backtest output must not feed upstream scoring or ranking.
@@ -92,15 +93,14 @@ Hard boundary:
 3. Chart implements only explicit specs or concrete root/user assignments.
 4. Valuation or hybrid candidates stay separated until the valuation agent gives
    an explicit availability/verdict handoff.
-5. Any physical folder migration must be handled as a separate post-MVP
+5. Any scanner/runtime folder migration must be handled as a separate post-MVP
    migration step.
 
 ## Non-Authorizations
 
 This contract does not authorize:
 
-- physical directory moves
-- `reserch_mvp` rename
+- scanner/runtime physical directory moves
 - score formula changes
 - score adoption
 - ranking or report semantic changes

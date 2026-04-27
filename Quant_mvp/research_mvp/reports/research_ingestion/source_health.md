@@ -111,7 +111,7 @@
 - missing_api_key_note_ko: SEMANTIC_SCHOLAR_API_KEY가 없어 public mode로 실행합니다.
 - skipped_source_reason: None
 - child_runs: ['refresh_20260427_technical_breakout', 'refresh_20260427_technical_mean_reversion', 'refresh_20260427_technical_momentum']
-- last_raw_snapshot_ref: C:\Users\jjaew\Project\master_mvp\reserch_mvp\data\research\raw\semantic_scholar\refresh_20260427_technical_breakout\65ab993d12c5c2cc.json
+- last_raw_snapshot_ref: C:\Users\jjaew\Project\master_mvp\Quant_mvp/research_mvp\data\research\raw\semantic_scholar\refresh_20260427_technical_breakout\65ab993d12c5c2cc.json
 ## periodic_refresh_pipeline
 - source: periodic_refresh_pipeline
 - adapter_version: research_ingestion.v1

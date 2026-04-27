@@ -25,11 +25,13 @@ This directory is the single source of truth for runtime parameters that would o
   `primary_score_migration` section records the exception-managed migration
   plan: the new score is the primary candidate, while MVP v0.1 composite scores
   remain archived legacy references until a later cutover branch is approved.
-- `research_sources.toml`: approved research metadata sources, rate limits, retry settings, and secret-redaction settings
-- `research_queries.toml`: conservative research query packs for technical, diagnostic, valuation, and Korea/KOSPI context discovery
-- `research_policy.toml`: hard-stop policy for research ingestion, including no score adoption, no backtest, and PDF-disabled defaults
-- `research_classification.toml`: transparent keyword rules for research_branch and downstream_route assignment
-- `research_scholar_discovery.toml`: Google Scholar discovery-only policy for local human-assisted inputs
+- `research_intake.toml`: score-governance intake contract for EvidenceCards
+  produced by `research_mvp`; its paths resolve from the `Quant_mvp` project
+  root and prefer canonical `research_mvp/data/research/evidence` files before
+  using temporary legacy `data/research/evidence` fallback files
+
+Research-ingestion source, query, policy, classification, Scholar discovery,
+and v0.2 ML reference query configs live under `research_mvp/config`.
 
 Valuation score examples are separated into `agents/valuation/valuation_scores.example.toml`.
 They are not part of the main technical scanner config.

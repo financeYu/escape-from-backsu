@@ -18,9 +18,9 @@
 
 ## Query-Set 확장 원칙
 
-확장 query-set은 `reserch_mvp/config/research_queries.toml`에 둔다.
+확장 query-set은 `Quant_mvp/research_mvp/config/research_queries.toml`에 둔다.
 
-`Quant_mvp`는 research query-set을 직접 소유하지 않는다. Quant가 필요한 것은 `Quant_mvp/config/research_intake.toml`에 정의된 EvidenceCard intake contract와 upstream handoff 산출물뿐이다.
+`Quant_mvp`는 `Quant_mvp/research_mvp`를 통해 research query-set을 소유한다. Score-governance lane이 필요한 것은 `Quant_mvp/config/research_intake.toml`에 정의된 EvidenceCard intake contract와 upstream handoff 산출물이다.
 
 각 확장 query-set은 최소한 아래 metadata를 가진다.
 

@@ -29,15 +29,16 @@ Paper-derived ideas must become EvidenceCards before any downstream score or val
 
 Read the repository root `AGENTS.md` first.
 
-This research agent is the canonical upstream research-ingestion owner and lives at:
+This research agent is the canonical Quant research-ingestion owner and lives at:
 
 ```text
-reserch_mvp/AGENTS.md
+Quant_mvp/research_mvp/AGENTS.md
 ```
 
-The directory name `reserch_mvp` is intentionally preserved for path compatibility. Do not rename it unless the user requests a dedicated migration.
-
-`reserch_mvp` is the upstream research and evidence lane under the broader Quant product umbrella. This is an organizational relationship only; it does not move canonical ownership of source policy, metadata adapters, seed lifecycle, EvidenceCard generation, or research-ingestion guardrails out of `reserch_mvp`.
+`Quant_mvp/research_mvp` is the upstream research and evidence lane inside the
+broader Quant product umbrella. It owns source policy, metadata adapters, seed
+lifecycle, EvidenceCard generation, research query config, and
+research-ingestion guardrails.
 
 The main technical workflow remains technical-first and uses only:
 
@@ -53,7 +54,10 @@ Valuation and fundamental review remains separated in:
 
 This agent may classify research as `technical`, `valuation`, `hybrid`, `diagnostic`, or `out_of_scope`, but it must not collapse those labels into the main technical `score_branch`.
 
-`Quant_mvp` is a downstream consumer and coordinator for this project's EvidenceCards and handoff files. Quant may read research outputs through an explicit intake contract, but it is not the source collection owner and must not own source collection policy, query expansion, metadata adapters, or EvidenceCard generation.
+The broader `Quant_mvp` score-governance lane consumes this project's
+EvidenceCards and handoff files through an explicit intake contract. That
+contract does not turn EvidenceCards into score definitions or adoption
+decisions.
 
 Allowed downstream routes:
 
@@ -79,7 +83,7 @@ Beyond-scope work includes:
 - valuation/fundamental review, valuation verdicts, or point-in-time financial availability decisions
 - scanner runtime, chart rendering, CLI, GUI, data cache, or report-generation behavior outside research ingestion
 - root-owned policy, release, CI, Git, roadmap verdict, or cross-project routing decisions
-- generated-output/cache boundary changes outside `reserch_mvp`
+- generated-output/cache boundary changes outside `Quant_mvp/research_mvp`
 - downstream project file edits except explicitly assigned intake/handoff updates
 
 The approval request must state:
@@ -118,8 +122,8 @@ Use the required master-up template in the workspace root `docs/master_up_templa
 
 The following integration issues are resolved in this agent specification:
 
-- The research agent is explicitly separated under `reserch_mvp/AGENTS.md`.
-- `Quant_mvp/agents/research/AGENTS.md` is a compatibility pointer / intake note, not the canonical research agent.
+- The research agent is explicitly housed under `Quant_mvp/research_mvp/AGENTS.md`.
+- This file is the canonical research agent.
 - `config/research_scholar_discovery.toml` is a required config file.
 - EvidenceCards explicitly include `valuation_status`, `valuation_verdict`, `blocked_by_data`, and `parent_evidence_card_id`.
 - Google Scholar allowed import channels are aligned with CLI commands, directory structure, and tests.
@@ -1021,13 +1025,13 @@ From a fresh checkout, first make the `src` layout importable with one of these 
 
 ```bash
 # From the repository root:
-python -m pip install -e reserch_mvp
+python -m pip install -e Quant_mvp/research_mvp
 
-# Or from reserch_mvp/:
+# Or from Quant_mvp/research_mvp/:
 python -m pip install -e .
 ```
 
-If editable install is not available, set `PYTHONPATH=reserch_mvp/src` from the repository root or `PYTHONPATH=src` from `reserch_mvp/` before running `python -m research_ingestion`.
+If editable install is not available, set `PYTHONPATH=Quant_mvp/research_mvp/src` from the repository root or `PYTHONPATH=src` from `Quant_mvp/research_mvp/` before running `python -m research_ingestion`.
 
 Suggested commands:
 

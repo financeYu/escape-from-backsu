@@ -66,7 +66,7 @@ true:
 
 If these conditions are not met, `review_mvp` must report findings, route the
 fix to the responsible subproject, or record a handoff/TODO. It must not
-directly edit `Quant_mvp`, `chart_mvp`, `reserch_mvp`, root-owned files, or
+directly edit `Quant_mvp`, `chart_mvp`, `Quant_mvp/research_mvp`, root-owned files, or
 other project areas from an internal review task.
 
 ## Review length policy

@@ -14,8 +14,8 @@ feedback.
 
 ## Research Material Consulted
 
-- `reserch_mvp/reports/research_ingestion/step5_candidate_evidence.md`
-- `reserch_mvp/reports/research_ingestion/handoff_summary.md`
+- `Quant_mvp/research_mvp/reports/research_ingestion/step5_candidate_evidence.md`
+- `Quant_mvp/research_mvp/reports/research_ingestion/handoff_summary.md`
 - `Quant_mvp/reports/technical_review/pretest_screening.md`
 
 ## Adjustment Summary

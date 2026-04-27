@@ -54,7 +54,7 @@ KOSPI200 구성 종목을 대상으로 하는 일봉 OHLCV 기반 기술적/통�
 | `chart_mvp/` | 현재 실행 가능한 스캐너/차트/캐시 하위 프로젝트 |
 | `Quant_mvp/` | 점수 설계, 기술 검토, research intake contract, 밸류에이션 경계 문서 |
 | `Quant_mvp/backtest_mvp/` | Quant에 종속된 evaluation-only 백테스트 하위 프로젝트 |
-| `reserch_mvp/` | 리서치 수집/증거 준비 canonical project |
+| `Quant_mvp/research_mvp/` | 리서치 수집/증거 준비 canonical project |
 | `review_mvp/` | 전문 코드 리뷰와 선택적 최종 검증 보조 도구 |
 
 ## 로드맵 / 아카이브

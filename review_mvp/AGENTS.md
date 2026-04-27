@@ -18,7 +18,7 @@ The workspace already has several specialized review concepts:
 
 - `Quant_mvp` reviews score definitions, technical usefulness, redundancy, and valuation boundaries.
 - `chart_mvp` verifies scanner runtime behavior.
-- `reserch_mvp` reviews research-ingestion evidence quality.
+- `Quant_mvp/research_mvp` reviews research-ingestion evidence quality.
 
 Those are domain reviews, not final code reviews.
 
@@ -122,7 +122,7 @@ following are true:
 
 If these conditions are not met, `review_mvp` must report findings, route the
 fix to the responsible subproject, or record a handoff/TODO. It must not
-directly edit `Quant_mvp`, `chart_mvp`, `reserch_mvp`, root-owned files, or
+directly edit `Quant_mvp`, `chart_mvp`, `Quant_mvp/research_mvp`, root-owned files, or
 other project areas from an internal review task.
 
 `review_mvp` output format:
@@ -238,7 +238,7 @@ python -m unittest discover -s tests -v
 ```
 
 Do not use the root-wide command from a subproject-local review task. Root-wide
-specialist review can inspect `Quant_mvp`, `chart_mvp`, `reserch_mvp`, and
+specialist review can inspect `Quant_mvp`, `chart_mvp`, `Quant_mvp/research_mvp`, and
 other project areas, so it is reserved for explicit master/root final-validation
 or cross-project review requests.
 

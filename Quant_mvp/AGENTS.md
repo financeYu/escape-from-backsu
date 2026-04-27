@@ -4,11 +4,9 @@
 
 If this project is used inside the parent `master_mvp` workspace, read the parent `../AGENTS.md` first. The parent master agent owns cross-project routing, Git policy, and handoff coordination. This `Quant_mvp` agent remains responsible for score governance, technical review, valuation boundaries, and quant-specific config policy.
 
-`Quant_mvp` may act as the product-line umbrella and score-governance
-coordinator for the separated research ingestion and scanner runtime lines.
-This coordination role is contract and handoff governance only: it does not
-move folders, transfer source-collection ownership from `../reserch_mvp`, or
-transfer chart runtime implementation ownership from `../chart_mvp`.
+`Quant_mvp` is the product-line umbrella for score governance and the canonical
+research-ingestion lane. Research ingestion lives inside
+`research_mvp/`; scanner runtime remains owned by `../chart_mvp`.
 
 This post-MVP documentation clarification preserves the MVP v0.1 baseline. It
 does not authorize score formula, adoption, ranking, report, backtest,
@@ -26,16 +24,14 @@ Root/master approval is required before:
 - editing root-owned files such as `../AGENTS.md`, root `README.md`, root
   `.gitignore`, root CI, release notes, project registry, roadmap status, or
   repository-wide policy
-- editing another subproject such as `../reserch_mvp`, `../chart_mvp`, or
-  `../review_mvp`
+- editing another subproject such as `../chart_mvp` or `../review_mvp`
 - changing cross-project routing, handoff ownership, integration policy, branch
   policy, or Step verdicts
 - consuming or modifying another subproject's runtime outputs, generated
   artifacts, cache paths, or implementation files beyond a read-only targeted
   boundary check
-- implementing behavior that belongs to another project role, including
-  research ingestion, chart runtime, specialist review tooling, or root/master
-  integration
+- implementing behavior that belongs to another project role, including chart
+  runtime, specialist review tooling, or root/master integration
 
 If a Quant task appears to require crossing this boundary, stop before editing
 or running side-effecting commands outside the Quant scope. Report:
@@ -128,15 +124,17 @@ Prefer explicit downgrades, deferrals, or narrower implementations.
 
 ## Multi-agent operating model
 
-This repository consumes one separated upstream research agent, uses one strict scope watchdog, and has **three distinct technical agents** with different responsibilities.
+This repository owns one internal research-ingestion subproject, uses one strict
+scope watchdog, and has **three distinct technical agents** with different
+responsibilities.
 
 Upstream evidence agent:
 
 0. **Research Ingestion Agent**
-   - lives in `../reserch_mvp/AGENTS.md`
+   - lives in `research_mvp/AGENTS.md`
    - owns approved paper metadata collection, local discovery seeds, metadata-source adapters, research query config, and conservative EvidenceCards
    - routes candidates without adopting scores, running backtests, claiming alpha, or performing valuation review
-   - hands Quant only explicit intake material governed by `config/research_intake.toml`
+   - hands the Quant score-governance lane only explicit intake material governed by `config/research_intake.toml`
 
 Scope watchdog:
 
@@ -168,8 +166,10 @@ Each agent should challenge different failure modes.
 
 Workers must use the root `docs/scope_audit_process.md` when watchdog audit is required before master-up.
 
-Research ingestion is intentionally separated into `../reserch_mvp`.
-The Quant-side `agents/research/AGENTS.md` is only a compatibility pointer and intake note. Quant may consume EvidenceCards and handoff files through `config/research_intake.toml`, but it must not collect sources, expand research query sets, own metadata adapters, generate EvidenceCards, adopt scores from EvidenceCards, run paper-derived backtests, claim alpha, or perform valuation review.
+Research ingestion is intentionally housed in `research_mvp` inside `Quant_mvp`.
+The score-governance lane may consume EvidenceCards and handoff files through
+`config/research_intake.toml`, but it must not adopt scores from EvidenceCards,
+run paper-derived backtests, claim alpha, or perform valuation review.
 
 EvidenceCards are upstream evidence objects, not score definitions, adoption
 decisions, ranking inputs, alpha evidence, or valuation verdicts. A chart
@@ -827,12 +827,14 @@ Valuation review lives in a separated agent document and should be invoked only 
   - `valuation_agent_examples.md`
 
 - `agents/`
-  - `research/`
-    - `AGENTS.md` as a compatibility pointer to `../reserch_mvp`
   - `audit/`
     - `AGENTS.md`
   - `valuation/`
     - `AGENTS.md`
+
+- `research_mvp/`
+  - canonical research-ingestion subproject for source policy, query sets,
+    metadata adapters, EvidenceCards, and research-ingestion reports
 
 - `reports/`
   - `score_backtests/`

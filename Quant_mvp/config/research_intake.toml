@@ -1,18 +1,24 @@
 [metadata]
 contract_version = "research_intake.v1"
 owner = "Quant_mvp"
-upstream_owner = "reserch_mvp"
+upstream_owner = "Quant_mvp/research_mvp"
+
+[path_resolution]
+base = "quant_project_root"
+allowed_inputs_status = "preferred_canonical"
+compatibility_inputs_status = "temporary_legacy_fallback"
 
 [allowed_inputs]
-evidence_cards_jsonl = "../reserch_mvp/data/research/evidence/evidence_cards.jsonl"
-technical_candidates_jsonl = "../reserch_mvp/data/research/evidence/technical_candidates.jsonl"
-diagnostic_items_jsonl = "../reserch_mvp/data/research/evidence/diagnostic_items.jsonl"
-hybrid_review_required_jsonl = "../reserch_mvp/data/research/evidence/hybrid_review_required.jsonl"
+evidence_cards_jsonl = "research_mvp/data/research/evidence/evidence_cards.jsonl"
+technical_candidates_jsonl = "research_mvp/data/research/evidence/technical_candidates.jsonl"
+diagnostic_items_jsonl = "research_mvp/data/research/evidence/diagnostic_items.jsonl"
+hybrid_review_required_jsonl = "research_mvp/data/research/evidence/hybrid_review_required.jsonl"
 
 [compatibility_inputs]
 # Temporary compatibility paths for EvidenceCards generated before the
 # research-ingestion split. Consumers should prefer [allowed_inputs] and fall
-# back here only when the upstream handoff files are not present locally.
+# back here only when the upstream handoff files are not present locally. All
+# paths in this contract resolve from the Quant_mvp project root.
 evidence_cards_jsonl = "data/research/evidence/evidence_cards.jsonl"
 technical_candidates_jsonl = "data/research/evidence/technical_candidates.jsonl"
 diagnostic_items_jsonl = "data/research/evidence/diagnostic_items.jsonl"
@@ -36,9 +42,10 @@ valuation_agent_handoff = false
 hybrid_split_required = false
 reject_log = false
 
-[quant_consumer_policy]
-may_collect_sources = false
-may_modify_research_queries = false
-may_generate_evidence_cards = false
+[quant_research_owner_policy]
+research_owner_path = "research_mvp"
+may_collect_sources = true
+may_modify_research_queries = true
+may_generate_evidence_cards = true
 may_adopt_scores_from_evidence_cards = false
 may_use_research_material_for_step14 = "future_intake_backlog_only_unless_explicitly_promoted"

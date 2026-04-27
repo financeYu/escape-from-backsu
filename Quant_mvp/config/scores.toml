@@ -7,7 +7,7 @@
 registry_stage = "step_9_research_tester_raw_score_contract_with_step20_mvp_downstream_contracts"
 registry_alignment = "official_step_5_score_definitions"
 official_candidate_count = 8
-research_adjustment_source = "../reserch_mvp/reports/research_ingestion/step5_candidate_evidence.md"
+research_adjustment_source = "research_mvp/reports/research_ingestion/step5_candidate_evidence.md"
 research_adjustment_status = "candidate_metadata_only_runtime_activation_disabled"
 runtime_score_implementation = false
 production_scoring_enabled = false

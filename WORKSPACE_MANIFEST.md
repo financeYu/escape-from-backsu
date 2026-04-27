@@ -68,12 +68,12 @@ expansion, or market data ingestion.
 - gui_mvp/
 - quant_project_reference_for_chatgpt_project_current.md
 - reports/validation/
-- reserch_mvp/AGENTS.md
-- reserch_mvp/config/
-- reserch_mvp/reports/research_ingestion/
-- reserch_mvp/research_ingestion/
-- reserch_mvp/src/research_ingestion/
-- reserch_mvp/tests/research_ingestion/
+- Quant_mvp/research_mvp/AGENTS.md
+- Quant_mvp/research_mvp/config/
+- Quant_mvp/research_mvp/reports/research_ingestion/
+- Quant_mvp/research_mvp/research_ingestion/
+- Quant_mvp/research_mvp/src/research_ingestion/
+- Quant_mvp/research_mvp/tests/research_ingestion/
 - review_mvp/
 - scripts/
 - src/backtest/
@@ -140,7 +140,7 @@ expansion, or market data ingestion.
 - python scripts/run_local_validation.py chart
 - python scripts/run_local_validation.py context
 - python scripts/run_local_validation.py reports-backtest
-- python -m pytest -q -p no:cacheprovider reserch_mvp/tests/research_ingestion
+- python -m pytest -q -p no:cacheprovider Quant_mvp/research_mvp/tests/research_ingestion
 - python -m pytest -q -p no:cacheprovider tests/context tests/test_step11_composite_schema.py
 - python -m unittest discover -s review_mvp/tests -v
 - python scripts/context/check_context_staleness.py

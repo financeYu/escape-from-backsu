@@ -9,7 +9,7 @@
 - branch: `research/step20-ingestion-ops-optimization`
 - worktree: `C:\Users\jjaew\Project\worktrees\research_step20-ingestion-ops-optimization`
 - active roadmap state: Step 20 COMPLETE 이후 research support patch
-- responsible project: `reserch_mvp`
+- responsible project: `Quant_mvp/research_mvp`
 
 ## 완료한 6개 항목
 
@@ -48,8 +48,8 @@
 
 ## 검증
 
-- `python -m pytest -q -p no:cacheprovider reserch_mvp\tests\research_ingestion` = 102 passed, 4 skipped
-- `$env:RUN_LIVE_RESEARCH_API_TESTS='1'; python -m pytest -q -p no:cacheprovider reserch_mvp\tests\research_ingestion\live` = 3 passed, 1 skipped
+- `python -m pytest -q -p no:cacheprovider Quant_mvp/research_mvp\tests\research_ingestion` = 102 passed, 4 skipped
+- `$env:RUN_LIVE_RESEARCH_API_TESTS='1'; python -m pytest -q -p no:cacheprovider Quant_mvp/research_mvp\tests\research_ingestion\live` = 3 passed, 1 skipped
 - `python -m research_ingestion collect --dry-run --run-id opt_check_collect --sources arxiv,openalex --query-set technical_momentum --max-results 2 --page-size 1` passed
 - `python -m research_ingestion refresh --dry-run --run-id opt_check_refresh --profile fast_refresh` passed
 - `python -m research_ingestion refresh --dry-run --run-id opt_check_full --profile full_refresh` passed

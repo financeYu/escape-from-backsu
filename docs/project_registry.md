@@ -9,10 +9,9 @@ quant design, valuation review, and executable scanner work from stepping on
 each other as the repository moves to Git-based collaboration.
 
 Post-MVP operating model: `Quant_mvp` is the product umbrella for the
-KOSPI200 technical quant system. `reserch_mvp` and `chart_mvp` remain separate
-physical subprojects and keep their local ownership boundaries, but they are
-routed as upstream research/evidence and downstream scanner/runtime lanes under
-the Quant product line.
+KOSPI200 technical quant system. Research ingestion now lives inside
+`Quant_mvp/research_mvp`, while `chart_mvp` remains a separate downstream
+scanner/runtime subproject.
 
 ---
 
@@ -21,7 +20,7 @@ the Quant product line.
 | ID | Project | Path | Primary responsibility | Reason |
 | --- | --- | --- | --- | --- |
 | P0 | Master Governance | `.` | Repository policy, Git hygiene, project routing, cross-project handoffs | Keeps the workspace coherent and prevents every subproject from inventing its own process |
-| P1 | Research Evidence | `reserch_mvp` | Upstream research/evidence lane for the Quant product umbrella: source policy, paper metadata, discovery imports, metadata adapters, EvidenceCards, source-health reports | Prevents paper claims from becoming adopted scores while giving Quant an explicit intake stream |
+| P1 | Research Evidence | `Quant_mvp/research_mvp` | Upstream research/evidence lane for the Quant product umbrella: source policy, paper metadata, discovery imports, metadata adapters, EvidenceCards, source-health reports | Prevents paper claims from becoming adopted scores while giving Quant an explicit intake stream |
 | P2 | Quant Score Governance | `Quant_mvp` | Quant product umbrella, score taxonomy, technical review, research intake contract, config-first scoring policy, and handoff coordination | Ensures formulas, windows, thresholds, and adoption decisions are explicit before implementation |
 | P3 | Scanner Runtime | `chart_mvp` | Downstream scanner/runtime lane for the Quant product umbrella: KOSPI200 data fetching, caching, indicators, ranking output, charts, CLI/GUI | Keeps runnable code and generated runtime artifacts separate from research/design documents while implementing only reviewed Quant specs |
 | P4 | Valuation Review | `Quant_mvp/agents/valuation` | Point-in-time fundamental availability and valuation verdicts | Prevents price-only signals from being mislabeled as valuation evidence |
@@ -37,10 +36,11 @@ the Quant product line.
 Research to quant:
 
 - Input: paper metadata, abstracts, local discovery seeds, EvidenceCards
-- Owner: `reserch_mvp`
+- Owner: `Quant_mvp/research_mvp`
 - Quant consumer contract: `Quant_mvp/config/research_intake.toml`
 - Output: candidate cards routed to `technical_score_architect`, `valuation_agent_handoff`, `hybrid_split_required`, `diagnostic_backlog`, or `reject_log`
-- Boundary: `Quant_mvp/agents/research/AGENTS.md` is a compatibility pointer / intake note, not a source-policy owner
+- Boundary: `Quant_mvp/research_mvp/AGENTS.md` is the canonical
+  source-policy owner.
 - Umbrella rule: Research is an upstream lane under the Quant product line, but
   it does not define scores, adopt scores, run backtests, or issue valuation
   verdicts.
@@ -119,18 +119,19 @@ Cross-step conflict checkpoint:
 
 ## Boundary decisions
 
-1. `reserch_mvp` keeps its current misspelled directory name until a dedicated rename migration is requested.
+1. `Quant_mvp/research_mvp` is the canonical research-ingestion location.
 2. `chart_mvp/data` and `chart_mvp/outputs` are runtime artifacts, not source-controlled project state.
 3. Research ingestion does not adopt scores.
-4. Quant consumes research via `research_intake.toml`; it does not own source collection, query expansion, metadata adapters, or EvidenceCard generation.
+4. Quant owns research ingestion through `Quant_mvp/research_mvp`; the
+   score-governance lane consumes research via `research_intake.toml`.
 5. Quant score review does not fetch live chart data.
 6. Chart runtime does not decide valuation status.
 7. The master agent coordinates ownership but does not overrule specialized agent boundaries.
 8. `review_mvp` handles specialist code-level review, not ordinary local first review, quant score adoption, or valuation verdicts.
 9. `Quant_mvp/backtest_mvp` is the canonical backtest owner; `src.backtest` is a legacy compatibility facade.
-9. Logical Quant umbrella routing does not move `reserch_mvp` or `chart_mvp`
-   into `Quant_mvp` physically. A physical migration requires a dedicated
-   post-MVP migration step, path/import review, and conflict checkpoint.
+9. `chart_mvp` remains physically separate from `Quant_mvp`; scanner runtime
+   migration still requires a dedicated post-MVP migration step, path/import
+   review, and conflict checkpoint.
 10. `docs/contracts/quant_umbrella_handoff_contract.md` records the compact
     handoff contract for the research -> Quant -> chart flow.
 

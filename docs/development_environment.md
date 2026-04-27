@@ -7,14 +7,14 @@
 ## Scope
 
 - 루트 `src` 패키지와 통합 테스트 의존성을 설치한다.
-- `reserch_mvp` 연구 수집 CLI를 editable package로 설치한다.
+- `Quant_mvp/research_mvp` 연구 수집 CLI를 editable package로 설치한다.
 - `chart_mvp/requirements.txt`의 런타임 의존성을 루트 개발환경에 포함한다.
 - `review_mvp`는 표준 라이브러리 기반 리뷰 도구로 유지한다.
 - live API, 외부 네트워크, secrets, market data cache 요구사항은 기본 개발환경에 포함하지 않는다.
 
 ## Python Version
 
-Python 3.11 이상을 사용한다. 루트와 `reserch_mvp` 모두 `tomllib`와 현대 packaging metadata를 기준으로 한다.
+Python 3.11 이상을 사용한다. 루트와 `Quant_mvp/research_mvp` 모두 `tomllib`와 현대 packaging metadata를 기준으로 한다.
 
 ## Setup
 
@@ -27,7 +27,7 @@ python -m pip install -r requirements-dev.txt
 이 명령은 다음을 설치한다.
 
 - 루트 package: `-e .[dev]`
-- research ingestion package: `-e ./reserch_mvp`
+- research ingestion package: `-e ./Quant_mvp/research_mvp`
 - chart runtime dependencies: `-r chart_mvp/requirements.txt`
 
 ## Validation Commands

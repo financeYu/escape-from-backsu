@@ -15,7 +15,7 @@ adaptive_edge = 0.25
 
 [research_adjustment]
 status = "candidate_weighting_only_runtime_activation_disabled"
-source_report = "../reserch_mvp/reports/research_ingestion/step5_candidate_evidence.md"
+source_report = "research_mvp/reports/research_ingestion/step5_candidate_evidence.md"
 applied_on = "2026-04-26"
 notes = "Korea-specific research intake favors cautious short-term reversal review, while trend/momentum variants carry high redundancy and pattern/volume confirmation ideas remain lower-priority context or filters."
 

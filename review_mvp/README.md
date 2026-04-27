@@ -61,7 +61,7 @@ Swift 기준 리뷰 프롬프트를 Python 기준으로 옮기고, 그 기준 �
 
 `review_mvp` 내부 변경을 점검할 때는 `review_mvp` 디렉터리 안에서
 실행하고 현재 하위 프로젝트만 대상으로 둡니다. 이 local 명령은
-`Quant_mvp`, `chart_mvp`, `reserch_mvp`를 스캔하지 않습니다.
+`Quant_mvp`, `chart_mvp`, `Quant_mvp/research_mvp`를 스캔하지 않습니다.
 
 기본 텍스트 리포트:
 
@@ -106,7 +106,7 @@ py -3 review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-
 py -3 -m unittest discover -s review_mvp/tests -v
 ```
 
-루트 명령은 `Quant_mvp`, `chart_mvp`, `reserch_mvp` 등 다른 하위
+루트 명령은 `Quant_mvp`, `chart_mvp`, `Quant_mvp/research_mvp` 등 다른 하위
 프로젝트까지 검사할 수 있으므로, master/root가 명시적으로 요청한
 cross-project 또는 final-validation review에만 사용합니다. 좁은 local
 change는 responsible subproject의 local first review와 local

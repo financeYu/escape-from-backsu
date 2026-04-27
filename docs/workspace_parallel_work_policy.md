@@ -291,7 +291,7 @@ Required role separation:
 | --- | --- | --- | --- | --- |
 | Step implementation | Major | one bounded roadmap Step or implementation slice | `codex/stepXX-<scope>` | Step-owned docs, source, tests |
 | Quant score/governance | Minor/support | Quant score design, adoption synthesis, technical review governance, or config-policy support not owned by the major Step branch | `quant/stepXX-<scope>` | `Quant_mvp/`, Step-owned Quant docs/config/tests |
-| Research ingestion | Minor/support | upstream evidence or EvidenceCard material only | `research/stepXX-<scope>` | `reserch_mvp/`, research handoff docs |
+| Research ingestion | Minor/support | upstream evidence or EvidenceCard material only | `research/stepXX-<scope>` | `Quant_mvp/research_mvp/`, research handoff docs |
 | Chart runtime | Minor/support | scanner, cache, ranking, chart, CLI, GUI implementation | `chart/stepXX-<scope>` | `chart_mvp/` runtime code/tests/config |
 | Review | Minor/support | code review findings or explicitly assigned minimal repair | `review/stepXX-<scope>` | `review_mvp/` or review notes |
 | Audit / scope watchdog | Minor/support | scope, roadmap, terminology, and boundary checks | `audit/stepXX-<scope>` | audit reports or compact packets |

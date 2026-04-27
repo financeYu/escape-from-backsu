@@ -63,7 +63,7 @@ These reports are treated as prior/background validation artifacts unless explic
 
 ## Child project ranking-like outputs
 
-No ranking-like output files were found under `Quant_mvp`, `reserch_mvp`, or `review_mvp` during Step 3 inspection.
+No ranking-like output files were found under `Quant_mvp`, `Quant_mvp/research_mvp`, or `review_mvp` during Step 3 inspection.
 
 The external sibling `C:/Users/jjaew/Project/stock_mvp` contains code files named `scorer.py`, `backtest.py`, and `report.py`, but no ranking output files were inspected or merged during Step 3.
 

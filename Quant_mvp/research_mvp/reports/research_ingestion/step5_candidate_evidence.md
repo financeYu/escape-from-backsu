@@ -7,10 +7,10 @@ Step 5 research-support / candidate evidence preparation
 Canonical agent:
 
 ```text
-reserch_mvp/AGENTS.md
+Quant_mvp/research_mvp/AGENTS.md
 ```
 
-`reserch_mvp`가 canonical research-ingestion owner이다. 본 산출물은 `Quant_mvp` Score Architect를 지원하기 위한 upstream evidence report이며, score definition이나 adoption decision이 아니다.
+`Quant_mvp/research_mvp`가 canonical research-ingestion owner이다. 본 산출물은 `Quant_mvp` Score Architect를 지원하기 위한 upstream evidence report이며, score definition이나 adoption decision이 아니다.
 
 ## 작업 범위
 

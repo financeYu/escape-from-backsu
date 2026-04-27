@@ -32,7 +32,7 @@ must not be used for production scoring during Step 5.
 ## Research-Informed Candidate Weighting Note
 
 The 2026-04-26 adjustment uses
-`reserch_mvp/reports/research_ingestion/step5_candidate_evidence.md` as local
+`Quant_mvp/research_mvp/reports/research_ingestion/step5_candidate_evidence.md` as local
 research support. It is not an adoption decision and does not activate runtime
 scoring. The practical effect is:
 

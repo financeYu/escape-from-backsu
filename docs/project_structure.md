@@ -20,11 +20,11 @@ No contrary repository evidence was found during Step 3 inspection.
 
 Child projects under the canonical root:
 
-- `Quant_mvp`: quant product umbrella, score governance, research intake,
+- `Quant_mvp`: quant product umbrella, score governance, research ingestion,
   and config-policy project
   - `Quant_mvp/backtest_mvp`: Quant-dependent evaluation-only backtest
     subproject
-- `reserch_mvp`: canonical upstream research-ingestion project and research
+- `Quant_mvp/research_mvp`: canonical research-ingestion project and research
   evidence lane for the Quant product umbrella
 - `chart_mvp`: current downstream runnable scanner/runtime project for
   Quant-reviewed specs
@@ -38,9 +38,9 @@ Only projects under the canonical root are active. Child and legacy logic must
 not be merged automatically. Any import, migration, or deletion requires an
 explicit reason and review.
 
-Logical Quant umbrella routing does not change the physical project layout.
-`reserch_mvp` and `chart_mvp` remain separate child projects until a dedicated
-post-MVP migration explicitly approves path moves, import updates, and
+Research ingestion is physically housed under `Quant_mvp/research_mvp`.
+`chart_mvp` remains a separate child project until a dedicated post-MVP
+migration explicitly approves scanner path moves, import updates, and
 generated-output boundary checks.
 
 ## Target Module Boundaries

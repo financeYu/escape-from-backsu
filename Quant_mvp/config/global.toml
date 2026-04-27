@@ -20,7 +20,7 @@ allow_user_override = true
 technical_enabled = true
 
 [external_agents]
-research_ingestion_agent_path = "../reserch_mvp/AGENTS.md"
+research_ingestion_agent_path = "research_mvp/AGENTS.md"
 research_intake_contract_path = "config/research_intake.toml"
 valuation_agent_path = "agents/valuation/AGENTS.md"
 valuation_examples_path = "docs/valuation_agent_examples.md"

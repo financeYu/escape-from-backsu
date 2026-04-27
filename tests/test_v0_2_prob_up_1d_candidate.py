@@ -12,13 +12,19 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.scores.prob_up_1d_candidate import (  # noqa: E402
+    CANDIDATE_SIDECAR_RANK_COLUMN,
+    DECISION_TIME_COLUMN,
+    EXECUTION_TIME_COLUMN,
     FEATURE_STATUS_COLUMN,
+    LABEL_AVAILABILITY_TIME_COLUMN,
     LABEL_AVAILABLE_COLUMN,
     LABEL_COLUMN,
+    LABEL_TIME_COLUMN,
     PROBABILITY_COLUMN,
     PROBABILITY_SAMPLE_ROLE_COLUMN,
     PROBABILITY_STATUS_COLUMN,
     ProbUp1DConfig,
+    build_prob_up_1d_candidate_sidecar_ranking,
     build_prob_up_1d_dataset,
     run_prob_up_1d_candidate_pipeline,
 )
@@ -89,6 +95,10 @@ def test_feature_table_and_next_day_labels_are_separated() -> None:
     assert samsung_second[LABEL_COLUMN] == 0
     assert bool(samsung_last[LABEL_AVAILABLE_COLUMN]) is False
     assert pd.isna(samsung_last[LABEL_COLUMN])
+    assert samsung_first[LABEL_TIME_COLUMN] == pd.Timestamp("2026-01-02")
+    assert samsung_first[LABEL_AVAILABILITY_TIME_COLUMN] == pd.Timestamp("2026-01-02")
+    assert pd.isna(samsung_last[LABEL_TIME_COLUMN])
+    assert pd.isna(samsung_last[LABEL_AVAILABILITY_TIME_COLUMN])
 
 
 def test_feature_table_does_not_change_when_only_future_price_changes() -> None:
@@ -129,6 +139,9 @@ def test_pipeline_outputs_candidate_probabilities_without_ranking_or_composites(
     output = result.candidate_output
 
     assert PROBABILITY_COLUMN in output.columns
+    assert {DECISION_TIME_COLUMN, EXECUTION_TIME_COLUMN, LABEL_TIME_COLUMN, LABEL_AVAILABILITY_TIME_COLUMN}.issubset(
+        output.columns
+    )
     assert PROBABILITY_STATUS_COLUMN in output.columns
     assert PROBABILITY_SAMPLE_ROLE_COLUMN in output.columns
     ready = output[PROBABILITY_STATUS_COLUMN].eq("candidate_probability")
@@ -139,6 +152,13 @@ def test_pipeline_outputs_candidate_probabilities_without_ranking_or_composites(
     assert result.training_result.model.evaluation_metrics["evaluation_count"] == pytest.approx(3.0)
     assert "evaluation_out_of_sample" in set(output[PROBABILITY_SAMPLE_ROLE_COLUMN])
     assert "candidate_unlabeled" in set(output[PROBABILITY_SAMPLE_ROLE_COLUMN])
+    latest = output[
+        output["ticker"].eq("005930") & output["date"].eq(pd.Timestamp("2026-01-06"))
+    ].iloc[0]
+    assert latest[DECISION_TIME_COLUMN] == pd.Timestamp("2026-01-06")
+    assert latest[EXECUTION_TIME_COLUMN] == pd.Timestamp("2026-01-06")
+    assert pd.isna(latest[LABEL_TIME_COLUMN])
+    assert pd.isna(latest[LABEL_AVAILABILITY_TIME_COLUMN])
 
     forbidden = {
         "rank",
@@ -153,6 +173,56 @@ def test_pipeline_outputs_candidate_probabilities_without_ranking_or_composites(
         LABEL_COLUMN,
     }
     assert not forbidden.intersection(output.columns)
+
+
+def test_as_of_date_latest_rows_are_candidate_inference_without_labels() -> None:
+    result = run_prob_up_1d_candidate_pipeline(
+        probability_frame(),
+        config=small_config(),
+        as_of_date="2026-01-06",
+    )
+    latest_rows = result.candidate_output[result.candidate_output["date"].eq(pd.Timestamp("2026-01-06"))]
+
+    assert set(latest_rows[PROBABILITY_SAMPLE_ROLE_COLUMN]) == {"candidate_unlabeled"}
+    assert latest_rows[PROBABILITY_COLUMN].notna().all()
+    assert latest_rows[LABEL_TIME_COLUMN].isna().all()
+    assert latest_rows[LABEL_AVAILABILITY_TIME_COLUMN].isna().all()
+    assert result.candidate_sidecar_ranking["date"].eq(pd.Timestamp("2026-01-06")).all()
+    assert CANDIDATE_SIDECAR_RANK_COLUMN in result.candidate_sidecar_ranking.columns
+
+
+def test_candidate_sidecar_ranking_orders_probability_then_ticker_for_ties() -> None:
+    candidate_output = pd.DataFrame(
+        [
+            {"ticker": "005930", "date": "2026-01-06", PROBABILITY_COLUMN: 0.60},
+            {"ticker": "000660", "date": "2026-01-06", PROBABILITY_COLUMN: 0.60},
+            {"ticker": "035420", "date": "2026-01-06", PROBABILITY_COLUMN: 0.80},
+            {"ticker": "051910", "date": "2026-01-05", PROBABILITY_COLUMN: 0.99},
+        ]
+    )
+
+    sidecar = build_prob_up_1d_candidate_sidecar_ranking(candidate_output, as_of_date="2026-01-06")
+
+    assert sidecar["ticker"].tolist() == ["035420", "000660", "005930"]
+    assert sidecar[CANDIDATE_SIDECAR_RANK_COLUMN].tolist() == [1, 2, 3]
+    assert "technical_composite_score" not in sidecar.columns
+    assert "final_composite_score" not in sidecar.columns
+
+
+def test_candidate_sidecar_ranking_rejects_production_rank_leakage() -> None:
+    candidate_output = pd.DataFrame(
+        [
+            {
+                "ticker": "005930",
+                "date": "2026-01-06",
+                PROBABILITY_COLUMN: 0.60,
+                "production_rank": 1,
+            }
+        ]
+    )
+
+    with pytest.raises(ValueError, match="production_rank"):
+        build_prob_up_1d_candidate_sidecar_ranking(candidate_output, as_of_date="2026-01-06")
 
 
 def test_forbidden_backtest_and_valuation_columns_are_rejected() -> None:
@@ -172,6 +242,15 @@ def test_forbidden_backtest_and_valuation_columns_are_rejected() -> None:
             label_frame,
             config=small_config(),
             feature_columns=("old_score_a_raw", "target_label"),
+        )
+
+    future_feature_frame = probability_frame()
+    future_feature_frame["old_future_return_raw"] = 0.1
+    with pytest.raises(ValueError, match="leakage/backtest feature columns"):
+        build_prob_up_1d_dataset(
+            future_feature_frame,
+            config=small_config(),
+            feature_columns=("old_score_a_raw", "old_future_return_raw"),
         )
 
     valuation_frame = probability_frame()

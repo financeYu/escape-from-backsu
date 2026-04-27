@@ -26,8 +26,14 @@ from .normalization_timeseries import (
     robust_zscore_expanding,
 )
 from .prob_up_1d_candidate import (
+    CANDIDATE_SIDECAR_RANK_COLUMN,
+    DECISION_TIME_COLUMN,
+    EXECUTION_TIME_COLUMN,
+    LABEL_AVAILABILITY_TIME_COLUMN,
+    LABEL_TIME_COLUMN,
     PROBABILITY_COLUMN,
     ProbUp1DConfig,
+    build_prob_up_1d_candidate_sidecar_ranking,
     build_prob_up_1d_dataset,
     fit_prob_up_1d_candidate_model,
     predict_prob_up_1d_candidate,
@@ -36,13 +42,19 @@ from .prob_up_1d_candidate import (
 from .technical_scores import calculate_all_raw_scores
 
 __all__ = (
+    "CANDIDATE_SIDECAR_RANK_COLUMN",
     "CrossSectionalNormalizationConfig",
+    "DECISION_TIME_COLUMN",
+    "EXECUTION_TIME_COLUMN",
+    "LABEL_AVAILABILITY_TIME_COLUMN",
+    "LABEL_TIME_COLUMN",
     "PROBABILITY_COLUMN",
     "ProbUp1DConfig",
     "TimeSeriesNormalizationConfig",
     "apply_clipping",
     "apply_winsorization",
     "build_normalization_diagnostics",
+    "build_prob_up_1d_candidate_sidecar_ranking",
     "build_prob_up_1d_dataset",
     "calculate_all_raw_scores",
     "fit_prob_up_1d_candidate_model",

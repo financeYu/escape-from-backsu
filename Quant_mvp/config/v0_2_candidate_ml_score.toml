@@ -1,0 +1,125 @@
+# Candidate-only v0.2 ML score configuration.
+# This config defines contract semantics only; it does not activate production ranking.
+
+[candidate_score]
+name = "prob_up_1d_candidate"
+version = "v0.2"
+status = "candidate_only"
+output_type = "sidecar_candidate_only"
+description = "Modeled probability that adjusted_close[t+1] > adjusted_close[t] using features available at decision_time."
+higher_is_better = true
+production_rank_activation = false
+replace_technical_composite_score = false
+replace_final_composite_score = false
+allow_trading_recommendations = false
+
+[universe]
+baseline = "MVP_v0_1_frozen"
+market = "KOSPI200"
+allow_new_market_activation = false
+allow_kosdaq = false
+allow_derivatives = false
+allow_overseas = false
+
+[timing]
+decision_time_field = "decision_time"
+execution_time_field = "execution_time"
+label_time_field = "label_time"
+label_availability_time_field = "label_availability_time"
+label_field = "up_1d_label"
+label_definition = "adjusted_close[t+1] > adjusted_close[t]"
+exclude_unlabeled_current_row_from_training = true
+require_features_available_at_or_before_decision_time = true
+allow_future_data = false
+allow_lookahead = false
+
+[outputs]
+probability_field = "prob_up_1d_candidate"
+rank_field = "prob_up_1d_candidate_sidecar_rank"
+status_field = "prob_up_1d_candidate_status"
+sample_role_field = "prob_up_1d_candidate_sample_role"
+required_output_fields = [
+  "ticker",
+  "date",
+  "decision_time",
+  "execution_time",
+  "label_time",
+  "label_availability_time",
+  "prob_up_1d_candidate",
+  "prob_up_1d_candidate_status",
+  "prob_up_1d_candidate_sample_role",
+]
+forbidden_production_fields_to_write = [
+  "technical_composite_score",
+  "final_composite_score",
+  "rank",
+  "production_rank",
+]
+
+[sidecar_ranking]
+enabled = true
+artifact_type = "sidecar_candidate_only"
+sort_fields = ["prob_up_1d_candidate", "ticker"]
+sort_directions = ["desc", "asc"]
+ties = "ticker_ascending"
+feeds_production_ranking = false
+feeds_reports = false
+feeds_gui = false
+feeds_composite_scores = false
+
+[features]
+allow_existing_technical_scores = true
+allow_daily_ohlcv_derived_features = true
+allow_missing_data_indicators = true
+allow_warmup_coverage_flags = true
+allow_static_non_fundamental_join_keys = true
+allow_fundamental_or_valuation_data = false
+allow_backtest_outputs = false
+allow_evaluation_outputs = false
+allow_realized_future_returns = false
+allow_label_columns_as_features = false
+
+[forbidden_feature_patterns]
+contains_any = [
+  "label",
+  "future_return",
+  "realized_return",
+  "backtest",
+  "evaluation",
+  "pnl",
+  "sharpe",
+  "alpha",
+  "per",
+  "pbr",
+  "roe",
+  "eps",
+  "bps",
+  "fundamental",
+  "valuation",
+  "filing",
+  "accounting",
+]
+
+[feedback_boundary]
+backtest_feedback_into_features = false
+backtest_feedback_into_scoring = false
+backtest_feedback_into_ranking = false
+evaluation_feedback_into_features = false
+adoption_decision_from_candidate_output = false
+
+[language_policy]
+allowed_terms = [
+  "candidate probability",
+  "modeled probability",
+  "sidecar candidate ranking",
+  "candidate-only",
+]
+forbidden_terms = [
+  "buy",
+  "sell",
+  "hold",
+  "trading recommendation",
+  "expected-return",
+  "proven-alpha",
+  "production ranking replacement",
+]

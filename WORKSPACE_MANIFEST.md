@@ -2,18 +2,19 @@
 
 workspace_id: quant_v0_2_predictive_probability_impl
 branch: quant/v0-2-predictive-probability-impl
-role: quant-score-implementation
-task_type: post_mvp_v0_2_predictive_probability_candidate
-active_step: post-MVP v0.2 predictive probability implementation
+role: v0.2 candidate-only ML score implementation
+task_type: post_mvp_v0_2_candidate_ml_score
+active_step: post-MVP v0.2 predictive probability candidate implementation
 owner_or_worker: Codex
 created_from_commit: 4f2b349
 
 ## Purpose
 
-Implement the approved `prob_up_1d_candidate` candidate-only predictive
-probability path in a separate role worktree. The implementation covers a
-feature table, label-separated training/evaluation pipeline, candidate
-probability output, and validation tests.
+Implement the approved `prob_up_1d_candidate` candidate-only ML scoring path in
+a separate role worktree. The implementation covers a deterministic candidate
+feature table, label-separated training/evaluation pipeline, as-of-date
+candidate inference, candidate-only sidecar ranking artifact, validation tests,
+guardrails, and documentation.
 
 This work must keep the MVP v0.1 production ranking and composite semantics
 unchanged. The output is a candidate probability artifact only.
@@ -26,17 +27,31 @@ unchanged. The output is a candidate probability artifact only.
   ranking replacements.
 - Keep labels separated from feature rows and exclude the current row when the
   next-day label is unavailable.
-- Add validation tests for no-lookahead, forbidden inputs, output schema, and
-  pipeline behavior.
+- Generate a sidecar candidate-only ranking artifact ordered by
+  `prob_up_1d_candidate` descending and ticker ascending for ties.
+- Add validation tests for no-lookahead, forbidden inputs, output schema,
+  candidate-only naming, sidecar ranking behavior, and production-boundary
+  guardrails.
+
+## Allowed Scope
+
+- Candidate ML docs.
+- Candidate ML config.
+- Candidate ML source.
+- Candidate ML tests.
+- Candidate ML validation guardrails.
+- Generated-output boundary docs.
 
 ## Allowed Write Paths
 
 - WORKSPACE_MANIFEST.md
 - src/scores/
+- src/validation/
 - tests/
 - Quant_mvp/config/
 - Quant_mvp/docs/
 - docs/extension/
+- reports/ml_candidate/README.md
 
 ## Read-Only Paths
 
@@ -54,6 +69,7 @@ unchanged. The output is a candidate probability artifact only.
 
 ## Forbidden Actions
 
+- Do not change the MVP v0.1 frozen baseline.
 - Do not activate production ranking.
 - Do not create trading, buy, sell, hold, expected-return, or proven-alpha
   recommendation outputs.
@@ -65,6 +81,8 @@ unchanged. The output is a candidate probability artifact only.
   evaluation diagnostics as model features.
 - Do not add data ingestion, external vendor assumptions, new markets, KOSDAQ,
   derivatives, NASDAQ, or overseas universe support.
+- Do not feed back backtest or evaluation results into score formulas, model
+  parameters, ranking behavior, production reports, or adoption decisions.
 - Do not commit generated reports, market caches, chart images, secrets, `.env`
   files, or nested worktree artifacts.
 
@@ -73,8 +91,9 @@ unchanged. The output is a candidate probability artifact only.
 - Candidate feature table builder with explicit feature/label separation.
 - Candidate training/evaluation pipeline with no production ranking side
   effects.
-- Candidate probability output containing `prob_up_1d_candidate` and optional
-  diagnostics only.
+- Candidate probability output containing `prob_up_1d_candidate`, required
+  timing fields, and optional diagnostics only.
+- Candidate-only sidecar ranking artifact sorted by candidate probability.
 - Focused validation tests and a master-up summary.
 
 ## Required Validation

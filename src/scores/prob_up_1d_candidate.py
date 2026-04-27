@@ -20,6 +20,10 @@ import numpy as np
 import pandas as pd
 
 from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
+from src.validation.v0_2_candidate_ml_guardrails import (
+    validate_v0_2_candidate_artifact_columns,
+    validate_v0_2_candidate_feature_columns,
+)
 
 from .schema import (
     IDENTITY_COLUMNS,
@@ -38,6 +42,11 @@ PROBABILITY_STATUS_COLUMN = "prob_up_1d_candidate_status"
 PROBABILITY_SAMPLE_ROLE_COLUMN = "prob_up_1d_candidate_sample_role"
 FEATURE_STATUS_COLUMN = "prob_up_1d_feature_status"
 FEATURE_VALID_COUNT_COLUMN = "prob_up_1d_feature_valid_count"
+DECISION_TIME_COLUMN = "decision_time"
+EXECUTION_TIME_COLUMN = "execution_time"
+LABEL_TIME_COLUMN = "label_time"
+LABEL_AVAILABILITY_TIME_COLUMN = "label_availability_time"
+CANDIDATE_SIDECAR_RANK_COLUMN = "prob_up_1d_candidate_sidecar_rank"
 
 DEFAULT_OLD_SCORE_FEATURE_COLUMNS = ALL_STEP9_RAW_SCORE_COLUMNS
 
@@ -124,6 +133,7 @@ class ProbUp1DPipelineResult:
     dataset: ProbUp1DDataset
     training_result: ProbUp1DTrainingResult
     candidate_output: pd.DataFrame
+    candidate_sidecar_ranking: pd.DataFrame
 
 
 def build_prob_up_1d_dataset(
@@ -212,6 +222,7 @@ def predict_prob_up_1d_candidate(
     model: ProbUp1DModel,
     *,
     sample_roles: Mapping[tuple[str, pd.Timestamp], str] | None = None,
+    label_table: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Emit candidate probability output without ranking or composite columns."""
 
@@ -220,6 +231,7 @@ def predict_prob_up_1d_candidate(
     _assert_label_separated(feature_table)
 
     output = feature_table.loc[:, list(IDENTITY_COLUMNS)].copy()
+    output = _attach_candidate_timing_fields(output, label_table=label_table)
     output[PROBABILITY_COLUMN] = pd.Series(pd.NA, index=output.index, dtype="Float64")
     output[PROBABILITY_STATUS_COLUMN] = pd.Series("missing_features", index=output.index, dtype="string")
     output[PROBABILITY_SAMPLE_ROLE_COLUMN] = pd.Series("candidate_unlabeled", index=output.index, dtype="string")
@@ -244,7 +256,50 @@ def predict_prob_up_1d_candidate(
                 output.at[index, PROBABILITY_SAMPLE_ROLE_COLUMN] = role
 
     assert_no_forbidden_output_columns(output, context="v0.2 probability candidate output")
+    validate_v0_2_candidate_artifact_columns(
+        output.columns,
+        context="v0.2 probability candidate output",
+    )
     return output
+
+
+def build_prob_up_1d_candidate_sidecar_ranking(
+    candidate_output: pd.DataFrame,
+    *,
+    as_of_date: date | datetime | pd.Timestamp | str | None = None,
+) -> pd.DataFrame:
+    """Return candidate-only sidecar ordering by probability, never production rank."""
+
+    require_columns(
+        candidate_output,
+        (*IDENTITY_COLUMNS, PROBABILITY_COLUMN),
+        context="v0.2 probability candidate sidecar ranking",
+    )
+    assert_no_forbidden_output_columns(candidate_output, context="v0.2 probability candidate sidecar ranking input")
+    validate_v0_2_candidate_artifact_columns(
+        candidate_output.columns,
+        context="v0.2 probability candidate sidecar ranking input",
+        require_timing_fields=False,
+    )
+
+    data = candidate_output.copy()
+    data["date"] = pd.to_datetime(data["date"], errors="raise")
+    data[PROBABILITY_COLUMN] = _numeric_series(data[PROBABILITY_COLUMN], column=PROBABILITY_COLUMN)
+    data = data.loc[data[PROBABILITY_COLUMN].notna()].copy()
+    if data.empty:
+        sidecar = data.loc[:, list(IDENTITY_COLUMNS) + [PROBABILITY_COLUMN]].copy()
+        sidecar[CANDIDATE_SIDECAR_RANK_COLUMN] = pd.Series(dtype="Int64")
+        return sidecar
+
+    target_date = pd.Timestamp(as_of_date).normalize() if as_of_date is not None else data["date"].dt.normalize().max()
+    sidecar = data.loc[data["date"].dt.normalize().eq(target_date)].copy()
+    sidecar = sidecar.sort_values(
+        [PROBABILITY_COLUMN, "ticker"],
+        ascending=[False, True],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    sidecar[CANDIDATE_SIDECAR_RANK_COLUMN] = pd.Series(range(1, len(sidecar) + 1), dtype="Int64")
+    return sidecar
 
 
 def run_prob_up_1d_candidate_pipeline(
@@ -277,11 +332,17 @@ def run_prob_up_1d_candidate_pipeline(
         dataset.feature_table,
         training_result.model,
         sample_roles=sample_roles,
+        label_table=dataset.label_table,
+    )
+    candidate_sidecar_ranking = build_prob_up_1d_candidate_sidecar_ranking(
+        candidate_output,
+        as_of_date=as_of_date,
     )
     return ProbUp1DPipelineResult(
         dataset=dataset,
         training_result=training_result,
         candidate_output=candidate_output,
+        candidate_sidecar_ranking=candidate_sidecar_ranking,
     )
 
 
@@ -331,6 +392,10 @@ def _resolve_feature_columns(
     if missing:
         raise ValueError(f"v0.2 probability feature columns missing from input: {', '.join(missing)}")
     _assert_no_probability_leakage_columns(feature_columns, context="v0.2 probability feature columns")
+    validate_v0_2_candidate_feature_columns(
+        feature_columns,
+        context="v0.2 probability feature columns",
+    )
     return feature_columns
 
 
@@ -351,10 +416,13 @@ def _build_label_table(data: pd.DataFrame, *, price_column: str) -> pd.DataFrame
     label_table = data.loc[:, list(IDENTITY_COLUMNS)].copy()
     current_price = data[price_column]
     next_price = current_price.groupby(data["ticker"], sort=False).shift(-1)
+    next_date = data["date"].groupby(data["ticker"], sort=False).shift(-1)
     current_finite = _finite_mask(current_price)
     next_finite = _finite_mask(next_price)
     label_available = current_price.notna() & next_price.notna() & current_finite & next_finite
     labels = (next_price > current_price).astype("Int64").where(label_available)
+    label_table[LABEL_TIME_COLUMN] = pd.to_datetime(next_date)
+    label_table[LABEL_AVAILABILITY_TIME_COLUMN] = pd.to_datetime(next_date).where(label_available)
     label_table[LABEL_AVAILABLE_COLUMN] = label_available.astype("boolean")
     label_table[LABEL_COLUMN] = labels.astype("Int64")
     return label_table
@@ -461,6 +529,37 @@ def _identity_keys(frame: pd.DataFrame) -> tuple[tuple[str, pd.Timestamp], ...]:
     return tuple((str(row["ticker"]), pd.Timestamp(row["date"])) for _, row in frame.iterrows())
 
 
+def _attach_candidate_timing_fields(
+    output: pd.DataFrame,
+    *,
+    label_table: pd.DataFrame | None,
+) -> pd.DataFrame:
+    timed = output.copy()
+    timed[DECISION_TIME_COLUMN] = pd.to_datetime(timed["date"], errors="raise")
+    timed[EXECUTION_TIME_COLUMN] = timed[DECISION_TIME_COLUMN]
+    timed[LABEL_TIME_COLUMN] = pd.NaT
+    timed[LABEL_AVAILABILITY_TIME_COLUMN] = pd.NaT
+    if label_table is None:
+        return timed
+
+    require_columns(
+        label_table,
+        (*IDENTITY_COLUMNS, LABEL_TIME_COLUMN, LABEL_AVAILABILITY_TIME_COLUMN),
+        context="v0.2 probability label timing table",
+    )
+    timing = label_table.loc[:, [*IDENTITY_COLUMNS, LABEL_TIME_COLUMN, LABEL_AVAILABILITY_TIME_COLUMN]].copy()
+    timing["date"] = pd.to_datetime(timing["date"], errors="raise")
+    timing[LABEL_TIME_COLUMN] = pd.to_datetime(timing[LABEL_TIME_COLUMN])
+    timing[LABEL_AVAILABILITY_TIME_COLUMN] = pd.to_datetime(timing[LABEL_AVAILABILITY_TIME_COLUMN])
+    timed = timed.drop(columns=[LABEL_TIME_COLUMN, LABEL_AVAILABILITY_TIME_COLUMN]).merge(
+        timing,
+        on=list(IDENTITY_COLUMNS),
+        how="left",
+        validate="one_to_one",
+    )
+    return timed
+
+
 def _numeric_feature_frame(frame: pd.DataFrame, feature_columns: tuple[str, ...]) -> pd.DataFrame:
     numeric = pd.DataFrame(index=frame.index)
     for column in feature_columns:
@@ -548,12 +647,17 @@ def _assert_no_future_dates(
 
 
 __all__ = (
+    "CANDIDATE_SIDECAR_RANK_COLUMN",
+    "DECISION_TIME_COLUMN",
     "DEFAULT_OLD_SCORE_FEATURE_COLUMNS",
     "DEFAULT_PRICE_COLUMN",
+    "EXECUTION_TIME_COLUMN",
     "FEATURE_STATUS_COLUMN",
     "FEATURE_VALID_COUNT_COLUMN",
     "LABEL_AVAILABLE_COLUMN",
+    "LABEL_AVAILABILITY_TIME_COLUMN",
     "LABEL_COLUMN",
+    "LABEL_TIME_COLUMN",
     "PROBABILITY_COLUMN",
     "PROBABILITY_SAMPLE_ROLE_COLUMN",
     "PROBABILITY_STATUS_COLUMN",
@@ -562,6 +666,7 @@ __all__ = (
     "ProbUp1DModel",
     "ProbUp1DPipelineResult",
     "ProbUp1DTrainingResult",
+    "build_prob_up_1d_candidate_sidecar_ranking",
     "build_prob_up_1d_dataset",
     "fit_prob_up_1d_candidate_model",
     "predict_prob_up_1d_candidate",

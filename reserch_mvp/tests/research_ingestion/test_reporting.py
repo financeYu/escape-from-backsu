@@ -5,7 +5,7 @@ from pathlib import Path
 from research_ingestion.classify import classify_paper
 from research_ingestion.config import load_research_config
 from research_ingestion.evidence import generate_evidence_card
-from research_ingestion.reporting import generate_reports, render_ingestion_report
+from research_ingestion.reporting import generate_reports, render_ingestion_report, render_source_health
 
 
 def test_korean_report_generation(sample_paper, workspace_tmp_path):
@@ -28,3 +28,22 @@ def test_report_separates_branch_counts(sample_paper):
     text = render_ingestion_report("run", [paper], [card], [])
     assert "branch별 분류 건수" in text
     assert "technical" in text
+
+
+def test_source_health_report_warns_snapshot_not_current_validation():
+    text = render_source_health(
+        "run",
+        {
+            "openalex": {
+                "status": "ok",
+                "request_cache_hit_count": 1,
+                "request_cache_miss_count": 2,
+                "request_cache_stale_count": 1,
+            }
+        },
+    )
+
+    assert "실행 시점의 source-health snapshot" in text
+    assert "현재 vendor availability" in text
+    assert "MVP scoring/ranking 입력이 아닙니다" in text
+    assert "stale cache warning" in text

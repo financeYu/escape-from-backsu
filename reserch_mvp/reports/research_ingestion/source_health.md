@@ -4,6 +4,12 @@
 
 이번 보완 작업에서는 research ingestion 운영 최적화 검증을 위해 opt-in live smoke test를 실행했다.
 
+## Freshness / Currentness
+
+- 이 보고서는 해당 실행 시점의 source-health snapshot이며 현재 vendor availability 또는 최신 연구 검증을 증명하지 않는다.
+- source-health, cache hit, stale cache 상태는 MVP scoring/ranking 입력이 아니다.
+- 오래된 source-health 결과를 현재 검증처럼 사용하려면 안 되며, 필요한 경우 별도 opt-in live 또는 offline CLI run으로 새 run_id를 생성해야 한다.
+
 실행 명령:
 
 ```powershell

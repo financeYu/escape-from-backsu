@@ -10,6 +10,7 @@
 - 논문 claim은 검증된 alpha가 아닙니다.
 - valuation 후보는 main technical Score Architect와 분리해야 합니다.
 - downstream agent가 구현 전 EvidenceCard와 제한 사항을 다시 검토해야 합니다.
+- source-health freshness는 handoff 참고 정보이며 MVP scoring/ranking 입력이 아닙니다.
 
 ## Handoff Counts
 

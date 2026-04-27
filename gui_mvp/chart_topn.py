@@ -6,6 +6,7 @@ outputs to canonical ranking evidence.
 
 from __future__ import annotations
 
+from datetime import datetime
 import json
 from pathlib import Path
 import sys
@@ -43,6 +44,262 @@ from stock_core.pipeline.daily_update import (
 from stock_core.providers.naver_price_provider import get_price_df
 from stock_core.utils.constants import CLOSE_COLUMN, DATE_COLUMN, PREV_DIFF_COLUMN, VOLUME_COLUMN
 from stock_core.utils.logging_utils import configure_logging
+from src.scanner.latest_ranking_validation import validate_step15_latest_ranking_output
+
+
+LATEST_TOP_JSON_NAMES = ("latest_top.json", "latest_top5.json")
+LEGACY_SCORE_NOTICE = (
+    "현재 Top N 표의 '점수'는 chart_mvp legacy placeholder입니다. "
+    "정식 MVP v0.1 점수는 Step 20 랭킹 CSV의 final_composite_score를 "
+    "읽기 전용으로 열어 확인하세요."
+)
+OFFICIAL_RANKING_FILETYPES = (
+    ("CSV files", "*.csv"),
+    ("All files", "*.*"),
+)
+OFFICIAL_RANKING_AUTO_SEARCH_ROOTS = (
+    REPO_ROOT / "reports",
+    REPO_ROOT / "outputs",
+    REPO_ROOT / "docs" / "releases",
+    CHART_MVP_ROOT / "outputs",
+)
+OFFICIAL_RANKING_CSV_PATTERNS = (
+    "*latest*ranking*.csv",
+    "*ranking*.csv",
+    "*latest*.csv",
+)
+OFFICIAL_RANKING_BASIS_OPTIONS: tuple[tuple[str, str], ...] = (
+    ("final_composite_score", "정식 랭킹 점수"),
+    ("technical_composite_score", "기술 점수"),
+    ("coverage_metric", "커버리지"),
+    ("valid_score_count", "유효 점수 수"),
+)
+DEFAULT_OFFICIAL_RANKING_BASIS = OFFICIAL_RANKING_BASIS_OPTIONS[0][1]
+OFFICIAL_RANKING_DISPLAY_COLUMNS: tuple[tuple[str, str, int], ...] = (
+    ("rank", "순위", 70),
+    ("ticker", "종목코드", 90),
+    ("date", "기준일", 120),
+    ("final_composite_score", "final_composite_score", 170),
+    ("technical_composite_score", "technical_composite_score", 190),
+    ("coverage_metric", "coverage", 100),
+    ("coverage_status", "coverage_status", 130),
+    ("ranking_validity_flag", "validity", 110),
+    ("valid_score_count", "valid_count", 100),
+    ("expected_score_count", "expected_count", 120),
+    ("neutral_shrinkage_count", "neutral_shrink", 120),
+    ("final_score_policy", "policy", 190),
+)
+
+
+def load_latest_topn_records() -> tuple[list[dict], str]:
+    """Load latest Top-N rows for GUI display, with JSON fallback."""
+
+    try:
+        latest_df = load_latest_top5_snapshot()
+    except Exception as exc:
+        csv_error = str(exc)
+    else:
+        if not latest_df.empty:
+            return latest_df.to_dict(orient="records"), "CSV"
+        csv_error = ""
+
+    outputs_dir = CHART_MVP_ROOT / "outputs"
+    for file_name in LATEST_TOP_JSON_NAMES:
+        json_path = outputs_dir / file_name
+        if not json_path.exists():
+            continue
+        try:
+            records = json.loads(json_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if isinstance(records, list):
+            normalized = []
+            for record in records:
+                if not isinstance(record, dict):
+                    continue
+                row = dict(record)
+                if "종목코드" in row:
+                    row["종목코드"] = str(row["종목코드"]).zfill(6)
+                normalized.append(row)
+            if normalized:
+                return normalized, file_name
+
+    if csv_error:
+        raise ValueError(f"저장된 Top-N 결과를 읽지 못했습니다: {csv_error}")
+    return [], ""
+
+
+def summarize_chart_artifacts(meta: dict) -> list[str]:
+    """Return user-facing chart artifact status lines for completion dialogs."""
+
+    chart_paths = list(meta.get("chart_paths") or [])
+    chart_failed_codes = list(meta.get("chart_failed_codes") or [])
+    chart_failed_count = int(meta.get("chart_failed_count") or len(chart_failed_codes))
+    if not meta.get("render_charts"):
+        return ["차트 파일 저장: 선택 안 함"]
+
+    lines = [f"차트 파일: {len(chart_paths)}개 저장"]
+    if chart_paths:
+        preview = chart_paths[:3]
+        lines.append("차트 경로: " + "; ".join(str(path) for path in preview))
+        if len(chart_paths) > len(preview):
+            lines.append(f"추가 차트: {len(chart_paths) - len(preview)}개")
+    if chart_failed_count:
+        failed = ", ".join(str(code) for code in chart_failed_codes[:10])
+        lines.append(f"차트 저장 실패: {chart_failed_count}개 ({failed})")
+    return lines
+
+
+def load_official_ranking_csv(path: str | Path) -> pd.DataFrame:
+    """Load and validate a Step 20 latest-ranking CSV for read-only display."""
+
+    frame = pd.read_csv(path, dtype={"ticker": "string"})
+    if "ticker" in frame.columns:
+        frame = frame.copy()
+        frame["ticker"] = frame["ticker"].astype("string").str.zfill(6)
+    validate_step15_latest_ranking_output(frame)
+    return frame
+
+
+def find_latest_official_ranking_csv(
+    search_roots: tuple[Path, ...] = OFFICIAL_RANKING_AUTO_SEARCH_ROOTS,
+) -> Path | None:
+    """Find the newest valid Step 20 ranking CSV under known output roots."""
+
+    candidates = list_official_ranking_csvs(search_roots)
+    return candidates[0] if candidates else None
+
+
+def list_official_ranking_csvs(
+    search_roots: tuple[Path, ...] = OFFICIAL_RANKING_AUTO_SEARCH_ROOTS,
+) -> list[Path]:
+    """Return valid Step 20 ranking CSVs sorted newest first."""
+
+    candidates: dict[Path, float] = {}
+    for root in search_roots:
+        if not root.exists():
+            continue
+        for pattern in OFFICIAL_RANKING_CSV_PATTERNS:
+            for path in root.rglob(pattern):
+                if not path.is_file() or path in candidates:
+                    continue
+                try:
+                    load_official_ranking_csv(path)
+                except Exception:
+                    continue
+                candidates[path] = path.stat().st_mtime
+
+    return sorted(candidates, key=lambda path: (candidates[path], str(path)), reverse=True)
+
+
+def format_official_ranking_choice(path: Path, *, repo_root: Path = REPO_ROOT) -> str:
+    """Return a compact label for a discovered Step 20 ranking CSV."""
+
+    try:
+        display_path = path.relative_to(repo_root)
+    except ValueError:
+        display_path = path
+    timestamp = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+    return f"{display_path} | {timestamp}"
+
+
+def resolve_official_ranking_basis(label_or_key: str) -> str:
+    """Resolve a GUI basis label to a Step 20 ranking column."""
+
+    normalized = str(label_or_key).strip()
+    allowed = {key for key, _label in OFFICIAL_RANKING_BASIS_OPTIONS}
+    if normalized in allowed:
+        return normalized
+    for key, label in OFFICIAL_RANKING_BASIS_OPTIONS:
+        if normalized == label:
+            return key
+    return "final_composite_score"
+
+
+def sort_official_ranking_for_display(frame: pd.DataFrame, basis: str) -> pd.DataFrame:
+    """Sort a read-only display copy without redefining canonical ranking."""
+
+    basis_column = resolve_official_ranking_basis(basis)
+    display = frame.copy()
+    if basis_column in {"final_composite_score", "technical_composite_score", "coverage_metric"}:
+        display["_display_basis_value"] = pd.to_numeric(display[basis_column], errors="coerce")
+        return display.sort_values(
+            by=["_display_basis_value", "rank", "ticker"],
+            ascending=[False, True, True],
+            na_position="last",
+            kind="mergesort",
+        ).drop(columns=["_display_basis_value"])
+    if basis_column == "valid_score_count":
+        display["_display_basis_value"] = pd.to_numeric(display[basis_column], errors="coerce")
+        return display.sort_values(
+            by=["_display_basis_value", "rank", "ticker"],
+            ascending=[False, True, True],
+            na_position="last",
+            kind="mergesort",
+        ).drop(columns=["_display_basis_value"])
+    return display.sort_values(by=["rank", "ticker"], ascending=[True, True], kind="mergesort")
+
+
+def format_official_ranking_value(column: str, value: object) -> str:
+    """Format Step 20 ranking values for the GUI without changing semantics."""
+
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except TypeError:
+        pass
+
+    if column in {"final_composite_score", "technical_composite_score"}:
+        return f"{float(value):.4f}"
+    if column == "coverage_metric":
+        return f"{float(value) * 100:.2f}%"
+    if column in {
+        "rank",
+        "valid_score_count",
+        "expected_score_count",
+        "neutral_shrinkage_count",
+        "review_routed_score_count",
+    }:
+        return f"{int(float(value))}"
+    return str(value)
+
+
+def official_ranking_display_rows(
+    frame: pd.DataFrame,
+    basis: str = "final_composite_score",
+) -> list[list[str]]:
+    """Return formatted Step 20 ranking rows for read-only GUI display."""
+
+    rows: list[list[str]] = []
+    for _, row in sort_official_ranking_for_display(frame, basis).iterrows():
+        rows.append(
+            [
+                format_official_ranking_value(column, row.get(column))
+                for column, _label, _width in OFFICIAL_RANKING_DISPLAY_COLUMNS
+            ]
+        )
+    return rows
+
+
+def summarize_official_ranking_source(
+    frame: pd.DataFrame,
+    source_path: str | Path,
+    basis: str = "final_composite_score",
+) -> str:
+    """Return the read-only source summary shown above the Step 20 ranking table."""
+
+    dates = frame["date"].astype("string").dropna().unique().tolist() if "date" in frame else []
+    date_text = ", ".join(str(date) for date in dates[:3]) if dates else "알 수 없음"
+    if len(dates) > 3:
+        date_text += f" 외 {len(dates) - 3}개"
+    basis_column = resolve_official_ranking_basis(basis)
+    return (
+        f"읽기 전용 파일: {source_path} | 행 수: {len(frame)} | 기준일: {date_text} | "
+        f"표시 기준: {basis_column} | canonical rank 컬럼은 그대로 유지됩니다. "
+        "재무/밸류에이션 점수와 매수/매도 추천은 포함하지 않습니다."
+    )
 
 from src.composite.contracts import DEFAULT_COMPOSITE_INPUT_REGISTRY
 from src.scanner.latest_ranking import build_latest_ranking_output
@@ -85,13 +342,19 @@ class Top5App:
         self.last_updated_var = tk.StringVar(value="마지막 갱신: 없음")
         self.auto_refresh_var = tk.BooleanVar(value=False)
         self.auto_refresh_minutes_var = tk.IntVar(value=30)
+        self.official_score_basis_var = tk.StringVar(value=DEFAULT_OFFICIAL_RANKING_BASIS)
+        self.official_ranking_choice_var = tk.StringVar(value="")
         self.progress_var = tk.DoubleVar(value=0.0)
 
         self._current_top5: list[dict] = []
+        self._official_ranking_source_path: Path | None = None
+        self._official_ranking_choices: dict[str, Path] = {}
+        self.official_ranking_choice_combo: ttk.Combobox | None = None
         self._is_running = False
         self._auto_refresh_job: str | None = None
 
         self._build_ui()
+        self.refresh_official_ranking_choices(show_status=False)
         self._load_latest_results()
         self._load_latest_meta()
         self._run_startup_due_check()
@@ -186,6 +449,44 @@ class Top5App:
             side=tk.LEFT,
             padx=(8, 0),
         )
+        ttk.Label(action_frame, text="점수 기준").pack(side=tk.LEFT, padx=(14, 4))
+        ttk.Combobox(
+            action_frame,
+            textvariable=self.official_score_basis_var,
+            values=[label for _key, label in OFFICIAL_RANKING_BASIS_OPTIONS],
+            state="readonly",
+            width=14,
+        ).pack(side=tk.LEFT)
+        ttk.Label(action_frame, text="CSV 파일").pack(side=tk.LEFT, padx=(14, 4))
+        self.official_ranking_choice_combo = ttk.Combobox(
+            action_frame,
+            textvariable=self.official_ranking_choice_var,
+            state="readonly",
+            width=36,
+        )
+        self.official_ranking_choice_combo.pack(side=tk.LEFT)
+        self.official_ranking_choice_combo.bind(
+            "<<ComboboxSelected>>",
+            lambda _event: self._select_official_ranking_choice(),
+        )
+        ttk.Button(
+            action_frame,
+            text="목록 새로고침",
+            command=lambda: self.refresh_official_ranking_choices(show_status=True),
+        ).pack(side=tk.LEFT, padx=(8, 0))
+        ttk.Button(
+            action_frame,
+            text="점수 새로고침",
+            command=self.open_latest_official_ranking_viewer,
+        ).pack(side=tk.LEFT, padx=(8, 0))
+
+        ttk.Label(
+            container,
+            text=LEGACY_SCORE_NOTICE,
+            foreground="#7c2d12",
+            wraplength=1120,
+            justify=tk.LEFT,
+        ).pack(fill=tk.X, pady=(0, 8))
 
     def _build_notice_section(self, container: ttk.Frame) -> None:
         notice = ttk.Label(
@@ -256,17 +557,33 @@ class Top5App:
 
 
     def _load_latest_results(self) -> None:
-        latest_df = load_latest_top5_snapshot()
-        if latest_df.empty:
-            self.set_status("대기 중 - 저장된 Top N 기술지표 표시 없음")
+        try:
+            latest_df = load_latest_top5_snapshot()
+        except Exception:
+            latest_df = pd.DataFrame()
+
+        if not latest_df.empty:
+            records = latest_df.to_dict(orient="records")
+            self._fill_tree(records)
+            if self._is_algorithm_snapshot(latest_df):
+                self.set_status("저장된 알고리즘 랭킹 결과를 먼저 표시했습니다.")
+            else:
+                self.set_status("저장된 latest_top 결과를 먼저 표시했습니다.")
             return
 
-        records = latest_df.to_dict(orient="records")
+        try:
+            records, source = load_latest_topn_records()
+        except Exception as exc:
+            self.set_status(str(exc))
+            return
+
+        if not records:
+            self.set_status("대기 중 - 저장된 Top N 결과 없음")
+            return
+
+        self._current_top5 = records
         self._fill_tree(records)
-        if self._is_algorithm_snapshot(latest_df):
-            self.set_status("저장된 알고리즘 랭킹 결과를 먼저 표시했습니다.")
-        else:
-            self.set_status("저장된 latest_top 결과를 먼저 표시했습니다.")
+        self.set_status(f"저장된 latest_top 결과를 먼저 표시했습니다. ({source})")
 
     def _load_latest_meta(self) -> None:
         meta_path = CHART_MVP_ROOT / "outputs" / "last_run_meta.json"
@@ -553,6 +870,9 @@ class Top5App:
             f"CSV: {meta['output_csv']}\n"
             f"JSON: {meta['output_json']}"
         )
+        artifact_lines = summarize_chart_artifacts(meta)
+        if artifact_lines:
+            summary += "\n" + "\n".join(artifact_lines)
         if meta.get("market_cap_override"):
             summary += f"\n\n{meta.get('market_cap_override_message', '')}"
         messagebox.showinfo("배치 완료", summary)
@@ -656,6 +976,147 @@ class Top5App:
             return f"{numeric:,.0f}"
         return "0"
 
+    def refresh_official_ranking_choices(self, *, show_status: bool) -> None:
+        paths = list_official_ranking_csvs()
+        choices = {format_official_ranking_choice(path): path for path in paths}
+        self._official_ranking_choices = choices
+        labels = list(choices)
+        if self.official_ranking_choice_combo is not None:
+            self.official_ranking_choice_combo.configure(values=labels)
+
+        current = self.official_ranking_choice_var.get()
+        if labels and current not in choices:
+            self.official_ranking_choice_var.set(labels[0])
+            self._official_ranking_source_path = choices[labels[0]]
+        elif labels and current in choices:
+            self._official_ranking_source_path = choices[current]
+        elif not labels:
+            self.official_ranking_choice_var.set("")
+            self._official_ranking_source_path = None
+
+        if show_status:
+            if labels:
+                self.set_status(f"정식 Step 20 CSV {len(labels)}개를 찾았습니다.")
+            else:
+                self.set_status("정식 Step 20 CSV를 찾지 못했습니다.")
+
+    def _select_official_ranking_choice(self) -> None:
+        selected = self.official_ranking_choice_var.get()
+        self._official_ranking_source_path = self._official_ranking_choices.get(selected)
+
+    def open_latest_official_ranking_viewer(self) -> None:
+        self._select_official_ranking_choice()
+        source_path = self._official_ranking_source_path
+        if source_path is None:
+            source_path = find_latest_official_ranking_csv()
+        if source_path is None:
+            messagebox.showerror(
+                "정식 점수 CSV 없음",
+                "GUI 목록에서 선택할 수 있는 Step 20 형식의 랭킹 CSV를 찾지 못했습니다. "
+                "먼저 정식 랭킹 CSV를 생성한 뒤 목록 새로고침을 눌러 주세요.",
+            )
+            return
+
+        self._official_ranking_source_path = source_path
+        try:
+            frame = load_official_ranking_csv(source_path)
+        except Exception as exc:
+            messagebox.showerror("정식 점수 새로고침 실패", str(exc))
+            return
+        self._open_official_ranking_window(frame, source_path)
+
+    def _open_official_ranking_window(self, frame: pd.DataFrame, source_path: Path) -> None:
+        window = tk.Toplevel(self.root)
+        window.title("Step 20 정식 랭킹 점수")
+        window.geometry("1320x720")
+
+        container = ttk.Frame(window, padding=12)
+        container.pack(fill=tk.BOTH, expand=True)
+
+        header = ttk.Frame(container)
+        header.pack(fill=tk.X)
+        ttk.Label(
+            header,
+            text="MVP v0.1 KOSPI200 technical-only final_composite_score",
+            font=("", 13, "bold"),
+        ).pack(side=tk.LEFT, anchor="w")
+        ttk.Button(
+            header,
+            text="점수 새로고침",
+            command=lambda: refresh_official_ranking(),
+        ).pack(side=tk.RIGHT)
+        ttk.Label(header, text="표시 기준").pack(side=tk.RIGHT, padx=(12, 4))
+        basis_var = tk.StringVar(value=self.official_score_basis_var.get())
+        basis_combo = ttk.Combobox(
+            header,
+            textvariable=basis_var,
+            values=[label for _key, label in OFFICIAL_RANKING_BASIS_OPTIONS],
+            state="readonly",
+            width=14,
+        )
+        basis_combo.pack(side=tk.RIGHT)
+
+        source_var = tk.StringVar(value="")
+        status_var = tk.StringVar(value="")
+        ttk.Label(
+            container,
+            textvariable=source_var,
+            foreground="#444444",
+            wraplength=1240,
+            justify=tk.LEFT,
+        ).pack(anchor="w", pady=(4, 4))
+        ttk.Label(container, textvariable=status_var, foreground="#166534").pack(
+            anchor="w",
+            pady=(0, 10),
+        )
+
+        table_frame = ttk.Frame(container)
+        table_frame.pack(fill=tk.BOTH, expand=True)
+
+        column_ids = tuple(column for column, _label, _width in OFFICIAL_RANKING_DISPLAY_COLUMNS)
+        tree = ttk.Treeview(table_frame, columns=column_ids, show="headings", height=18)
+        for column, label, width in OFFICIAL_RANKING_DISPLAY_COLUMNS:
+            tree.heading(column, text=label)
+            tree.column(column, width=width, minwidth=width, anchor="center", stretch=True)
+
+        current_frame = {"frame": frame}
+
+        def fill_official_ranking(display_frame: pd.DataFrame, *, status: str) -> None:
+            current_frame["frame"] = display_frame
+            for item in tree.get_children():
+                tree.delete(item)
+            basis = resolve_official_ranking_basis(basis_var.get())
+            for values in official_ranking_display_rows(display_frame, basis=basis):
+                tree.insert("", tk.END, values=values)
+            source_var.set(
+                summarize_official_ranking_source(display_frame, source_path, basis=basis)
+            )
+            status_var.set(status)
+
+        def refresh_official_ranking() -> None:
+            try:
+                refreshed = load_official_ranking_csv(source_path)
+            except Exception as exc:
+                status_var.set("새로고침 실패")
+                messagebox.showerror("점수 새로고침 실패", str(exc))
+                return
+            fill_official_ranking(refreshed, status="점수 새로고침 완료")
+
+        basis_combo.bind(
+            "<<ComboboxSelected>>",
+            lambda _event: fill_official_ranking(
+                current_frame["frame"],
+                status="표시 기준을 변경했습니다.",
+            ),
+        )
+        y_scrollbar = ttk.Scrollbar(table_frame, orient=tk.VERTICAL, command=tree.yview)
+        x_scrollbar = ttk.Scrollbar(table_frame, orient=tk.HORIZONTAL, command=tree.xview)
+        tree.configure(yscrollcommand=y_scrollbar.set, xscrollcommand=x_scrollbar.set)
+        tree.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        x_scrollbar.pack(side=tk.BOTTOM, fill=tk.X)
+        y_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        fill_official_ranking(frame, status="점수 파일을 불러왔습니다.")
+
     def open_selected_chart(self) -> None:
         selection = self.tree.selection()
         if not selection:
@@ -677,7 +1138,12 @@ class Top5App:
             return
 
         self.set_status(f"{name} 차트 준비 중...")
-        self._open_chart_window(code=code, name=name)
+        try:
+            self._open_chart_window(code=code, name=name)
+        except Exception as exc:
+            self.set_status(f"{name} 차트 표시 실패")
+            messagebox.showerror("차트 표시 실패", str(exc))
+            return
         self.set_status(f"{name} 차트 표시 완료")
 
     def _open_chart_window(self, code: str, name: str) -> None:
@@ -884,7 +1350,22 @@ def main() -> int:
     return 0
 
 
-__all__ = ("Top5App", "main")
+__all__ = (
+    "LEGACY_SCORE_NOTICE",
+    "Top5App",
+    "find_latest_official_ranking_csv",
+    "format_official_ranking_choice",
+    "format_official_ranking_value",
+    "list_official_ranking_csvs",
+    "load_latest_topn_records",
+    "load_official_ranking_csv",
+    "main",
+    "official_ranking_display_rows",
+    "resolve_official_ranking_basis",
+    "sort_official_ranking_for_display",
+    "summarize_chart_artifacts",
+    "summarize_official_ranking_source",
+)
 
 
 if __name__ == "__main__":

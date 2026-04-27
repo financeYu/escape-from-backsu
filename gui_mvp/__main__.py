@@ -5,12 +5,23 @@ from __future__ import annotations
 import sys
 
 
+USAGE = "Usage: python -m gui_mvp [launcher|chart|backtest]"
+
+
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
-    target = "chart"
+    target = "launcher"
     if args:
         target = args[0].strip().lower()
 
+    if target in {"-h", "--help", "help"}:
+        print(USAGE)
+        return 0
+
+    if target in {"launcher", "home", "gui", "menu"}:
+        from gui_mvp.launcher import main as launcher_main
+
+        return launcher_main()
     if target in {"chart", "topn", "top-n"}:
         from gui_mvp.chart_topn import main as chart_main
 
@@ -20,7 +31,7 @@ def main(argv: list[str] | None = None) -> int:
 
         return backtest_main()
 
-    print("Usage: python -m gui_mvp [chart|backtest]", file=sys.stderr)
+    print(USAGE, file=sys.stderr)
     return 2
 
 

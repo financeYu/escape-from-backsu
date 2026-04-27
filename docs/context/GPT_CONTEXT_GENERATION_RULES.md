@@ -25,7 +25,8 @@ The brief is built from compact baseline facts plus one active request packet.
 The local ChatGPT project reference snapshot is
 `docs/context/gpt/quant_project_reference_for_chatgpt_project_current.md`.
 Both GPT-facing outputs are generated only when the user explicitly requests a
-GPT or ChatGPT context refresh.
+GPT or ChatGPT context refresh. The default is no GPT-folder refresh unless the
+user explicitly asks for it.
 
 Use this shape:
 
@@ -161,6 +162,8 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 - Rules include default GPT input = compact baseline + one active request packet.
 - GPT-facing output refresh commands require `--user-requested`; GPT submission
   brief generation also requires a non-empty `--request`.
+- Paired GPT-facing refresh updates both `docs/context/gpt/` files with their
+  respective generators so the project reference and request brief do not drift.
 - Rules include the mandatory anti-repetition phrase.
 - Rules mark Step 1-20 history as archive-only.
 - Rules forbid full validation logs in default context.

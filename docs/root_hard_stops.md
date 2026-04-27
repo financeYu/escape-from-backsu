@@ -79,6 +79,10 @@ Generated reports, runtime outputs, chart images, caches, raw market data,
 `.env`, and secrets are not default context and are not source-controlled unless
 explicitly promoted as small review fixtures.
 
+GPT-facing references under `docs/context/gpt/` are not refreshed by default.
+Refresh them only when the user explicitly requests a GPT or ChatGPT context
+update.
+
 ## Gate-End Status
 
 At the end of a Step or assigned gate, report exactly one of:

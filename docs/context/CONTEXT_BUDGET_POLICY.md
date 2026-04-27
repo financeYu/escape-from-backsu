@@ -94,6 +94,8 @@ request packet. This budget policy, `docs/context/GPT_CONTEXT_GENERATION_RULES.m
 and `docs/context/CONTEXT_ROUTING_INDEX.md` are internal rules and routing aids.
 Do not paste those internal files into GPT by default.
 Generate GPT submission context directly at `docs/context/gpt/gpt_context_quant.md`.
+Do not refresh GPT-folder outputs unless the user explicitly requests a GPT or
+ChatGPT context update.
 
 Rules:
 

@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-27T13:22:56+09:00
+Generated at: 2026-04-27T21:33:24+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -31,13 +31,13 @@ role branch/worktree. Step 20 is complete, and the KOSPI200 technical MVP v0.1
 baseline is frozen.
 - Current baseline: MVP v0.1 frozen KOSPI200 technical-only scanner baseline.
 - Current active Step: post-MVP `v0.2 predictive probability score route`.
+- Current active route skill:
+  `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
+- Current repeatable route validation:
+  `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`.
 - Current gate: this Step authorizes only the scoped implementation of
   `prob_up_1d_candidate` feature table, label-separated training/evaluation
-  pipeline, candidate probability output, and validation tests in the approved
-  role branch/worktree. It does not authorize production ranking activation,
-  trading recommendations, `final_composite_score` replacement, report behavior
-  changes, backtest metrics as model features, valuation/fundamental data, data
-- omitted 1 additional lines for compact context
+- omitted 5 additional lines for compact context
 
 ## Current Baseline
 
@@ -58,8 +58,31 @@ baseline is frozen.
 
 - KOSDAQ150, futures, options, Nasdaq/overseas, or multi-universe activation.
 - New market-data ingestion or live vendor assumptions.
-- Runtime score formula, weight, adoption, normalization, ranking, report,
-  backtest, or valuation semantic changes outside the approved
-  `prob_up_1d_candidate` candidate-only implementation scope.
+- Production ranking activation or ranking generation unless the active route
+  explicitly authorizes it.
+- Report behavior changes or runtime score semantic changes outside the active
+  candidate ML gate.
+- `final_composite_score` replacement or silent score redefinition.
+- Financial/fundamental data in `technical_composite_score` or
+  `final_composite_score`.
+- Valuation/fundamental scoring activation.
+- Backtest metrics as model features.
+- Backtest feedback into scoring, ranking, or model feature construction.
+- Trading recommendations, buy/sell/hold, proven-alpha, or expected-return
+  wording.
 
-[Context truncated by `max_chars`; consult repository docs for full detail.]
+## Route-Only References
+
+- Root compact hard stops: `docs/root_hard_stops.md`.
+- Current roadmap status: `docs/roadmap_status.md`.
+- MVP baseline: `docs/context/MVP_V0_1_BASELINE.md`.
+- MVP contracts: `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`.
+- Extension registry: `docs/context/EXTENSION_REGISTRY.toml`.
+- Candidate ML gate skill: `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
+- Candidate ML gate validator: `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`.
+- Candidate ML score contract: `Quant_mvp/docs/v0_2_candidate_ml_score_contract.md`.
+- Candidate ML implementation gate: `Quant_mvp/docs/v0_2_candidate_ml_implementation_gate_1.md`.
+- Candidate ML config: `Quant_mvp/config/v0_2_candidate_ml_score.toml`.
+- Quant agent scope: `Quant_mvp/AGENTS.md`.
+- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).
+- Archive lookup: `docs/context/ARCHIVE_INDEX.md`.

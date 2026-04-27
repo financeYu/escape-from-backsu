@@ -17,12 +17,12 @@ DEFAULT_CONFIG_PATH = Path("Quant_mvp/config/context_snapshot.toml")
 class ContextConfig:
     project_root: Path
     output_path: Path
-    output_paths: tuple[Path, ...]
     obsolete_local_paths: tuple[Path, ...]
     max_chars: int
     project_label: str
     context_key: str
     local_latest_only: bool
+    output_paths: tuple[Path, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -58,7 +58,8 @@ def load_config(project_root: Path, config_path: Path) -> ContextConfig:
 
 def refresh_context(config: ContextConfig) -> ExportResult:
     text = build_context(config)
-    for output_path in config.output_paths:
+    output_paths = config.output_paths or (config.output_path,)
+    for output_path in output_paths:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(text, encoding="utf-8", newline="\n")
 
@@ -71,7 +72,7 @@ def refresh_context(config: ContextConfig) -> ExportResult:
 
     return ExportResult(
         output_path=config.output_path,
-        output_paths=config.output_paths,
+        output_paths=output_paths,
         removed_local_paths=tuple(removed),
         char_count=len(text),
     )
@@ -158,8 +159,8 @@ def _guardrail_context_sections(hard_stops: str) -> list[str]:
         _compact_section(
             hard_stops,
             "## Forbidden Scope Without Explicit Approval",
-            next_heading="## Archive Read Gate",
-            max_lines=10,
+            next_heading="## Context Boundary",
+            max_lines=14,
         ),
         "",
     ]
@@ -174,7 +175,13 @@ def _route_reference_sections() -> list[str]:
         "- MVP baseline: `docs/context/MVP_V0_1_BASELINE.md`.",
         "- MVP contracts: `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`.",
         "- Extension registry: `docs/context/EXTENSION_REGISTRY.toml`.",
+        "- Candidate ML gate skill: `.agents/skills/quant-candidate-ml-gate/SKILL.md`.",
+        "- Candidate ML gate validator: `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`.",
+        "- Candidate ML score contract: `Quant_mvp/docs/v0_2_candidate_ml_score_contract.md`.",
+        "- Candidate ML implementation gate: `Quant_mvp/docs/v0_2_candidate_ml_implementation_gate_1.md`.",
+        "- Candidate ML config: `Quant_mvp/config/v0_2_candidate_ml_score.toml`.",
         "- Quant agent scope: `Quant_mvp/AGENTS.md`.",
+        "- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).",
         "- Archive lookup: `docs/context/ARCHIVE_INDEX.md`.",
         "",
     ]

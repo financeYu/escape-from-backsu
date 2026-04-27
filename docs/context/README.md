@@ -38,7 +38,7 @@ release-evidence check requires narrow archive lookup.
 - `CHANGE_IMPACT_MATRIX.yml`: route-only change impact matrix.
 - `ARCHIVE_INDEX.md`: archive lookup index; do not read old Step history by default.
 - `gpt/`: GPT-only context briefs, kept separate from default local context.
-- `gpt/gpt_context_quant.md`: single GPT submission brief generated only when explicitly requested.
+- `gpt/gpt_context_quant.md`: GPT-facing brief generated only when explicitly requested.
 - `gpt/quant_project_reference_for_chatgpt_project_current.md`: local ChatGPT
   project reference snapshot generated only when explicitly requested.
 - `GPT_CONTEXT_GENERATION_RULES.md`: internal rules for generating short GPT briefs; do not paste into GPT by default.
@@ -63,6 +63,9 @@ results unless the task names an allowed archive lookup reason.
 
 ## Tooling
 
+- `scripts/context/refresh_gpt_references.py`: refreshes both GPT-facing files
+  with their respective generators, only when explicitly requested:
+  `python scripts/context/refresh_gpt_references.py --user-requested --request "<current GPT task>"`
 - `scripts/context/build_context_packet.py`: builds a compact routed packet for a task.
   - GPT submission brief, only when explicitly requested:
     `python scripts/context/build_context_packet.py --mode gpt-brief --user-requested --request "<current GPT task>"`
@@ -70,7 +73,8 @@ results unless the task names an allowed archive lookup reason.
     and a non-empty `--request` are required.
   - ChatGPT project reference snapshot, only when explicitly requested:
     `python scripts/refresh_quant_project_context.py --user-requested`
-    writes `docs/context/gpt/quant_project_reference_for_chatgpt_project_current.md`.
+    writes the project reference snapshot configured by
+    `Quant_mvp/config/context_snapshot.toml`.
   - Routed task packet:
     `python scripts/context/build_context_packet.py --task "<task>" --step "<step>" --stage "<stage>"`
     writes under `docs/context/generated/`.

@@ -6,11 +6,16 @@
 향후 ML 개선을 위한 리서치 참조 패키지다. 목적은 label design,
 no-lookahead control, walk-forward / purged validation, probability
 calibration, overfitting prevention, model-family 후보, Qlib-style reference
-architecture를 EvidenceCard로 보존하는 것이다.
+architecture, implementation-readiness gate를 EvidenceCard로 보존하는 것이다.
 
 이 문서는 score 채택, 모델 구현, production ranking activation, trading
 language, valuation/fundamental scoring을 승인하지 않는다. EvidenceCard만
 생성하고 score 채택은 수행하지 않는다.
+
+Selected reusable gates:
+
+- `.agents/skills/quant-candidate-ml-gate/SKILL.md`
+- `.agents/skills/ml-research-evidence/SKILL.md`
 
 Confirmed context는 다음 3개로 제한한다.
 
@@ -55,10 +60,22 @@ seed에서 EvidenceCard를 만들지 않는다.
 낮은 품질의 trading blog는 authority로 쓰지 않는다. 불가피하게 참고하면
 `review_status: background_only`로 표시한다.
 
+Full-text가 존재하더라도 license 또는 source terms가 불명확하면
+`metadata_only` 또는 `abstract_reviewed`로만 남긴다. 외부 paid API, hosted LLM,
+또는 third-party extraction service에 PDF/full-text를 업로드하지 않으며,
+본문 기반 요약은 local review note와 짧은 non-verbatim evidence summary로
+제한한다.
+
 ## PDF / Full-Text Collection Policy
 
 PDF 원천 수집 금지는 폐기한다. 다만 PDF / full-text 수집은 라이선스 또는
 공식 약관이 명확할 때만 허용한다.
+
+현재 `Quant_mvp/research_mvp/config/research_policy.toml`의 기본 실행 정책은
+`pdf_download_default = false`와 `fulltext_download_remains_disabled = true`다.
+따라서 이 plan은 future reference policy를 정의하지만, 별도 승인 없는 현재
+작업에서 PDF downloader, full-text crawler, cache writer를 구현하거나 실행하지
+않는다.
 
 허용되는 수집 기준:
 
@@ -105,6 +122,17 @@ PDF 원천 수집 금지는 폐기한다. 다만 PDF / full-text 수집은 라�
 - `license_allows_redistribution`
 - `license_requires_attribution`
 
+Full-text review trace:
+
+- `fulltext_source_type`: `official_html`, `official_pdf`, `repository_pdf`,
+  `user_provided_pdf`, `documentation_page`, `none`
+- `fulltext_access_method`: manual/local review method only
+- `fulltext_reviewed_at`
+- `fulltext_reviewer`
+- `fulltext_review_scope`
+- `redistribution_allowed`: false unless explicitly proven
+- `external_upload_allowed`: false by default
+
 Creative Commons BY-NC는 noncommercial use와 attribution requirement를
 명시하며, BY-NC-ND는 noncommercial과 no-derivatives restriction을 함께
 가진다. 이 제한은 EvidenceCard의 `allowed_use`와 `forbidden_use`에 그대로
@@ -115,7 +143,9 @@ Creative Commons BY-NC는 noncommercial use와 attribution requirement를
 `license_verified_pdf_collected`로 올린다.
 
 Reference별 license/full-text 상태와 local risk burn-down은
-`docs/extension/v0_2_ml_reference_review_manifest.md`를 따른다.
+`docs/extension/v0_2_ml_reference_review_manifest.md`를 따른다. 수동 검토
+대기열과 `full_text_reviewed` / `project_validated` 승격 후보 분리는
+`docs/extension/v0_2_ml_fulltext_license_review_packet.md`를 따른다.
 
 ## Research Taxonomy
 
@@ -135,6 +165,12 @@ Reference별 license/full-text 상태와 local risk burn-down은
   liquidity, momentum features, cross-sectional prediction artifact.
 - `reference_architecture`: Qlib-style data handler, feature processor,
   dataset splitter, trainer, recorder, evaluator, report artifact.
+- `decision_time_controls`: feature observation time, decision time,
+  execution time, label time, label availability time, unlabeled latest row.
+- `purged_embargo_validation`: label horizon overlap, purge window, embargo
+  window, split gap, split manifest.
+- `future_model_family_reference`: logistic baseline, calibrated linear model,
+  tree ensemble, GBDT, neural later-only, stacking/ensembling later-only.
 
 ## Evidence Levels
 
@@ -155,6 +191,11 @@ Reference별 license/full-text 상태와 local risk burn-down은
 Implementation gate decision은 `full_text_reviewed` 또는 `project_validated`
 근거를 요구한다. `metadata_only` EvidenceCard는 discovery-only로만 남긴다.
 
+Promotion은 수동이며 단조 증가만 허용한다. `project_validated`는 논문 성과를
+인정한다는 뜻이 아니라, 해당 method assumption이 이 repository의 feature,
+label, split, calibration, sidecar, evaluation-only boundary와 충돌하지 않음을
+검토했다는 뜻이다.
+
 ## Implementation Readiness
 
 허용 값:
@@ -165,6 +206,20 @@ Implementation gate decision은 `full_text_reviewed` 또는 `project_validated`
 - `requires_license_review`
 - `requires_full_text_review`
 - `requires_project_validation`
+
+Readiness는 implementation 승인 상태가 아니다. `implementation_reference_candidate`
+도 직접 feature, score formula, production rank, report behavior 변경을 허용하지
+않는다. Candidate ML implementation gate에서 사용할 수 있는 근거는 다음을 모두
+만족해야 한다.
+
+- `evidence_level`이 `full_text_reviewed` 또는 `project_validated`.
+- `implementation_readiness`가 `contract_reference_candidate`,
+  `implementation_reference_candidate`, 또는 `requires_project_validation` 중 하나로
+  명시되어 있고, 남은 조건이 risk note에 기록됨.
+- no-lookahead, label availability, split, calibration, overfitting control에
+  대해 unchecked assumption이 비어 있거나 gate-blocking backlog로 남아 있음.
+- `allowed_use`가 reference/validation/label/calibration/model/architecture 후보
+  중 하나이며, `forbidden_use`에 candidate-only 금지 항목이 남아 있음.
 
 ## EvidenceCard Schema
 
@@ -197,14 +252,30 @@ EvidenceCard:
     target_horizon: string | null
     asset_universe: string | null
     data_frequency: string | null
+    feature_observation_time_rule: string | null
+    decision_time_rule: string | null
+    execution_time_rule: string | null
+    label_time_rule: string | null
+    label_availability_rule: string | null
     train_test_split_method: string | null
     leakage_controls: string | null
     purging_embargo_controls: string | null
     transaction_cost_handling: string | null
     calibration_method: string | null
+    calibration_fit_scope: string | null
     overfitting_controls: string | null
+    multiple_testing_controls: string | null
     evaluation_metrics: list[string]
     method_type: classification | probability_estimation | ranking | portfolio_simulation | architecture | validation | unknown
+  candidate_ml_boundary:
+    candidate_output_name: prob_up_1d_candidate
+    candidate_only: true
+    sidecar_required: true
+    production_rank_activation: false
+    technical_composite_score_change: false
+    final_composite_score_change: false
+    report_behavior_change: false
+    backtest_feedback_to_training: false
   unchecked_assumptions: list[string]
   implementation_relevance: string
   allowed_use:
@@ -221,6 +292,64 @@ EvidenceCard:
   risk_notes: list[string]
   review_status: pending | reviewed | needs_license_review | needs_full_text_review | needs_project_validation | rejected | background_only
 ```
+
+## Candidate ML Timing Controls
+
+`prob_up_1d_candidate` reference cards must record timing assumptions even when
+the reference itself does not provide repository-ready details.
+
+Required timing interpretation:
+
+- `decision_time`: the time at which the candidate probability would be known.
+- `feature_observation_time`: the latest timestamp used by every feature before
+  or at `decision_time`.
+- `execution_time`: optional later timestamp for evaluation convention only; it
+  is not a trading instruction.
+- `label_time`: the timestamp represented by `adjusted_close[t+1]`.
+- `label_availability_time`: the timestamp when `up_1d_label` can be known.
+- latest unlabeled row remains `candidate_unlabeled` and cannot enter
+  training/evaluation labels.
+
+If a reference does not state these controls, set
+`implementation_readiness: requires_project_validation` and add a risk note
+instead of filling the gap optimistically.
+
+## Validation And Calibration Controls
+
+Walk-forward, purged split, embargo, and calibration references are contract
+tools only. They may define audit fields and validation harness expectations,
+but they do not adopt a model or prove project performance.
+
+Required validation interpretation:
+
+- chronological split only; no random shuffle for time-dependent evaluation.
+- rolling or expanding window must be explicit in config.
+- purge and embargo must be tied to label horizon and label availability, not
+  only to a generic split gap.
+- scaler, imputer, clipper, feature selector, model, and calibration parameters
+  must be fit inside the training/calibration scope only.
+- Brier score, log loss, and calibration curve are probability diagnostics, not
+  ranking activation criteria.
+- multiple model families, feature sets, label variants, or trial counts trigger
+  data-snooping and selection-bias warnings.
+
+## Future Model-Family Reference Boundary
+
+Future model-family references are allowed as `model_candidate_reference` only.
+The current package records them to prepare review, not to implement models.
+
+Allowed future-only families:
+
+- calibrated logistic regression / linear probability baseline.
+- random forest and extra trees with probability calibration checks.
+- XGBoost / LightGBM tabular GBDT candidates.
+- neural tabular or sequence models only as later-only references with explicit
+  calibration and overfit risk notes.
+- stacking or ensembling only after base-family validation and multiple-testing
+  controls are project-validated.
+
+Every future model-family EvidenceCard must preserve `candidate_only: true`,
+`production_rank_activation: false`, and `final_composite_score_change: false`.
 
 ## Reference Inventory
 

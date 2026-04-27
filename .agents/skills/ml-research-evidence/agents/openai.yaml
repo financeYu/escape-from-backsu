@@ -1,0 +1,4 @@
+interface:
+  display_name: "ML Research Evidence"
+  short_description: "Gate ML research EvidenceCards."
+  default_prompt: "Use the ML research evidence gate for candidate-only ML research reference work."

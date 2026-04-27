@@ -3,7 +3,7 @@
 # paper downloading, model training, scoring, ranking, or report behavior.
 
 [metadata]
-contract_version = "v0_2_ml_research_queries.v1"
+contract_version = "v0_2_ml_research_queries.v2"
 owner = "Quant_mvp"
 upstream_research_owner = "Quant_mvp/research_mvp"
 route = "prob_up_1d_candidate"
@@ -104,6 +104,30 @@ terms = [
 ]
 
 [[query_sets]]
+id = "decision_time_label_availability"
+taxonomy_tags = ["decision_time_controls", "labeling_no_lookahead"]
+allowed_use = ["label_design_reference", "validation_method_candidate", "reference_only"]
+source_names = ["arxiv", "ssrn", "openalex", "crossref", "semantic_scholar", "official_docs"]
+terms = [
+  "decision time label availability no lookahead financial machine learning",
+  "feature observation time label leakage financial time series",
+  "prediction timestamp label availability adjusted close machine learning",
+  "latest unlabeled row inference time label leakage",
+]
+
+[[query_sets]]
+id = "purged_embargo_validation"
+taxonomy_tags = ["purged_embargo_validation", "time_series_validation"]
+allowed_use = ["validation_method_candidate", "reference_only"]
+source_names = ["arxiv", "ssrn", "openalex", "crossref", "semantic_scholar", "academic_publisher"]
+terms = [
+  "purged cross validation embargo financial machine learning",
+  "label overlap purge embargo time series prediction",
+  "walk forward purged validation financial labels",
+  "financial machine learning split gap embargo label horizon",
+]
+
+[[query_sets]]
 id = "backtest_overfitting_prevention"
 taxonomy_tags = ["backtest_overfitting_prevention"]
 allowed_use = ["validation_method_candidate", "reference_only"]
@@ -130,8 +154,20 @@ terms = [
 ]
 
 [[query_sets]]
+id = "calibration_drift_monitoring"
+taxonomy_tags = ["probability_calibration", "decision_time_controls"]
+allowed_use = ["calibration_reference", "validation_method_candidate", "reference_only"]
+source_names = ["arxiv", "openalex", "crossref", "semantic_scholar", "official_docs", "academic_publisher"]
+terms = [
+  "probability calibration drift time series classifier",
+  "calibration curve temporal validation classifier",
+  "Brier score time series cross validation classifier",
+  "calibrated probability out of sample financial machine learning",
+]
+
+[[query_sets]]
 id = "model_candidates"
-taxonomy_tags = ["model_candidates"]
+taxonomy_tags = ["model_candidates", "future_model_family_reference"]
 allowed_use = ["model_candidate_reference", "reference_only"]
 source_names = ["arxiv", "openalex", "crossref", "semantic_scholar", "official_docs", "academic_publisher"]
 terms = [
@@ -140,6 +176,19 @@ terms = [
   "extra trees classifier tabular probability",
   "XGBoost scalable tree boosting system",
   "LightGBM gradient boosting decision tree",
+]
+
+[[query_sets]]
+id = "future_model_family_references"
+taxonomy_tags = ["future_model_family_reference", "model_candidates", "probability_calibration"]
+allowed_use = ["model_candidate_reference", "calibration_reference", "reference_only"]
+source_names = ["arxiv", "openalex", "crossref", "semantic_scholar", "official_docs", "academic_publisher"]
+terms = [
+  "calibrated logistic regression probabilistic classifier baseline",
+  "random forest calibrated probabilities tabular classification",
+  "gradient boosting probability calibration tabular classifier",
+  "neural network probability calibration tabular data",
+  "stacking ensemble probability calibration multiple testing",
 ]
 
 [[query_sets]]

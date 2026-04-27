@@ -1,6 +1,6 @@
 ---
 name: quant-candidate-ml-gate
-description: Use for master_mvp post-MVP v0.2 candidate ML probability gate work: prob_up_1d_candidate, candidate-only predictive probability outputs, feature table scope checks, label-separated training/evaluation checks, leakage checks, and repeatable gate contract validation. Do not use for production ranking activation, report behavior changes, final_composite_score replacement, valuation/fundamental scoring, data-ingestion expansion, or trading recommendation work.
+description: "Use for master_mvp post-MVP v0.2 candidate ML probability gate work: prob_up_1d_candidate, candidate-only predictive probability outputs, feature table scope checks, label-separated training/evaluation checks, leakage checks, and repeatable gate contract validation. Do not use for production ranking activation, report behavior changes, final_composite_score replacement, valuation/fundamental scoring, data-ingestion expansion, or trading recommendation work."
 ---
 
 # Quant Candidate ML Gate
@@ -102,6 +102,10 @@ Block or flag:
    ```bash
    bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh
    ```
+
+   If sandboxed Git Bash fails with `Win32 error 5`, use
+   `.agents/skills/quant-validator-approval/SKILL.md` and rerun only this exact
+   validator command with the narrow approval prefix defined there.
 
 4. Read affected subproject instructions. Use a separate role worktree/branch
    for implementation, review, audit, research, chart runtime, or integration

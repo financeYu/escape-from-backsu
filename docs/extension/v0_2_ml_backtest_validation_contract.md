@@ -30,6 +30,22 @@ Backtest evaluator 출력은 diagnostic report, validation table, audit note로�
 production rank, production report order, model feature construction, model
 selection automation을 변경하지 않는다.
 
+## Contract Version And Ownership
+
+- Contract id: `v0_2_ml_backtest_validation_contract`.
+- Candidate output: `prob_up_1d_candidate`.
+- Owner boundary: Quant candidate ML gate / research reference package.
+- Backtest status: evaluation-only.
+- Production activation: false.
+- Score formula change: false.
+- Report behavior change: false.
+- Trading language: false.
+
+Any future implementation packet must reference this contract and declare which
+fields are implemented, stubbed, or blocked. Missing timing, split, calibration,
+or overfitting controls are gate blockers, not TODOs that can be silently
+resolved during model training.
+
 ## Out-Of-Sample Prediction Artifact Rule
 
 `prob_up_1d_candidate` sidecar artifact는 fold별 out-of-sample 예측만 포함해야
@@ -51,6 +67,11 @@ selection automation을 변경하지 않는다.
 - `label_table_version`
 - `calibration_method`
 - `prediction_generated_at`
+- `feature_max_observation_time`
+- `label_availability_time_for_evaluation`
+- `training_window_id`
+- `calibration_window_id`
+- `sidecar_schema_version`
 
 허용되지 않는 필드:
 
@@ -72,6 +93,19 @@ selection automation을 변경하지 않는다.
 - Inference artifact에는 label value가 들어가지 않는다.
 - Evaluation join은 out-of-sample prediction artifact와 label table 사이에서만
   수행한다.
+
+Required table lineage:
+
+- `feature_table_version`
+- `feature_source_snapshot_id`
+- `feature_allowed_list_version`
+- `label_table_version`
+- `adjusted_close_source_id`
+- `split_manifest_version`
+- `processor_fit_manifest_version`
+
+If any lineage field is missing, the run may remain a local diagnostic draft but
+cannot close the candidate ML gate.
 
 ## Decision-Time-Only Feature Rule
 
@@ -105,6 +139,23 @@ selection automation을 변경하지 않는다.
 - `feature_time_violation_count`
 - `label_leakage_violation_count`
 - `processor_fit_scope`
+- `feature_allowlist_violation_count`
+- `future_membership_violation_count`
+- `latest_unlabeled_row_count`
+
+## Decision-Time Control Matrix
+
+Each run must produce or validate a timing matrix with these relationships.
+
+| Field | Required relationship | Gate action on violation |
+| --- | --- | --- |
+| `feature_observation_time` | `<= decision_time` | fail |
+| `feature_processor_fit_end` | `<= train_end` or calibration-scope equivalent | fail |
+| `decision_time` | `< label_availability_time` for labeled rows | fail |
+| `execution_time` | `>= decision_time` | warning unless evaluation convention is invalid |
+| `label_time` | after `decision_time` for `up_1d_label` | fail |
+| `label_availability_time` | known only after `adjusted_close[t+1]` is available | fail |
+| latest inference row | no label value, `candidate_unlabeled` status | fail if labeled optimistically |
 
 ## Label Availability Rule
 
@@ -135,6 +186,29 @@ selection automation을 변경하지 않는다.
   calibration sub-window 안에서만 수행한다.
 - validation/test metric은 model selection evidence가 아니라 diagnostic field로
   기록한다.
+
+Split manifest required fields:
+
+- `split_id`
+- `split_method`: `walk_forward_expanding` or `walk_forward_rolling`
+- `train_start`
+- `train_end`
+- `calibration_start`
+- `calibration_end`
+- `validation_start`
+- `validation_end`
+- `test_start`
+- `test_end`
+- `embargo_start`
+- `embargo_end`
+- `purge_window`
+- `embargo_window`
+- `split_gap_days`
+- `sample_role_counts`
+
+Hyperparameter selection must use only the allowed training/validation scope
+declared in the split manifest. Test/backtest output cannot choose the model
+family, feature set, label variant, threshold, or calibration method.
 
 ## Purged / Embargo Rule
 
@@ -173,6 +247,25 @@ Candidate probability는 classification accuracy만으로 판단하지 않는다
 Calibration model은 training fold 또는 별도 calibration sub-window에서만 fit한다.
 Validation/test/inference labels로 calibration parameter를 fit하지 않는다.
 Isotonic calibration은 small sample overfit risk를 `risk_notes`에 기록한다.
+
+Calibration artifact required fields:
+
+- `calibration_artifact_id`
+- `calibration_method`
+- `calibration_fit_scope`
+- `calibration_fit_start`
+- `calibration_fit_end`
+- `calibration_sample_count`
+- `calibration_positive_count`
+- `pre_calibration_brier_score`
+- `post_calibration_brier_score`
+- `pre_calibration_log_loss`
+- `post_calibration_log_loss`
+- `calibration_curve_bin_count`
+- `small_sample_warning`
+
+Calibration improvement is diagnostic only. It does not activate production
+ranking, trading language, or automatic model promotion.
 
 ## Overfitting Audit Fields
 
@@ -220,6 +313,23 @@ audit 설계 후보일 뿐이다. 이 값들은 production score나 rank에 들�
 - `data_snooping_risk`
 - `backtest_feedback_risk`
 
+Multiple-testing control fields:
+
+- `experiment_registry_id`
+- `predeclared_trial_budget`
+- `actual_trial_count`
+- `familywise_comparison_count`
+- `feature_set_comparison_count`
+- `label_variant_comparison_count`
+- `metric_family_count`
+- `selection_rule_predeclared`
+- `holdout_reuse_count`
+- `human_override_reason`
+
+If the actual trial count exceeds the predeclared budget, set
+`manual_review_required: true` and block gate closure until the excess search is
+documented as exploratory rather than confirmatory.
+
 ## Forbidden Feedback Rule
 
 다음 feedback은 금지한다.
@@ -251,6 +361,11 @@ changes, final composite changes, or production report changes.
 Sidecar rank가 필요하면 `prob_up_1d_candidate_sidecar_rank`로만 기록하고,
 production rank와 이름/경로/schema를 분리한다.
 
+Future model families must enter through a reference manifest before training.
+The manifest must state model family, intended feature set, label version,
+calibration plan, trial budget, and forbidden downstream uses. Adding a model
+family reference is not authorization to train, deploy, rank, or report it.
+
 ## Acceptance Checklist
 
 Gate를 닫기 전 필요한 조건:
@@ -262,11 +377,17 @@ Gate를 닫기 전 필요한 조건:
 - walk-forward split이 chronological이며 shuffle이 없음.
 - overlap label에는 purge/embargo/gap policy가 기록됨.
 - calibration metrics가 fold 밖 label leakage 없이 계산됨.
+- calibration artifact가 training/calibration scope 안에서만 fit됨.
+- multiple-testing trial budget과 actual trial count가 기록됨.
+- post-hoc model/feature/label selection risk가 warning 또는 blocker로 남음.
 - backtest evaluator는 out-of-sample sidecar artifact만 읽음.
 - backtest output이 scoring/ranking/model feature/production report로 feedback하지
   않는다는 grep/check가 통과됨.
 - EvidenceCard 근거가 `full_text_reviewed` 또는 `project_validated`가 되기 전에는
   implementation gate decision을 닫지 않음.
+- future model-family reference가 model training, API client, download script,
+  ingestion expansion, score formula, production rank, report behavior, trading
+  language를 활성화하지 않음.
 
 ## Review Status
 

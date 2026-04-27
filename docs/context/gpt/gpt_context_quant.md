@@ -11,7 +11,7 @@ Generated only after an explicit user request with a non-empty request string.
 
 ## Current Request
 
-- Task: 커밋하고 GPT 폴더 레퍼런스 두 파일을 명시 요청 기준으로 함께 갱신
+- Task: gpt용 레퍼런스 갱신해
 - Decision needed: focus on the current request, not old roadmap narration.
 
 ## Do Not Repeat

@@ -87,3 +87,7 @@ Rules:
 
 Local risks are resolved. External paper review remains as an explicit,
 gate-blocking backlog rather than an unresolved hidden risk.
+
+The separated manual review queue for license/full-text backlog and
+`full_text_reviewed` / `project_validated` promotion candidates is
+`docs/extension/v0_2_ml_fulltext_license_review_packet.md`.

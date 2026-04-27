@@ -1,0 +1,30 @@
+{
+  "artifact_type": "candidate_only_walk_forward_evaluation",
+  "as_of_date": "20260210",
+  "candidate_output": "prob_up_1d_candidate",
+  "evaluation_source": "time_ordered_walk_forward_candidate_quality",
+  "feeds_composite_scores": false,
+  "feeds_model_selection_from_return_performance": false,
+  "feeds_production_ranking": false,
+  "feeds_reports": false,
+  "fold_count": 5,
+  "interpretation_limits": [
+    "candidate_only_model_quality_diagnostic",
+    "not_production_ranking_activation",
+    "not_final_or_technical_composite_replacement",
+    "not_report_behavior_change",
+    "not_model_selection_feedback_from_return_performance"
+  ],
+  "production_rank_activation": false,
+  "replace_final_composite_score": false,
+  "replace_technical_composite_score": false,
+  "required_metrics": [
+    "brier_score",
+    "log_loss",
+    "calibration_error",
+    "coverage",
+    "nan_missing_rate",
+    "feature_stability_mean_abs_shift"
+  ],
+  "split_mode": "time_ordered_expanding_window"
+}

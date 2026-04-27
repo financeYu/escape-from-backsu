@@ -41,11 +41,11 @@ Narrow verification found:
   `reports/validation/v0_2_predictive_probability/`.
 
 Because `adjusted_close` is not part of the current MVP v0.1 canonical OHLCV
-contract, the future v0.2 implementation must validate an explicit
-`adjusted_close` source before constructing labels. `Quant_mvp/config/data.toml`
-currently lists optional `adj_close`-style OHLCV fields, but this is not yet a
-canonical `adjusted_close` implementation contract. It must not reinterpret the
-existing `close` column as adjusted close.
+contract, the v0.2 candidate implementation validates an explicit adjusted
+close source before constructing labels. `Quant_mvp/config/data.toml` lists
+optional `adj_close` OHLCV support, and this route approves `adj_close` as the
+only alias that may be normalized to canonical `adjusted_close`. It must not
+reinterpret the existing `close` column as adjusted close.
 
 ## `adjusted_close` Availability Contract
 
@@ -60,10 +60,12 @@ Frozen rules:
 - `adjusted_close` is required for label construction.
 - `up_1d_label` is the label column for the future implementation.
 - Current repo availability verdict:
-  `BLOCKER_UNTIL_CONFIRMED_ADJUSTED_CLOSE_SOURCE`.
-- The only narrow repo evidence found is optional `adj_close` support in
-  `Quant_mvp/config/data.toml`; implementation must first normalize an approved
-  source or alias to canonical `adjusted_close`.
+  `CONFIRMED_EXISTING_OPTIONAL_ALIAS_ADJ_CLOSE`.
+- Approved alias list: `adj_close` only. The candidate implementation must
+  normalize this existing optional field to canonical `adjusted_close` before
+  label construction.
+- If neither `adjusted_close` nor `adj_close` is present, label construction is
+  blocked before training/evaluation rows are built.
 - `adjusted_close[t+1]` and `adjusted_close[t]` must come from the approved
   adjusted-close source for the same ticker and trading calendar.
 - Missing `adjusted_close` must fail fast before label construction.
@@ -90,6 +92,8 @@ Fail-fast examples for future implementation:
 - the next trading-day adjusted close is unavailable for a labeled
   training/evaluation row
 - the code path tries to use `close` when `adjusted_close` is missing
+- both `adjusted_close` and `adj_close` are present with conflicting same-row
+  values
 
 ## Feature Allowlist Contract
 
@@ -99,6 +103,14 @@ Default policy:
 - The config allowlist in `Quant_mvp/config/v0_2_candidate_ml_score.toml` is
   the machine-readable Gate 1 source for allowed source fields, allowed feature
   families, and forbidden feature patterns.
+- The implemented feature input path is
+  `src.scores.prob_up_1d_candidate.build_prob_up_1d_feature_input_frame`.
+- The implemented feature source is `step9_raw_technical_old_scores`: the
+  existing Step 9 raw technical old-score columns generated from approved
+  OHLCV-derived technical inputs.
+- The machine-readable old-score feature allowlist is
+  `[feature_allowlist].old_score_feature_columns` in
+  `Quant_mvp/config/v0_2_candidate_ml_score.toml`.
 - Every feature must be available at or before `decision_time`.
 - Every feature must be technical-only under the MVP v0.1 baseline.
 - Every rolling or cross-sectional feature must have documented source fields,
@@ -157,6 +169,17 @@ Candidate old-score feature routes may be implemented only if each column is
 resolved back to the allowlisted technical source or indicator families above.
 `technical_composite_score`, `final_composite_score`, production `rank`, and
 report-generated fields remain excluded even if they are technical-only outputs.
+
+Current allowed old-score feature columns for `prob_up_1d_candidate` are:
+
+- `short_term_overreaction_raw`
+- `atr_adjusted_oversold_distance_raw`
+- `rsi_price_divergence_raw`
+- `realized_vol_percentile_raw`
+- `donchian_breakout_distance_raw`
+- `bollinger_width_squeeze_raw`
+- `cmf_confirmation_raw`
+- `efficiency_ratio_trend_raw`
 
 ## Explicit Feature Exclusions
 
@@ -224,11 +247,76 @@ Required missing/warmup checks:
 
 - missing and warmup values must remain missing, invalid, blocked, or handled by
   a deterministic predeclared rule
+- the current implementation records `prob_up_1d_feature_valid_count` and
+  `prob_up_1d_feature_status`
+- training/evaluation rows require complete allowlisted features; inference
+  rows with incomplete allowlisted features keep `prob_up_1d_candidate` null
+  and emit `missing_features`
 - missing/warmup values must not be filled with optimistic values such as known
   future outcomes, cross-sectional winners, best-case returns, or favorable
   ranks
 - any imputation rule must be fixed before training and must not depend on
   validation/test outcomes
+
+## Walk-Forward Evaluation Contract
+
+The candidate quality diagnostic path is:
+
+```text
+src.scores.prob_up_1d_candidate.evaluate_prob_up_1d_candidate_walk_forward
+```
+
+The export path is:
+
+```text
+src.scores.prob_up_1d_candidate.export_prob_up_1d_walk_forward_evaluation
+```
+
+Fold definition:
+
+- split mode: `time_ordered_expanding_window`
+- train folds use only dates before the evaluation period
+- evaluation folds use the next configured date period after the train window
+- train, evaluation, and current inference rows remain separate sample roles
+- random split must not be the primary candidate quality diagnostic
+
+Required candidate quality metrics:
+
+- `brier_score`
+- `log_loss`
+- `calibration_error`
+- `coverage`
+- `nan_missing_rate`
+- `feature_stability_mean_abs_shift`
+
+Coverage and missing handling:
+
+- fold coverage is measured on label-available evaluation rows before dropping
+  incomplete feature rows
+- incomplete feature rows reduce coverage and increase missing-rate metrics
+- incomplete rows are not filled to create evaluation probabilities
+
+Interpretation limits:
+
+- the walk-forward output is a candidate-only model quality diagnostic
+- it must not activate production ranking
+- it must not replace `technical_composite_score` or `final_composite_score`
+- it must not change report behavior
+- it must not feed model selection from return-performance fields
+
+Generated artifact root:
+
+```text
+reports/v0_2_predictive_probability/evaluation/
+```
+
+Generated artifact names:
+
+- `prob_up_1d_candidate_walk_forward_metric_summary_{as_of_date}.csv`
+- `prob_up_1d_candidate_walk_forward_fold_metrics_{as_of_date}.csv`
+- `prob_up_1d_candidate_walk_forward_calibration_{as_of_date}.csv`
+- `prob_up_1d_candidate_walk_forward_feature_stability_{as_of_date}.csv`
+- `prob_up_1d_candidate_walk_forward_evaluation_{as_of_date}.manifest.json`
 
 Preferred tests:
 
@@ -241,6 +329,8 @@ Preferred tests:
 - label-availability timing test
 - as-of-date inference-without-label contract test
 - warmup/missing-state conservative handling test
+- multi-fold time-ordered walk-forward diagnostic test
+- calibration, coverage, missing-rate, and feature-stability diagnostic test
 
 These tests should be deterministic unit or static contract checks first.
 Broad integration tests are not required for this gate.
@@ -295,6 +385,130 @@ Minimum future sidecar columns:
 The sidecar must not include production `rank`, `technical_composite_score`,
 `final_composite_score`, trading recommendation fields, forecasted-return fields,
 or valuation/fundamental fields.
+
+## Sidecar Selection Packet Contract
+
+The candidate sidecar selection packet path is:
+
+```text
+src.scores.prob_up_1d_candidate.build_prob_up_1d_candidate_selection_packet
+```
+
+The packet export path is:
+
+```text
+src.scores.prob_up_1d_candidate.export_prob_up_1d_candidate_selection_packet
+```
+
+Generated packet root:
+
+```text
+reports/v0_2_predictive_probability/candidate_sidecar/selection_packet/
+```
+
+Generated packet names:
+
+- `prob_up_1d_candidate_selection_packet_{as_of_date}.csv`
+- `prob_up_1d_candidate_selection_packet_{as_of_date}.manifest.json`
+
+Selection packet sorting is fixed and exclusive:
+
+1. `prob_up_1d_candidate` descending
+2. `ticker` ascending
+
+Required packet fields:
+
+- `ticker`
+- `as_of_date`
+- `decision_time`
+- `prob_up_1d_candidate`
+- `model_version`
+- `model_type`
+- `feature_set_version`
+- `feature_schema_version`
+- `feature_schema_columns`
+- `label_contract_version`
+- `adjusted_close_source_field`
+- `adjusted_close_canonical_source_status`
+- `prob_up_1d_feature_status`
+- `prob_up_1d_feature_valid_count`
+- `feature_expected_count`
+- `feature_coverage_ratio`
+- `data_quality_flag`
+
+Packet boundary rules:
+
+- the packet is a candidate probability artifact only
+- the packet must not contain production `rank`
+- the packet must not contain `prob_up_1d_candidate_sidecar_rank`
+- the packet must not replace `final_composite_score`
+- the packet must not feed production reports
+- the packet must not alter production ranking order
+
+## Evaluation-Only Backtest Approval Packet
+
+The approval packet path is:
+
+```text
+Quant_mvp/docs/v0_2_candidate_ml_evaluation_backtest_approval_packet.md
+```
+
+This packet defines a root-approved evaluation-only diagnostic connection from
+candidate probability artifacts to a diagnostic evaluator. It does not
+authorize production ranking, report exposure, composite replacement, or
+feedback into model or feature selection.
+
+Allowed evaluation-only scope:
+
+- use candidate probability artifacts as downstream evaluation inputs
+- validate candidate artifact schema before evaluation
+- validate no-lookahead timing fields before evaluation
+- write generated diagnostic artifacts only
+
+Forbidden scope:
+
+- backtest diagnostics must not update model parameters
+- backtest diagnostics must not update feature allowlists
+- backtest diagnostics must not update score, ranking, report, or composite
+  definitions
+- candidate artifacts must not become production ranking inputs
+- candidate artifacts must not replace `technical_composite_score`
+- candidate artifacts must not replace `final_composite_score`
+
+Implemented diagnostic adapter:
+
+```text
+src.scores.prob_up_1d_candidate.run_prob_up_1d_evaluation_only_backtest
+```
+
+Further expansion remains blocked until root opens a separate gate.
+
+## Production Activation Root Approval Packet
+
+The root approval review packet path is:
+
+```text
+Quant_mvp/docs/v0_2_candidate_ml_production_activation_root_approval_packet.md
+```
+
+This packet prepares decision material only. It does not activate production
+ranking, replace `final_composite_score`, change reports, or convert
+`prob_up_1d_candidate` into order-action strategy behavior.
+
+The packet records:
+
+- current candidate-only output summary
+- model evaluation summary requirements
+- leakage and no-lookahead audit result and follow-up
+- adjusted-close canonical source result
+- sidecar packet validation result
+- evaluation-only backtest approval state
+- additional gates required before any later activation review
+- disable and rollback plan draft
+
+Current state remains `approval_review_ready_not_decided`. Production
+activation review remains blocked until root closes the listed blockers and
+opens a separate activation decision gate.
 
 ## Gate 1 Validation Profile
 

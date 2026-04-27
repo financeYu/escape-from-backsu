@@ -1,0 +1,2 @@
+fold_count,evaluation_count,brier_score,log_loss,calibration_error,coverage,nan_missing_rate,missing_row_rate,feature_stability_mean_abs_shift,feature_stability_max_abs_shift,split_mode,candidate_only_diagnostic
+5.0,15.0,0.3331559210806938,0.9607361941454862,0.4009202929879416,1.0,0.0,0.0,1.8405227424942285,1.9278607813754975,time_ordered_expanding_window,True

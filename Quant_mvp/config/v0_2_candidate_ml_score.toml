@@ -16,12 +16,15 @@ allow_trading_recommendations = false
 
 [adjusted_close_source]
 label_source_field = "adjusted_close"
-repo_availability_status = "BLOCKER_UNTIL_CONFIRMED_ADJUSTED_CLOSE_SOURCE"
+repo_availability_status = "CONFIRMED_EXISTING_OPTIONAL_ALIAS_ADJ_CLOSE"
 known_optional_aliases = ["adj_close"]
+approved_aliases = ["adj_close"]
 require_canonical_adjusted_close = true
 allow_close_fallback = false
 allow_new_market_data_ingestion = false
 must_validate_before_label_construction = true
+canonicalization_rule = "Use adjusted_close when present; otherwise normalize existing optional adj_close to adjusted_close before label construction."
+close_alias_status = "not_approved"
 
 [universe]
 baseline = "MVP_v0_1_frozen"
@@ -109,6 +112,48 @@ forbidden_schema_fields = [
   "valuation_signal",
 ]
 
+[sidecar_selection_packet]
+enabled = true
+packet_type = "candidate_sidecar_selection_packet"
+implementation_path = "src.scores.prob_up_1d_candidate.build_prob_up_1d_candidate_selection_packet"
+export_path = "src.scores.prob_up_1d_candidate.export_prob_up_1d_candidate_selection_packet"
+schema_validator = "src.scores.prob_up_1d_candidate.validate_prob_up_1d_selection_packet_schema"
+sort_fields = ["prob_up_1d_candidate", "ticker"]
+sort_directions = ["desc", "asc"]
+allow_production_rank_field = false
+allow_sidecar_rank_field = false
+production_rank_activation = false
+feeds_production_ranking = false
+feeds_reports = false
+feeds_composite_scores = false
+replace_final_composite_score = false
+required_fields = [
+  "ticker",
+  "as_of_date",
+  "decision_time",
+  "prob_up_1d_candidate",
+  "model_version",
+  "model_type",
+  "feature_set_version",
+  "feature_schema_version",
+  "feature_schema_columns",
+  "label_contract_version",
+  "adjusted_close_source_field",
+  "adjusted_close_canonical_source_status",
+  "prob_up_1d_feature_status",
+  "prob_up_1d_feature_valid_count",
+  "feature_expected_count",
+  "feature_coverage_ratio",
+  "data_quality_flag",
+]
+
+[sidecar_selection_packet_output_path]
+root = "reports/v0_2_predictive_probability/candidate_sidecar/selection_packet"
+filename_template = "prob_up_1d_candidate_selection_packet_{as_of_date}.csv"
+manifest_template = "prob_up_1d_candidate_selection_packet_{as_of_date}.manifest.json"
+generated_output = true
+source_controlled_by_default = false
+
 [features]
 allow_existing_technical_scores = true
 allow_production_composite_scores = false
@@ -124,6 +169,19 @@ allow_label_columns_as_features = false
 
 [feature_allowlist]
 mode = "default_deny"
+feature_input_path = "src.scores.prob_up_1d_candidate.build_prob_up_1d_feature_input_frame"
+feature_source = "step9_raw_technical_old_scores"
+schema_consistency_validator = "src.scores.prob_up_1d_candidate.validate_prob_up_1d_schema_consistency"
+old_score_feature_columns = [
+  "short_term_overreaction_raw",
+  "atr_adjusted_oversold_distance_raw",
+  "rsi_price_divergence_raw",
+  "realized_vol_percentile_raw",
+  "donchian_breakout_distance_raw",
+  "bollinger_width_squeeze_raw",
+  "cmf_confirmation_raw",
+  "efficiency_ratio_trend_raw",
+]
 allowed_source_fields = [
   "ticker",
   "date",
@@ -147,6 +205,60 @@ allowed_feature_families = [
   "static_non_fundamental_join_key",
   "same_date_kospi200_cross_sectional_technical",
 ]
+
+[missing_data_policy]
+feature_status_field = "prob_up_1d_feature_status"
+feature_valid_count_field = "prob_up_1d_feature_valid_count"
+ready_feature_status = "ready"
+missing_feature_status = "missing_features"
+train_eval_requires_complete_features = true
+inference_missing_probability = "prob_up_1d_candidate remains null when allowlisted features are incomplete"
+
+[walk_forward_evaluation]
+enabled = true
+implementation_path = "src.scores.prob_up_1d_candidate.evaluate_prob_up_1d_candidate_walk_forward"
+export_path = "src.scores.prob_up_1d_candidate.export_prob_up_1d_walk_forward_evaluation"
+evaluation_source = "time_ordered_walk_forward_candidate_quality"
+split_mode = "time_ordered_expanding_window"
+initial_train_periods = 20
+eval_periods = 5
+step_periods = 5
+minimum_folds = 2
+calibration_bins = 5
+train_eval_inference_separation_required = true
+random_split_primary = false
+candidate_only_diagnostic = true
+feeds_production_ranking = false
+feeds_reports = false
+feeds_composite_scores = false
+replace_technical_composite_score = false
+replace_final_composite_score = false
+feeds_model_selection_from_return_performance = false
+required_metrics = [
+  "brier_score",
+  "log_loss",
+  "calibration_error",
+  "coverage",
+  "nan_missing_rate",
+  "feature_stability_mean_abs_shift",
+]
+interpretation_limits = [
+  "candidate_only_model_quality_diagnostic",
+  "not_production_ranking_activation",
+  "not_final_or_technical_composite_replacement",
+  "not_report_behavior_change",
+  "not_model_selection_feedback_from_return_performance",
+]
+
+[walk_forward_evaluation_output_path]
+root = "reports/v0_2_predictive_probability/evaluation"
+summary_template = "prob_up_1d_candidate_walk_forward_metric_summary_{as_of_date}.csv"
+fold_metrics_template = "prob_up_1d_candidate_walk_forward_fold_metrics_{as_of_date}.csv"
+calibration_template = "prob_up_1d_candidate_walk_forward_calibration_{as_of_date}.csv"
+feature_stability_template = "prob_up_1d_candidate_walk_forward_feature_stability_{as_of_date}.csv"
+manifest_template = "prob_up_1d_candidate_walk_forward_evaluation_{as_of_date}.manifest.json"
+generated_output = true
+source_controlled_by_default = false
 
 [forbidden_feature_patterns]
 contains_any = [
@@ -200,10 +312,164 @@ label_fields_forbidden_from_features = [
 
 [feedback_boundary]
 backtest_feedback_into_features = false
+backtest_feedback_into_model = false
 backtest_feedback_into_scoring = false
 backtest_feedback_into_ranking = false
+backtest_feedback_into_reports = false
+backtest_feedback_into_final_composite_score = false
+backtest_feedback_into_technical_composite_score = false
 evaluation_feedback_into_features = false
 adoption_decision_from_candidate_output = false
+model_selection_from_backtest = false
+feature_selection_from_backtest = false
+cutoff_selection_from_backtest = false
+
+[evaluation_only_backtest_approval]
+status = "root_approved_evaluation_only_diagnostic_implemented"
+approval_packet_path = "Quant_mvp/docs/v0_2_candidate_ml_evaluation_backtest_approval_packet.md"
+implementation_path = "src.scores.prob_up_1d_candidate.run_prob_up_1d_evaluation_only_backtest"
+loader_path = "src.scores.prob_up_1d_candidate.load_candidate_probability_artifact"
+export_path = "src.scores.prob_up_1d_candidate.export_prob_up_1d_evaluation_only_backtest"
+diagnostic_validator = "src.scores.prob_up_1d_candidate.validate_prob_up_1d_evaluation_only_backtest_diagnostic"
+implementation_authorized = true
+root_approval_received = true
+root_approval_required = true
+candidate_artifact_allowed_as_evaluation_input = true
+candidate_artifact_allowed_as_feature_input = false
+candidate_artifact_allowed_as_model_selection_input = false
+production_rank_activation = false
+feeds_production_ranking = false
+feeds_reports = false
+feeds_composite_scores = false
+replace_technical_composite_score = false
+replace_final_composite_score = false
+allowed_candidate_artifact_sources = [
+  "prob_up_1d_candidate_output",
+  "candidate_only_sidecar",
+  "candidate_sidecar_selection_packet",
+  "walk_forward_diagnostic_context",
+]
+required_validators = [
+  ".agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh",
+  ".agents/skills/quant-review-gate/scripts/validate_review_gate.sh",
+  "validate_v0_2_candidate_artifact_columns",
+  "validate_v0_2_candidate_feature_columns",
+  "validate_prob_up_1d_selection_packet_schema",
+  "no_lookahead_timing_validator",
+  "generated_output_boundary_validator",
+  "forbidden_feedback_loop_tests",
+]
+implementation_blockers = [
+  "production_activation_still_not_authorized",
+  "evaluation_diagnostics_not_interpreted_as_runtime_adoption",
+]
+
+[evaluation_only_backtest]
+status = "candidate_only_diagnostic_implemented"
+artifact_type = "candidate_only_evaluation_backtest_diagnostic"
+evaluation_source = "candidate_probability_artifact_evaluation_only"
+output_root = "reports/v0_2_predictive_probability/evaluation_only_backtest"
+diagnostic_template = "prob_up_1d_candidate_evaluation_only_backtest_diagnostic_{as_of_date}.csv"
+manifest_template = "prob_up_1d_candidate_evaluation_only_backtest_{as_of_date}.manifest.json"
+allowed_input_artifact_types = [
+  "candidate_sidecar_selection_packet",
+  "candidate_probability_artifact",
+]
+requires_decision_time = true
+requires_probability_field = true
+validates_no_lookahead_timing = true
+rejects_production_rank_fields = true
+rejects_composite_fields = true
+rejects_report_output_fields = true
+rejects_future_or_realized_return_fields = true
+rejects_feedback_config_updates = true
+writes_diagnostics_only = true
+production_rank_activation = false
+feeds_production_ranking = false
+feeds_reports = false
+feeds_composite_scores = false
+replace_technical_composite_score = false
+replace_final_composite_score = false
+backtest_feedback_into_features = false
+backtest_feedback_into_model = false
+backtest_feedback_into_scoring = false
+backtest_feedback_into_ranking = false
+backtest_feedback_into_reports = false
+model_selection_from_backtest = false
+feature_selection_from_backtest = false
+cutoff_selection_from_backtest = false
+interpretation_limits = [
+  "candidate_probability_artifact_evaluation_only",
+  "not_production_ranking_activation",
+  "not_final_or_technical_composite_replacement",
+  "not_report_behavior_change",
+  "not_model_selection_feedback",
+  "not_feature_selection_feedback",
+  "not_cutoff_selection_feedback",
+]
+
+[production_activation_root_approval]
+status = "root_approval_review_packet_only_not_activated"
+approval_packet_path = "Quant_mvp/docs/v0_2_candidate_ml_production_activation_root_approval_packet.md"
+activation_decision_state = "approval_review_ready_not_decided"
+activation_executed = false
+implementation_authorized = false
+root_approval_required = true
+candidate_only_state_preserved = true
+production_rank_activation = false
+report_runtime_change = false
+feeds_production_ranking = false
+feeds_reports = false
+feeds_composite_scores = false
+replace_technical_composite_score = false
+replace_final_composite_score = false
+order_action_strategy_behavior = false
+evaluation_only_backtest_approved = true
+evaluation_only_backtest_implemented = true
+required_additional_gates = [
+  "root_production_activation_decision_gate",
+  "score_runtime_semantics_gate",
+  ".agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh",
+  ".agents/skills/quant-review-gate/scripts/validate_review_gate.sh",
+  "leakage_no_lookahead_audit",
+  "candidate_artifact_schema_validation",
+  "sidecar_packet_schema_and_sorting_validation",
+  "evaluation_only_backtest_approval_gate",
+  "generated_output_cache_boundary_audit",
+  "cross_step_conflict_checkpoint",
+  "disable_plan_review",
+  "post_change_runtime_isolation_review",
+]
+required_activation_evidence = [
+  "exact_candidate_artifact_path_and_manifest",
+  "model_version_and_feature_schema_version",
+  "walk_forward_metric_summary",
+  "calibration_coverage_missing_stability_summary",
+  "leakage_no_lookahead_audit_result",
+  "adjusted_close_provenance_evidence",
+  "sidecar_schema_validation_output",
+  "evaluation_only_diagnostic_output_and_boundary_audit",
+  "runtime_diff_for_approved_surface_only",
+  "disable_plan_and_rollback_rehearsal_evidence",
+]
+activation_blockers = [
+  "root_activation_approval_missing",
+  "evaluation_only_backtest_implementation_not_approved",
+  "evaluation_only_backtest_diagnostics_unavailable",
+  "activation_acceptance_criteria_not_defined",
+  "source_availability_timestamp_validator_not_production_ready",
+  "generated_output_cache_boundary_validator_owner_missing",
+  "rollback_rehearsal_evidence_missing",
+  "production_runtime_isolation_review_incomplete",
+]
+disable_plan_steps = [
+  "set_activation_flag_disabled",
+  "stop_reading_prob_up_1d_candidate_in_production_ranking_path",
+  "keep_candidate_sidecar_diagnostic_only",
+  "restore_existing_final_composite_score_ranking_path",
+  "remove_report_exposure_if_future_surface_was_approved",
+  "rerun_score_runtime_semantics_and_candidate_ml_gate_validators",
+]
 
 [language_policy]
 allowed_terms = [

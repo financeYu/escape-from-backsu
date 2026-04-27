@@ -92,12 +92,18 @@ V0_2_BACKTEST_FEEDBACK_COLUMN_TERMS = frozenset(
         "forward",
         "hit_rate",
         "future",
-        "realized",
         "win_rate",
+        "holding_return",
         "realized_return",
+        "realized_holding_return",
         "forward_return",
         "future_return",
         "paper_return",
+        "generated_report",
+        "report_output",
+        "ranking_output",
+        "candidate_sidecar",
+        "cache",
         "cagr",
         "profit_factor",
     }
@@ -114,7 +120,7 @@ V0_2_LABEL_LEAKAGE_COLUMN_TERMS = frozenset(
         "tomorrow",
         "t_plus",
         "tplus",
-        "realized",
+        "realized_return",
         "outcome",
         "y_true",
     }
@@ -153,12 +159,14 @@ def find_v0_2_candidate_forbidden_columns(columns: pd.DataFrame | Iterable[str])
     """Return candidate artifact columns that violate v0.2 guardrails."""
 
     names = column_names(columns)
+    artifact_substrings = V0_2_BACKTEST_FEEDBACK_COLUMN_TERMS - frozenset({"candidate_sidecar"})
     forbidden: set[str] = set(
         find_forbidden_columns_by_rules(
             names,
             exact=V0_2_CANDIDATE_FORBIDDEN_EXACT_COLUMNS,
             prefixes=V0_2_CANDIDATE_FORBIDDEN_PREFIXES,
             suffixes=V0_2_CANDIDATE_FORBIDDEN_SUFFIXES,
+            substrings=artifact_substrings,
             tokens=V0_2_BACKTEST_FEEDBACK_COLUMN_TERMS,
         )
     )

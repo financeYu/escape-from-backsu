@@ -11,6 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.scores.technical_scores import ALL_STEP9_RAW_SCORE_COLUMNS  # noqa: E402
 from src.validation.v0_2_candidate_ml_guardrails import (  # noqa: E402
     validate_v0_2_candidate_artifact_columns,
     validate_v0_2_candidate_artifact_frame,
@@ -40,7 +41,7 @@ def candidate_artifact() -> pd.DataFrame:
 def test_candidate_artifact_accepts_candidate_only_sidecar_shape() -> None:
     validate_v0_2_candidate_artifact_frame(
         candidate_artifact(),
-        feature_columns=("old_score_a_raw", "old_score_b_raw"),
+        feature_columns=ALL_STEP9_RAW_SCORE_COLUMNS,
     )
 
 
@@ -105,7 +106,9 @@ def test_feature_columns_reject_future_label_and_backtest_leakage() -> None:
 
 
 def test_feature_columns_allow_non_label_y_characters() -> None:
-    validate_v0_2_candidate_feature_columns(("volatility_regime_raw", "liquidity_proxy_raw"))
+    validate_v0_2_candidate_feature_columns(
+        ("volatility_regime_raw", "liquidity_proxy_raw", "realized_vol_percentile_raw")
+    )
 
 
 def test_candidate_artifact_requires_timing_fields() -> None:

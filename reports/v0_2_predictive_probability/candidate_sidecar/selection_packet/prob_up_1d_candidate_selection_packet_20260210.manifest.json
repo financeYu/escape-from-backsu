@@ -1,0 +1,46 @@
+{
+  "artifact_type": "candidate_sidecar_selection_packet",
+  "as_of_date": "20260210",
+  "candidate_output": "prob_up_1d_candidate",
+  "feeds_composite_scores": false,
+  "feeds_production_ranking": false,
+  "feeds_reports": false,
+  "production_rank_activation": false,
+  "replace_final_composite_score": false,
+  "row_count": 3,
+  "schema": [
+    "ticker",
+    "as_of_date",
+    "decision_time",
+    "prob_up_1d_candidate",
+    "prob_up_1d_candidate_status",
+    "prob_up_1d_candidate_sample_role",
+    "model_version",
+    "model_type",
+    "model_train_count",
+    "model_evaluation_count",
+    "model_feature_count",
+    "feature_set_version",
+    "feature_schema_version",
+    "feature_schema_columns",
+    "label_contract_version",
+    "adjusted_close_source_field",
+    "adjusted_close_approved_aliases",
+    "adjusted_close_canonical_source_status",
+    "prob_up_1d_feature_status",
+    "prob_up_1d_feature_valid_count",
+    "feature_expected_count",
+    "feature_coverage_ratio",
+    "data_quality_flag",
+    "candidate_packet_type"
+  ],
+  "selection_packet_path": "src.scores.prob_up_1d_candidate.build_prob_up_1d_candidate_selection_packet",
+  "sort_directions": [
+    "desc",
+    "asc"
+  ],
+  "sort_fields": [
+    "prob_up_1d_candidate",
+    "ticker"
+  ]
+}

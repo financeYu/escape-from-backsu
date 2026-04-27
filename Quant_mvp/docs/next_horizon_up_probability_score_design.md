@@ -21,6 +21,12 @@ extension design lives in
 freeze gate passes, this score family remains `v0.1n_candidate` and must not
 replace MVP v0.1 scoring, ranking, reports, or backtests.
 
+The exception-managed migration plan is documented in
+`Quant_mvp/docs/primary_score_migration_contract.md`. In that plan, this score
+is the new `primary_score` candidate, while the MVP v0.1 composite score is
+preserved only as archived `old_score` material until a later cutover branch is
+approved.
+
 ## Candidate Score
 
 This design uses one parameterized score instead of hardcoded 1-day, 1-week, or

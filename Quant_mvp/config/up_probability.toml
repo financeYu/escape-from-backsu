@@ -17,6 +17,24 @@ valuation_fundamental_inputs_allowed = false
 requires_calibrated_probability_input = true
 evaluation_only_notice = "KOSPI200 technical-only candidate up-probability score; evaluation-only, no trading recommendation."
 
+[primary_score_migration]
+exception_branch = "quant/post20-primary-score-migration"
+primary_score_column = "next_horizon_up_probability_score"
+primary_score_status = "primary_candidate_pending_validation"
+primary_score_runtime_cutover_enabled = false
+legacy_score_archive_enabled = true
+legacy_score_runtime_fallback_enabled = false
+legacy_score_archive_source = "MVP v0.1 technical-only composite"
+legacy_score_archive_status = "archived_legacy_reference"
+legacy_score_archive_columns = [
+  "legacy_technical_composite_score",
+  "legacy_final_composite_score",
+]
+forbidden_active_score_columns_after_cutover = [
+  "technical_composite_score",
+  "final_composite_score",
+]
+
 [up_probability_score.columns]
 probability = "next_horizon_up_probability"
 score = "next_horizon_up_probability_score"

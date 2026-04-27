@@ -56,3 +56,18 @@ forbidden_during_mvp_v0_1 = [
   "backtest feedback into scoring or ranking",
   "valuation/fundamental data in technical_composite_score or final_composite_score",
 ]
+
+[extension.v0_1n_candidate_ml]
+state = "approval_prep_only"
+permission = "candidate-only experimental line for future v0.2; does not authorize implementation or production adoption"
+context = "docs/extension/v0_1n_implementation_approval_packet.md"
+candidate_output = "prob_up_1d_candidate"
+candidate_label = "adjusted_close[t+1] > adjusted_close[t]"
+forbidden = [
+  "MVP v0.1 baseline changes",
+  "production scoring or ranking adoption",
+  "score formula, weight, normalization, ranking, or report behavior changes",
+  "new market data ingestion",
+  "backtest feedback into scoring or ranking",
+  "trading recommendation language",
+]

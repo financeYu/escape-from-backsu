@@ -159,7 +159,8 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 - `docs/context/GPT_CONTEXT_GENERATION_RULES.md` exists.
 - Rules include max 3 confirmed context facts.
 - Rules include default GPT input = compact baseline + one active request packet.
-- GPT-facing output refresh commands require `--user-requested`.
+- GPT-facing output refresh commands require `--user-requested`; GPT submission
+  brief generation also requires a non-empty `--request`.
 - Rules include the mandatory anti-repetition phrase.
 - Rules mark Step 1-20 history as archive-only.
 - Rules forbid full validation logs in default context.

@@ -211,12 +211,15 @@ def write_context_packet(config: PacketConfig) -> PacketResult:
 
 def build_gpt_brief(config: GptBriefConfig) -> str:
     root = config.project_root.resolve()
-    request = config.request.strip() or "Replace this placeholder with the active user request."
+    request = config.request.strip()
+    if not request:
+        raise ValueError("GPT brief refresh requires --request with the active user request.")
     missing_refs = _missing_refs(root, GPT_BRIEF_ROUTE_REFS)
     sections = [
         "# GPT Context Quant",
         "",
         "Status: routing aid, not an authority document.",
+        "Generated only after an explicit user request with a non-empty request string.",
         "",
         "## Confirmed Context",
         "",
@@ -346,11 +349,16 @@ def _write_requested_packet(
                 "Refusing to refresh GPT brief without --user-requested. "
                 "Run only after the user explicitly asks for this GPT context update."
             )
+        if not args.request or not args.request.strip():
+            parser.error(
+                "Refusing to refresh GPT brief without --request. "
+                "Use --request to record the active GPT task."
+            )
         output = Path(args.output) if args.output else DEFAULT_GPT_BRIEF_OUTPUT
         return write_gpt_brief(
             GptBriefConfig(
                 project_root=Path(args.project_root),
-                request=args.request or "Replace this placeholder with the active user request.",
+                request=args.request,
                 output_path=output,
             )
         )

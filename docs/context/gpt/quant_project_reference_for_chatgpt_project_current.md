@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-27T02:29:30+09:00
+Generated at: 2026-04-27T13:22:56+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -8,6 +8,11 @@ Context key: `quant_project_current_context`
 This file is the only local context snapshot kept by the master workspace.
 Older local snapshots managed by this script are removed during refresh.
 No paid API upload is performed by this local-only workflow.
+
+## User-Requested Context Policy
+
+- Refresh only when the user explicitly requests this ChatGPT reference update.
+- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.
 
 ## Authority Order
 
@@ -20,12 +25,19 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-No active roadmap Step is in progress. Step 20 is complete, and the KOSPI200
-technical MVP v0.1 baseline is frozen.
+Post-MVP `v0.2 predictive probability score route` Step is open for the
+approved candidate-only implementation of `prob_up_1d_candidate` in a separate
+role branch/worktree. Step 20 is complete, and the KOSPI200 technical MVP v0.1
+baseline is frozen.
 - Current baseline: MVP v0.1 frozen KOSPI200 technical-only scanner baseline.
-- Current gate: future expansion or semantic changes need a separately approved
-  post-MVP version/Step, routed context packet, correct role branch/worktree,
-  and conflict checkpoint when required.
+- Current active Step: post-MVP `v0.2 predictive probability score route`.
+- Current gate: this Step authorizes only the scoped implementation of
+  `prob_up_1d_candidate` feature table, label-separated training/evaluation
+  pipeline, candidate probability output, and validation tests in the approved
+  role branch/worktree. It does not authorize production ranking activation,
+  trading recommendations, `final_composite_score` replacement, report behavior
+  changes, backtest metrics as model features, valuation/fundamental data, data
+- omitted 1 additional lines for compact context
 
 ## Current Baseline
 
@@ -46,24 +58,8 @@ technical MVP v0.1 baseline is frozen.
 
 - KOSDAQ150, futures, options, Nasdaq/overseas, or multi-universe activation.
 - New market-data ingestion or live vendor assumptions.
-- Score formula, weight, adoption, normalization, ranking, report, backtest, or valuation semantic changes.
-- Financial/fundamental data in `technical_composite_score` or
-  `final_composite_score`.
-- Backtest feedback into scoring/ranking.
-- Trading recommendations, buy/sell/hold, proven-alpha, or expected-return wording.
+- Runtime score formula, weight, adoption, normalization, ranking, report,
+  backtest, or valuation semantic changes outside the approved
+  `prob_up_1d_candidate` candidate-only implementation scope.
 
-## User-Requested Context Policy
-
-- Refresh only when the user explicitly requests this ChatGPT reference update.
-- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.
-
-## Route-Only References
-
-- Root compact hard stops: `docs/root_hard_stops.md`.
-- Current roadmap status: `docs/roadmap_status.md`.
-- MVP baseline: `docs/context/MVP_V0_1_BASELINE.md`.
-- MVP contracts: `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`.
-- Quant agent scope: `Quant_mvp/AGENTS.md`.
-- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).
-- Family map: `Quant_mvp/docs/family_map.md` (on-demand only; not embedded).
-- Archive lookup: `docs/context/ARCHIVE_INDEX.md`.
+[Context truncated by `max_chars`; consult repository docs for full detail.]

@@ -110,6 +110,7 @@ def test_gpt_brief_mode_generates_route_only_context(tmp_path: Path) -> None:
 
     text = result.output_path.read_text(encoding="utf-8")
     assert len(text.splitlines()) <= 80
+    assert "Generated only after an explicit user request" in text
     assert "Draft a GPT prompt." in text
     assert "Do not repeat completed Step history" in text
     assert "`docs/context/MVP_V0_1_BASELINE.md` - FOUND" in text
@@ -135,6 +136,31 @@ def test_request_only_cli_requires_explicit_gpt_brief_mode(tmp_path: Path, capsy
     assert exc_info.value.code == 2
     assert not output.exists()
     assert "--mode gpt-brief --user-requested --request" in captured.err
+
+
+def test_gpt_brief_cli_requires_active_request_text(tmp_path: Path, capsys) -> None:
+    _write_minimal_context_project(tmp_path)
+
+    with pytest.raises(SystemExit) as exc_info:
+        module.main(["--project-root", str(tmp_path), "--mode", "gpt-brief", "--user-requested"])
+
+    captured = capsys.readouterr()
+    output = tmp_path / "docs/context/gpt/gpt_context_quant.md"
+    assert exc_info.value.code == 2
+    assert not output.exists()
+    assert "without --request" in captured.err
+
+
+def test_gpt_brief_builder_rejects_blank_request(tmp_path: Path) -> None:
+    _write_minimal_context_project(tmp_path)
+    config = module.GptBriefConfig(
+        project_root=tmp_path,
+        request="  ",
+        output_path=tmp_path / "docs/context/generated/gpt_brief.md",
+    )
+
+    with pytest.raises(ValueError, match="requires --request"):
+        module.build_gpt_brief(config)
 
 
 def test_explicit_gpt_brief_cli_writes_separate_context_path(tmp_path: Path, capsys) -> None:

@@ -66,7 +66,8 @@ results unless the task names an allowed archive lookup reason.
 - `scripts/context/build_context_packet.py`: builds a compact routed packet for a task.
   - GPT submission brief, only when explicitly requested:
     `python scripts/context/build_context_packet.py --mode gpt-brief --user-requested --request "<current GPT task>"`
-    writes `docs/context/gpt/gpt_context_quant.md`; `--request` alone is intentionally not enough.
+    writes `docs/context/gpt/gpt_context_quant.md`; both `--user-requested`
+    and a non-empty `--request` are required.
   - ChatGPT project reference snapshot, only when explicitly requested:
     `python scripts/refresh_quant_project_context.py --user-requested`
     writes `docs/context/gpt/quant_project_reference_for_chatgpt_project_current.md`.

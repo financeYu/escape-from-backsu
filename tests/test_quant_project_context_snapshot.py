@@ -33,6 +33,7 @@ def test_refresh_context_keeps_only_latest_local_file() -> None:
     assert "Workspace: `repository root`" in text
     assert str(root) not in text
     assert "No paid API upload is performed" in text
+    assert "Refresh only when the user explicitly requests this ChatGPT reference update." in text
     assert "Cross-Step Conflict Checkpoint" in text
     assert "Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded)." in text
     assert "`score_a` | test" not in text

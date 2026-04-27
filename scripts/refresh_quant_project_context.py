@@ -87,6 +87,11 @@ def _context_header_sections(config: ContextConfig) -> list[str]:
         "Older local snapshots managed by this script are removed during refresh.",
         "No paid API upload is performed by this local-only workflow.",
         "",
+        "## User-Requested Context Policy",
+        "",
+        "- Refresh only when the user explicitly requests this ChatGPT reference update.",
+        "- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.",
+        "",
         "## Authority Order",
         "",
         "1. User's latest explicit instruction",
@@ -140,11 +145,6 @@ def _guardrail_context_sections(hard_stops: str) -> list[str]:
             next_heading="## Archive Read Gate",
             max_lines=10,
         ),
-        "",
-        "## User-Requested Context Policy",
-        "",
-        "- Refresh only when the user explicitly requests this ChatGPT reference update.",
-        "- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.",
         "",
     ]
 

@@ -33,7 +33,7 @@ from src.backtest import (  # noqa: E402
     ConservativeBacktestResult,
     run_conservative_backtest,
 )
-from src.backtest.contracts import (  # noqa: E402
+from Quant_mvp.backtest_mvp.contracts import (  # noqa: E402
     ALLOWED_MISSING_PRICE_POLICIES,
     ALLOWED_PRICE_POLICIES,
     ALLOWED_REBALANCE_FREQUENCIES,

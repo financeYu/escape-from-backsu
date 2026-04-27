@@ -5,6 +5,12 @@ Local desktop GUI module for post-MVP viewers.
 This module is intended to run from the repository checkout. The chart viewer
 depends on `chart_mvp/src/stock_core` and is not packaged as a standalone wheel.
 
+Open the launcher:
+
+```powershell
+python -m gui_mvp
+```
+
 Run the extracted chart Top-N viewer:
 
 ```powershell
@@ -20,3 +26,9 @@ python -m gui_mvp backtest
 The backtest viewer is display-only. It calls `src.backtest` and keeps realized
 returns inside Step 17 result objects; it does not update scoring, ranking,
 reports, or configuration.
+
+Create a Windows desktop shortcut for the launcher:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File gui_mvp\create_desktop_shortcut.ps1
+```

@@ -478,6 +478,30 @@ def test_candidate_selection_packet_rejects_production_boundary_fields() -> None
             validate_prob_up_1d_selection_packet_schema(leaked)
 
 
+def test_candidate_selection_packet_rejects_invalid_timing_and_probability_values() -> None:
+    result = run_prob_up_1d_candidate_pipeline(
+        probability_frame(),
+        config=small_config(),
+        as_of_date="2026-01-06",
+    )
+    packet = build_prob_up_1d_candidate_selection_packet(result, as_of_date="2026-01-06")
+
+    bad_decision_time = packet.copy()
+    bad_decision_time[DECISION_TIME_COLUMN] = "not-a-date"
+    with pytest.raises(ValueError, match="invalid decision_time"):
+        validate_prob_up_1d_selection_packet_schema(bad_decision_time)
+
+    bad_as_of_date = packet.copy()
+    bad_as_of_date["as_of_date"] = "not-a-date"
+    with pytest.raises(ValueError, match="invalid as_of_date"):
+        validate_prob_up_1d_selection_packet_schema(bad_as_of_date)
+
+    bad_probability = packet.copy()
+    bad_probability[PROBABILITY_COLUMN] = 1.5
+    with pytest.raises(ValueError, match=r"outside \[0, 1\]"):
+        validate_prob_up_1d_selection_packet_schema(bad_probability)
+
+
 def test_candidate_selection_packet_export_writes_candidate_only_manifest(tmp_path: Path) -> None:
     result = run_prob_up_1d_candidate_pipeline(
         probability_frame(),

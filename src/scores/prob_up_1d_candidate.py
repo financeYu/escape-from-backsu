@@ -710,6 +710,17 @@ def validate_prob_up_1d_selection_packet_schema(packet: pd.DataFrame) -> None:
             "v0.2 probability candidate selection packet contains forbidden production fields: "
             f"{', '.join(leaked)}"
         )
+    as_of_dates = _parse_required_datetime_column(packet["as_of_date"], column="as_of_date")
+    decision_times = _parse_required_datetime_column(packet[DECISION_TIME_COLUMN], column=DECISION_TIME_COLUMN)
+    probabilities = _numeric_series(packet[PROBABILITY_COLUMN], column=PROBABILITY_COLUMN)
+    if as_of_dates.isna().any():
+        raise ValueError("v0.2 probability candidate selection packet has missing as_of_date.")
+    if decision_times.isna().any():
+        raise ValueError("v0.2 probability candidate selection packet has missing decision_time.")
+    if probabilities.isna().any():
+        raise ValueError("v0.2 probability candidate selection packet has missing prob_up_1d_candidate.")
+    if not probabilities.between(0.0, 1.0).all():
+        raise ValueError("v0.2 probability candidate selection packet has probabilities outside [0, 1].")
     if not packet["candidate_packet_type"].eq(SELECTION_PACKET_TYPE).all():
         raise ValueError("v0.2 probability candidate selection packet has invalid packet type.")
     _assert_selection_packet_sort(packet)

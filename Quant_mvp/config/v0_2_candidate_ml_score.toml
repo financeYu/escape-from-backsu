@@ -454,9 +454,7 @@ required_activation_evidence = [
 ]
 activation_blockers = [
   "root_activation_approval_missing",
-  "evaluation_only_backtest_implementation_not_approved",
-  "evaluation_only_backtest_diagnostics_unavailable",
-  "activation_acceptance_criteria_not_defined",
+  "root_acceptance_of_attached_diagnostic_evidence_pending",
   "source_availability_timestamp_validator_not_production_ready",
   "generated_output_cache_boundary_validator_owner_missing",
   "rollback_rehearsal_evidence_missing",

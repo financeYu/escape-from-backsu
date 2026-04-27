@@ -6,8 +6,11 @@ This document records a conservative pre-screening pass for valuation candidates
 
 Weaknesses and blockers first:
 
-- valuation work is separated from the main technical agent into `agents/valuation/AGENTS.md`.
-- valuation score examples are stored in `agents/valuation/valuation_scores.example.toml`, not in the main `config/scores.toml`.
+- valuation work is separated from the main technical agent into
+  `../.agents/skills/valuation_review/SKILL.md`.
+- valuation score examples are stored in
+  `../.agents/skills/valuation_review/references/valuation_scores.example.toml`,
+  not in the main `config/scores.toml`.
 - `config/data.toml` currently sets `point_in_time_fundamentals = false`.
 - `config/data.toml` currently sets `quality_fields = false`.
 - `config/data.toml` currently sets `analyst_revisions = false`.

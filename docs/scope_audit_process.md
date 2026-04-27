@@ -11,13 +11,18 @@ The goal is to catch scope creep while work is still small:
 - scoring, ranking, backtest, valuation, composite, and generated-output boundaries remain explicit
 - master-up summaries include a clear audit verdict when the change needs one
 
-The current watchdog is:
+The current root-managed watchdog gate is:
 
 ```text
-Quant_mvp/agents/audit/AGENTS.md
+.agents/skills/quant-subproject-audit-gate/SKILL.md
 ```
 
-The watchdog audits instructions and scope. It does not implement features, repair code by default, or change roadmap state.
+The watchdog audits instructions and scope. Validation is a separate evidence
+part of the same gate. Neither part implements features, repairs code by
+default, or changes roadmap state.
+
+Audit and validation must stay separate: audit returns the policy/scope verdict,
+and validation records command evidence.
 
 ## Roles
 
@@ -32,14 +37,22 @@ Scope watchdog:
 
 - checks whether the worker stayed within the latest user request, active roadmap Step, and project boundary
 - checks hard-stop categories, terminology, evidence strength, forbidden output columns, generated-output boundaries, and config integrity
+- covers the whole `Quant_mvp` subproject by changed-path and boundary checks without reading all subproject content
 - returns exactly one audit verdict: `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION`
 - records actual violations, risks, style suggestions, unknowns, and inferences separately
+
+Validation part:
+
+- records required commands, commands run, commands skipped, and short evidence
+- reports `PASS`, `FAIL`, or `NOT_RUN` separately from the audit verdict
+- does not approve scope expansion, score adoption, ranking, valuation, backtest, or trading claims
 
 Master:
 
 - decides whether the watchdog was required
 - holds integration review when a required watchdog audit is missing
 - keeps `review_mvp` separate from watchdog audit
+- runs `.agents/skills/quant-review-gate/SKILL.md` before accepting completion
 
 ## When Watchdog Audit Is Required
 
@@ -132,7 +145,7 @@ The worker supplies:
 - unresolved risks:
 ```
 
-The watchdog responds using the required output format in `Quant_mvp/agents/audit/AGENTS.md`.
+The watchdog responds using `.agents/skills/quant-subproject-audit-gate/SKILL.md`.
 
 ## Verdict Handling
 
@@ -160,9 +173,12 @@ The watchdog responds using the required output format in `Quant_mvp/agents/audi
 
 ## Relationship To review_mvp
 
-The watchdog and `review_mvp` are different gates.
+The watchdog, validation evidence, and `review_mvp` are different gates.
 
 The watchdog checks whether the worker is allowed to do the work and whether the work stayed inside policy, roadmap, terminology, evidence, and boundary rules.
+
+Validation evidence records whether the required commands passed, failed, or
+were not run. It does not replace the watchdog verdict.
 
 `review_mvp` checks specialist code-level and integration risks when repository policy requires it.
 

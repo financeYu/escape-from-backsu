@@ -362,7 +362,7 @@ def _reason_ko(branch: str, hits: dict[str, list[str]], paper: dict[str, Any], m
     if branch == "hybrid":
         return "technical keyword와 valuation/fundamental keyword가 함께 감지되어 hybrid_split_required로 분리했습니다."
     if branch == "valuation":
-        return "point-in-time fundamentals가 필요한 valuation 후보이므로 별도 valuation agent handoff가 필요합니다."
+        return "point-in-time fundamentals가 필요한 valuation 후보이므로 valuation review skill handoff가 필요합니다."
     if branch == "diagnostic":
         return "방법론/검증/편향 관련 키워드가 감지되어 alpha signal이 아닌 diagnostic backlog로 분류했습니다."
     if branch == "technical":

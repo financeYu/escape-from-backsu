@@ -12,7 +12,9 @@ Before implementation approval:
 - label no-lookahead review
 - model-input boundary review
 - generated-output boundary review
-- scope watchdog review
+- root-managed scope watchdog review through
+  `.agents/skills/quant-subproject-audit-gate/SKILL.md`
+- separate validation evidence summary that does not replace the audit verdict
 - `review_mvp` specialist review when code, tests, config, schemas, generated
   outputs, or cross-project handoffs are included
 

@@ -23,10 +23,10 @@ scanner/runtime subproject.
 | P1 | Research Evidence | `Quant_mvp/research_mvp` | Upstream research/evidence lane for the Quant product umbrella: source policy, paper metadata, discovery imports, metadata adapters, EvidenceCards, source-health reports | Prevents paper claims from becoming adopted scores while giving Quant an explicit intake stream |
 | P2 | Quant Score Governance | `Quant_mvp` | Quant product umbrella, score taxonomy, technical review, research intake contract, config-first scoring policy, and handoff coordination | Ensures formulas, windows, thresholds, and adoption decisions are explicit before implementation |
 | P3 | Scanner Runtime | `chart_mvp` | Downstream scanner/runtime lane for the Quant product umbrella: KOSPI200 data fetching, caching, indicators, ranking output, charts, CLI/GUI | Keeps runnable code and generated runtime artifacts separate from research/design documents while implementing only reviewed Quant specs |
-| P4 | Valuation Review | `Quant_mvp/agents/valuation` | Point-in-time fundamental availability and valuation verdicts | Prevents price-only signals from being mislabeled as valuation evidence |
+| P4 | Valuation Review | `.agents/skills/valuation_review` | Point-in-time fundamental availability and valuation verdicts | Prevents price-only signals from being mislabeled as valuation evidence |
 | P5 | Ops and Reproducibility | root plus affected project | Ignore rules, dependency setup, CI, data/output path policy | Makes the repo cloneable, testable, and reviewable on machines other than the original local PC |
 | P6 | Specialist Review and Final Validation | `review_mvp`, root workspace | High-risk code review, minimal safe repair guidance, final conflict/error checks | Gives the master agent a specialist checkpoint for correctness, security, reliability, and cross-project integration risk without making every local change wait on `review_mvp` |
-| P7 | Scope Compliance Audit | `Quant_mvp/agents/audit` | Instruction compliance, roadmap-order checks, worker scope containment, terminology and evidence-strength audit | Lets a strict watchdog stop scope creep before worker changes are treated as normal project progress |
+| P7 | Scope Compliance Audit | `Quant_mvp/AGENTS.md` process + `.agents/skills/quant-subproject-audit-gate` | Instruction compliance, roadmap-order checks, worker scope containment, terminology and evidence-strength audit | Lets a strict watchdog stop scope creep before worker changes are treated as normal project progress |
 | P8 | Backtest MVP | `Quant_mvp/backtest_mvp` | Evaluation-only conservative backtest contracts, config, runner, and generated-output boundary | Keeps realized-return evaluation subordinate to Quant governance and prevents backtest feedback from becoming score or ranking input |
 
 ---
@@ -78,14 +78,14 @@ Root-agent conflict stop:
 Worker to scope watchdog:
 
 - Input: worker scope declaration, active roadmap Step, intended files, changed files, evidence, generated-output status, and unresolved risks
-- Owner: `Quant_mvp/agents/audit` for audit verdict; responsible worker for fixes or clarifications
+- Owner: `.agents/skills/quant-subproject-audit-gate/SKILL.md` for audit verdict; `Quant_mvp/AGENTS.md` for the Quant-side trigger process; responsible worker for fixes or clarifications
 - Output: `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION`
 - Invocation: required by `docs/scope_audit_process.md` when a worker touches roadmap-gated behavior, score/normalization/diagnostic/selection/composite/ranking/backtest/valuation semantics, schema/config/generated-output boundaries, cross-project handoffs, or root-boundary requests
 
 Valuation handoff:
 
 - Input: valuation or fundamental candidate
-- Owner: `Quant_mvp/agents/valuation`
+- Owner: `.agents/skills/valuation_review/SKILL.md`
 - Output: `valuation_status`, `valuation_verdict`, point-in-time caveats, and blocked/rejected reasons
 
 Backtest MVP handoff:

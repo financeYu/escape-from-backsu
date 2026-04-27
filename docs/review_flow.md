@@ -282,7 +282,9 @@ Required review or audit fixes are routed back to the narrowest responsible work
 
 ## Scope watchdog audit
 
-The scope watchdog is `Quant_mvp/agents/audit/AGENTS.md`.
+The scope watchdog is the root-managed Codex skill
+`.agents/skills/quant-subproject-audit-gate/SKILL.md`. Quant workers connect to
+that gate through the process in `Quant_mvp/AGENTS.md` when a check is needed.
 
 It checks whether workers stayed inside the latest request, active roadmap Step, project boundary, and hard-stop guardrails.
 

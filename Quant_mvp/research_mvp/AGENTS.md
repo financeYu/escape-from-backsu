@@ -46,10 +46,10 @@ The main technical workflow remains technical-first and uses only:
 - `diagnostic`
 - `out_of_scope`
 
-Valuation and fundamental review remains separated in:
+Valuation and fundamental review remains separated in the root Codex skill:
 
 ```text
-../Quant_mvp/agents/valuation/AGENTS.md
+../.agents/skills/valuation_review/SKILL.md
 ```
 
 This agent may classify research as `technical`, `valuation`, `hybrid`, `diagnostic`, or `out_of_scope`, but it must not collapse those labels into the main technical `score_branch`.
@@ -939,7 +939,8 @@ Only EvidenceCards with all of the following may be handed to the main technical
 
 ### Valuation handoff
 
-EvidenceCards requiring fundamentals must be handed to the valuation agent.
+EvidenceCards requiring fundamentals must be handed to
+`../.agents/skills/valuation_review/SKILL.md`.
 
 Rules:
 
@@ -1013,7 +1014,7 @@ The report must clearly state:
 - `이번 실행은 score 채택을 수행하지 않았습니다.`
 - `이번 실행은 backtest를 수행하지 않았습니다.`
 - `논문 claim은 검증된 alpha가 아닙니다.`
-- `valuation 후보는 별도 valuation agent로 handoff해야 합니다.`
+- `valuation 후보는 valuation review skill로 handoff해야 합니다.`
 
 ---
 

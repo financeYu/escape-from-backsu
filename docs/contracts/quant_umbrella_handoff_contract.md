@@ -91,8 +91,9 @@ Hard boundary:
 2. Quant turns accepted technical candidates into explicit score specs before
    implementation.
 3. Chart implements only explicit specs or concrete root/user assignments.
-4. Valuation or hybrid candidates stay separated until the valuation agent gives
-   an explicit availability/verdict handoff.
+4. Valuation or hybrid candidates stay separated until
+   `.agents/skills/valuation_review/SKILL.md` gives an explicit
+   availability/verdict handoff.
 5. Any scanner/runtime folder migration must be handled as a separate post-MVP
    migration step.
 

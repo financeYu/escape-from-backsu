@@ -101,10 +101,10 @@ Step 18 시작 시 아래 항목을 먼저 처리한다.
 
 ## Handoff Rule
 
-사용자가 valuation-aware work를 요청하면 아래 문서로 라우팅한다.
+사용자가 valuation-aware work를 요청하면 아래 Codex skill로 라우팅한다.
 
 ```text
-Quant_mvp/agents/valuation/AGENTS.md
+.agents/skills/valuation_review/SKILL.md
 ```
 
 메인 technical workflow는 valuation이 unavailable, deferred, blocked by data라고 기록할 수 있다. 하지만 valuation opinion을 만들어내면 안 된다.

@@ -11,7 +11,7 @@ This document does not implement scores, composite scores, rankings, valuation r
 | branch | owner | allowed inputs now | current status |
 | --- | --- | --- | --- |
 | `technical` | `Quant_mvp` Score Architect | daily OHLCV, price, volume, rolling statistics, technical indicators, cross-sectional technical features | available for definition only |
-| `valuation` | `Quant_mvp/agents/valuation` | point-in-time-safe fundamentals such as earnings, revenue, book equity, cash flow, profitability, quality, PER, PBR, ROE | deferred / unavailable |
+| `valuation` | `.agents/skills/valuation_review/SKILL.md` | point-in-time-safe fundamentals such as earnings, revenue, book equity, cash flow, profitability, quality, PER, PBR, ROE | deferred / unavailable |
 | `diagnostic` | main technical workflow or review workflow | coverage, missingness, stability, redundancy, turnover, data quality, correlation diagnostics | allowed as diagnostics only |
 | `hybrid` | split review required | separable technical inputs plus separable point-in-time valuation inputs | blocked_by_data until valuation data is verified |
 | `out_of_scope` | master or responsible project reviewer | intraday-only, order book, opaque ML, unsupported alternative data, or non-MVP ideas | reject or defer |
@@ -117,4 +117,3 @@ hybrid_status = blocked_by_data_until_point_in_time_valuation_is_verified
 financial_data_in_technical_score = false
 financial_data_in_final_composite_score = false
 ```
-

@@ -375,7 +375,7 @@ keywords = [
 ]
 
 [query_sets.fundamental_valuation]
-description_ko = "별도 valuation agent로 넘겨야 하는 fundamental / valuation 문헌"
+description_ko = "valuation review skill로 넘겨야 하는 fundamental / valuation 문헌"
 keywords = ["book to market", "earnings yield", "profitability", "accounting fundamentals", "valuation"]
 branch_hint = "valuation"
 downstream_route = "valuation_agent_handoff"

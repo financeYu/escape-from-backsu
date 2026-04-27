@@ -155,7 +155,7 @@ def _ingestion_report_guardrail_lines() -> list[str]:
         "- 이번 실행은 score 채택을 수행하지 않았습니다.",
         "- 이번 실행은 backtest를 수행하지 않았습니다.",
         "- 논문 claim은 검증된 alpha가 아닙니다.",
-        "- valuation 후보는 별도 valuation agent로 handoff해야 합니다.",
+        "- valuation 후보는 valuation review skill로 handoff해야 합니다.",
         "- Google Scholar snippet, ranking, citation count는 evidence로 사용하지 않았습니다.",
         "- EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.",
         "",

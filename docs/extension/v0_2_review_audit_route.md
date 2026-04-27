@@ -5,15 +5,18 @@ score route`.
 
 ## Required Review Order
 
-1. Scope watchdog pre-work check for model, label, ranking, generated-output,
-   and backtest-feedback boundaries.
-2. Contract review for label, model-input, probability output, generated-output,
+1. Root-managed Quant subproject audit gate
+   (`.agents/skills/quant-subproject-audit-gate/SKILL.md`) for model, label,
+   ranking, generated-output, and backtest-feedback boundaries.
+2. Validation evidence as a separate part of the audit packet; command success
+   does not replace the audit verdict.
+3. Contract review for label, model-input, probability output, generated-output,
    validation, config, and rollback contracts.
-3. Implementation review only after root/master implementation approval.
-4. `review_mvp` specialist review for code, tests, config, schemas,
+4. Implementation review only after root/master implementation approval.
+5. `review_mvp` specialist review for code, tests, config, schemas,
    generated-output boundaries, or cross-project handoffs.
-5. Cross-step conflict checkpoint before Step closure or downstream adoption.
-6. Master integration decision.
+6. Cross-step conflict checkpoint before Step closure or downstream adoption.
+7. Master integration decision.
 
 ## Blocking Findings
 
@@ -26,6 +29,7 @@ The route must HOLD or REJECT if any of these occur:
 - valuation/fundamental data enters technical or final composite
 - trading recommendation wording appears
 - validation profile is missing or failed
+- audit verdict and validation evidence are collapsed into one unchecked status
 
 ## Specialist Review Trigger
 

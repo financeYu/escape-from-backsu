@@ -50,7 +50,8 @@ Valuation and fundamental analysis are deferred until after:
 
 No active `.codex/agents/valuation-reviewer.toml` is required now.
 
-The optional `agents/valuation/AGENTS.md` file is a placeholder and handoff reference only.
+Valuation review is routed through
+`../.agents/skills/valuation_review/SKILL.md` when explicitly needed.
 
 No valuation score should be implemented now.
 No valuation output should be merged into `technical_composite_score` or `final_composite_score` during the technical-first phase.

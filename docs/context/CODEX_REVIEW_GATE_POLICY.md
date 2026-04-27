@@ -8,6 +8,7 @@ Primary dispatcher: `.agents/skills/review_gate/SKILL.md`
 
 Specialized on-demand skills:
 
+- `.agents/skills/quant-subproject-audit-gate/SKILL.md`
 - `.agents/skills/technical_review/SKILL.md`
 - `.agents/skills/valuation_review/SKILL.md`
 - `.agents/skills/review_mvp_specialist/SKILL.md`
@@ -30,11 +31,12 @@ review usage.
 | File path pattern or signal | Trigger reason | Required skill | Minimum validation profile |
 | --- | --- | --- | --- |
 | `Quant_mvp/docs/score_*.md`, `Quant_mvp/docs/family_map.md`, `docs/score_branch_policy.md` | Technical score definition, family, or branch semantics may change. | `.agents/skills/technical_review/SKILL.md` | focused doc grep plus relevant schema/config check if changed |
+| `Quant_mvp/AGENTS.md` scope-check process, `docs/scope_audit_process.md`, or explicit Quant scope-watchdog/audit request | Subproject-wide audit routing or audit/validation separation may change. | `.agents/skills/quant-subproject-audit-gate/SKILL.md` | audit gate contract script plus focused forbidden-scope grep |
 | `Quant_mvp/config/**`, `config/**` with score, normalization, branch, or weight keys | Technical scoring or adoption defaults may change. | `.agents/skills/technical_review/SKILL.md` or `full_review_required` if runtime behavior changes | affected config/schema tests or targeted parser check |
 | `src/**`, `chart_mvp/src/**`, `tests/**` touching score, normalization, diagnostics, ranking, reports, or backtests | Runtime behavior or output semantics may change. | `full_review_required`; include `.agents/skills/review_mvp_specialist/SKILL.md` when code review policy triggers | affected unit tests plus focused integration check |
 | `docs/contracts/**`, `docs/release/**`, `docs/releases/**`, `reports/validation/**` with ranking/composite/report/backtest semantics | Contract or generated-output boundary may change. | `.agents/skills/technical_review/SKILL.md` or `full_review_required` | contract/schema grep plus focused report validation |
 | `docs/step14_adoption_synthesis.md`, adoption reports, composite membership docs, ranking handoff docs | Adoption, composite membership, or score-to-production handoff may change. | `.agents/skills/technical_review/SKILL.md` via `adoption_review_required` | focused diff review plus affected contract check |
-| `Quant_mvp/agents/valuation/**`, `Quant_mvp/docs/valuation*.md`, `docs/architecture/*valuation*`, `reports/*valuation*` | Valuation/fundamental review boundary may change. | `.agents/skills/valuation_review/SKILL.md` | focused doc grep plus PIT field/policy check |
+| `.agents/skills/valuation_review/**`, `Quant_mvp/docs/valuation*.md`, `docs/architecture/*valuation*`, `reports/*valuation*` | Valuation/fundamental review boundary may change. | `.agents/skills/valuation_review/SKILL.md` | focused doc grep plus PIT field/policy check |
 | Changed fields containing `PER`, `PBR`, `ROE`, `fundamental`, `valuation`, `filing_date`, `availability_date`, `quality`, `profitability`, `revision` | Fundamental data may be entering a forbidden path. | `.agents/skills/valuation_review/SKILL.md` or `full_review_required` | schema/field grep plus affected validation |
 | Validation failure mentioning schema mismatch, missing required column, composite/ranking/report contract, PIT timing, generated-output boundary, or guardrail wording | Failure may indicate a boundary or contract breach. | `full_review_required`, with `review_mvp_required: true` when code/schema/integration risk is present | rerun smallest affected check after fix |
 | Explicit user request for technical, valuation, adoption, full, specialist, or final review | User requested review. | requested skill, or `full_review_required` when ambiguous | validation requested by user or affected checks |

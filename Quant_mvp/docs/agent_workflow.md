@@ -88,7 +88,7 @@ Valuation and fundamental analysis are deferred until the technical scanner, tec
 
 Current rules:
 - do not create `.codex/agents/valuation-reviewer.toml`
-- treat `agents/valuation/AGENTS.md` as an optional placeholder only
+- route valuation review through `../.agents/skills/valuation_review/SKILL.md`
 - do not implement valuation scores
 - do not merge valuation output into `technical_composite_score`
 - do not merge valuation output into `final_composite_score`

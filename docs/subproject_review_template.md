@@ -40,7 +40,7 @@ Record the commands, outputs, docs, and files checked. If a command was not run,
 
 For generated outputs, confirm whether they were intentionally excluded from source control or promoted to a small fixture with an explanation.
 
-For watchdog-triggered changes, include the watchdog audit request package and final verdict from `Quant_mvp/agents/audit/AGENTS.md`.
+For watchdog-triggered changes, include the watchdog audit request package and final verdict from `.agents/skills/quant-subproject-audit-gate/SKILL.md`.
 
 If watchdog audit is marked not needed, state why the change did not touch any required trigger in `docs/scope_audit_process.md`.
 

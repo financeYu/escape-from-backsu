@@ -6,7 +6,9 @@ If this project is used inside the parent `master_mvp` workspace, read the paren
 
 `Quant_mvp` is the product-line umbrella for score governance and the canonical
 research-ingestion lane. Research ingestion lives inside
-`research_mvp/`; scanner runtime remains owned by `../chart_mvp`.
+`research_mvp/`; valuation review is routed to
+`../.agents/skills/valuation_review/SKILL.md`; scanner runtime remains owned by
+`../chart_mvp`.
 
 This post-MVP documentation clarification preserves the MVP v0.1 baseline. It
 does not authorize score formula, adoption, ranking, report, backtest,
@@ -80,6 +82,9 @@ Every delegated packet must include:
 
 Quant sub-agents must not expand beyond the selected skill gate. Candidate ML
 probability work uses `../.agents/skills/quant-candidate-ml-gate/SKILL.md`.
+Subproject-wide audit or scope-watchdog work uses
+`../.agents/skills/quant-subproject-audit-gate/SKILL.md`, with audit and
+validation reported as separate parts.
 Completion acceptance uses `../.agents/skills/quant-review-gate/SKILL.md`. If no
 narrower execution skill matches, use `../.agents/skills/quant-review-gate/SKILL.md`
 as the minimal default review gate rather than inventing broad permission.
@@ -124,8 +129,8 @@ Prefer explicit downgrades, deferrals, or narrower implementations.
 
 ## Multi-agent operating model
 
-This repository owns one internal research-ingestion subproject, uses one strict
-scope watchdog, and has **three distinct technical agents** with different
+This repository owns one internal research-ingestion subproject, uses a
+Codex-skill-gated scope check process, and has **three distinct technical agents** with different
 responsibilities.
 
 Upstream evidence agent:
@@ -136,14 +141,15 @@ Upstream evidence agent:
    - routes candidates without adopting scores, running backtests, claiming alpha, or performing valuation review
    - hands the Quant score-governance lane only explicit intake material governed by `config/research_intake.toml`
 
-Scope watchdog:
+Scope check process:
 
-0a. **Instruction Compliance Auditor / Scope Creep Watchdog**
-   - lives in `agents/audit/AGENTS.md`
-   - audits whether workers stayed inside the latest request, active roadmap Step, project boundary, terminology rules, and hard-stop guardrails
-   - checks score, normalization, diagnostics, selection, ranking, composite, backtest, valuation, future-return, generated-output, config, and evidence-overclaim boundaries
-   - returns `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION`
-   - does not implement features, repair code by default, or change roadmap state
+0a. **Quant scope check to Codex skill gate**
+   - when a Quant worker sees that scope, roadmap, terminology, leakage, generated-output, validation, or hard-stop review is needed, stop local expansion and connect the task to `../.agents/skills/quant-subproject-audit-gate/SKILL.md`
+   - send root/master the current task, allowed scope, forbidden scope, changed paths, intended output, validation commands, unresolved risks, and requested audit coverage
+   - keep audit verdicts separate from validation command evidence
+   - the Codex skill gate checks score, normalization, diagnostics, selection, ranking, composite, backtest, valuation, future-return, generated-output, config, and evidence-overclaim boundaries
+   - the Codex skill gate returns `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION`
+   - the process does not implement features, repair code by default, or change roadmap state
 
 Technical workflow agents:
 
@@ -164,7 +170,11 @@ These agents must **not** collapse into one generic role.
 Each agent has a different job.
 Each agent should challenge different failure modes.
 
-Workers must use the root `docs/scope_audit_process.md` when watchdog audit is required before master-up.
+Workers must use the root `docs/scope_audit_process.md` and connect to
+`../.agents/skills/quant-subproject-audit-gate/SKILL.md` when scope check or
+subproject audit is required before master-up. Validation commands and
+validation evidence are a separate part of the handoff; they do not replace the
+audit verdict.
 
 Research ingestion is intentionally housed in `research_mvp` inside `Quant_mvp`.
 The score-governance lane may consume EvidenceCards and handoff files through
@@ -177,8 +187,10 @@ runtime implementation must not start from an EvidenceCard alone; it requires a
 Quant-owned score specification, handoff contract, or explicit root/user
 assignment that defines the allowed technical or diagnostic behavior.
 
-Valuation / fundamental analysis is intentionally separated into `agents/valuation/AGENTS.md`.
-The main technical agent may reference valuation examples for teaching or handoff, but must not perform valuation review itself.
+Valuation / fundamental analysis is intentionally separated into
+`../.agents/skills/valuation_review/SKILL.md`. The main technical agent may
+reference valuation examples for teaching or handoff, but must not perform
+valuation review itself.
 
 ---
 
@@ -292,7 +304,8 @@ Primary scope:
 - score diagnostics and exportable outputs
 
 Optional extended scope:
-- examples showing how a separate valuation agent could review point-in-time fundamental overlays
+- examples showing how the separated valuation review skill could review
+  point-in-time fundamental overlays
 - handoff notes that explain why technical evidence is not valuation evidence
 
 Out of scope unless explicitly requested:
@@ -318,7 +331,8 @@ The baseline system assumes:
 
 ### External valuation boundary
 Valuation / fundamental data is outside this main agent's active responsibility.
-If valuation-aware work is requested, use the separated valuation agent in `agents/valuation/AGENTS.md`.
+If valuation-aware work is requested, route it to
+`../.agents/skills/valuation_review/SKILL.md`.
 
 The main technical agent may provide examples such as:
 - `earnings_yield` requires point-in-time earnings and market capitalization
@@ -379,7 +393,8 @@ The Score Architect must not:
 - redefine ideas after seeing performance
 - invent unsupported "novel alpha" stories
 - smuggle valuation claims into price-only signals
-- perform valuation review that belongs to the separated valuation agent
+- perform valuation review that belongs to
+  `../.agents/skills/valuation_review/SKILL.md`
 
 ### Deliverables
 - `docs/score_catalog.md`
@@ -525,7 +540,8 @@ Agent 3 reviews the tested scores from a technical perspective.
 ### Stage 4: adoption synthesis
 The final adopted score set must be determined from technical review, redundancy diagnostics, and implementation quality.
 
-If valuation review is requested, hand off to `agents/valuation/AGENTS.md` as a separate workflow.
+If valuation review is requested, hand off to
+`../.agents/skills/valuation_review/SKILL.md` as a separate workflow.
 
 Do not skip stages.
 Do not allow testing to redefine architecture retroactively without explicit versioning.
@@ -620,7 +636,8 @@ Examples:
 Diagnostics must not be marketed as alpha signals.
 
 ### External valuation examples
-Valuation examples belong in `docs/valuation_agent_examples.md` and the separated valuation agent.
+Valuation examples belong in `docs/valuation_agent_examples.md` and the
+separated valuation review skill.
 They should not be implemented by this main technical agent.
 
 ---
@@ -666,7 +683,9 @@ Preferred structure:
 - `coverage_metric`
 - `data_quality_flag`
 
-If valuation review is needed, it should be produced by the separated valuation agent and merged only through an explicit downstream adoption step.
+If valuation review is needed, it should be produced by
+`../.agents/skills/valuation_review/SKILL.md` and merged only through an
+explicit downstream adoption step.
 
 ---
 
@@ -707,7 +726,8 @@ Reject or block immediately if any of the following is true:
 - the implementation relies on unnecessary hardcoded tickers, paths, windows, thresholds, weights, or branch logic that should be configurable
 - the score is mostly duplicate information
 - the design ignores warmup, NaN, or insufficient history
-- a hybrid score is proposed without routing the valuation portion to the separated valuation agent
+- a hybrid score is proposed without routing the valuation portion to
+  `../.agents/skills/valuation_review/SKILL.md`
 - the system claims value support from price-only evidence
 
 If a reject rule applies, state it explicitly.
@@ -825,12 +845,6 @@ Valuation review lives in a separated agent document and should be invoked only 
   - `testing_protocol.md`
   - `selection_criteria.md`
   - `valuation_agent_examples.md`
-
-- `agents/`
-  - `audit/`
-    - `AGENTS.md`
-  - `valuation/`
-    - `AGENTS.md`
 
 - `research_mvp/`
   - canonical research-ingestion subproject for source policy, query sets,

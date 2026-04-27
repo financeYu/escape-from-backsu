@@ -28,6 +28,10 @@ Use this skill:
 For candidate ML probability work, run the selected execution gate first:
 `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
 
+For Quant subproject-wide audit or scope-watchdog work, run the selected audit
+gate first:
+`.agents/skills/quant-subproject-audit-gate/SKILL.md`.
+
 For specialist review routing, use `.agents/skills/review_gate/SKILL.md`.
 If that dispatcher selects technical, valuation, adoption, full, or
 `review_mvp` review, this gate must wait for that downstream review result.

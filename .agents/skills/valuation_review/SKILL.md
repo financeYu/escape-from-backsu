@@ -16,6 +16,10 @@ from the KOSPI200-only, technical-only MVP baseline. This skill is review-only
 and candidate-only unless a separately approved post-MVP Step explicitly
 authorizes valuation activation.
 
+This skill is the canonical valuation/fundamental review gate. Do not route
+valuation work through the removed Quant-local valuation agent document; that
+internal document has been replaced by this Codex skill.
+
 ## When To Use
 
 Use only when `.agents/skills/review_gate/SKILL.md` outputs:
@@ -25,6 +29,10 @@ Use only when `.agents/skills/review_gate/SKILL.md` outputs:
 
 Use also when an explicit user, root, or master request asks for
 valuation/fundamental review.
+
+Use when Quant or research ingestion routes a candidate to
+`valuation_agent_handoff`; the route name is a handoff label, not a separate
+agent file.
 
 ## When Not To Use
 
@@ -44,6 +52,8 @@ Use the narrowest available inputs:
 - focused validation/test summary, if available
 - changed docs or generated reports that make valuation, cheapness, target
   price, expected return, or recommendation claims
+- optional separated example config:
+  `.agents/skills/valuation_review/references/valuation_scores.example.toml`
 
 ## Allowed File/Tool Scope
 
@@ -64,7 +74,44 @@ requires those changes, output a handoff.
 5. Check whether price-only data is being described with valuation language.
 6. Check whether financial/fundamental data enters technical or final composite
    scoring.
-7. Produce the output schema. Keep findings compact and Korean by default.
+7. For every valuation candidate, check the required candidate fields below.
+8. Produce the output schema. Keep findings compact and Korean by default.
+
+## Candidate Field Expectations
+
+For each reviewed valuation candidate, require:
+
+- `score_name`
+- `score_family`
+- `valuation_status`
+- `purpose`
+- `economic_rationale_quality`
+- `raw_input_features`
+- `point_in_time_requirements`
+- `raw_formula_design`
+- `normalization_candidates`
+- `minimum_history_needed`
+- `sector_adjustment_needed`
+- `expected_overlap_risk`
+- `value_trap_risk`
+- `failure_modes`
+- `valuation_verdict`
+- `valuation_comment`
+
+Allowed values for `valuation_status`:
+
+- `available`
+- `partially_available`
+- `unavailable`
+
+Allowed values for `valuation_verdict`:
+
+- `adopt`
+- `conditional`
+- `research_only`
+- `reject`
+- `blocked_by_data`
+- `unavailable`
 
 ## Output Schema
 
@@ -101,8 +148,29 @@ Use affected checks only. Examples:
 - targeted grep for valuation/fundamental/PER/PBR/ROE/PIT fields
 - schema or field check if financial data structures changed
 - focused docs/report grep for forbidden valuation or advice wording
+- `bash .agents/skills/valuation_review/scripts/validate_valuation_review_gate.sh`
 
 Do not run the full test suite for docs-only review.
+
+## Extensibility Notes
+
+Intentional contract literals:
+
+- candidate status values: `available`, `partially_available`, `unavailable`
+- candidate verdict values: `adopt`, `conditional`, `research_only`,
+  `reject`, `blocked_by_data`, `unavailable`
+- protected score fields: `technical_composite_score`, `final_composite_score`
+- forbidden advice language families: buy/sell/hold, target prices, expected
+  return
+
+Extension points:
+
+- Add new valuation candidate example records under
+  `.agents/skills/valuation_review/references/`, not in `Quant_mvp/config`.
+- Add new required candidate fields in the Candidate Field Expectations section
+  before enforcing them in validators.
+- Add new data-availability checks through focused task validation rather than
+  widening this review skill into runtime data ingestion.
 
 ## Escalation Conditions
 
@@ -120,7 +188,8 @@ Escalate or hand off when:
 ## Optional Resources Or Scripts
 
 - `docs/context/CODEX_REVIEW_GATE_POLICY.md`
-- `Quant_mvp/agents/valuation/AGENTS.md`
+- `.agents/skills/valuation_review/references/valuation_scores.example.toml`
+- `.agents/skills/valuation_review/scripts/validate_valuation_review_gate.sh`
 - `docs/review_mvp_policy.md`
 - `review_mvp/review.py` only when Review Gate sets `review_mvp_required: true`
 

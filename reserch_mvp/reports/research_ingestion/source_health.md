@@ -4,6 +4,14 @@
 - API key 값은 redaction 대상이며 이 보고서에 노출되면 안 됩니다.
 - rate-limit / 403 / 429 이벤트는 보수적 retry 또는 수동 검토가 필요합니다.
 
+## Reliability Smoke Validation Note
+
+- 별도 research reliability worktree에서 opt-in live smoke validation이 수행되었습니다.
+- live smoke validation: 3 passed, 1 skipped.
+- Semantic Scholar live smoke는 `SEMANTIC_SCHOLAR_API_KEY` 없이 skipped로 처리되었습니다.
+- Google Scholar direct request, PDF fulltext download, paywalled publisher scraping은 수행하지 않았습니다.
+- 이 메모는 source-health snapshot이나 MVP scoring/ranking 입력이 아닙니다.
+
 ## arxiv
 - source: arxiv
 - adapter_version: research_ingestion.v1

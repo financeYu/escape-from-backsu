@@ -233,16 +233,40 @@ def render_source_health(run_id: str, source_health: dict[str, Any]) -> str:
         "# Source Health",
         "",
         f"- run_id: `{run_id}`",
+        "- freshness scope: 이 보고서는 해당 run_id 실행 시점의 source-health snapshot입니다.",
+        "- currentness warning: 이 파일만으로 현재 vendor availability, API freshness, 또는 최신 연구 검증을 증명하지 않습니다.",
+        "- MVP boundary: source-health, cache hit, stale cache 상태는 MVP scoring/ranking 입력이 아닙니다.",
         "- API key 값은 redaction 대상이며 이 보고서에 노출되면 안 됩니다.",
         "- rate-limit / 403 / 429 이벤트는 보수적 retry 또는 수동 검토가 필요합니다.",
         "",
     ]
+    lines.extend(_source_health_cache_lines(source_health))
     if not source_health:
         lines.append("현재 기록된 source health 이벤트가 없습니다.")
     for source, payload in source_health.items():
         lines.extend(_source_health_payload_lines(source, payload))
     lines.append("")
     return "\n".join(lines)
+
+
+def _source_health_cache_lines(source_health: dict[str, Any]) -> list[str]:
+    cache_hit_count = 0
+    cache_miss_count = 0
+    cache_stale_count = 0
+    for payload in source_health.values():
+        if not isinstance(payload, dict):
+            continue
+        cache_hit_count += int(payload.get("request_cache_hit_count") or 0)
+        cache_miss_count += int(payload.get("request_cache_miss_count") or 0)
+        cache_stale_count += int(payload.get("request_cache_stale_count") or 0)
+    lines = [
+        f"- request cache hits: {cache_hit_count}",
+        f"- request cache misses: {cache_miss_count}",
+        f"- stale cache observations: {cache_stale_count}",
+    ]
+    if cache_stale_count:
+        lines.append("- stale cache warning: stale cache가 관찰되면 current validated input으로 해석하지 말고 재수집 또는 수동 검토가 필요합니다.")
+    return lines + [""]
 
 
 def render_scholar_discovery_report(run_id: str, seeds: list[dict[str, Any]]) -> str:
@@ -290,6 +314,7 @@ def render_handoff_summary(run_id: str, evidence_cards: list[dict[str, Any]]) ->
         "- 논문 claim은 검증된 alpha가 아닙니다.",
         "- valuation 후보는 main technical Score Architect와 분리해야 합니다.",
         "- downstream agent가 구현 전 EvidenceCard와 제한 사항을 다시 검토해야 합니다.",
+        "- source-health freshness는 handoff 참고 정보이며 MVP scoring/ranking 입력이 아닙니다.",
         "",
         "## route counts",
         _counter_lines(by_route),

@@ -18,6 +18,12 @@
 - unresolved Scholar seed count: 0
 - PDF fulltext used: no
 
+## source freshness / currentness
+
+- 이 보고서의 source-health 관련 내용은 해당 실행 시점의 snapshot이며 현재 vendor availability 또는 최신 연구 검증을 증명하지 않는다.
+- cache hit 또는 stale cache 상태는 research 후보 관리용 metadata이며 MVP scoring/ranking 입력이 아니다.
+- research source freshness는 `technical_composite_score`, `final_composite_score`, ranking 순서를 변경하지 않는다.
+
 ## 핵심 제한 사항
 - 이번 실행은 score 채택을 수행하지 않았습니다.
 - 이번 실행은 backtest를 수행하지 않았습니다.

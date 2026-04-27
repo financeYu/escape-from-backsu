@@ -38,11 +38,12 @@ require_file "$GATE1_DOC"
 require_file "$GATE1_CONFIG"
 
 rule_count="$(grep -Ec '^[0-9]+\.' AGENTS.md)"
-[ "$rule_count" -eq 10 ] || fail "AGENTS.md must contain exactly 10 numbered router rules; found $rule_count"
+[ "$rule_count" -eq 11 ] || fail "AGENTS.md must contain exactly 11 numbered router rules; found $rule_count"
 
 require_grep 'root_hard_stops\.md' "AGENTS.md"
 require_grep 'roadmap_status\.md' "AGENTS.md"
 require_grep '\.agents/skills/quant-candidate-ml-gate/SKILL\.md' "AGENTS.md"
+require_grep '\.agents/skills/quant-review-gate/SKILL\.md' "AGENTS.md"
 require_grep 'user prompt.*local goal|gate.*local goal|goal/output' "AGENTS.md"
 
 require_grep 'current project authority|project authority' "docs/root_hard_stops.md"

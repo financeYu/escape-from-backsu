@@ -11,6 +11,25 @@ baseline is frozen.
 
 - Current baseline: MVP v0.1 frozen KOSPI200 technical-only scanner baseline.
 - Current active Step: post-MVP `v0.2 predictive probability score route`.
+- Current governance route extension: `final_composite_score` predictive
+  probability semantic approval route opened under
+  `QG_APPROVED_FINAL_SCORE_PROB_UP_1D_V0_2`; implementation, runtime cutover,
+  production ranking, and report behavior remain not complete and blocked until
+  all v0.2 final score gates pass.
+- Current final score output contract state: v0.2 output-contract connection
+  helper opened for `final_composite_score = prob_up_1d_candidate` only when
+  calibration PASS is explicit and `score_semantic_version =
+  "v0_2_prob_up_1d"` is emitted. Production ranking and report behavior remain
+  blocked.
+- Current ranking/report activation approval route: opened under
+  `QG_APPROVED_RANKING_REPORT_PROB_UP_1D_V0_2`; ranking/report implementation
+  remains not complete and blocked until ranking contract, report wording,
+  cross-step conflict, and quant-review-gate checks pass.
+- Current completion state: v0.2 `final_composite_score` prob_up_1d semantic
+  route completed after quant-review-gate PASS. In `v0_2_prob_up_1d`,
+  `final_composite_score` is the calibrated estimated probability that
+  `adjusted_close` will be higher on the next business day than on the feature
+  observation business day.
 - Current active route skill:
   `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
 - Current repeatable route validation:

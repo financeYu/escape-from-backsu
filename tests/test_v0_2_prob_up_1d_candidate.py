@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import tomllib
 from pathlib import Path
 
 import pandas as pd
@@ -61,6 +62,37 @@ def probability_frame() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def business_day_label_frame() -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "ticker": "005930",
+                "date": "2026-01-02",
+                "adjusted_close": 100.0,
+                "close": 500.0,
+                "old_score_a_raw": 0.1,
+                "old_score_b_raw": 0.2,
+            },
+            {
+                "ticker": "005930",
+                "date": "2026-01-05",
+                "adjusted_close": 101.0,
+                "close": 400.0,
+                "old_score_a_raw": 0.3,
+                "old_score_b_raw": 0.4,
+            },
+            {
+                "ticker": "005930",
+                "date": "2026-01-06",
+                "adjusted_close": 99.0,
+                "close": 600.0,
+                "old_score_a_raw": 0.5,
+                "old_score_b_raw": 0.6,
+            },
+        ]
+    )
+
+
 def small_config() -> ProbUp1DConfig:
     return ProbUp1DConfig(
         feature_columns=FEATURE_COLUMNS,
@@ -101,6 +133,17 @@ def test_feature_table_and_next_day_labels_are_separated() -> None:
     assert pd.isna(samsung_last[LABEL_AVAILABILITY_TIME_COLUMN])
 
 
+def test_prob_up_1d_label_uses_adjusted_close_next_business_day() -> None:
+    dataset = build_prob_up_1d_dataset(business_day_label_frame(), config=small_config())
+    labels = dataset.label_table.sort_values(["ticker", "date"]).reset_index(drop=True)
+
+    assert labels.loc[0, "date"] == pd.Timestamp("2026-01-02")
+    assert labels.loc[0, LABEL_TIME_COLUMN] == pd.Timestamp("2026-01-05")
+    assert labels.loc[0, LABEL_COLUMN] == 1
+    assert labels.loc[1, LABEL_COLUMN] == 0
+    assert pd.isna(labels.loc[2, LABEL_COLUMN])
+
+
 def test_feature_table_does_not_change_when_only_future_price_changes() -> None:
     base = probability_frame()
     changed_future = base.copy()
@@ -134,6 +177,10 @@ def test_feature_table_does_not_change_when_only_future_price_changes() -> None:
     assert changed_label == 1
 
 
+def test_prob_up_1d_no_lookahead_on_rolling_features() -> None:
+    test_feature_table_does_not_change_when_only_future_price_changes()
+
+
 def test_pipeline_outputs_candidate_probabilities_without_ranking_or_composites() -> None:
     result = run_prob_up_1d_candidate_pipeline(probability_frame(), config=small_config())
     output = result.candidate_output
@@ -156,7 +203,7 @@ def test_pipeline_outputs_candidate_probabilities_without_ranking_or_composites(
         output["ticker"].eq("005930") & output["date"].eq(pd.Timestamp("2026-01-06"))
     ].iloc[0]
     assert latest[DECISION_TIME_COLUMN] == pd.Timestamp("2026-01-06")
-    assert latest[EXECUTION_TIME_COLUMN] == pd.Timestamp("2026-01-06")
+    assert latest[EXECUTION_TIME_COLUMN] == pd.Timestamp("2026-01-07")
     assert pd.isna(latest[LABEL_TIME_COLUMN])
     assert pd.isna(latest[LABEL_AVAILABILITY_TIME_COLUMN])
 
@@ -173,6 +220,25 @@ def test_pipeline_outputs_candidate_probabilities_without_ranking_or_composites(
         LABEL_COLUMN,
     }
     assert not forbidden.intersection(output.columns)
+
+
+def test_prob_up_1d_candidate_range_is_probability_like() -> None:
+    result = run_prob_up_1d_candidate_pipeline(probability_frame(), config=small_config())
+    probabilities = result.candidate_output[PROBABILITY_COLUMN].dropna()
+
+    assert not probabilities.empty
+    assert probabilities.between(0.0, 1.0).all()
+
+
+def test_prob_up_1d_train_eval_split_is_time_ordered() -> None:
+    result = run_prob_up_1d_candidate_pipeline(probability_frame(), config=small_config())
+    train_dates = [key[1] for key in result.training_result.train_keys]
+    evaluation_dates = [key[1] for key in result.training_result.evaluation_keys]
+
+    assert train_dates
+    assert evaluation_dates
+    assert max(train_dates) <= min(evaluation_dates)
+    assert set(result.training_result.train_keys).isdisjoint(result.training_result.evaluation_keys)
 
 
 def test_as_of_date_latest_rows_are_candidate_inference_without_labels() -> None:
@@ -259,6 +325,25 @@ def test_forbidden_backtest_and_valuation_columns_are_rejected() -> None:
         build_prob_up_1d_dataset(valuation_frame, config=small_config())
 
 
+def test_prob_up_1d_features_do_not_include_future_columns() -> None:
+    for column in (
+        "next_day_return",
+        "future_rank",
+        "future_report_output",
+        "backtest_hit_rate",
+        "evaluation_metric",
+        "next_adjusted_close",
+    ):
+        frame = probability_frame()
+        frame[column] = 1.0
+        with pytest.raises(ValueError, match="leakage"):
+            build_prob_up_1d_dataset(
+                frame,
+                config=small_config(),
+                feature_columns=("old_score_a_raw", column),
+            )
+
+
 def test_missing_features_do_not_emit_fabricated_probabilities() -> None:
     frame = probability_frame()
     missing_row = frame["ticker"].eq("000660") & frame["date"].eq("2026-01-01")
@@ -273,3 +358,23 @@ def test_missing_features_do_not_emit_fabricated_probabilities() -> None:
     assert first[PROBABILITY_STATUS_COLUMN] == "missing_features"
     assert pd.isna(first[PROBABILITY_COLUMN])
     assert result.dataset.feature_table.loc[0, FEATURE_STATUS_COLUMN] == "missing_features"
+
+
+def test_prob_up_1d_candidate_missing_policy() -> None:
+    test_missing_features_do_not_emit_fabricated_probabilities()
+
+
+def test_prob_up_1d_calibration_gate_required() -> None:
+    result = run_prob_up_1d_candidate_pipeline(probability_frame(), config=small_config())
+    metrics = result.training_result.model.evaluation_metrics
+    config = tomllib.loads(
+        (PROJECT_ROOT / "Quant_mvp/config/v0_2_candidate_ml_score.toml").read_text(
+            encoding="utf-8"
+        )
+    )
+
+    assert config["final_score_contract"]["final_score_requires_calibration_pass"] is True
+    assert config["final_score_contract"]["runtime_replacement_enabled"] is False
+    assert "brier_score" in metrics
+    assert "expected_calibration_error" in metrics
+    assert metrics["calibration_gate_pass"] == pytest.approx(1.0)

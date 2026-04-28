@@ -14,6 +14,32 @@ replace_technical_composite_score = false
 replace_final_composite_score = false
 allow_trading_recommendations = false
 
+[final_score_contract]
+contract_only = true
+runtime_replacement_enabled = false
+final_score_output_contract_enabled = true
+production_ranking_activation_enabled = false
+report_behavior_activation_enabled = false
+governance_approval_token = "QG_APPROVED_FINAL_SCORE_PROB_UP_1D_V0_2"
+final_score_semantic_version = "v0_2_prob_up_1d"
+final_score_source = "prob_up_1d_candidate"
+final_score_requires_calibration_pass = true
+final_score_missing_policy = "exclude_from_ranking"
+final_score_sort_direction = "desc"
+score_range = [0.0, 1.0]
+v0_1_final_score_meaning = "technical_composite_score"
+v0_1_baseline_frozen = true
+allow_runtime_replacement_before_all_gates_pass = false
+
+[calibration_gate]
+required_before_final_score_promotion = true
+metric_brier_score_required = true
+metric_expected_calibration_error_required = true
+max_brier_score = 0.35
+max_expected_calibration_error = 0.35
+calibration_curve_required_for_review = true
+output_remains_candidate_before_pass = true
+
 [adjusted_close_source]
 label_source_field = "adjusted_close"
 repo_availability_status = "BLOCKER_UNTIL_CONFIRMED_ADJUSTED_CLOSE_SOURCE"

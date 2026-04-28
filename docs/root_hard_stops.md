@@ -47,6 +47,9 @@ The active route authorizes only:
 - Report behavior changes or runtime score semantic changes outside the active
   candidate ML gate.
 - `final_composite_score` replacement or silent score redefinition.
+- `final_composite_score` replacement remains prohibited except under
+  `QG_APPROVED_FINAL_SCORE_PROB_UP_1D_V0_2` and only after all v0.2 final score
+  gates pass.
 - Financial/fundamental data in `technical_composite_score` or
   `final_composite_score`.
 - Valuation/fundamental scoring activation.

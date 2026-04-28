@@ -86,6 +86,8 @@ V0_2_CANDIDATE_FORBIDDEN_SUFFIXES = (
 V0_2_BACKTEST_FEEDBACK_COLUMN_TERMS = frozenset(
     {
         "backtest",
+        "evaluation",
+        "metric",
         "sharpe",
         "sortino",
         "drawdown",
@@ -109,6 +111,7 @@ V0_2_LABEL_LEAKAGE_COLUMN_TERMS = frozenset(
         "target",
         "future",
         "forward",
+        "next_adjusted_close",
         "next_day",
         "nextday",
         "tomorrow",

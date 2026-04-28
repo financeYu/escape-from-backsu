@@ -17,6 +17,33 @@ valuation support.
 - `runtime_enabled = false` remains the controlling runtime setting.
 - Financial or fundamental fields must not enter `technical_composite_score` or
   `final_composite_score`.
+- `final_composite_score` is versioned by semantic contract:
+  - v0.1: `final_composite_score = technical_composite_score`, frozen baseline.
+  - v0.2: `final_composite_score = prob_up_1d` only after
+    `prob_up_1d_candidate` is validated, calibrated, and approved through all
+    v0.2 final score gates.
+- Because the same field name has different meanings across versions, every
+  v0.2 output must carry `score_semantic_version` or equivalent metadata before
+  runtime use. The current v0.2 final-score metadata value is
+  `v0_2_prob_up_1d`.
+- The v0.2 output-contract helper is
+  `src/scores/v0_2_final_score.py`; it requires calibration PASS, writes
+  `score_semantic_version = "v0_2_prob_up_1d"`, and rejects missing candidate
+  probabilities from ranking eligibility rather than falling back to
+  `technical_composite_score`.
+- The frozen v0.1 scanner/ranking path remains unchanged:
+  `src/scanner/latest_ranking_builder.py` sets
+  `final_composite_score = technical_composite_score` for the technical-only
+  MVP baseline.
+- v0.2 probability ranking is separately contracted in
+  `Quant_mvp/docs/v0_2_prob_up_1d_ranking_contract.md`; it sorts
+  `final_composite_score` descending only when `score_semantic_version =
+  "v0_2_prob_up_1d"`, calibration PASS metadata is present, and
+  invalid/missing scores are excluded.
+- v0.2 probability report wording is separately contracted in
+  `Quant_mvp/docs/v0_2_prob_up_1d_report_wording_contract.md`; it allows
+  probability-score wording only and blocks trading, return, guarantee, and
+  alpha-proof wording.
 - Price-only evidence must not be described as cheapness, value, undervaluation,
   or bargain evidence.
 - Research Tester implementation begins no earlier than Step 9.
@@ -39,7 +66,7 @@ valuation support.
 
 | upstream idea | Step 5 routing | reason |
 | --- | --- | --- |
-| `prob_up_1d_candidate` / `next_horizon_up_probability_score` | post-MVP v0.1n candidate-only design in `Quant_mvp/docs/next_horizon_up_probability_score_design.md` and `docs/extension/v0_1n_strategy_composition_v0_2_plan.md` | future v0.2 semantic candidate for calibrated 1-day-ahead adjusted-close up probability; strategy-composition design only, not MVP v0.1 ranking, backtest, or GUI activation |
+| `prob_up_1d_candidate` / `next_horizon_up_probability_score` | post-MVP candidate-only design in `Quant_mvp/docs/next_horizon_up_probability_score_design.md`; v0.2 final-score semantic contract in `Quant_mvp/docs/v0_2_final_score_prob_up_1d_contract.md` | future v0.2 semantic candidate for calibrated 1-day-ahead adjusted-close up probability; may become `final_composite_score` only after all final score gates pass; not MVP v0.1 ranking, backtest, or GUI activation |
 | `medium_term_relative_strength` | folded into trend/breakout review queue | Korea evidence is mixed and overlap with breakout, 52-week high, and trend return is high |
 | `moving_average_trend_structure` | folded into `efficiency_ratio_trend` or later trend review | high overlap with breakout and relative strength |
 | `price_near_52w_high` | folded into `donchian_breakout_distance` as longer-window alternative | concept is useful but redundant in first MVP set |

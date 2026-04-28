@@ -72,6 +72,8 @@ FORBIDDEN_FUTURE_LABEL_PREFIXES = (
 )
 FORBIDDEN_BACKTEST_FEATURE_MARKERS = (
     "backtest",
+    "evaluation",
+    "metric",
     "sharpe",
     "sortino",
     "calmar",
@@ -100,6 +102,9 @@ class ProbUp1DConfig:
     learning_rate: float = 0.1
     l2: float = 1e-3
     tolerance: float = 1e-8
+    calibration_bins: int = 5
+    max_brier_score: float = 0.35
+    max_expected_calibration_error: float = 0.35
 
 
 @dataclass(frozen=True)
@@ -198,6 +203,7 @@ def fit_prob_up_1d_candidate_model(
     evaluation_metrics = _evaluation_metrics(
         evaluation_frame[LABEL_COLUMN].to_numpy(dtype=float),
         evaluation_probabilities,
+        config=active_config,
     )
 
     model = ProbUp1DModel(
@@ -494,16 +500,57 @@ def _fit_logistic_regression(
     return coefficients, intercept
 
 
-def _evaluation_metrics(labels: np.ndarray, probabilities: np.ndarray) -> dict[str, float]:
+def _evaluation_metrics(
+    labels: np.ndarray,
+    probabilities: np.ndarray,
+    *,
+    config: ProbUp1DConfig,
+) -> dict[str, float]:
     clipped = np.clip(probabilities, 1e-12, 1.0 - 1e-12)
     predictions = (clipped >= 0.5).astype(float)
+    brier_score = float(np.mean((clipped - labels) ** 2))
+    expected_calibration_error = _expected_calibration_error(
+        labels,
+        clipped,
+        bins=config.calibration_bins,
+    )
     return {
         "evaluation_count": float(len(labels)),
         "positive_rate": float(labels.mean()) if len(labels) else float("nan"),
-        "brier_score": float(np.mean((clipped - labels) ** 2)),
+        "brier_score": brier_score,
+        "expected_calibration_error": expected_calibration_error,
+        "calibration_gate_pass": float(
+            brier_score <= config.max_brier_score
+            and expected_calibration_error <= config.max_expected_calibration_error
+        ),
+        "calibration_max_brier_score": float(config.max_brier_score),
+        "calibration_max_expected_calibration_error": float(
+            config.max_expected_calibration_error
+        ),
         "log_loss": float(-np.mean((labels * np.log(clipped)) + ((1.0 - labels) * np.log1p(-clipped)))),
         "classification_accuracy": float(np.mean(predictions == labels)),
     }
+
+
+def _expected_calibration_error(labels: np.ndarray, probabilities: np.ndarray, *, bins: int) -> float:
+    if len(labels) == 0:
+        return float("nan")
+    edges = np.linspace(0.0, 1.0, bins + 1)
+    total = float(len(labels))
+    error = 0.0
+    for index in range(bins):
+        lower = edges[index]
+        upper = edges[index + 1]
+        if index == bins - 1:
+            mask = (probabilities >= lower) & (probabilities <= upper)
+        else:
+            mask = (probabilities >= lower) & (probabilities < upper)
+        if not mask.any():
+            continue
+        confidence = float(probabilities[mask].mean())
+        accuracy = float(labels[mask].mean())
+        error += (float(mask.sum()) / total) * abs(confidence - accuracy)
+    return float(error)
 
 
 def _sample_roles(
@@ -536,7 +583,7 @@ def _attach_candidate_timing_fields(
 ) -> pd.DataFrame:
     timed = output.copy()
     timed[DECISION_TIME_COLUMN] = pd.to_datetime(timed["date"], errors="raise")
-    timed[EXECUTION_TIME_COLUMN] = timed[DECISION_TIME_COLUMN]
+    timed[EXECUTION_TIME_COLUMN] = timed[DECISION_TIME_COLUMN] + pd.offsets.BDay(1)
     timed[LABEL_TIME_COLUMN] = pd.NaT
     timed[LABEL_AVAILABILITY_TIME_COLUMN] = pd.NaT
     if label_table is None:
@@ -604,6 +651,9 @@ def _assert_no_probability_leakage_columns(columns: pd.Index | tuple[str, ...] |
         if normalized == "label" or normalized == "target":
             flagged.append(str(column))
             continue
+        if normalized == "next_adjusted_close":
+            flagged.append(str(column))
+            continue
         if normalized.endswith("_label") or normalized.startswith(("label_", "target_")):
             flagged.append(str(column))
             continue
@@ -625,6 +675,14 @@ def _validate_training_config(config: ProbUp1DConfig) -> None:
         raise ValueError("v0.2 probability logistic training parameters must be positive.")
     if config.l2 < 0:
         raise ValueError("v0.2 probability l2 must be non-negative.")
+    if config.calibration_bins <= 0:
+        raise ValueError("v0.2 probability calibration_bins must be positive.")
+    if not 0.0 <= config.max_brier_score <= 1.0:
+        raise ValueError("v0.2 probability max_brier_score must be within [0, 1].")
+    if not 0.0 <= config.max_expected_calibration_error <= 1.0:
+        raise ValueError(
+            "v0.2 probability max_expected_calibration_error must be within [0, 1]."
+        )
 
 
 def _sigmoid(values: np.ndarray) -> np.ndarray:

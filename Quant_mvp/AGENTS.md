@@ -89,6 +89,13 @@ Completion acceptance uses `../.agents/skills/quant-review-gate/SKILL.md`. If no
 narrower execution skill matches, use `../.agents/skills/quant-review-gate/SKILL.md`
 as the minimal default review gate rather than inventing broad permission.
 
+### Codex skill isolation boundary
+
+Quant skill gates must be selected only from `../.agents/skills`. Do not load
+external/global/user/plugin skills for Quant gate authority, export Quant gates
+to other projects, or edit non-Quant skill lanes unless root/master approves a
+named handoff.
+
 Git finalization is not part of ordinary sub-agent execution. Use
 `../.agents/skills/quant-git-finalize/SKILL.md` only after review gate `PASS`.
 Do not push when review is `NEEDS FIX`, forbidden scope changed, validation

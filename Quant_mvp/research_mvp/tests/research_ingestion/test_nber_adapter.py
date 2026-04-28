@@ -81,3 +81,34 @@ def test_nber_fetch_uses_configured_rate_limiter(monkeypatch):
 
     assert calls == ["wait", "ref.tsv", "mark", "wait", "abs.tsv", "mark"]
     assert sorted(body["files"]) == ["abs", "ref"]
+
+
+def test_nber_optional_file_404_does_not_fail_source(monkeypatch):
+    adapter = NberAdapter({"files": ["ref", "auths"]})
+    responses = {
+        "ref.tsv": SourceResponse(
+            url="https://data.nber.org/nber_paper_chapter_metadata/tsv/ref.tsv",
+            body="paper\ttitle\nw12345\tMomentum Research\n",
+            status=200,
+            headers={},
+            retry_count=0,
+        ),
+        "auths.tsv": SourceResponse(
+            url="https://data.nber.org/nber_paper_chapter_metadata/tsv/auths.tsv",
+            body="",
+            status=404,
+            headers={},
+            retry_count=0,
+        ),
+    }
+
+    def fake_fetch_text_with_retries(**kwargs):
+        return responses[kwargs["url"].rsplit("/", 1)[-1]]
+
+    monkeypatch.setattr("research_ingestion.sources.nber_adapter.fetch_text_with_retries", fake_fetch_text_with_retries)
+
+    response = adapter.fetch_search_response("momentum", limit=1)
+    body = json.loads(response.body)
+
+    assert response.ok is True
+    assert body["files"]["auths"]["status"] == 404

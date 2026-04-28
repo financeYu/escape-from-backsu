@@ -1,0 +1,112 @@
+---
+name: cost-aware-review-refactor
+description: Lightweight project-local utility for reducing review and refactor cost through diff-first, changed-files-first, cheapest-check-first triage. Not a gate, release approval, security audit, production activation path, or blocker process.
+---
+
+# Cost-Aware Review Refactor
+
+## Purpose
+
+Reduce repeat review and refactor cost by helping the root agent choose the
+smallest useful inspection, validation, and cleanup path for a changed scope.
+This skill is advisory and lightweight. It does not approve completion, block
+release, replace gate skills, or expand project authority.
+
+Root remains responsible for orchestration, scope control, delegation, and final
+confirmation. This skill only helps summarize the cheapest next checks and
+small refactor opportunities that are already inside the assigned scope.
+
+## When To Use
+
+Use this skill when the task asks for review cost reduction, lightweight
+refactor triage, changed-file inspection, validation minimization, or repeated
+review cleanup before a formal gate or specialist review.
+
+Good fits:
+
+- docs/config/test/code changes where a cheaper focused check may be enough
+- identifying duplicate review work already owned by an existing gate or
+  subproject process
+- proposing narrow refactors within changed files
+- preparing a compact handoff for the root agent or an owning subproject agent
+
+## When Not To Use
+
+Do not use this skill as:
+
+- gate, release approval, blocker declaration, or approval packet
+- security audit, full audit, production activation, or final acceptance review
+- replacement for `.agents/skills/quant-review-gate/SKILL.md`,
+  `.agents/skills/review_gate/SKILL.md`, validators, root policy, or affected
+  subproject `AGENTS.md`
+- authority for shared policy, global routing, schema/contract, score
+  semantics, architecture boundary, or multiple-subproject changes
+
+If a formal gate, validator, audit, or specialist review is required, stop using
+this skill as the decision maker and route to the existing owner.
+
+## Operating Rules
+
+Apply these principles in order:
+
+1. Diff first: start from `git diff --name-only`, `git status --short`, or the
+   explicit changed-file list.
+2. Changed files first: inspect changed files and nearby references before
+   broad searches.
+3. Cheapest check first: prefer targeted `rg`, `git diff --check`, local unit
+   tests for touched files, or existing validators over broad suites.
+4. Reuse owners: if an existing skill, validator, subproject workflow, or root
+   policy already owns the rule, reference it instead of restating it.
+5. Keep refactors local: propose or make only narrow cleanup inside allowed
+   scope and changed ownership boundaries.
+
+Avoid repeating long Codex process rules already present in `AGENTS.md`,
+project docs, gate skills, validators, or subproject instructions.
+
+## Root Coordination Boundary
+
+This skill must not directly perform or approve changes that affect:
+
+- shared policy or global routing
+- schema, contract, validator, or score semantics
+- multiple subprojects or cross-project ownership
+- architecture boundaries
+- release, production activation, or final completion acceptance
+
+When such a change appears necessary, report it as requiring root agent approval
+and stop at a recommendation. The root agent may split the work, select the
+proper gate, or delegate to a sub-agent or subproject owner.
+
+## Subproject Delegation
+
+For review or refactor checks that can be performed inside one subproject or
+worktree, defer to that subproject agent and its local `AGENTS.md`. Provide only
+a compact handoff:
+
+- changed files
+- cheapest useful checks
+- suspected duplicate process or owner
+- questions requiring root approval
+
+Do not use this utility to bypass subproject workflows.
+
+## Compact Output
+
+Return a compact Korean summary:
+
+```yaml
+utility: cost-aware-review-refactor
+scope: "<changed files or assigned scope>"
+cheapest_next_checks:
+  - "<targeted check>"
+refactor_opportunities:
+  - "<narrow in-scope opportunity or none>"
+existing_owner_refs:
+  - "<skill/process/subproject owner or none>"
+root_approval_required:
+  - "<condition or none>"
+handoff_target: "<root | subproject/worktree | gate skill>"
+```
+
+Use `root_approval_required: ["none"]` only when the work stays within the
+assigned local scope and does not overlap root-owned or gate-owned authority.

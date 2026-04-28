@@ -16,6 +16,8 @@ try:  # Prefer the installed project/runtime HTTP stack when available.
 except Exception:  # pragma: no cover - exercised only when requests is absent.
     requests = None  # type: ignore[assignment]
 
+MAX_SOURCE_RESPONSE_WAIT_SECONDS = 300.0
+
 
 @dataclass(frozen=True)
 class SourceResponse:
@@ -28,6 +30,10 @@ class SourceResponse:
     @property
     def ok(self) -> bool:
         return self.status is not None and 200 <= self.status < 300
+
+
+class SourceResponseTimeoutSkip(TimeoutError):
+    """Raised when a source response waits too long and should be skipped."""
 
 
 class SourceRateLimiter:
@@ -68,6 +74,7 @@ def fetch_text_with_retries(
     retry_statuses: set[int] | None = None,
 ) -> SourceResponse:
     assert_no_scholar_request(url)
+    timeout_seconds = _bounded_response_timeout_seconds(timeout_seconds)
     retryable = _retry_statuses(retry_statuses)
     attempts = _request_attempts(max_retries)
     if requests is not None:
@@ -101,6 +108,7 @@ def post_json_with_retries(
     retry_statuses: set[int] | None = None,
 ) -> SourceResponse:
     assert_no_scholar_request(url)
+    timeout_seconds = _bounded_response_timeout_seconds(timeout_seconds)
     retryable = _retry_statuses(retry_statuses)
     attempts = _request_attempts(max_retries)
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -134,6 +142,10 @@ def _request_attempts(max_retries: int) -> int:
     return max(0, int(max_retries)) + 1
 
 
+def _bounded_response_timeout_seconds(timeout_seconds: float) -> float:
+    return min(max(0.001, float(timeout_seconds)), MAX_SOURCE_RESPONSE_WAIT_SECONDS)
+
+
 def _urlopen_with_retries(
     *,
     url: str,
@@ -147,6 +159,7 @@ def _urlopen_with_retries(
     last_error: URLError | None = None
 
     for attempt in range(attempts):
+        started = time.monotonic()
         try:
             with urlopen(request_factory(), timeout=timeout_seconds) as response:
                 return _response_from_urlopen(url, response, attempt)
@@ -157,6 +170,10 @@ def _urlopen_with_retries(
             return _response_from_http_error(url, exc, attempt)
         except URLError as exc:
             last_error = exc
+            if _is_timeout_exception(exc) and _waited_at_least_skip_threshold(started):
+                raise SourceResponseTimeoutSkip(
+                    "source response exceeded no-response threshold=300s; skipping this source page"
+                ) from exc
             if attempt < attempts - 1:
                 _sleep_before_retry(retry_backoff_seconds, attempt)
                 continue
@@ -200,6 +217,7 @@ def _fetch_with_requests(
 ) -> SourceResponse:
     last_error: Exception | None = None
     for attempt in range(attempts):
+        started = time.monotonic()
         try:
             response = requests.get(url, headers=headers, timeout=timeout_seconds)  # type: ignore[union-attr]
             if response.status_code in retryable and attempt < attempts - 1:
@@ -214,6 +232,10 @@ def _fetch_with_requests(
             )
         except requests.RequestException as exc:  # type: ignore[union-attr]
             last_error = exc
+            if _is_timeout_exception(exc) and _waited_at_least_skip_threshold(started):
+                raise SourceResponseTimeoutSkip(
+                    "source response exceeded no-response threshold=300s; skipping this source page"
+                ) from exc
             if attempt < attempts - 1:
                 _sleep_before_retry(retry_backoff_seconds, attempt)
                 continue
@@ -235,6 +257,7 @@ def _post_with_requests(
 ) -> SourceResponse:
     last_error: Exception | None = None
     for attempt in range(attempts):
+        started = time.monotonic()
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=timeout_seconds)  # type: ignore[union-attr]
             if response.status_code in retryable and attempt < attempts - 1:
@@ -249,6 +272,10 @@ def _post_with_requests(
             )
         except requests.RequestException as exc:  # type: ignore[union-attr]
             last_error = exc
+            if _is_timeout_exception(exc) and _waited_at_least_skip_threshold(started):
+                raise SourceResponseTimeoutSkip(
+                    "source response exceeded no-response threshold=300s; skipping this source page"
+                ) from exc
             if attempt < attempts - 1:
                 _sleep_before_retry(retry_backoff_seconds, attempt)
                 continue
@@ -281,3 +308,19 @@ def _retry_after_seconds(value: str | None) -> float | None:
         return max(0.0, (retry_at - datetime.now(UTC)).total_seconds())
     except (TypeError, ValueError, IndexError, OverflowError):
         return None
+
+
+def _is_timeout_exception(exc: BaseException) -> bool:
+    if isinstance(exc, TimeoutError):
+        return True
+    if requests is not None and isinstance(exc, requests.Timeout):  # type: ignore[union-attr]
+        return True
+    reason = getattr(exc, "reason", None)
+    if isinstance(reason, BaseException):
+        return _is_timeout_exception(reason)
+    name = type(exc).__name__.lower()
+    return "timeout" in name or "timed out" in str(exc).lower()
+
+
+def _waited_at_least_skip_threshold(started: float) -> bool:
+    return (time.monotonic() - started) >= MAX_SOURCE_RESPONSE_WAIT_SECONDS

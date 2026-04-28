@@ -222,11 +222,45 @@ def _make_normalized_paper_from_values(values: dict[str, Any]) -> dict[str, Any]
     values["doi"] = normalize_doi(values["doi"])
     values["arxiv_id"] = normalize_arxiv_id(values["arxiv_id"])
     values["nber_id"] = normalize_nber_id(values["nber_id"])
+    if not clean_text(values["title"]):
+        values["title"] = _fallback_title_from_metadata(values)
+        values["manual_review_required"] = True
+        values["conflict_notes"] = [
+            *(values["conflict_notes"] or []),
+            "source_title_missing_conservative_placeholder_used",
+        ]
     values["now"] = utc_now_iso()
     paper = _normalized_paper_payload(values)
     paper.update(extra)
     validate_normalized_paper(paper)
     return paper
+
+
+def _fallback_title_from_metadata(values: dict[str, Any]) -> str:
+    primary_identifiers = [
+        ("DOI", values.get("doi")),
+        ("arXiv", values.get("arxiv_id")),
+        ("NBER", values.get("nber_id")),
+        ("OpenAlex", values.get("openalex_id")),
+        ("Semantic Scholar", values.get("semantic_scholar_id")),
+        ("Crossref", values.get("crossref_id")),
+    ]
+    context = [f"{label} {identifier}" for label, identifier in primary_identifiers if identifier]
+    if not context:
+        secondary_identifiers = [
+            ("source record", values.get("source_record_id")),
+            ("source URL", next(iter(values.get("source_urls") or []), None)),
+            ("raw snapshot", next(iter(values.get("raw_snapshot_refs") or []), None)),
+        ]
+        context.extend(f"{label} {identifier}" for label, identifier in secondary_identifiers if identifier)
+    if values.get("publication_year"):
+        context.append(f"year {values['publication_year']}")
+    venue = clean_text(values.get("venue"))
+    if venue:
+        context.append(f"venue {venue}")
+    source = clean_text(values.get("source_adapter")) or "metadata source"
+    detail = "; ".join(context) if context else "no reliable identifier"
+    return f"Untitled paper metadata from {source} ({detail})"
 
 
 def _normalized_paper_payload(values: dict[str, Any]) -> dict[str, Any]:

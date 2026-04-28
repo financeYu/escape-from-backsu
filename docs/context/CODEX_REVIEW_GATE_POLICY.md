@@ -26,6 +26,23 @@ This is local/project-level review routing only. Do not use GitHub review
 trigger wording, configure automatic GitHub PR review, or require GitHub PR
 review usage.
 
+## Project Skill Isolation
+
+Project-local Codex skills under this workspace's `.agents/skills/` are the only
+project gate authority. External, global, user, or plugin skills must not be
+loaded, selected, or used to satisfy `master_mvp` or `Quant_mvp` gates.
+
+Unless root/master names a cross-project handoff, Quant gates such as `quant-*`,
+`score-runtime-semantics-gate`, and `ml-research-evidence` must not be imported,
+edited, enforced, or used as completion authority by other projects.
+
+The reverse boundary also holds: Quant work must not edit or weaken non-Quant
+project skills, `review_mvp` internals, chart runtime skills, or another
+project's agent policy. Record the need as a handoff or unresolved risk.
+
+Completion review checks that the selected skill gate stayed inside its own
+project boundary and did not create reverse authority over another skill lane.
+
 ## Trigger Matrix
 
 | File path pattern or signal | Trigger reason | Required skill | Minimum validation profile |
@@ -82,6 +99,7 @@ and still avoids advice language.
 review. It may confirm:
 
 - the gate remained a dispatcher
+- project-local skill isolation remains intact
 - specialized skills are on-demand, not default
 - `review_mvp` remains conditional on `review_mvp_required: true` or explicit
   master/root request

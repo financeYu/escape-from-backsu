@@ -1,0 +1,174 @@
+# Paper Registry + No-Recollect Gate
+#
+# This registry is intentionally lightweight. It records paper identity,
+# review status, and EvidenceCard references so the research pipeline can reuse
+# already-sufficient evidence without recollecting PDFs or rechecking full cards.
+
+schema_version = "paper_registry.v1"
+owner = "Quant_mvp/research_mvp"
+default_review_status = "metadata_pending"
+default_pdf_recollect_allowed = false
+default_full_card_recheck_allowed = false
+created_for = "Paper Registry + No-Recollect Gate"
+
+[scope]
+allowed_scope = [
+  "research metadata identity",
+  "EvidenceCard reference tracking",
+  "metadata-only targeted updates",
+  "no-recollect/no-recheck decisions",
+]
+forbidden_scope = [
+  "bulk PDF redownload",
+  "existing EvidenceCard full re-review",
+  "rights or license policy change",
+  "score adoption",
+  "backtest",
+  "ranking or report behavior change",
+  "valuation verdict",
+]
+
+[identity_normalization]
+doi = "lowercase, trim whitespace, strip https://doi.org/ and doi: prefixes"
+arxiv_id = "lowercase, trim whitespace, strip arxiv: prefix, remove version suffix for identity match"
+canonical_url = "lowercase scheme and host, strip fragments and tracking query parameters, prefer DOI/arXiv canonical URL when available"
+title_normalized = "Unicode NFKC, lowercase, remove punctuation, collapse whitespace"
+normalized_title_hash = "sha256(title_normalized), hex encoded; short display may use first 16 chars but full hash is canonical"
+title_author_year_key = "title_normalized + first_author_family_name_normalized + publication_year"
+
+[lookup_order]
+keys = [
+  "doi",
+  "arxiv_id",
+  "canonical_url",
+  "normalized_title_hash",
+  "title_author_year_key",
+]
+rule = "Use identifier exact matches before title-derived matches. Title-derived matches require manual_review_required=true unless DOI/arXiv/canonical_url confirms the same paper."
+
+[review_status]
+allowed = [
+  "metadata_pending",
+  "needs_required_fields",
+  "sufficient",
+  "insufficient",
+  "superseded_by_new_version",
+  "erratum_review_required",
+  "license_status_review_required",
+  "manual_review_required",
+  "retracted_or_blocked",
+]
+sufficient_meaning = "The current EvidenceCard is enough for the current research question and may be reused without paper recollection or full card recheck."
+
+[evidence_card_reference]
+required_for_sufficient = [
+  "evidence_card_id",
+  "evidence_card_path",
+  "source_run_id",
+  "review_status",
+  "review_question",
+  "reviewed_at_utc_or_unknown",
+]
+path_policy = "Use repo-relative paths. Prefer docs/research/evidence_cards/ for curated cards and data/research/evidence/ for generated JSONL cards when present."
+reuse_policy = "A sufficient registry match returns the existing evidence_card_id and evidence_card_path. Do not create a duplicate card for the same research question."
+
+[no_recollect_gate]
+before_candidate_processing = [
+  "normalize DOI, arXiv ID, canonical URL, title, first author, and publication year",
+  "query registry by lookup_order.keys",
+  "if review_status=sufficient and review_question matches, reuse evidence_card_path",
+  "if a sufficient match exists, skip PDF/body recollection and skip full EvidenceCard recheck",
+  "if no sufficient match exists, process as a new metadata candidate under existing source policy",
+]
+hard_blocks = [
+  "bulk PDF redownload",
+  "automatic publisher fulltext crawl",
+  "Google Scholar live request",
+  "paywalled or license-ambiguous fulltext collection",
+  "regenerating existing sufficient cards solely because a refresh ran",
+]
+
+[no_recheck_exceptions]
+allowed = [
+  "new_version_or_erratum",
+  "changed_research_question",
+  "missing_required_fields",
+  "license_status_change",
+  "root_approved_refresh",
+]
+rule = "Exceptions must be recorded in the registry entry with exception_reason, requested_by, and allowed_update_scope before recheck starts."
+
+[metadata_only_targeted_update]
+allowed_when = [
+  "the registry has a duplicate match but required metadata fields are missing",
+  "the update can be completed through approved metadata APIs or local metadata records",
+  "no PDF/body/fulltext collection is needed",
+  "no existing sufficient EvidenceCard interpretation changes",
+]
+allowed_fields = [
+  "doi",
+  "arxiv_id",
+  "canonical_url",
+  "openalex_id",
+  "semantic_scholar_id",
+  "crossref_id",
+  "title",
+  "authors",
+  "publication_year",
+  "publication_date",
+  "venue",
+  "source_urls",
+  "open_access_status",
+  "license",
+  "is_retracted",
+  "citation_count",
+]
+forbidden_fields = [
+  "candidate_idea interpretation",
+  "classification verdict",
+  "valuation verdict",
+  "implementation readiness promotion",
+  "backtest or alpha claim",
+  "score/ranking/report behavior",
+]
+
+[required_fields]
+minimum_identity = [
+  "title",
+  "normalized_title_hash",
+  "publication_year_or_null_with_reason",
+]
+minimum_sufficient_entry = [
+  "registry_id",
+  "review_status",
+  "review_question",
+  "evidence_card_id",
+  "evidence_card_path",
+  "match_keys",
+]
+
+[bootstrap_policy]
+initial_mode = "schema_and_gate_first"
+legacy_artifacts_may_be_indexed_metadata_only = true
+legacy_artifact_references = [
+  "reports/research_ingestion/step5_candidate_evidence.md",
+  "data/research/evidence/evidence_cards.jsonl",
+]
+bootstrap_rule = "Index legacy papers by metadata fields only. Do not reread PDFs, revalidate full claims, or re-score existing EvidenceCards during bootstrap."
+
+# Entry template for future metadata-only additions:
+#
+# [[paper]]
+# registry_id = "paper-reg-0001"
+# review_status = "sufficient"
+# review_question = "technical research ingestion triage"
+# evidence_card_id = "EC-001"
+# evidence_card_path = "docs/research/evidence_cards/EC-001.toml"
+# doi = "10.xxxx/example"
+# arxiv_id = ""
+# canonical_url = "https://doi.org/10.xxxx/example"
+# normalized_title_hash = "full_sha256_hex"
+# title_author_year_key = "normalizedtitle|firstauthor|2024"
+# match_keys = ["doi", "canonical_url", "normalized_title_hash", "title_author_year_key"]
+# allowed_update_scope = "reuse_only"
+# exception_reason = ""

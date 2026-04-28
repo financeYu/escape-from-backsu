@@ -10,10 +10,10 @@ import sys
 import pytest
 
 from research_ingestion.cli import _update_source_health_from_collection, cmd_classify, cmd_normalize, main
-from research_ingestion.cli_collect import _fetch_source_page
+from research_ingestion.cli_collect import _fetch_source_page, _record_collect_request_exception
 from research_ingestion.config import ProjectPaths, load_research_config
 from research_ingestion.persistence import read_jsonl, write_json, write_jsonl
-from research_ingestion.sources.http import SourceResponse
+from research_ingestion.sources.http import SourceResponse, SourceResponseTimeoutSkip
 
 
 def test_collect_dry_run_reports_guardrails(capsys, monkeypatch):
@@ -212,6 +212,22 @@ def test_fetch_source_page_returns_cache_metadata():
     assert page.cache_key is None
     assert page.request_latency_ms >= 0.0
     assert page.rate_limit_wait_seconds == 0.0
+
+
+def test_collect_request_timeout_is_recorded_as_skipped_source_page():
+    health = {"request_count": 0, "failure_count": 0, "status": "planned", "skipped_source_reason": None}
+
+    _record_collect_request_exception(
+        health,
+        {"sources": {"redaction": {}}},
+        object(),
+        SourceResponseTimeoutSkip("source response exceeded timeout_seconds=300; skipping this source page"),
+    )
+
+    assert health["request_count"] == 1
+    assert health["failure_count"] == 0
+    assert health["status"] == "skipped"
+    assert "공통 상한: 5분" in health["skipped_source_reason"]
 
 
 def test_backtest_normalize_uses_run_and_lane_files_without_overwriting_global(sample_paper, workspace_tmp_path):

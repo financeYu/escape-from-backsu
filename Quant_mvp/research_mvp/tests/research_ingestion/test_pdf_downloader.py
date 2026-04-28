@@ -109,21 +109,128 @@ def test_pdf_downloader_skips_scholar_urls(sample_paper, workspace_tmp_path):
     assert "scholar.google.com" in rows[0]["skip_reason_ko"]
 
 
-def test_pdf_downloader_default_policy_remains_disabled(sample_paper, workspace_tmp_path):
+def test_pdf_downloader_skips_paywall_or_login_markers_before_fetch(sample_paper, workspace_tmp_path):
+    config = _enabled_pdf_config()
+    paths = ProjectPaths(workspace_tmp_path)
+    paper = _pdf_ready_paper(
+        sample_paper,
+        collection_basis="login_required_subscription_access",
+        fulltext_source_type="login_required_pdf",
+    )
+    fetched = False
+
+    def fetch(url, timeout, headers, max_bytes):
+        nonlocal fetched
+        fetched = True
+        return b"%PDF-1.7\n", {}, 200
+
+    summary = download_pdfs(
+        papers=[paper],
+        config=config,
+        paths=paths,
+        run_id="pdf_paywall",
+        fetch_pdf_bytes=fetch,
+    )
+
+    rows = read_jsonl(Path(summary["manifest_path"]))
+    assert fetched is False
+    assert summary["downloaded_count"] == 0
+    assert rows[0]["status"] == "skipped"
+    assert "login_required_pdf" in rows[0]["skip_reason_ko"]
+
+
+def test_pdf_downloader_skips_tdm_license(sample_paper, workspace_tmp_path):
+    config = _enabled_pdf_config()
+    paths = ProjectPaths(workspace_tmp_path)
+    paper = _pdf_ready_paper(
+        sample_paper,
+        license="Springer Nature TDM License",
+        license_name="Springer Nature TDM License",
+        license_url="Springer Nature TDM License",
+    )
+
+    summary = download_pdfs(papers=[paper], config=config, paths=paths, run_id="pdf_tdm")
+
+    rows = read_jsonl(Path(summary["manifest_path"]))
+    assert summary["downloaded_count"] == 0
+    assert rows[0]["status"] == "skipped"
+    assert rows[0]["pdf_fulltext_use_basis"] == "blocked_publisher_tdm_license"
+
+
+def test_pdf_downloader_limits_manifest_category_to_cc_candidates(sample_paper, workspace_tmp_path):
+    config = _enabled_pdf_config()
+    paths = ProjectPaths(workspace_tmp_path)
+    paper = _pdf_ready_paper(sample_paper, category="manual_review")
+    fetched = False
+
+    def fetch(url, timeout, headers, max_bytes):
+        nonlocal fetched
+        fetched = True
+        return b"%PDF-1.7\n", {}, 200
+
+    summary = download_pdfs(
+        papers=[paper],
+        config=config,
+        paths=paths,
+        run_id="pdf_manual_review_category",
+        fetch_pdf_bytes=fetch,
+    )
+
+    rows = read_jsonl(Path(summary["manifest_path"]))
+    assert fetched is False
+    assert summary["downloaded_count"] == 0
+    assert rows[0]["status"] == "skipped"
+    assert "manual_review" in rows[0]["skip_reason_ko"]
+
+
+def test_pdf_downloader_allows_explicit_upload_or_redistribution_trace(sample_paper, workspace_tmp_path):
+    config = _enabled_pdf_config()
+    paths = ProjectPaths(workspace_tmp_path)
+    paper = _pdf_ready_paper(
+        sample_paper,
+        redistribution_allowed=True,
+        external_upload_allowed=True,
+    )
+
+    summary = download_pdfs(
+        papers=[paper],
+        config=config,
+        paths=paths,
+        run_id="pdf_explicit_upload_trace",
+        fetch_pdf_bytes=lambda url, timeout, headers, max_bytes: (b"%PDF-1.7\n", {"content-type": "application/pdf"}, 200),
+    )
+
+    rows = read_jsonl(Path(summary["manifest_path"]))
+    assert summary["downloaded_count"] == 1
+    assert rows[0]["status"] == "downloaded"
+    assert rows[0]["external_upload_allowed"] is True
+    assert rows[0]["redistribution_allowed"] is True
+
+
+def test_pdf_downloader_policy_enabled_dry_run_does_not_download(sample_paper, workspace_tmp_path):
     config = load_research_config(Path(__file__).resolve().parents[2])
     paths = ProjectPaths(workspace_tmp_path)
+    fetched = False
+
+    def fetch(url, timeout, headers, max_bytes):
+        nonlocal fetched
+        fetched = True
+        return b"%PDF-1.7\n", {}, 200
 
     summary = download_pdfs(
         papers=[_pdf_ready_paper(sample_paper)],
         config=config,
         paths=paths,
-        run_id="pdf_disabled",
+        run_id="pdf_policy_dry_run",
+        dry_run=True,
+        fetch_pdf_bytes=fetch,
     )
 
     rows = read_jsonl(Path(summary["manifest_path"]))
+    assert fetched is False
     assert summary["downloaded_count"] == 0
-    assert rows[0]["pdf_fulltext_download_allowed"] is False
-    assert "비활성화" in rows[0]["skip_reason_ko"]
+    assert rows[0]["status"] == "planned_dry_run"
+    assert rows[0]["pdf_fulltext_download_allowed"] is True
 
 
 def test_pdf_downloader_manifest_redacts_tokenized_source_url(sample_paper, workspace_tmp_path):
@@ -173,6 +280,26 @@ def test_pdf_downloader_enforces_max_pdf_bytes(sample_paper, workspace_tmp_path)
     assert summary["downloaded_count"] == 0
     assert rows[0]["status"] == "skipped"
     assert "max_pdf_bytes=8" in rows[0]["skip_reason_ko"]
+    assert rows[0]["local_pdf_path"] is None
+
+
+def test_pdf_downloader_skips_non_pdf_response(sample_paper, workspace_tmp_path):
+    config = _enabled_pdf_config()
+    paths = ProjectPaths(workspace_tmp_path)
+    paper = _pdf_ready_paper(sample_paper)
+
+    summary = download_pdfs(
+        papers=[paper],
+        config=config,
+        paths=paths,
+        run_id="pdf_non_pdf",
+        fetch_pdf_bytes=lambda url, timeout, headers, max_bytes: (b"<html>login</html>", {"content-type": "text/html"}, 200),
+    )
+
+    rows = read_jsonl(Path(summary["manifest_path"]))
+    assert summary["downloaded_count"] == 0
+    assert rows[0]["status"] == "skipped"
+    assert "PDF signature" in rows[0]["skip_reason_ko"]
     assert rows[0]["local_pdf_path"] is None
 
 

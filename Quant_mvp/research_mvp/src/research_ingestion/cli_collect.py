@@ -13,6 +13,7 @@ from .license_policy import annotate_license_policy
 from .persistence import write_jsonl
 from .relevance import apply_collection_relevance_gate
 from .request_cache import RequestCache, request_cache_from_config
+from .sources.http import SourceResponseTimeoutSkip
 from .cli_common import (
     SourcePageFetch,
     _adapter_for_source,
@@ -291,6 +292,15 @@ def _record_collect_request_exception(
     exc: Exception,
 ) -> None:
     health["request_count"] += 1
+    if isinstance(exc, SourceResponseTimeoutSkip):
+        health["status"] = "skipped"
+        health["skipped_source_reason"] = (
+            f"응답 대기 timeout에 도달하여 해당 source page를 보수적으로 skip했습니다 "
+            f"(공통 상한: 5분): "
+            f"{_safe_error_message(exc, _redaction_env_vars(config, adapter))}"
+        )
+        health["last_error_ko"] = health["skipped_source_reason"]
+        return
     health["failure_count"] += 1
     health["status"] = "failed"
     health["last_error_ko"] = (

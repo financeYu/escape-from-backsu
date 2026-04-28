@@ -12,7 +12,8 @@ from ..redaction import redact_mapping
 from .http import SourceRateLimiter, SourceResponse, fetch_text_with_retries
 
 
-DEFAULT_FILES = ["ref", "abs", "auth", "auths", "title", "jel", "prog", "published"]
+DEFAULT_FILES = ["ref", "abs", "auths", "title", "jel", "prog", "published"]
+REQUIRED_FILES = {"ref"}
 
 
 class NberAdapter:
@@ -61,7 +62,7 @@ class NberAdapter:
             }
             retry_count = max(retry_count, int(response.retry_count or 0))
             headers.update({f"{file_name}-{key}": value for key, value in response.headers.items()})
-            if not response.ok and combined_status == 200:
+            if file_name in REQUIRED_FILES and not response.ok and combined_status == 200:
                 combined_status = int(response.status or 0) or 500
         body = json.dumps(
             {

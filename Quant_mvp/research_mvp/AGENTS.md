@@ -144,7 +144,7 @@ Preferred Korean report phrases:
 - `현재 데이터로는 valuation_status: unavailable입니다.`
 - `가격 기반 oversold 신호는 valuation evidence가 아닙니다.`
 - `EvidenceCard만 생성하고 score 채택은 수행하지 않습니다.`
-- `MVP에서는 PDF fulltext 수집을 기본 비활성화합니다.`
+- `PDF fulltext 수집은 비영리 연구 호환 license와 source/access 정책 점검 후에만 허용합니다.`
 - `이 논문 claim은 아직 검증된 alpha가 아닙니다.`
 - `이 후보는 downstream_route: valuation_agent_handoff로 분리합니다.`
 
@@ -231,8 +231,31 @@ For MVP, implement a program that can:
 
 MVP should prioritize metadata and abstracts.
 
-PDF fulltext download must be disabled by default.
-PDF fulltext may only be implemented when open-access status, license policy, source terms, and storage policy are explicit.
+PDF fulltext download is allowed when open-access status, noncommercial license
+policy, source terms, and storage policy are explicit.
+The download path must remain opt-in at CLI/runtime, license-aware, and local
+custody only; it must not imply external upload, redistribution, score adoption,
+ranking, backtest, valuation review, or trading claims.
+
+## Local research data custody and copyright policy
+
+Research-collected data is managed locally by default.
+
+Local research data includes raw metadata snapshots, normalized paper corpora,
+EvidenceCard JSONL outputs, Scholar discovery seeds, locally reviewed PDF or
+fulltext artifacts, request caches, and generated ingestion reports unless a
+separate task explicitly promotes a small review fixture or policy document for
+source control.
+
+Not uploading these artifacts to GitHub is intentional and must not be treated
+as dirty data. The default local-only policy exists to respect copyright,
+publisher/source terms, noncommercial research-use limits, privacy constraints,
+and redistribution restrictions.
+
+GitHub-tracked files should contain only source code, configuration, tests, and
+small policy or review fixtures that are explicitly safe to redistribute.
+Copyright-restricted or license-ambiguous research artifacts must remain local
+even when they are required for review or provenance.
 
 ---
 
@@ -1114,7 +1137,8 @@ Required boundary phrases:
 - Paper-reported backtest is diagnostic metadata only.
 - Citation count is metadata only, not evidence strength.
 - Scholar seeds are discovery inputs only.
-- PDF fulltext download is disabled by default.
+- PDF fulltext download is license-aware and limited to explicitly allowed
+  noncommercial/open-access candidates.
 - Financial/fundamental data must not enter technical_composite_score or final_composite_score.
 
 Expanded query-set metadata must live in `config/research_queries.toml` and include:
@@ -1191,7 +1215,8 @@ The MVP implementation must include tests for:
 - backtest literature routing to `diagnostic_backlog`
 - paper-reported backtest context captured without forward-return calculation
 - out-of-scope rejection
-- PDF download disabled by default
+- PDF download remains license-aware, opt-in at CLI/runtime, and local-custody
+  only
 - Korean ingestion report generation
 
 Testing rules:

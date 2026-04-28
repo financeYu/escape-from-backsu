@@ -14,20 +14,25 @@ scholar_snippets_are_not_evidence = true
 citation_count_does_not_upgrade_confidence = true
 
 [pdf_policy]
-allow_pdf = false
+allow_pdf = true
 explicit_confirmation_required = true
 confirmation_phrase = "I confirm OA/license/source policy for PDF use"
-max_downloads_per_run = 1
+max_downloads_per_run = 3
 timeout_seconds = 30
 max_pdf_bytes = 26214400
 user_agent = "research-ingestion-pdf-downloader/1.0"
+allowed_manifest_categories = [
+  "auto_cc",
+  "noncommercial_cc",
+]
+noncommercial_collection_basis = "noncommercial_research_only"
 
 [license_policy]
 intended_use = "noncommercial_research"
 allow_metadata_without_license = true
 allow_noncommercial_licenses = true
 manual_review_when_license_unknown = false
-fulltext_download_remains_disabled = true
+fulltext_download_remains_disabled = false
 allowed_open_license_tokens = [
   "cc0",
   "publicdomain",
@@ -41,7 +46,69 @@ allowed_noncommercial_license_tokens = [
   "cc-by-nc-sa",
   "cc-by-nc-nd",
 ]
-notes_ko = "비상업 연구 목적에서는 CC BY-NC 계열 license도 metadata/abstract 후보 수집을 허용한다. PDF/fulltext 다운로드는 계속 비활성화한다."
+allowed_pdf_license_tokens = [
+  "cc-by",
+  "cc-by-sa",
+  "cc-by-nd",
+  "cc-by-nc",
+  "cc-by-nc-sa",
+  "cc-by-nc-nd",
+]
+blocked_fulltext_license_tokens = [
+  "elsevier-tdm",
+  "springer-nature-tdm",
+  "wiley-tdm",
+  "tdm-license",
+  "tdm-only",
+]
+notes_ko = "PDF/fulltext 수집은 명시적인 open 또는 비상업 연구 호환 license 후보에 한해 source, access, local custody 점검 후 허용한다."
+
+[fulltext_access_policy]
+blocked_access_markers = [
+  "paywall",
+  "login",
+  "logged-in",
+  "subscription",
+  "subscriber",
+  "institutional access",
+  "shibboleth",
+  "sso",
+  "tdm",
+]
+blocked_source_types = [
+  "paywalled_publisher_pdf",
+  "login_required_pdf",
+  "subscription_pdf",
+  "tdm_license_pdf",
+]
+exclude_scholar_urls = true
+exclude_non_pdf_response = true
+external_upload_default_allowed = false
+redistribution_default_allowed = false
+notes_ko = "paywall/login/Scholar URL, 비PDF 응답, Wiley/Elsevier/Springer TDM license류 fulltext는 자동 수집하지 않는다."
+
+[local_data_policy]
+local_only_by_default = true
+github_upload_required = false
+not_dirty_when_untracked = true
+git_tracking_check_required = true
+generated_raw_fulltext_git_tracked_allowed = false
+git_tracking_check_paths = [
+  "data/research/raw",
+  "data/research/fulltext",
+  "data/research/request_cache",
+]
+reason_ko = "리서치 수집 데이터는 저작권, source terms, 비상업 연구 목적 제한, 재배포 제한 준수를 위해 로컬로만 관리한다. GitHub에 업로드하지 않는 것은 더티 데이터가 아니라 의도된 local-only custody 정책이다."
+includes = [
+  "raw_metadata_snapshots",
+  "normalized_paper_corpora",
+  "evidence_card_jsonl",
+  "scholar_discovery_seeds",
+  "local_pdf_or_fulltext_artifacts",
+  "request_caches",
+  "generated_ingestion_reports",
+]
+source_control_policy_ko = "GitHub에는 재배포가 안전한 source code, config, tests, small policy/review fixtures만 추적한다."
 
 [outputs]
 normalized_jsonl = "data/research/normalized/papers.jsonl"

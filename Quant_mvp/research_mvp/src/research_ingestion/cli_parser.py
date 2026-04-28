@@ -13,6 +13,7 @@ def build_parser(command_handlers: Mapping[str, Callable[..., Any]]) -> argparse
     _add_scholar_import_parsers(subparsers, command_handlers)
     _add_pipeline_parsers(subparsers, command_handlers)
     _add_pdf_parser(subparsers, command_handlers)
+    _add_pdf_manifest_parser(subparsers, command_handlers)
     _add_refresh_parser(subparsers, command_handlers)
     return parser
 
@@ -116,6 +117,18 @@ def _add_pdf_parser(
     download.add_argument("--input-path", default=None)
     download.add_argument("--max-records", type=int, default=None)
     download.set_defaults(func=command_handlers["download_pdfs"])
+
+
+def _add_pdf_manifest_parser(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    command_handlers: Mapping[str, Callable[..., Any]],
+) -> None:
+    manifest = subparsers.add_parser("pdf-ready-manifest")
+    _add_run_common(manifest)
+    manifest.add_argument("--input-path", default=None)
+    manifest.add_argument("--output-path", default=None)
+    manifest.add_argument("--summary-path", default=None)
+    manifest.set_defaults(func=command_handlers["pdf_ready_manifest"])
 
 
 def _add_run_common(parser: argparse.ArgumentParser) -> None:

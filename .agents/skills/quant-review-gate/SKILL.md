@@ -14,6 +14,13 @@ This skill does not authorize new quant behavior. It verifies that the completed
 task stayed inside the selected skill gate and project hard stops before root
 accepts completion.
 
+When `.agents/skills/cost-aware-review-refactor/SKILL.md` has already produced
+a compact summary for the same changed scope, this gate consumes that utility
+output as advisory triage evidence. Do not repeat utility-owned selection of
+cheapest checks, local refactor opportunities, or duplicate-owner discovery
+unless the utility summary is missing, stale, scope-mismatched, or conflicts
+with project hard stops.
+
 ## When To Use
 
 Use this skill:
@@ -47,6 +54,8 @@ Root must provide or reconstruct a compact task packet before review:
 - validation commands
 - Korean final report format
 - selected execution skill gate, or `quant-review-gate` as the minimal default
+- optional `cost-aware-review-refactor` summary when it was run for the same
+  scope
 
 The worker or sub-agent must not expand beyond the selected skill gate. If the
 packet is missing a boundary needed to judge safety, return `NEEDS FIX`.
@@ -54,6 +63,18 @@ packet is missing a boundary needed to judge safety, return `NEEDS FIX`.
 ## Review Checks
 
 Check only task-relevant files and summaries.
+
+If a same-scope `cost-aware-review-refactor` summary is provided, treat these as
+already checked by the utility and do not recreate them inside this gate:
+
+- choosing the cheapest useful next checks
+- identifying narrow in-scope refactor opportunities
+- identifying duplicate process, validator, skill, or subproject owners
+
+This de-duplication does not waive this gate's authority checks. The gate still
+must verify scope, forbidden-boundary safety, validation evidence, score/ranking
+and report semantics safety, skill isolation, forbidden claim language, and
+worktree status.
 
 Required checks:
 
@@ -64,6 +85,10 @@ Required checks:
   formulas were not changed unless explicitly authorized
 - `technical_composite_score` and `final_composite_score` were not redefined
   unless explicitly authorized
+- project-local skill isolation was preserved: Quant gates did not become
+  cross-project authority, and Quant work did not edit non-Quant skill lanes
+- selected skill authority came only from this workspace's `.agents/skills`;
+  external, global, user, or plugin skills were not used for project gates
 - forbidden trading, buy/sell/hold, proven-alpha, expected-return, or
   profitability wording was not introduced as a claim
 - worktree status is reported, including unrelated pre-existing dirty files
@@ -81,6 +106,10 @@ they must be separated from task changed files and reported as remaining risk.
 - task-specific validation commands from the selected execution gate
 - `bash .agents/skills/quant-review-gate/scripts/validate_review_gate.sh`
 
+When a same-scope cost-aware utility summary is present, skip commands used only
+to rediscover its utility findings. Run only the commands still needed for this
+gate's independent PASS rules.
+
 Do not run `git fetch`, `git pull`, or `git push` in this review gate.
 
 ## PASS Rules
@@ -91,8 +120,12 @@ Return `PASS` only when all are true:
 - forbidden scope was not touched by the task
 - required validation passed or was correctly marked not applicable
 - downstream specialist review is not required, or it already passed
+- same-scope cost-aware utility findings, when provided, were consumed as
+  advisory evidence and did not replace this gate's authority checks
 - changed lines do not introduce unauthorized production ranking, report,
   runtime score, score formula, trading, profitability, or alpha claims
+- changed lines do not let another project invade Quant gates or let Quant
+  tasks modify another project skill lane without explicit approval
 - worktree status is included
 
 Otherwise return `NEEDS FIX`.

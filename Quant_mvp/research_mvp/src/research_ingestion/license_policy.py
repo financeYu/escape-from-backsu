@@ -19,6 +19,14 @@ NONCOMMERCIAL_LICENSE_TOKENS = {
     "ccbyncnd",
 }
 
+BLOCKED_FULLTEXT_LICENSE_TOKENS = {
+    "elseviertdm",
+    "springernaturetdm",
+    "wileytdm",
+    "tdmlicense",
+    "tdmonly",
+}
+
 
 def assess_license_policy(license_value: str | None, policy_config: dict[str, Any] | None = None) -> dict[str, Any]:
     policy = policy_config or {}
@@ -75,6 +83,16 @@ def assess_pdf_fulltext_policy(license_value: str | None, policy_config: dict[st
         return _pdf_blocked_result(
             "missing_explicit_fulltext_license",
             "PDF/fulltext 수집에는 명시 license가 필요합니다.",
+        )
+    if _is_blocked_fulltext_license(license_value, policy):
+        return _pdf_blocked_result(
+            "blocked_publisher_tdm_license",
+            "Wiley/Elsevier/Springer TDM license류는 PDF/fulltext 자동 수집 대상이 아닙니다.",
+        )
+    if not _is_allowed_pdf_license(license_value, policy):
+        return _pdf_blocked_result(
+            "license_not_in_pdf_allowlist",
+            "PDF/fulltext 수집은 auto_cc 또는 noncommercial_cc license 후보로 제한됩니다.",
         )
     assessment = assess_license_policy(
         license_value,
@@ -141,6 +159,32 @@ def _allowed_result(*, noncommercial_allowed: bool, basis: str, notes: str) -> d
 
 def _matches_configured_token(token: str, configured: list[Any]) -> bool:
     return token in {normalize_license_token(str(item)) for item in configured if str(item).strip()}
+
+
+def _is_blocked_fulltext_license(license_value: str | None, policy: dict[str, Any]) -> bool:
+    token = normalize_license_token(license_value)
+    if not token:
+        return False
+    configured = {
+        normalize_license_token(str(item))
+        for item in policy.get("blocked_fulltext_license_tokens", [])
+        if str(item).strip()
+    }
+    blocked_tokens = BLOCKED_FULLTEXT_LICENSE_TOKENS | configured
+    return token in blocked_tokens or any(blocked in token for blocked in blocked_tokens if blocked)
+
+
+def _is_allowed_pdf_license(license_value: str | None, policy: dict[str, Any]) -> bool:
+    configured = policy.get("allowed_pdf_license_tokens", [])
+    if not configured:
+        return True
+    token = normalize_license_token(license_value)
+    allowed = {
+        normalize_license_token(str(item))
+        for item in configured
+        if str(item).strip()
+    }
+    return token in allowed
 
 
 def _pdf_blocked_result(basis: str, notes: str) -> dict[str, Any]:

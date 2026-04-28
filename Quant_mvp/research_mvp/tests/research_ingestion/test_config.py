@@ -24,6 +24,21 @@ def test_config_loading_from_project_root():
     assert "backtest_methodology" in config["policy"]["refresh_policy"]["default_query_sets"]
     assert "isRetracted" in get_source_config(config, "semantic_scholar")["fields"]
     assert config["policy"]["guardrails"]["pdf_download_default"] is False
+    assert config["policy"]["pdf_policy"]["allow_pdf"] is True
+    assert config["policy"]["pdf_policy"]["max_downloads_per_run"] == 3
+    assert config["policy"]["pdf_policy"]["allowed_manifest_categories"] == ["auto_cc", "noncommercial_cc"]
+    assert config["policy"]["license_policy"]["fulltext_download_remains_disabled"] is False
+    assert config["policy"]["license_policy"]["allowed_pdf_license_tokens"] == [
+        "cc-by",
+        "cc-by-sa",
+        "cc-by-nd",
+        "cc-by-nc",
+        "cc-by-nc-sa",
+        "cc-by-nc-nd",
+    ]
+    assert "elsevier-tdm" in config["policy"]["license_policy"]["blocked_fulltext_license_tokens"]
+    assert "login_required_pdf" in config["policy"]["fulltext_access_policy"]["blocked_source_types"]
+    assert config["policy"]["local_data_policy"]["generated_raw_fulltext_git_tracked_allowed"] is False
 
 
 def test_expanded_query_sets_have_routing_metadata():
@@ -127,8 +142,9 @@ def test_missing_config_handling(workspace_tmp_path):
         load_toml(missing)
 
 
-def test_pdf_disabled_by_default_and_allow_pdf_requires_policy():
+def test_pdf_enabled_policy_still_requires_explicit_confirmation():
     config = load_research_config(Path(__file__).resolve().parents[2])
     validate_pdf_policy(config, allow_pdf=False, confirmed=False)
     with pytest.raises(ValueError):
-        validate_pdf_policy(config, allow_pdf=True, confirmed=True)
+        validate_pdf_policy(config, allow_pdf=True, confirmed=False)
+    validate_pdf_policy(config, allow_pdf=True, confirmed=True)

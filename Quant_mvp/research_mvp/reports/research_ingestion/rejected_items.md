@@ -1,5 +1,110 @@
 # Rejected Items
 
-- run_id: `refresh_20260427`
+- run_id: `changed_criteria_resume_20260428_b5_valuation`
 
-현재 reject_log 항목이 없습니다.
+- Physical Momentum in the Indian Stock Market / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- From microscopic price dynamics to multidimensional rough volatility models / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- A Generalization of the Robust Positive Expectation Theorem for Stock Trading via Feedback Control / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Record statistics of financial time series and geometric random walks / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Not All Factors Crowd Equally: Modeling, Measuring, and Trading on Alpha Decay / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Forecast-to-Fill: Benchmark-Neutral Alpha and Billion-Dollar Capacity in Gold Futures (2015-2025) / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Dynamic Factor Allocation Leveraging Regime-Switching Signals / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Constructing Time-Series Momentum Portfolios with Deep Multi-Task Learning / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Spatio-Temporal Momentum: Jointly Learning Time-Series and Cross-Sectional Strategies / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Size, Value, and Momentum in Developed Country Equity Returns: Macroeconomic and Liquidity Exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Size, Value, and Momentum in Developed Country Equity Returns: Macroeconomic and Liquidity Exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Size, Value, and Momentum in Polish Equity Returns: Local or International Factors? / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Long run Adjustment of Size, Value, Momentum and Growth Premium in Equity Returns: Evidence from South Asian Emerging Markets / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Size, value, and momentum in developed country equity returns: Macroeconomic and liquidity exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Nonlinear dynamics of U.S. equity factor portfolios / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Dynamic Trading with Predictable Returns and Transaction Costs / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Technical analysis: An asset allocation perspective on the use of moving averages☆ / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- On the different forms of returns from moving average buy-sell trading rule in the stock market / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Stock index and price dynamics in the UK and the US: new evidence from a trading rule and statistical analysis / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Dynamically Adjustable Moving Average (AMA’) technical analysis indicator to forecast Asian Tigers’ futures markets / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Technical analysis and the stochastic properties of the Jordanian stock market index return / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- The Components of Corporate Credit Spreads: Default, Recovery, Tax, Jumps, Liquidity, and Market Factors / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Liquidity, Volume, and Order Imbalance Volatility / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Trading networks / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Predictability of stock market activity using Google search queries / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Dynamic portfolio optimization with liquidity cost and market impact: a simulation-and-regression approach / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Liquidity effects of COVID-19 in the European tourism industry / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- LIQUIDITY ANALYSIS AND LEVERAGE OF RETURNS OF STOCK COMPANIES LISTED IN INDONESIA STOCK EXCHANGE / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Stock Investment and Excess Returns: A Critical Review in the Light of the Efficient Market Hypothesis / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- U-Shaped Returns and Long–Short Profits from Market Order Imbalance: Evidence from the Korean Stock Market / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- The Eco-Efficiency Premium Puzzle / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Risk Everywhere: Modeling and Managing Volatility / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- A Review of IPO Activity, Pricing and Allocations / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Daily Equity Returns and Price Limit in China's Stock Market / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Which Daily Equity Returns Improve Output Forecasts? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Which daily equity returns improve output forecasts? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Time series modeling of histogram-valued data: The daily histogram time series of S&amp;P500 intradaily returns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Time series properties of liquidating company equity returns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Which daily equity returns improve output forecasts? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Comment on: “Time series modeling of histogram-valued data: The daily histogram time series of S&amp;P500 intradaily returns” by Gloria González-Rivera and Javier Arroyo / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Strictly chronological forecasting of daily equity returns with rolling MODWT features and residual stacking / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Simple Tests for Models of Dependence Between Multiple Financial Time Series, with Applications to U.S. Equity Returns and Exchange Rates / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- A Parsimonious Continuous Time Model for Equity Returns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- The Best of Both Worlds: Forecasting US Equity Market Returns using a Hybrid Machine Learning – Time Series Approach / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- ChatGPT in Systematic Investing -- Enhancing Risk-Adjusted Returns with LLMs / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Global Equity Portfolios and Short-Term Predictability of Returns: Is It There? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Institutional Investors and Equity Returns: Are Short-term Institutions Better Informed? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Forecasting Nigerian Equity Stock Returns Using Long Short-Term Memory Technique / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- SHORT‐TERM ABNORMAL RETURNS OF THE CONTRARIAN STRATEGY IN THE JAPANESE STOCK MARKET / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Short-term predictability of equity returns along two style dimensions / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Short-term contrarian in the carbon emission market / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Short-term Persistence Performance of Equity Mutual Fund Returns: Evidence from India / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Institutional Investors and Equity Returns: Are Short-term Institutions Better Informed? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Short- and long-term effects of responsible investment growth on equity returns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- The Term Structure of Equity Returns and Duration Premium / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Long-Term Daily Equity Returns Across Sectors of the Oil and Gas Industry, 2000–2019 / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Long-Term Sources of Investment Returns and a Simple Way to Enhance Equity Returns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Short-term contrarian profits and the disposition effect / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Term-Structure of Equity Risk and the Cross-Section of Currency Returns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Short-Term Contrarian Profits in the Kuwait Stock Market / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- What Drives Long-Term Equity Returns, January 2010 / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Regime switching in the relationship between equity returns and short-term interest rates in the UK / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Evolution of short-term contrarian profits / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Long-Term Stock Returns in Brazil: Volatile Equity Returns for U.S.-Like Investors / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- The Term Structure of Equity Returns: Risk or Mispricing? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- The Term Structure of Equity Returns: Risk or Mispricing? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Using Risk Factors to Understand Long/Short Equity Mutual Fund Returns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Duration Premium and Term Structure of Equity Returns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- In Search of the Origins of Financial Fluctuations: The Inelastic Markets Hypothesis / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Portfolio management system in equity market neutral using reinforcement learning / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- The Analysis of Stock Exchange Data: Technical Analysis and Investment Theories / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Greenwashing Detection Through ESG Rating Divergence and NLP Sentiment Analysis: Does Rating Divergence Predict Stock Underperformance? / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Technical analysis of commodity charts / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Introduction to Technical Analysis / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- teen. Technical Analysis of Commodity Charts / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Alphabetic Index of Stock Charts / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Technical Analysis of Commodity Charts / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Technical analysis and the stock market / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- TECHNICAL ANALYSIS OF STOCK MARKET &amp; PREDICTION USING DATA SCIENCE / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Technical theory / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Aggregated Information Representation for Technical Analysis on Stock Market with Csiszár Divergence / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Measuring implications in technical chart patterns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Gaps / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Measuring Implications in Technical Chart Patterns / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Charts / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Charts / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Gaps / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- The Technical Approach to Trading and Investing / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Effect of technical trading on market action / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- PREDICTION OF STOCK RETURNS MAY BE FALLACIOUS: A STOCHASTIC CONFIRMATION OF MALKIEL’S ASSERTION ON DARTBOARD INVESTMENTS / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Forecasting SMI Volatility: The Information Content of Daily Returns, High Frequency Returns and Implied Volatilities / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Individual Stock Returns Volatility and Equity Anomalies / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- A high-frequency approach to Realized Risk Measures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Spiking Neural Network for Cross-Market Portfolio Optimization in Financial Markets: A Neuromorphic Computing Approach / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Long-term Memory and Volatility Clustering in Daily and High-frequency Price Changes / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Technical Analysis and Stock Returns: An Aggregate Approach / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Analysis of Stock Price Movement through Technical Analysis: A Study on Listed Multinational Companies in Dhaka Stock Exchange / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Is bitcoin a near stock? Linear and non-linear causal evidence from a price–volume relationship / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Dynamic relation of Chinese stock price-volume pre- and post- the Split Share Structure Reform / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Exploring Realized Volatility through High-Frequency Data: The Role of Liquidity, Transaction Costs, and Influencing Factors. / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Replicating Anomalies / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Interpretable Hypothesis-Driven Trading:A Rigorous Walk-Forward Validation Framework for Market Microstructure Signals / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Analysis of Stock Market Prediction Models Using Deep Learning / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Market anomalies, asset pricing models, and stock returns: evidence from the Indian stock market / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Stock Market Seasonality in an Emerging Market / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Size, value, and momentum in emerging market stock returns / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.

@@ -22,6 +22,8 @@ execution/review path finishes, and before any Git finalization.
 These are project-local Codex skill instructions under `.agents/skills/`.
 They are not globally installed Codex skills and are not GitHub PR review
 configuration.
+Do not load, select, or satisfy project review gates with external, global,
+user, or plugin skills.
 
 ## When To Use
 

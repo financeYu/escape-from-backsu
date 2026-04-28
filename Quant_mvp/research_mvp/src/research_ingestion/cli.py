@@ -54,6 +54,7 @@ from .cli_outputs import (
     _write_normalized_papers,
 )
 from .pdf_downloader import cmd_download_pdfs as _cmd_download_pdfs
+from .pdf_manifest import cmd_pdf_ready_manifest as _cmd_pdf_ready_manifest
 from .cli_parser import build_parser as _build_parser
 from .cli_refresh import (
     _current_policy_versions,
@@ -107,6 +108,7 @@ def _command_handlers() -> dict[str, Any]:
         "run_all": cmd_run_all,
         "refresh": cmd_refresh,
         "download_pdfs": cmd_download_pdfs,
+        "pdf_ready_manifest": cmd_pdf_ready_manifest,
     }
 
 
@@ -190,3 +192,7 @@ def cmd_refresh(args: argparse.Namespace, config: dict[str, Any], paths: Project
 
 def cmd_download_pdfs(args: argparse.Namespace, config: dict[str, Any], paths: ProjectPaths) -> None:
     return _cmd_download_pdfs(args, config, paths)
+
+
+def cmd_pdf_ready_manifest(args: argparse.Namespace, config: dict[str, Any], paths: ProjectPaths) -> None:
+    return _cmd_pdf_ready_manifest(args, config, paths)

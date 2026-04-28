@@ -5,10 +5,19 @@ from datetime import UTC, datetime
 from pathlib import Path
 import hashlib
 from typing import Any
-from urllib.parse import urlsplit
 
 from .config import ProjectPaths
 from .license_policy import assess_pdf_fulltext_policy
+from .pdf_policy import (
+    TRACE_FIELDS,
+    blocked_access_message,
+    disallowed_manifest_category,
+    first_pdf_url,
+    has_trace_value,
+    is_http_url,
+    license_value,
+    trace_fields,
+)
 from .persistence import ensure_parent, read_jsonl, validate_storage_segment, write_jsonl
 from .redaction import assert_no_scholar_request, redact_url
 
@@ -16,19 +25,6 @@ try:
     import requests
 except Exception:  # pragma: no cover - exercised only when requests is absent.
     requests = None  # type: ignore[assignment]
-
-
-REQUIRED_TRACE_FIELDS = (
-    "license_name",
-    "license_url",
-    "license_checked_at",
-    "license_evidence_quote",
-    "collection_basis",
-    "fulltext_source_type",
-    "fulltext_review_scope",
-    "redistribution_allowed",
-    "external_upload_allowed",
-)
 
 
 FetchPdfBytes = Callable[[str, float, dict[str, str], int], tuple[bytes, dict[str, str], int | None]]
@@ -121,7 +117,8 @@ def fetch_pdf(url: str, timeout_seconds: float, headers: dict[str, str], max_byt
 
 
 def _candidate_row(paper: dict[str, Any], config: dict[str, Any], paths: ProjectPaths, run_id: str) -> dict[str, Any]:
-    url = _first_pdf_url(paper)
+    url = first_pdf_url(paper)
+    policy = config.get("policy", {})
     base = {
         "run_id": run_id,
         "canonical_paper_id": paper.get("canonical_paper_id"),
@@ -135,30 +132,36 @@ def _candidate_row(paper: dict[str, Any], config: dict[str, Any], paths: Project
         "license_collection_allowed": False,
         "license_use_basis": None,
         "pdf_fulltext_download_allowed": False,
+        "pdf_fulltext_use_basis": None,
         "policy_notes_ko": None,
-        **_trace_fields(paper),
+        **trace_fields(paper),
     }
-    if not config.get("policy", {}).get("pdf_policy", {}).get("allow_pdf", False):
+    if not policy.get("pdf_policy", {}).get("allow_pdf", False):
         return _skipped(base, "research_policy.toml에서 PDF use가 비활성화되어 있습니다.")
     if not url:
         return _skipped(base, "pdf_url이 없어 다운로드하지 않았습니다.")
-    if not _is_http_url(url):
+    if not is_http_url(url):
         return _skipped(base, "HTTP(S) URL만 PDF 다운로드 대상으로 허용합니다.")
     try:
         assert_no_scholar_request(url)
     except RuntimeError as exc:
         return _skipped(base, str(exc))
-    missing = [field for field in REQUIRED_TRACE_FIELDS if not _has_trace_value(paper, field)]
+    disallowed_category = disallowed_manifest_category(paper, policy.get("pdf_policy", {}))
+    if disallowed_category:
+        return _skipped(base, f"PDF-ready manifest category가 허용 대상이 아닙니다: {disallowed_category}")
+    blocked_access_reason = blocked_access_message(paper, url, policy.get("fulltext_access_policy", {}))
+    if blocked_access_reason:
+        return _skipped(base, blocked_access_reason)
+    missing = [field for field in TRACE_FIELDS if not has_trace_value(paper, field)]
     if missing:
         return _skipped(base, f"PDF/fulltext trace field가 부족합니다: {', '.join(missing)}")
-    if paper.get("external_upload_allowed") is not False:
-        return _skipped(base, "external_upload_allowed는 false여야 합니다.")
-    assessment = assess_pdf_fulltext_policy(_license_value(paper), config.get("policy", {}).get("license_policy", {}))
+    assessment = assess_pdf_fulltext_policy(license_value(paper), policy.get("license_policy", {}))
     base.update(
         {
             "license_collection_allowed": assessment["license_collection_allowed"],
             "license_use_basis": assessment["license_use_basis"],
             "pdf_fulltext_download_allowed": assessment["pdf_fulltext_download_allowed"],
+            "pdf_fulltext_use_basis": assessment["pdf_fulltext_use_basis"],
             "policy_notes_ko": assessment["pdf_fulltext_policy_notes_ko"],
         }
     )
@@ -214,31 +217,6 @@ def _max_downloads(max_records: int | None, pdf_policy: dict[str, Any]) -> int:
             f"PDF 대량 다운로드는 허용되지 않습니다. max_downloads_per_run={configured} 이하로 지정하세요."
         )
     return requested
-
-
-def _first_pdf_url(paper: dict[str, Any]) -> str | None:
-    urls = paper.get("pdf_urls") or []
-    if isinstance(urls, str):
-        return urls
-    return next((str(url) for url in urls if str(url).strip()), None)
-
-
-def _is_http_url(url: str) -> bool:
-    return urlsplit(url).scheme in {"http", "https"}
-
-
-def _license_value(paper: dict[str, Any]) -> str | None:
-    return paper.get("license_url") or paper.get("license_name") or paper.get("license")
-
-
-def _has_trace_value(paper: dict[str, Any], field: str) -> bool:
-    if field in {"redistribution_allowed", "external_upload_allowed"}:
-        return isinstance(paper.get(field), bool)
-    return bool(str(paper.get(field) or "").strip())
-
-
-def _trace_fields(paper: dict[str, Any]) -> dict[str, Any]:
-    return {field: paper.get(field) for field in REQUIRED_TRACE_FIELDS}
 
 
 def _skipped(row: dict[str, Any], reason_ko: str) -> dict[str, Any]:

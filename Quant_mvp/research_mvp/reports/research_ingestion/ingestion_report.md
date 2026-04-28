@@ -1,44 +1,44 @@
 # Research Ingestion Report
 
-- run_id: `refresh_20260427`
-- run timestamp: `2026-04-27T00:04:09Z`
-- selected sources: arxiv, crossref, semantic_scholar
-- selected query-set: `technical_momentum,technical_mean_reversion,technical_breakout`
-- raw records by source: arxiv=5, crossref=15, semantic_scholar=0
-- collection relevance rejected: 9
-- collection relevance manual review: 7
+- run_id: `changed_criteria_resume_20260428_b5_valuation`
+- run timestamp: `2026-04-28T06:46:54Z`
+- selected sources: openalex, crossref, semantic_scholar, nber
+- selected query-set: `fundamental_valuation`
+- raw records by source: crossref=50, nber=0, openalex=50, semantic_scholar=0
+- collection relevance rejected: 46
+- collection relevance manual review: 28
 - enrichment target count: 0
 - enrichment records by source: 없음
-- normalized paper count: 11
-- deduped paper count: 11
-- EvidenceCard count: 11
-- rejected item count: 0
-- manual review required: 9
+- normalized paper count: 691
+- deduped paper count: 691
+- EvidenceCard count: 698
+- rejected item count: 106
+- manual review required: 552
 - retracted / blocked paper count: 0
 - unresolved Scholar seed count: 0
 - PDF fulltext used: no
-
-## source freshness / currentness
-
-- 이 보고서의 source-health 관련 내용은 해당 실행 시점의 snapshot이며 현재 vendor availability 또는 최신 연구 검증을 증명하지 않는다.
-- cache hit 또는 stale cache 상태는 research 후보 관리용 metadata이며 MVP scoring/ranking 입력이 아니다.
-- research source freshness는 `technical_composite_score`, `final_composite_score`, ranking 순서를 변경하지 않는다.
 
 ## 핵심 제한 사항
 - 이번 실행은 score 채택을 수행하지 않았습니다.
 - 이번 실행은 backtest를 수행하지 않았습니다.
 - 논문 claim은 검증된 alpha가 아닙니다.
-- valuation 후보는 별도 valuation agent로 handoff해야 합니다.
+- valuation 후보는 valuation review skill로 handoff해야 합니다.
 - Google Scholar snippet, ranking, citation count는 evidence로 사용하지 않았습니다.
 - EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.
 
 ## branch별 분류 건수
-- hybrid: 2
-- technical: 9
+- diagnostic: 253
+- hybrid: 82
+- out_of_scope: 106
+- technical: 195
+- valuation: 62
 
 ## downstream_route별 건수
-- hybrid_split_required: 2
-- technical_score_architect: 9
+- diagnostic_backlog: 253
+- hybrid_split_required: 82
+- reject_log: 106
+- technical_score_architect: 195
+- valuation_agent_handoff: 62
 
 ## source 오류 / rate-limit 요약
 - 기록된 오류/rate-limit 요약이 없습니다. 자세한 내용은 source_health.md를 확인하세요.

@@ -1,129 +1,94 @@
 # Source Health
 
-- run_id: `refresh_20260427`
+- run_id: `changed_criteria_resume_20260428_b5_valuation`
+- freshness scope: 이 보고서는 해당 run_id 실행 시점의 source-health snapshot입니다.
+- currentness warning: 이 파일만으로 현재 vendor availability, API freshness, 또는 최신 연구 검증을 증명하지 않습니다.
+- MVP boundary: source-health, cache hit, stale cache 상태는 MVP scoring/ranking 입력이 아닙니다.
 - API key 값은 redaction 대상이며 이 보고서에 노출되면 안 됩니다.
 - rate-limit / 403 / 429 이벤트는 보수적 retry 또는 수동 검토가 필요합니다.
 
-## Reliability Smoke Validation Note
+- request cache hits: 0
+- request cache misses: 5
+- stale cache observations: 0
 
-- 별도 research reliability worktree에서 opt-in live smoke validation이 수행되었습니다.
-- live smoke validation: 3 passed, 1 skipped.
-- Semantic Scholar live smoke는 `SEMANTIC_SCHOLAR_API_KEY` 없이 skipped로 처리되었습니다.
-- Google Scholar direct request, PDF fulltext download, paywalled publisher scraping은 수행하지 않았습니다.
-- 이 메모는 source-health snapshot이나 MVP scoring/ranking 입력이 아닙니다.
-
-## arxiv
-- source: arxiv
+## openalex
+- source: openalex
 - adapter_version: research_ingestion.v1
 - query_set: None
 - status: ok
-- request_count: 7
-- rate_limit_wait_count: 4
-- rate_limit_wait_seconds: 12.762
-- request_latency_ms: 17307.243
-- parse_ms: 1.685
+- request_count: 1
+- rate_limit_wait_count: 0
+- rate_limit_wait_seconds: 0.0
+- request_latency_ms: 2438.724
+- parse_ms: 14.314
 - dedupe_ms: 0.0
 - classification_ms: 0.0
-- success_count: 7
+- success_count: 1
 - failure_count: 0
-- http_status_summary: {'200': 7}
+- http_status_summary: {'200': 1}
 - http_429_count: 0
 - parse_error_count: 0
 - schema_error_count: 0
 - dedup_ratio: 0.0
-- new_item_count: 4
-- candidate_route_counts: {'hybrid_split_required': 2, 'technical_score_architect': 2}
-- reject_reason_counts: {}
-- relevance_reject_reason_counts: {'collection_exclude_keyword': 1}
-- manual_review_required_count: 2
+- new_item_count: 200
+- candidate_route_counts: {'valuation_agent_handoff': 39, 'hybrid_split_required': 43, 'technical_score_architect': 51, 'diagnostic_backlog': 42, 'reject_log': 25}
+- reject_reason_counts: {'language_guardrail_violation': 12, 'MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.': 13}
+- relevance_reject_reason_counts: {'rejected': 22}
+- manual_review_required_count: 134
 - request_cache_hit_count: 0
-- request_cache_miss_count: 7
+- request_cache_miss_count: 1
 - request_cache_stale_count: 0
 - unresolved_seed_count: 0
 - pdf_download_attempt_count: 0
 - rate_limit_observations: []
 - missing_api_key_note_ko: None
 - skipped_source_reason: None
-- child_runs: ['refresh_20260427_technical_breakout', 'refresh_20260427_technical_mean_reversion', 'refresh_20260427_technical_momentum']
+- child_runs: ['changed_criteria_resume_20260428_b5_valuation_fundamental_valuation']
 ## crossref
 - source: crossref
 - adapter_version: research_ingestion.v1
 - query_set: None
 - status: ok
-- request_count: 3
+- request_count: 1
 - rate_limit_wait_count: 0
 - rate_limit_wait_seconds: 0.0
-- request_latency_ms: 3130.302
-- parse_ms: 1.585
+- request_latency_ms: 7320.575
+- parse_ms: 4.173
 - dedupe_ms: 0.0
 - classification_ms: 0.0
-- success_count: 3
+- success_count: 1
 - failure_count: 0
-- http_status_summary: {'200': 3}
+- http_status_summary: {'200': 1}
 - http_429_count: 0
 - parse_error_count: 0
 - schema_error_count: 0
 - dedup_ratio: 0.0
-- new_item_count: 7
-- candidate_route_counts: {'technical_score_architect': 7}
-- reject_reason_counts: {}
-- relevance_reject_reason_counts: {'collection_required_keyword_group_missing': 7, 'collection_exclude_keyword': 1}
-- manual_review_required_count: 7
+- new_item_count: 465
+- candidate_route_counts: {'technical_score_architect': 135, 'reject_log': 69, 'hybrid_split_required': 32, 'diagnostic_backlog': 205, 'valuation_agent_handoff': 24}
+- reject_reason_counts: {'language_guardrail_violation': 10, 'MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.': 59}
+- relevance_reject_reason_counts: {'rejected': 24}
+- manual_review_required_count: 404
 - request_cache_hit_count: 0
-- request_cache_miss_count: 3
+- request_cache_miss_count: 1
 - request_cache_stale_count: 0
 - unresolved_seed_count: 0
 - pdf_download_attempt_count: 0
 - rate_limit_observations: []
 - missing_api_key_note_ko: CROSSREF_MAILTO가 없어 기본 User-Agent로 실행합니다. 가능하면 polite email을 설정하세요.
 - skipped_source_reason: None
-- child_runs: ['refresh_20260427_technical_breakout', 'refresh_20260427_technical_mean_reversion', 'refresh_20260427_technical_momentum']
+- child_runs: ['changed_criteria_resume_20260428_b5_valuation_fundamental_valuation']
 ## semantic_scholar
 - source: semantic_scholar
 - adapter_version: research_ingestion.v1
 - query_set: None
-- status: failed
-- request_count: 6
-- rate_limit_wait_count: 5
-- rate_limit_wait_seconds: 4.929
-- request_latency_ms: 50801.89
+- status: skipped
+- request_count: 0
+- rate_limit_wait_count: 0
+- rate_limit_wait_seconds: 0.0
+- request_latency_ms: 0.0
 - parse_ms: 0.0
 - dedupe_ms: 0.0
 - classification_ms: 0.0
-- success_count: 0
-- failure_count: 6
-- http_status_summary: {'429': 6}
-- http_429_count: 6
-- parse_error_count: 0
-- schema_error_count: 0
-- dedup_ratio: None
-- new_item_count: 0
-- candidate_route_counts: {}
-- reject_reason_counts: {}
-- relevance_reject_reason_counts: {}
-- manual_review_required_count: 0
-- request_cache_hit_count: 0
-- request_cache_miss_count: 6
-- request_cache_stale_count: 0
-- unresolved_seed_count: 0
-- pdf_download_attempt_count: 0
-- rate_limit_observations: ['HTTP 429 observed for technical_momentum:semantic_scholar:0:page1', 'HTTP 429 observed for technical_momentum:semantic_scholar:1:page1', 'HTTP 429 observed for technical_mean_reversion:semantic_scholar:0:page1', 'HTTP 429 observed for technical_mean_reversion:semantic_scholar:1:page1', 'HTTP 429 observed for technical_breakout:semantic_scholar:0:page1', 'HTTP 429 observed for technical_breakout:semantic_scholar:1:page1']
-- missing_api_key_note_ko: SEMANTIC_SCHOLAR_API_KEY가 없어 public mode로 실행합니다.
-- skipped_source_reason: None
-- child_runs: ['refresh_20260427_technical_breakout', 'refresh_20260427_technical_mean_reversion', 'refresh_20260427_technical_momentum']
-- last_raw_snapshot_ref: C:\Users\jjaew\Project\master_mvp\Quant_mvp/research_mvp\data\research\raw\semantic_scholar\refresh_20260427_technical_breakout\65ab993d12c5c2cc.json
-## periodic_refresh_pipeline
-- source: periodic_refresh_pipeline
-- adapter_version: research_ingestion.v1
-- query_set: None
-- status: ok
-- request_count: 0
-- rate_limit_wait_count: 0
-- rate_limit_wait_seconds: 17.691
-- request_latency_ms: 71239.435
-- parse_ms: 3.27
-- dedupe_ms: 0.633
-- classification_ms: 46.092
 - success_count: 0
 - failure_count: 0
 - http_status_summary: {}
@@ -134,7 +99,73 @@
 - new_item_count: 0
 - candidate_route_counts: {}
 - reject_reason_counts: {}
-- relevance_reject_reason_counts: {'collection_exclude_keyword': 2, 'collection_required_keyword_group_missing': 7}
+- relevance_reject_reason_counts: {}
+- manual_review_required_count: 0
+- request_cache_hit_count: 0
+- request_cache_miss_count: 0
+- request_cache_stale_count: 0
+- unresolved_seed_count: 0
+- pdf_download_attempt_count: 0
+- rate_limit_observations: []
+- missing_api_key_note_ko: SEMANTIC_SCHOLAR_API_KEY가 없어 실행할 수 없습니다.
+- skipped_source_reason: SEMANTIC_SCHOLAR_API_KEY가 없어 실행할 수 없습니다.
+- child_runs: ['changed_criteria_resume_20260428_b5_valuation_fundamental_valuation']
+## nber
+- source: nber
+- adapter_version: research_ingestion.v1
+- query_set: None
+- status: ok
+- request_count: 3
+- rate_limit_wait_count: 3
+- rate_limit_wait_seconds: 19.995
+- request_latency_ms: 62828.88
+- parse_ms: 0.077
+- dedupe_ms: 0.0
+- classification_ms: 0.0
+- success_count: 3
+- failure_count: 0
+- http_status_summary: {'200': 3}
+- http_429_count: 0
+- parse_error_count: 0
+- schema_error_count: 0
+- dedup_ratio: None
+- new_item_count: 0
+- candidate_route_counts: {}
+- reject_reason_counts: {}
+- relevance_reject_reason_counts: {}
+- manual_review_required_count: 0
+- request_cache_hit_count: 0
+- request_cache_miss_count: 3
+- request_cache_stale_count: 0
+- unresolved_seed_count: 0
+- pdf_download_attempt_count: 0
+- rate_limit_observations: []
+- missing_api_key_note_ko: None
+- skipped_source_reason: None
+- child_runs: ['changed_criteria_resume_20260428_b5_valuation_fundamental_valuation']
+## periodic_refresh_pipeline
+- source: periodic_refresh_pipeline
+- adapter_version: research_ingestion.v1
+- query_set: None
+- status: ok
+- request_count: 0
+- rate_limit_wait_count: 0
+- rate_limit_wait_seconds: 19.995
+- request_latency_ms: 72588.179
+- parse_ms: 18.564
+- dedupe_ms: 21.935
+- classification_ms: 179.169
+- success_count: 0
+- failure_count: 0
+- http_status_summary: {}
+- http_429_count: 0
+- parse_error_count: 0
+- schema_error_count: 0
+- dedup_ratio: None
+- new_item_count: 0
+- candidate_route_counts: {}
+- reject_reason_counts: {}
+- relevance_reject_reason_counts: {'rejected': 46}
 - manual_review_required_count: 0
 - request_cache_hit_count: 0
 - request_cache_miss_count: 0

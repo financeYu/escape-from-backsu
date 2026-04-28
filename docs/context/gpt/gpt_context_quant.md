@@ -11,7 +11,7 @@ Generated only after an explicit user request with a non-empty request string.
 
 ## Current Request
 
-- Task: gpt용 레퍼런스 갱신해
+- Task: gpt용 컨텍스트 갱신해
 - Decision needed: focus on the current request, not old roadmap narration.
 
 ## Do Not Repeat

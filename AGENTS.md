@@ -4,6 +4,12 @@
 4. Classify as `planning/read-only`, `narrow edit`, or `Step/gate closure`, then route to the narrowest project and Codex skill gate; before any sub-agent executes, root must name the matching skill gate and provide current task, allowed scope, forbidden scope, required output, validation commands, and Korean final report format.
 5. For candidate ML/probability gate work, use `.agents/skills/quant-candidate-ml-gate/SKILL.md` and run its contract validator when applicable.
 6. For Quant subproject-wide audit/scope-watchdog work, use `.agents/skills/quant-subproject-audit-gate/SKILL.md`; keep audit verdict and validation evidence as separate parts.
+
+Skill isolation: load/select only this workspace's `.agents/skills`; external/global/user/plugin skills are not project gate authority. Quant gates cannot be imported by other projects or used to edit non-Quant skills without root/master approval.
+
+Cost-aware utility: use `.agents/skills/cost-aware-review-refactor/SKILL.md` only for lightweight diff-first review/refactor triage; it is not a gate and must defer root-, gate-, or subproject-owned decisions to the existing owner.
+When that utility encounters blocked cheap checks such as missing `pytest`, unavailable `bash`/WSL, denied `rg`, inaccessible temp/cache directories, or Git `safe.directory` ownership errors, keep findings separate from validation status and route the remaining validator request to the responsible project/root agent.
+
 7. For subproject work, read only that subproject `AGENTS.md`, one active packet, one needed domain stub, and targeted files.
 8. Obey hard stops: no universe/data-ingestion expansion, active valuation/fundamental scoring, ranking/report/backtest semantic change, trading advice, or final score replacement unless explicitly authorized.
 9. Use separate role worktrees/branches for Step 15+ implementation, review, audit, research, chart runtime, and master integration work.

@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from research_ingestion.sources.http import SourceRateLimiter, _retry_after_seconds
+from research_ingestion.sources import http as http_module
+from research_ingestion.sources.http import (
+    SourceRateLimiter,
+    SourceResponseTimeoutSkip,
+    _bounded_response_timeout_seconds,
+    fetch_text_with_retries,
+    _retry_after_seconds,
+)
 
 
 def test_retry_after_seconds_numeric_value():
@@ -11,6 +18,55 @@ def test_retry_after_seconds_numeric_value():
 
 def test_retry_after_seconds_invalid_value_returns_none():
     assert _retry_after_seconds("not-a-date") is None
+
+
+def test_response_timeout_is_capped_at_five_minutes():
+    assert _bounded_response_timeout_seconds(999.0) == 300.0
+
+
+def test_short_configured_timeout_does_not_skip_before_five_minutes(monkeypatch):
+    calls: list[float] = []
+
+    def fake_get(url, headers, timeout):
+        calls.append(timeout)
+        raise http_module.requests.Timeout("timed out")
+
+    times = iter([0.0, 20.0, 21.0, 41.0])
+    monkeypatch.setattr(http_module.requests, "get", fake_get)
+    monkeypatch.setattr(http_module.time, "monotonic", lambda: next(times))
+    monkeypatch.setattr(http_module.time, "sleep", lambda seconds: None)
+
+    with pytest.raises(http_module.requests.Timeout):
+        fetch_text_with_retries(
+            url="https://api.example.test/works",
+            headers={},
+            timeout_seconds=20.0,
+            max_retries=1,
+        )
+
+    assert calls == [20.0, 20.0]
+
+
+def test_five_minute_timeout_is_recorded_as_skip(monkeypatch):
+    calls: list[float] = []
+
+    def fake_get(url, headers, timeout):
+        calls.append(timeout)
+        raise http_module.requests.Timeout("timed out")
+
+    times = iter([0.0, 301.0])
+    monkeypatch.setattr(http_module.requests, "get", fake_get)
+    monkeypatch.setattr(http_module.time, "monotonic", lambda: next(times))
+
+    with pytest.raises(SourceResponseTimeoutSkip):
+        fetch_text_with_retries(
+            url="https://api.example.test/works",
+            headers={},
+            timeout_seconds=999.0,
+            max_retries=1,
+        )
+
+    assert calls == [300.0]
 
 
 def test_source_rate_limiter_sleeps_for_remaining_interval(monkeypatch):

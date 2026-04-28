@@ -85,7 +85,7 @@ baseline is frozen.
 - Research ingestion 확장 상태는 `docs/research_ingestion_expansion.md`와 affected research config를 targeted read한다.
 - EvidenceCard는 score definition, adoption decision, alpha evidence, valuation verdict가 아니다.
 - Paper-reported backtest와 citation count는 diagnostic metadata only다.
-- PDF fulltext download는 기본 비활성화 상태다.
+- PDF fulltext download는 비영리 연구 호환 license, source/access, local custody 점검 후에만 허용되는 상태다.
 - Financial/fundamental data must not enter `technical_composite_score` or `final_composite_score`.
 
 ## 밸류에이션 상태

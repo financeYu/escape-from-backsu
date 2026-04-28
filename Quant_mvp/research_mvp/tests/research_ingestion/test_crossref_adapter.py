@@ -50,6 +50,25 @@ def test_crossref_parser_tolerates_malformed_optional_lists():
     assert paper["license"] == "vor"
 
 
+def test_crossref_parser_uses_conservative_placeholder_for_items_without_title():
+    payload = {
+        "message": {
+            "items": [
+                {"DOI": "10.1000/no-title", "title": []},
+                {"DOI": "10.1000/with-title", "title": ["Usable paper"]},
+            ]
+        }
+    }
+
+    papers = CrossrefAdapter({}).parse_works_json(payload)
+
+    assert len(papers) == 2
+    assert papers[0]["doi"] == "10.1000/no-title"
+    assert papers[0]["title"] == "Untitled paper metadata from crossref (DOI 10.1000/no-title; Crossref 10.1000/no-title)"
+    assert papers[0]["manual_review_required"] is True
+    assert papers[1]["doi"] == "10.1000/with-title"
+
+
 def test_crossref_fetch_uses_configured_rate_limiter(monkeypatch):
     adapter = CrossrefAdapter({"min_interval_seconds": 1.0, "max_concurrency": 1})
     calls: list[str] = []

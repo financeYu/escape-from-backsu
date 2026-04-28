@@ -1,0 +1,57 @@
+{
+  "source_papers_jsonl": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\research_mvp\\data\\research\\normalized\\papers.jsonl",
+  "generated_candidates_path": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\research_mvp\\input\\manifest\\papers.jsonl",
+  "generated_skipped_path": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\research_mvp\\input\\manifest\\skipped_papers.jsonl",
+  "target_candidate_count": 41,
+  "input_line_count": 691,
+  "json_parse_errors": 0,
+  "valid_candidate_pool_before_dedup": 691,
+  "unique_candidate_pool_after_dedup": 691,
+  "candidate_count": 41,
+  "skipped_count": 650,
+  "duplicate_removed_count": 0,
+  "below_cutoff_count": 650,
+  "insufficient_candidates_reason": "",
+  "field_mapping_used_counts": {
+    "paper_id": {
+      "canonical_paper_id": 691
+    },
+    "title": {
+      "title": 691
+    },
+    "source_url": {
+      "source_urls.0": 691
+    },
+    "doi": {
+      "doi": 632
+    },
+    "arxiv_id": {
+      "arxiv_id": 51
+    },
+    "publisher_page_url": {},
+    "repository_page_url": {},
+    "license_page_url": {},
+    "pdf_url": {
+      "pdf_urls.0": 174
+    },
+    "license_name": {
+      "license": 191
+    },
+    "license_url": {}
+  },
+  "selection_score_distribution_selected": {
+    "150": 9,
+    "140": 1,
+    "130": 29,
+    "120": 1,
+    "110": 1
+  },
+  "skip_reason_counts": {
+    "below_top_41_selection_cutoff": 650
+  },
+  "notes": [
+    "No PDF/fulltext collection was performed.",
+    "No live license trace was performed.",
+    "Existing metadata license fields are candidate-selection hints only, not collection permission."
+  ]
+}

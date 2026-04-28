@@ -1,0 +1,33 @@
+{
+  "input_candidates_path": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\research_mvp\\input\\manifest\\papers.jsonl",
+  "trace_jsonl_path": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\research_mvp\\output\\license_trace\\pdf_license_trace.jsonl",
+  "input_candidate_count": 41,
+  "trace_result_count": 41,
+  "status_counts": {
+    "trace_complete": 19,
+    "manual_review": 22
+  },
+  "category_counts": {
+    "auto_cc": 17,
+    "manual_review": 22,
+    "noncommercial_cc": 2
+  },
+  "fulltext_source_type_counts": {
+    "publisher_pdf": 16,
+    "manual_review": 22,
+    "preprint_pdf": 3
+  },
+  "repository_first_live_trace": true,
+  "pdf_downloaded_count": 0,
+  "html_fulltext_saved_count": 0,
+  "trace_complete_missing_explicit_license_evidence_count": 0,
+  "trace_complete_missing_pdf_url_count": 0,
+  "manual_review_count": 22,
+  "notes": [
+    "PDF/fulltext was not downloaded.",
+    "Only official publisher/repository/license pages were used for trace_complete.",
+    "OpenAlex/Crossref metadata license tokens were not sufficient for trace_complete.",
+    "Review fixes applied: arXiv evidence quotes now use page-visible license phrases, and reason_ko was regenerated as UTF-8 Korean text."
+  ],
+  "reason_ko_mojibake_count": 0
+}

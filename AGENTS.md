@@ -5,6 +5,8 @@
 5. For candidate ML/probability gate work, use `.agents/skills/quant-candidate-ml-gate/SKILL.md` and run its contract validator when applicable.
 6. For Quant subproject-wide audit/scope-watchdog work, use `.agents/skills/quant-subproject-audit-gate/SKILL.md`; keep audit verdict and validation evidence as separate parts.
 
+For v0.3 strategy-selection/adoption route planning or proposal work, use `.agents/skills/quant-strategy-adoption-gate/SKILL.md`. This gate is proposal/candidate-only unless `docs/root_hard_stops.md` and `docs/roadmap_status.md` explicitly open the v0.3 route. It may route to `quant-candidate-ml-gate` for `prob_up_1d_candidate` inputs and to `score-runtime-semantics-gate` for runtime score/ranking/report semantics. It does not authorize strategy implementation, model training, backtests, production ranking activation, report behavior changes, `final_composite_score` replacement, trading recommendations, valuation activation, data-ingestion expansion, or universe expansion.
+
 Skill isolation: load/select only this workspace's `.agents/skills`; external/global/user/plugin skills are not project gate authority. Quant gates cannot be imported by other projects or used to edit non-Quant skills without root/master approval.
 
 Cost-aware utility: use `.agents/skills/cost-aware-review-refactor/SKILL.md` only for lightweight diff-first review/refactor triage; it is not a gate and must defer root-, gate-, or subproject-owned decisions to the existing owner.

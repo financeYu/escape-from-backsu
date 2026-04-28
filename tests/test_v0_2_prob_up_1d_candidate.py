@@ -36,6 +36,7 @@ FEATURE_COLUMNS = ("old_score_a_raw", "old_score_b_raw")
 
 def probability_frame() -> pd.DataFrame:
     rows: list[dict[str, object]] = []
+    business_dates = pd.bdate_range("2026-01-01", periods=6)
     prices = {
         "005930": [10.0, 11.0, 10.0, 12.0, 13.0, 12.0],
         "000660": [20.0, 19.0, 21.0, 20.0, 22.0, 23.0],
@@ -49,11 +50,11 @@ def probability_frame() -> pd.DataFrame:
         "000660": [0.20, 0.60, 0.35, 0.70, 0.75, 0.65],
     }
     for ticker in ("005930", "000660"):
-        for offset, price in enumerate(prices[ticker], start=1):
+        for offset, (day, price) in enumerate(zip(business_dates, prices[ticker]), start=1):
             rows.append(
                 {
                     "ticker": ticker,
-                    "date": f"2026-01-{offset:02d}",
+                    "date": day.strftime("%Y-%m-%d"),
                     "adjusted_close": price,
                     "old_score_a_raw": score_a[ticker][offset - 1],
                     "old_score_b_raw": score_b[ticker][offset - 1],
@@ -120,7 +121,7 @@ def test_feature_table_and_next_day_labels_are_separated() -> None:
         labels["ticker"].eq("005930") & labels["date"].eq(pd.Timestamp("2026-01-02"))
     ].iloc[0]
     samsung_last = labels[
-        labels["ticker"].eq("005930") & labels["date"].eq(pd.Timestamp("2026-01-06"))
+        labels["ticker"].eq("005930") & labels["date"].eq(pd.Timestamp("2026-01-08"))
     ].iloc[0]
 
     assert samsung_first[LABEL_COLUMN] == 1
@@ -144,37 +145,50 @@ def test_prob_up_1d_label_uses_adjusted_close_next_business_day() -> None:
     assert pd.isna(labels.loc[2, LABEL_COLUMN])
 
 
+def test_prob_up_1d_label_requires_adjacent_business_day_row() -> None:
+    frame = business_day_label_frame()
+    frame = frame.loc[~frame["date"].eq("2026-01-05")].reset_index(drop=True)
+
+    dataset = build_prob_up_1d_dataset(frame, config=small_config())
+    labels = dataset.label_table.sort_values(["ticker", "date"]).reset_index(drop=True)
+
+    assert labels.loc[0, "date"] == pd.Timestamp("2026-01-02")
+    assert labels.loc[0, LABEL_TIME_COLUMN] == pd.Timestamp("2026-01-06")
+    assert bool(labels.loc[0, LABEL_AVAILABLE_COLUMN]) is False
+    assert pd.isna(labels.loc[0, LABEL_COLUMN])
+
+
 def test_feature_table_does_not_change_when_only_future_price_changes() -> None:
     base = probability_frame()
     changed_future = base.copy()
     changed_future.loc[
-        changed_future["ticker"].eq("005930") & changed_future["date"].eq("2026-01-06"),
+        changed_future["ticker"].eq("005930") & changed_future["date"].eq("2026-01-07"),
         "adjusted_close",
-    ] = 999.0
+    ] = 1.0
 
     dataset = build_prob_up_1d_dataset(base, config=small_config())
     changed_dataset = build_prob_up_1d_dataset(changed_future, config=small_config())
 
     base_features = dataset.feature_table[
         dataset.feature_table["ticker"].eq("005930")
-        & dataset.feature_table["date"].eq(pd.Timestamp("2026-01-05"))
+        & dataset.feature_table["date"].eq(pd.Timestamp("2026-01-06"))
     ].loc[:, list(FEATURE_COLUMNS)]
     changed_features = changed_dataset.feature_table[
         changed_dataset.feature_table["ticker"].eq("005930")
-        & changed_dataset.feature_table["date"].eq(pd.Timestamp("2026-01-05"))
+        & changed_dataset.feature_table["date"].eq(pd.Timestamp("2026-01-06"))
     ].loc[:, list(FEATURE_COLUMNS)]
 
     pd.testing.assert_frame_equal(base_features.reset_index(drop=True), changed_features.reset_index(drop=True))
     base_label = dataset.label_table[
         dataset.label_table["ticker"].eq("005930")
-        & dataset.label_table["date"].eq(pd.Timestamp("2026-01-05"))
+        & dataset.label_table["date"].eq(pd.Timestamp("2026-01-06"))
     ][LABEL_COLUMN].iloc[0]
     changed_label = changed_dataset.label_table[
         changed_dataset.label_table["ticker"].eq("005930")
-        & changed_dataset.label_table["date"].eq(pd.Timestamp("2026-01-05"))
+        & changed_dataset.label_table["date"].eq(pd.Timestamp("2026-01-06"))
     ][LABEL_COLUMN].iloc[0]
-    assert base_label == 0
-    assert changed_label == 1
+    assert base_label == 1
+    assert changed_label == 0
 
 
 def test_prob_up_1d_no_lookahead_on_rolling_features() -> None:
@@ -200,10 +214,10 @@ def test_pipeline_outputs_candidate_probabilities_without_ranking_or_composites(
     assert "evaluation_out_of_sample" in set(output[PROBABILITY_SAMPLE_ROLE_COLUMN])
     assert "candidate_unlabeled" in set(output[PROBABILITY_SAMPLE_ROLE_COLUMN])
     latest = output[
-        output["ticker"].eq("005930") & output["date"].eq(pd.Timestamp("2026-01-06"))
+        output["ticker"].eq("005930") & output["date"].eq(pd.Timestamp("2026-01-08"))
     ].iloc[0]
-    assert latest[DECISION_TIME_COLUMN] == pd.Timestamp("2026-01-06")
-    assert latest[EXECUTION_TIME_COLUMN] == pd.Timestamp("2026-01-07")
+    assert latest[DECISION_TIME_COLUMN] == pd.Timestamp("2026-01-08")
+    assert latest[EXECUTION_TIME_COLUMN] == pd.Timestamp("2026-01-09")
     assert pd.isna(latest[LABEL_TIME_COLUMN])
     assert pd.isna(latest[LABEL_AVAILABILITY_TIME_COLUMN])
 
@@ -245,15 +259,15 @@ def test_as_of_date_latest_rows_are_candidate_inference_without_labels() -> None
     result = run_prob_up_1d_candidate_pipeline(
         probability_frame(),
         config=small_config(),
-        as_of_date="2026-01-06",
+        as_of_date="2026-01-08",
     )
-    latest_rows = result.candidate_output[result.candidate_output["date"].eq(pd.Timestamp("2026-01-06"))]
+    latest_rows = result.candidate_output[result.candidate_output["date"].eq(pd.Timestamp("2026-01-08"))]
 
     assert set(latest_rows[PROBABILITY_SAMPLE_ROLE_COLUMN]) == {"candidate_unlabeled"}
     assert latest_rows[PROBABILITY_COLUMN].notna().all()
     assert latest_rows[LABEL_TIME_COLUMN].isna().all()
     assert latest_rows[LABEL_AVAILABILITY_TIME_COLUMN].isna().all()
-    assert result.candidate_sidecar_ranking["date"].eq(pd.Timestamp("2026-01-06")).all()
+    assert result.candidate_sidecar_ranking["date"].eq(pd.Timestamp("2026-01-08")).all()
     assert CANDIDATE_SIDECAR_RANK_COLUMN in result.candidate_sidecar_ranking.columns
 
 

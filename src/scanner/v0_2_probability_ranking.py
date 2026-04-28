@@ -119,9 +119,17 @@ def validate_v0_2_probability_ranking_output(frame: pd.DataFrame) -> None:
 
 
 def _assert_true_gate(values: pd.Series, column: str) -> None:
-    normalized = values.map(lambda value: bool(value) if pd.notna(value) else False)
+    normalized = values.map(_is_explicit_gate_pass)
     if not normalized.all():
         raise ValueError(f"v0.2 probability ranking requires {column} PASS.")
+
+
+def _is_explicit_gate_pass(value: object) -> bool:
+    if isinstance(value, (bool, np.bool_)):
+        return bool(value)
+    if isinstance(value, str):
+        return value.strip().lower() in {"pass", "passed", "true"}
+    return False
 
 
 def _assert_no_direct_candidate_ranking(frame: pd.DataFrame) -> None:

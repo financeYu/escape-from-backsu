@@ -79,6 +79,27 @@ def test_v0_2_ranking_requires_calibration_pass() -> None:
         build_v0_2_probability_ranking(frame)
 
 
+@pytest.mark.parametrize("value", ("False", "FAIL", "0", ""))
+def test_v0_2_ranking_rejects_string_false_gate_values(value: str) -> None:
+    frame = _final_score_frame()
+    frame[CALIBRATION_GATE_PASS_COLUMN] = value
+    frame[LEAKAGE_NO_LOOKAHEAD_GATE_PASS_COLUMN] = value
+
+    with pytest.raises(ValueError, match="calibration_gate_pass"):
+        build_v0_2_probability_ranking(frame)
+
+
+@pytest.mark.parametrize("value", ("PASS", "passed", "true", True))
+def test_v0_2_ranking_accepts_explicit_gate_pass_values(value: object) -> None:
+    frame = _final_score_frame()
+    frame[CALIBRATION_GATE_PASS_COLUMN] = value
+    frame[LEAKAGE_NO_LOOKAHEAD_GATE_PASS_COLUMN] = value
+
+    ranking = build_v0_2_probability_ranking(frame)
+
+    assert not ranking.empty
+
+
 def test_v0_1_ranking_path_is_not_modified_by_v0_2_contract() -> None:
     frame = pd.DataFrame(
         {

@@ -423,9 +423,19 @@ def _build_label_table(data: pd.DataFrame, *, price_column: str) -> pd.DataFrame
     current_price = data[price_column]
     next_price = current_price.groupby(data["ticker"], sort=False).shift(-1)
     next_date = data["date"].groupby(data["ticker"], sort=False).shift(-1)
+    expected_next_date = data["date"] + pd.offsets.BDay(1)
+    next_business_day = pd.to_datetime(next_date).dt.normalize().eq(
+        pd.to_datetime(expected_next_date).dt.normalize()
+    )
     current_finite = _finite_mask(current_price)
     next_finite = _finite_mask(next_price)
-    label_available = current_price.notna() & next_price.notna() & current_finite & next_finite
+    label_available = (
+        current_price.notna()
+        & next_price.notna()
+        & current_finite
+        & next_finite
+        & next_business_day
+    )
     labels = (next_price > current_price).astype("Int64").where(label_available)
     label_table[LABEL_TIME_COLUMN] = pd.to_datetime(next_date)
     label_table[LABEL_AVAILABILITY_TIME_COLUMN] = pd.to_datetime(next_date).where(label_available)

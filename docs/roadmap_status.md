@@ -1,69 +1,135 @@
-# 로드맵 상태
+# Roadmap Status
 
-이 파일은 현재 작업 판단에 필요한 latest-only status만 유지한다. 완료 Step의 긴 구현/검증 이력은 기본 컨텍스트가 아니며 `docs/context/archive/`와 `docs/roadmap_archive/`에서 필요한 경우에만 확인한다.
+This file keeps only the latest route state needed for current work. Completed
+v0.1/v0.2 implementation and validation history are archived reference
+material, not default context. Use `docs/context/archive/` or
+`docs/roadmap_archive/` only for named conflict, regression, provenance,
+compatibility, hard-stop, or release-evidence checks.
 
-## 현재 로드맵 상태
+## Current Route State
 
-Post-MVP `v0.2 predictive probability score route` Step is open for the
-approved candidate-only implementation of `prob_up_1d_candidate` in a separate
-role branch/worktree. Step 20 is complete, and the KOSPI200 technical MVP v0.1
-baseline is frozen.
+Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE. The product goal
+is now the end-to-end strategy discovery and evidence loop, not the standalone
+v0.2 probability score route.
 
-- Current baseline: MVP v0.1 frozen KOSPI200 technical-only scanner baseline.
-- Current active Step: post-MVP `v0.2 predictive probability score route`.
-- Current governance route extension: `final_composite_score` predictive
-  probability semantic approval route opened under
-  `QG_APPROVED_FINAL_SCORE_PROB_UP_1D_V0_2`; implementation, runtime cutover,
-  production ranking, and report behavior remain not complete and blocked until
-  all v0.2 final score gates pass.
-- Current final score output contract state: v0.2 output-contract connection
-  helper opened for `final_composite_score = prob_up_1d_candidate` only when
-  calibration PASS is explicit and `score_semantic_version =
-  "v0_2_prob_up_1d"` is emitted. Production ranking and report behavior remain
-  blocked.
-- Current ranking/report activation approval route: opened under
-  `QG_APPROVED_RANKING_REPORT_PROB_UP_1D_V0_2`; ranking/report implementation
-  remains not complete and blocked until ranking contract, report wording,
-  cross-step conflict, and quant-review-gate checks pass.
-- Current completion state: v0.2 `final_composite_score` prob_up_1d semantic
-  route completed after quant-review-gate PASS. In `v0_2_prob_up_1d`,
-  `final_composite_score` is the calibrated estimated probability that
-  `adjusted_close` will be higher on the next business day than on the feature
-  observation business day.
-- Current active route skill:
-  `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
-- Current repeatable route validation:
-  `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`.
-- Current gate: this Step authorizes only the scoped implementation of
-  `prob_up_1d_candidate` feature table, label-separated training/evaluation
-  pipeline, candidate probability output, and validation tests in the approved
-  role branch/worktree. It does not authorize production ranking activation,
-  trading recommendations, `final_composite_score` replacement, report behavior
-  changes, backtest metrics as model features, valuation/fundamental data, data
-  ingestion changes, or universe expansion.
+Product goal:
 
-## 컨텍스트 운영 상태
+- collect research, papers, and strategy ideas
+- structure those ideas as quant strategy candidates
+- backtest or simulate each strategy candidate in an evidence-only lane
+- use machine learning or evaluation algorithms to select review-preferred
+  candidates
+- check what historical return, risk, and performance characteristics may be
+  supported by the adopted-candidate evidence
 
-- 기본 시작점: `docs/context/current_context.md`, `docs/context/MVP_V0_1_BASELINE.md`,
-  `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`, `docs/context/EXTENSION_REGISTRY.toml`,
-  `docs/context/CHANGE_IMPACT_MATRIX.yml`, task-specific file only.
-- Targeted lookup: `docs/context/CONTEXT_ROUTING_INDEX.md`와 필요한 domain stub만 사용한다.
-- Archive lookup: `docs/context/ARCHIVE_INDEX.md`에서 시작하고 conflict, regression,
-  provenance, release-evidence 확인이 있을 때만 가장 좁은 파일을 읽는다.
-- 답변과 handoff는 confirmed context fact를 최대 3개만 반복하고 현재 판단, 변경, 검증, 남은 리스크를 중심으로 작성한다.
-- 완료 Step 1-20 산출물은 기본적으로 신뢰한다.
+Direction lock:
 
-## 병렬 Workspace 운영 메모
+- v0.3 product_goal is the current route memory.
+- Do not route routine v0.3 work back through archived v0.1/v0.2 standards.
+- If a task is blocked, choose the next concrete v0.3 artifact:
+  `ResearchHypothesis`, `StrategyHypothesis`, `StrategyCandidate`,
+  `EvaluationEvidence`, or `AdoptionCandidate`.
+- "Superior strategy" selection is evidence-preferred candidate selection for
+  review only, not a production or future-performance claim.
 
-- Step 14 이후 병렬 구현, review, research ingestion, audit/scope watchdog, master integration 작업은 `docs/workspace_parallel_work_policy.md`를 따른다.
-- Step 15부터는 Step implementation, Quant score/governance, research ingestion, chart runtime, review, audit/scope watchdog, master integration을 별도 branch/worktree로 분리한다.
-- 모든 하위 에이전트는 파일 편집 전에 role branch/worktree를 만들거나 선택하고 루트 `WORKSPACE_MANIFEST.md`를 작성해야 한다.
-- `C:\Users\jjaew\Project\master_mvp`는 integration / verification / status-control 전용 workspace로 유지한다.
-- 현재 root/master status-control 범위는 post-MVP `v0.2 predictive probability`
-  승인 기록, 구현 branch/worktree 분리 확인, review/audit gate 관리다.
-- 이 운영 메모는 Step 상태를 변경하지 않는다.
+Current baseline facts:
 
-## 전체 Step 판정
+- v0.1 is archived as a frozen historical baseline reference.
+- v0.2 is archived as a supporting probability compatibility reference.
+- Archived v0.1/v0.2 material must not be mixed into current v0.3 progress
+  unless a named provenance/regression/compatibility check requires it.
+- v0.3 is the active route for research intake, strategy candidate structure,
+  evidence-only backtest/simulation, selector/evaluator review, and adoption
+  evidence.
+
+Current active route skill:
+
+- `.agents/skills/quant-strategy-adoption-gate/SKILL.md`
+
+Completion review gate:
+
+- `.agents/skills/quant-review-gate/SKILL.md`
+
+Archived/supporting probability compatibility route:
+
+- `.agents/skills/quant-candidate-ml-gate/SKILL.md`
+- `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`
+- Use only when a task explicitly touches archived/supporting
+  `prob_up_1d_candidate` compatibility.
+
+## Active v0.3 Work Lanes
+
+| Lane | Active purpose | Primary output |
+| --- | --- | --- |
+| Research intake | collect papers, research notes, EvidenceCards, and strategy ideas | `ResearchHypothesis` |
+| Strategy structure | convert ideas into testable strategy hypotheses and candidate records | `StrategyHypothesis`, `StrategyCandidate` |
+| Backtest/simulation | evaluate candidates historically with no-lookahead and no-feedback checks | `EvaluationEvidence` |
+| ML/evaluator selector | compare allowlisted evidence summaries and select review-preferred candidates | `AdoptionCandidate` |
+| Adoption evidence | summarize historical return/risk/performance characteristics for review | adoption review packet |
+
+## Active Route Artifacts
+
+- `docs/extension/v0_3_research_to_strategy_adoption_route.md`
+- `docs/extension/v0_3_strategy_hypothesis_intake_contract.md`
+- `docs/extension/v0_3_strategy_candidate_registry_contract.md`
+- `docs/extension/v0_3_evaluation_evidence_contract.md`
+- `docs/extension/v0_3_adoption_candidate_selector_gate.md`
+- `docs/extension/v0_3_production_activation_decision_gate.md`
+- `docs/extension/v0_3_review_packet.md`
+- `docs/context/EXTENSION_REGISTRY.toml`
+
+## Archived v0.1/v0.2 References
+
+- Archive routing packet: `docs/roadmap_archive/v0_1_v0_2_archive.md`
+- Archive index: `docs/context/ARCHIVE_INDEX.md`
+- v0.1 frozen baseline reference:
+  `docs/context/MVP_V0_1_BASELINE.md`
+- v0.1 contract manifest reference:
+  `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`
+- v0.2 predictive probability route reference:
+  `docs/extension/v0_2_predictive_probability_route.md`
+- v0.2 probability output contract reference:
+  `docs/extension/v0_2_probability_output_contract.md`
+
+Archived references are not current progress. They are opened only for named
+provenance, regression, compatibility, release/freeze, or contract-boundary
+checks.
+
+## Current Authorization
+
+Allowed now:
+
+- v0.3 route docs, contracts, schemas, validators, fixtures, and review packets
+- research idea intake and provenance/license/evidence mapping
+- candidate-only StrategyHypothesis and StrategyCandidate artifacts
+- candidate-only backtest/simulation tasks in approved owner lanes
+- EvaluationEvidence output and evidence-only comparison summaries
+- ML or rule-based selector/evaluator artifacts that consume allowlisted
+  evidence summaries and emit AdoptionCandidate review packets
+- historical return/risk/performance summaries when framed as evidence only
+
+Still blocked without later explicit approval:
+
+- live trading, brokerage integration, order generation, or real-money execution
+- production ranking/report activation
+- `final_composite_score` replacement or silent redefinition
+- valuation/fundamental scoring activation
+- new market-data ingestion or universe expansion
+- backtest metrics as production score weights, production ranking inputs,
+  runtime model features, or automatic production activation triggers
+- trading recommendations, buy/sell/hold instructions, expected-return
+  promises, proven-alpha claims, profitability-proof wording, or
+  future-performance guarantees
+
+## Parallel Workspace Policy
+
+Step 15+ implementation, review, audit/scope-watchdog, research, chart runtime,
+and master integration work remain separated by role branch/worktree.
+
+`C:\Users\jjaew\Project\master_mvp` remains the integration, verification, and
+status-control workspace unless a task explicitly selects a role worktree.
+
+## Overall Step State
 
 | Step | Status |
 | --- | --- |
@@ -86,68 +152,76 @@ baseline is frozen.
 | Step 17 | COMPLETE |
 | Step 18 | COMPLETE |
 | Step 19 | COMPLETE |
-| Step 20 | COMPLETE / KOSPI200 MVP Completeness Hardening & Final Done Validation |
-| post-MVP v0.2 predictive probability score route | ACTIVE / candidate-only implementation approved in separate role branch/worktree |
+| Step 20 | COMPLETE / KOSPI200 MVP Completeness Hardening and Final Done Validation |
+| post-MVP v0.1 KOSPI200 technical MVP | ARCHIVED / frozen baseline reference |
+| post-MVP v0.2 predictive probability score route | ARCHIVED / supporting compatibility reference |
+| post-MVP v0.3 research-to-strategy adoption route | ACTIVE |
 
-## 현재 Baseline 핵심
+## Baseline Contracts
 
-- MVP universe는 KOSPI200 only다.
-- `technical_composite_score`는 technical-only이며 MVP v0.1에서 `final_composite_score`와 같다.
-- Valuation/fundamental data는 candidate-only이며 technical/final composite에 들어가지 않는다.
-- Backtest output은 evaluation-only이며 upstream scoring/ranking에 feedback하지 않는다.
-- Generated reports, runtime outputs, chart images, local caches, raw market data는 default context가 아니다.
-- MVP v0.1 frozen baseline 변경은 금지한다. 이후 변경은 `v0.2+` 또는 별도
-  post-MVP 버전/Step으로 관리한다.
+- Archived v0.1 contracts remain frozen references.
+- MVP universe remains KOSPI200 unless a later route explicitly opens another
+  universe.
+- `technical_composite_score` remains technical-only as an archived/frozen
+  baseline contract.
+- v0.1 `final_composite_score` remains frozen archive reference unless a later
+  score/runtime route explicitly changes it.
+- Backtest and simulation outputs are evaluation evidence only.
+- Generated evidence reports, runtime outputs, chart images, local caches, raw
+  market data, `.env`, and secrets are not default context.
+- v0.3 evidence must not feed production scoring, ranking, report behavior,
+  runtime model features, or automatic activation.
 
-## Research Ingestion 상태
+## Research Ingestion State
 
-- Research ingestion 확장 상태는 `docs/research_ingestion_expansion.md`와 affected research config를 targeted read한다.
-- EvidenceCard는 score definition, adoption decision, alpha evidence, valuation verdict가 아니다.
-- Paper-reported backtest와 citation count는 diagnostic metadata only다.
-- PDF fulltext download는 비영리 연구 호환 license, source/access, local custody 점검 후에만 허용되는 상태다.
-- Financial/fundamental data must not enter `technical_composite_score` or `final_composite_score`.
+- Research ingestion now supports v0.3 idea intake and StrategyHypothesis
+  drafting.
+- EvidenceCards remain evidence/provenance records, not score definitions,
+  adoption decisions, or proof of future performance.
+- Paper-reported backtests are diagnostic metadata until reproduced through an
+  approved v0.3 evaluation lane.
+- PDF full-text download remains subject to license, source/access, and local
+  custody checks.
 
-## 밸류에이션 상태
+## Guardrails
 
-- `valuation_status = candidate_only_not_activated`
-- `financial_data_usage_now = candidate_schema_and_synthetic_fixtures_only`
-- `point_in_time_status = availability_date_required_for_candidate_records`; live vendor PIT availability remains unverified until separately proven.
-- `financial_data_in_technical_score = false`
-- `financial_data_in_final_composite_score = false`
-- Step 18 candidate data remains separate from technical scoring, final ranking, and Step 17 backtest inputs.
-
-## 활성 Guardrails
-
-- future data 금지
-- lookahead 금지
-- silent score redefinition 금지
+- no future data
+- no lookahead
 - config-first implementation
-- documented score definition 전 score implementation 금지
-- documented composite design 전 composite score implementation 금지
-- active Step이 명시적으로 허용하기 전에는 ranking generation 금지
-- valuation status가 candidate-only인 동안 active valuation/fundamental scoring 금지
-- financial data를 `technical_composite_score`에 넣지 않는다
-- financial data를 `final_composite_score`에 넣지 않는다
-- price-only evidence에 valuation language 사용 금지
-- backtest feedback을 upstream scoring/ranking에 넣지 않는다
-- trading recommendation, proven alpha, expected return signal language 금지
+- documented strategy candidate before evaluation
+- predeclared evaluation criteria before backtest/simulation
+- no feedback from evaluation evidence into production scores, rankings,
+  reports, model features, or automatic activation
+- no active valuation/fundamental scoring while valuation status is
+  candidate-only
+- no financial/fundamental data in `technical_composite_score`
+- no financial/fundamental data in `final_composite_score`
+- no price-only evidence as valuation language
+- no trading recommendation, proven-alpha, expected-return promise,
+  profitability-proof wording, or future-performance guarantee
 
-## 상세 이력 위치
+## Detailed History Locations
 
 - Compact post-Step20 baseline: `docs/context/MVP_V0_1_BASELINE.md`
 - Context routing index: `docs/context/CONTEXT_ROUTING_INDEX.md`
 - Archive index: `docs/context/ARCHIVE_INDEX.md`
 - Release evidence: `docs/releases/`
-- Contracts: `docs/contracts/step20_composite_contract.md`, `docs/contracts/step20_ranking_contract.md`
+- Contracts: `docs/contracts/step20_composite_contract.md`,
+  `docs/contracts/step20_ranking_contract.md`
 
-## Step 간 충돌 체크포인트
+## Cross-Step Conflict Checkpoint
 
-Run a Cross-Step Conflict Checkpoint whenever an important in-Step stage ends and before each Step is closed.
+Run a Cross-Step Conflict Checkpoint whenever an important in-Step stage ends
+and before each Step is closed.
 
-Use `docs/cross_step_conflict_check.md` and generate a compact review packet with:
+Use `docs/cross_step_conflict_check.md` and generate a compact review packet
+with:
 
 ```powershell
 python scripts/build_review_packet.py --step "<current step>" --stage "<stage name>"
 ```
 
-Completed Step artifacts are trusted by default. The checkpoint checks only whether the current stage conflicts with roadmap order, hard stops, cross-project handoffs, generated-output boundaries, context-routing boundaries, or unresolved carry-forward risks.
+Completed Step artifacts are trusted by default. The checkpoint checks only
+whether the current stage conflicts with roadmap order, hard stops,
+cross-project handoffs, generated-output boundaries, context-routing
+boundaries, or unresolved carry-forward risks.

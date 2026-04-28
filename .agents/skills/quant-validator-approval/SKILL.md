@@ -1,26 +1,27 @@
 ---
 name: quant-validator-approval
-description: Use when the master_mvp quant candidate ML gate contract validator must run through Git Bash and sandboxed bash fails with Win32 error 5, or when Codex needs to avoid a known repeat sandbox failure or repeated approval prompts for the exact validator command. This skill preserves the narrow approved command prefix for `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`.
+description: Use after cost-aware-review-refactor records a blocked required validator caused by unavailable bash/WSL or Git Bash Win32 error 5. Preserves narrow exact-command approval paths for project-local quant gate validators, including `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`.
 ---
 
 # Quant Validator Approval
 
 ## Purpose
 
-Run the required candidate ML gate contract validator without broadening shell
-approval. This skill does not authorize new quant behavior; it only standardizes
-the approval path for the existing validator.
+Run a required project-local quant gate validator without broadening shell
+approval after the cost-aware utility has recorded the bash/WSL/Git Bash
+blocker. This skill does not authorize new quant behavior; it only
+standardizes the approval path for exact validator commands.
 
 ## Scope
 
 Allowed:
 
-- candidate ML gate contract validation only
-- the exact validator command below
-- escalation only for the exact validator command after sandboxed Git Bash fails
-  with `Win32 error 5`, when that error is already established for the current
-  environment, or when the user explicitly asks to avoid or persist the known
-  validator approval path
+- project-local quant gate validation commands under `.agents/skills/*/scripts/`
+- the exact validator command recorded by `cost-aware-review-refactor`
+- escalation only for the exact validator command after sandboxed bash/WSL or
+  Git Bash fails with `Win32 error 5`, when that error is already established
+  for the current environment, or when the user explicitly asks to avoid or
+  persist the known validator approval path
 
 Forbidden:
 
@@ -32,29 +33,50 @@ Forbidden:
 ## Procedure
 
 1. Read `docs/root_hard_stops.md` and `docs/roadmap_status.md` first.
-2. If the work is candidate ML gate work, use
+2. Use `.agents/skills/cost-aware-review-refactor/SKILL.md` first to record
+   the blocked command, short error, affected scope, substitute evidence when
+   available, and routed validator request. Do not jump directly from a failed
+   bash/WSL/Git Bash command to escalation.
+3. If the work is candidate ML gate work, use
    `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
-3. If `Win32 error 5` has not already been observed in the current environment
-   and the user has not explicitly asked to avoid the known sandbox failure, run
-   the validator normally:
+4. If `Win32 error 5` or unavailable bash/WSL has not already been observed in
+   the current environment and the user has not explicitly asked to avoid the
+   known sandbox failure, run the validator normally:
 
    ```bash
    bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh
    ```
 
-4. If the sandboxed run prints Git Bash `Win32 error 5`, or if the error is
-   already established for the current environment, or if the user explicitly
-   asks to avoid the known sandbox failure, run the same command with
-   `sandbox_permissions: "require_escalated"` and this exact prefix rule:
+5. If the sandboxed run prints WSL installation/update output, Git Bash
+   `Win32 error 5`, `couldn't create signal pipe`, or `CreateFileMapping`, or if
+   the error is already established for the current environment, or if the user
+   explicitly asks to avoid the known sandbox failure, run the same validator
+   with `sandbox_permissions: "require_escalated"` and an exact prefix rule.
+   For the candidate ML validator, use:
 
    ```json
    ["bash", ".agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh"]
    ```
 
-5. Do not ask a separate chat question before the escalation request. Put the
+   For another project-local gate validator, use the same exact-command shape,
+   for example:
+
+   ```json
+   ["bash", ".agents/skills/quant-review-gate/scripts/validate_review_gate.sh"]
+   ```
+
+   or the exact Git Bash executable plus script path when PowerShell must call
+   Git Bash directly:
+
+   ```json
+   ["C:\\Program Files\\Git\\bin\\bash.exe", ".agents/skills/quant-review-gate/scripts/validate_review_gate.sh"]
+   ```
+
+6. Do not ask a separate chat question before the escalation request. Put the
    approval question in the tool `justification` field so the user can allow or
    persist this exact prefix for future validator runs.
-6. Treat validation as passed only when stdout includes:
+7. Treat validation as passed only when stdout includes the validator's expected
+   PASS line, such as:
 
    ```text
    PASS: quant candidate ML gate contract is present
@@ -67,8 +89,9 @@ Report in Korean:
 ```yaml
 gate: quant_validator_approval
 task_class: planning/read-only | narrow edit | Step/gate closure
-validator_command: "bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh"
-approval_prefix: '["bash", ".agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh"]'
+blocked_source: "cost-aware-review-refactor summary required"
+validator_command: "<exact validator command>"
+approval_prefix: "<exact prefix only>"
 contract_validation: pass | fail | not_run
 status: COMPLETE | PARTIALLY COMPLETE | NEEDS FIX
 ```

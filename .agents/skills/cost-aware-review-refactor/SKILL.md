@@ -63,6 +63,44 @@ Apply these principles in order:
 Avoid repeating long Codex process rules already present in `AGENTS.md`,
 project docs, gate skills, validators, or subproject instructions.
 
+## Blocked Cheap Check Protocol
+
+When a cheap check is blocked by the environment, do not convert the blockage
+into a gate failure by itself and do not keep retrying the same blocked path.
+Record it separately from validation status, choose the cheapest safe
+substitute when one exists, and route any remaining required validator request
+to the responsible root, gate, or subproject owner.
+
+Common blocked cheap checks:
+
+- missing `pytest`
+- unavailable `bash` or WSL
+- Windows `bash.exe` WSL install/update messages
+- Git Bash `Win32 error 5`, including `couldn't create signal pipe` or
+  `CreateFileMapping` failures
+- denied `rg`
+- inaccessible temp/cache directories
+- Git `safe.directory` ownership errors
+
+Required handling:
+
+1. Record the blocked command, short error, and affected scope under
+   `blocked_cheap_checks`.
+2. If a narrow substitute exists, use it and label it as substitute evidence.
+   For example, when `rg` is denied on Windows, use targeted PowerShell
+   `Select-String` over the same file list.
+3. If the blocked check is a required validator, route it to the responsible
+   gate/root agent instead of marking the utility result as complete
+   validation. For Git Bash `Win32 error 5` cases, preserve the exact validator
+   command and route through `.agents/skills/quant-validator-approval/SKILL.md`
+   for the narrow approved execution path.
+4. Keep findings, substitute evidence, and remaining validator requests as
+   separate fields. The downstream gate decides whether the blocker is
+   acceptable, needs escalation, or requires a different owner.
+
+This protocol is advisory triage only. It does not approve completion and does
+not waive required validation.
+
 ## Root Coordination Boundary
 
 This skill must not directly perform or approve changes that affect:
@@ -99,10 +137,18 @@ utility: cost-aware-review-refactor
 scope: "<changed files or assigned scope>"
 cheapest_next_checks:
   - "<targeted check>"
+blocked_cheap_checks:
+  - "<command or none: short blocker and affected scope>"
+substitute_evidence:
+  - "<substitute check or none>"
 refactor_opportunities:
   - "<narrow in-scope opportunity or none>"
 existing_owner_refs:
   - "<skill/process/subproject owner or none>"
+routed_validator_requests:
+  - "<responsible gate/root/subproject and command, or none>"
+validator_approval_route:
+  - "<quant-validator-approval with exact command, or none>"
 root_approval_required:
   - "<condition or none>"
 handoff_target: "<root | subproject/worktree | gate skill>"

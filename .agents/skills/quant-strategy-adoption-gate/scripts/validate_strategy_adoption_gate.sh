@@ -65,7 +65,8 @@ require_patterns "$SKILL_FILE" \
 
 require_patterns "AGENTS.md" \
   'quant-strategy-adoption-gate/SKILL\.md' \
-  'proposal/candidate-only' \
+  'active v0\.3 strategy-selection/adoption' \
+  'Archived v0\.1/v0\.2 material is reference-only' \
   'root_hard_stops\.md.*roadmap_status\.md|roadmap_status\.md.*root_hard_stops\.md' \
   'score-runtime-semantics-gate' \
   'does not authorize.*production ranking activation|production ranking activation.*does not authorize' \
@@ -74,11 +75,33 @@ require_patterns "AGENTS.md" \
   'data-ingestion expansion' \
   'universe expansion'
 
-require_grep 'The active route is post-MVP `v0\.2 predictive probability score route`' "docs/root_hard_stops.md"
-require_grep 'The only approved active candidate ML output is `prob_up_1d_candidate`' "docs/root_hard_stops.md"
+require_grep 'The active route is post-MVP `v0\.3 research-to-strategy adoption route`' "docs/root_hard_stops.md"
+require_grep 'v0\.1 and v0\.2 are archived reference states' "docs/root_hard_stops.md"
+require_grep 'v0\.2 `prob_up_1d_candidate` remains an archived/supporting compatibility' "docs/root_hard_stops.md"
+require_grep 'docs/roadmap_archive/v0_1_v0_2_archive\.md' "docs/root_hard_stops.md"
+require_grep '## Direction Lock' "docs/root_hard_stops.md"
+require_grep 'collect research, papers, and strategy ideas' "docs/root_hard_stops.md"
+require_grep 'backtest or simulate each strategy candidate in an evidence-only lane' "docs/root_hard_stops.md"
+require_grep 'machine learning or evaluation algorithms' "docs/root_hard_stops.md"
+require_grep 'ResearchHypothesis' "docs/root_hard_stops.md"
+require_grep 'StrategyHypothesis' "docs/root_hard_stops.md"
+require_grep 'StrategyCandidate' "docs/root_hard_stops.md"
+require_grep 'EvaluationEvidence' "docs/root_hard_stops.md"
+require_grep 'AdoptionCandidate' "docs/root_hard_stops.md"
+require_grep 'Post-MVP `v0\.3 research-to-strategy adoption route` is ACTIVE' "docs/roadmap_status.md"
+require_grep 'v0\.1 is archived as a frozen historical baseline reference' "docs/roadmap_status.md"
+require_grep 'v0\.2 is archived as a supporting probability compatibility reference' "docs/roadmap_status.md"
+require_grep 'Direction lock:' "docs/roadmap_status.md"
+require_grep 'state = "active_candidate_evidence_route"' "docs/context/EXTENSION_REGISTRY.toml"
+require_grep 'state = "archived_supporting_compatibility_reference"' "docs/context/EXTENSION_REGISTRY.toml"
+require_file "docs/roadmap_archive/v0_1_v0_2_archive.md"
+require_grep '## Product Goal Anchor' "$SKILL_FILE"
+require_grep '## Direction-Lock Procedure' "$SKILL_FILE"
+require_grep 'evidence-preferred' "$SKILL_FILE"
+require_grep 'next_v0_3_artifact' "$SKILL_FILE"
 
-if grep -Eq 'v0\.3 (is )?active|active v0\.3 route|active route.*v0\.3|v0\.3 implementation scope is open' "$SKILL_FILE" "AGENTS.md"; then
-  fail "v0.3 must remain proposal/candidate-only unless root authority opens it"
+if grep -Eq 'v0\.3 production activation is active|active production v0\.3 route|v0\.3 production implementation scope is open' "$SKILL_FILE" "AGENTS.md"; then
+  fail "v0.3 production activation must remain blocked unless root authority opens it"
 fi
 
 printf '%s\n' "PASS: quant strategy adoption gate contract is present"

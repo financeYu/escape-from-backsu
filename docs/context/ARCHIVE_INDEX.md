@@ -40,6 +40,11 @@ document bodies into active context.
 
 - `README.md` - legacy status and roadmap sections only; root README remains a
   root-owned overview, but old Step status in it is historical.
+- `docs/roadmap_archive/v0_1_v0_2_archive.md` - archive routing packet for
+  v0.1 frozen baseline references and v0.2 predictive-probability
+  compatibility references. Use it to keep v0.1/v0.2 out of active v0.3
+  progress unless a named provenance, regression, compatibility, or
+  release/freeze lookup requires them.
 - `docs/project_checklist.md` - legacy Step 1-20 roadmap/checklist body only;
   root guardrails and hard stops remain relevant where not superseded by the
   current MVP v0.1 baseline.
@@ -114,9 +119,10 @@ document bodies into active context.
 - `reports/validation/mvp_v0_1_local_market_data_readiness.md` - local market
   data readiness validation evidence.
 
-### Active MVP v0.1 Context, Not Archive
+### Archived v0.1/v0.2 References
 
-Do not classify these files as old roadmap/checklist material:
+These files are archived/frozen references after v0.3 activation. They are not
+current progress and should not be loaded by default:
 
 - `docs/context/MVP_V0_1_BASELINE.md` - active compact MVP v0.1 baseline.
 - `docs/context/current_context.md` - latest-only current context.
@@ -128,6 +134,19 @@ Do not classify these files as old roadmap/checklist material:
 - `docs/releases/mvp_kospi200_baseline_manifest.md` - MVP baseline manifest.
 - `docs/release/MVP_V0_1_QUICKSTART.md` - active MVP quickstart aid.
 - `docs/release/MVP_V0_1_VALIDATION_LADDER.md` - active validation ladder.
+- `docs/extension/v0_2_predictive_probability_route.md` - archived v0.2 route
+  reference.
+- `docs/extension/v0_2_probability_output_contract.md` - archived v0.2
+  probability output contract reference.
+- `docs/extension/v0_2_prob_up_1d_label_contract.md` - archived v0.2 label
+  contract reference.
+- `docs/extension/v0_2_model_input_handoff_contract.md` - archived v0.2 model
+  input handoff reference.
+
+### Future Planning Context, Not Current Progress
+
+Use only for explicit future-extension planning:
+
 - `docs/context/domain/future_multi_universe_context.md` - future-extension
   planning context, not old roadmap.
 - `docs/context/domain/future_derivatives_context.md` - future-extension

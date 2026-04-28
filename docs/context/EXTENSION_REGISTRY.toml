@@ -1,9 +1,11 @@
-# Route-only registry for future extension ideas.
-# Entries here do not authorize implementation or Step 21 entry.
+# Registry for active and future extension routes.
+# The active route state is governed by docs/root_hard_stops.md and
+# docs/roadmap_status.md.
 
-status = "routing_only"
+status = "active_v0_3_strategy_adoption_route"
 baseline = "docs/context/MVP_V0_1_BASELINE.md"
 archive_index = "docs/context/ARCHIVE_INDEX.md"
+archived_v0_1_v0_2 = "docs/roadmap_archive/v0_1_v0_2_archive.md"
 
 [extension_readiness.market_policy_refactor]
 state = "contract_only"
@@ -44,9 +46,10 @@ permission = "requires separately approved post-MVP step and point-in-time avail
 context = "docs/context/domain/valuation_context.md"
 
 [extension.scoring_v0_2]
-state = "superseded_by_predictive_probability_route"
-permission = "superseded as primary v0.2 direction; old technical scores may be old_score_features only"
+state = "archived_superseded_reference"
+permission = "archived v0.2 scoring reference only; not current progress and not an active route; old technical scores may be inspected only for named provenance, regression, or prob_up_1d_candidate compatibility checks"
 context = "docs/context/domain/technical_scoring_context.md"
+archive_context = "docs/roadmap_archive/v0_1_v0_2_archive.md"
 approval_packet = "docs/extension/v0_2_score_revision_approval_packet.md"
 candidate_score_list = "docs/extension/v0_2_candidate_score_list.md"
 candidate_score_list_state = "frozen_technical_diagnostic_set"
@@ -56,8 +59,8 @@ score_specification_schema_state = "approved_for_candidate_spec_authoring"
 raw_feature_lineage_contract = "docs/extension/v0_2_raw_feature_lineage_contract.md"
 raw_feature_lineage_contract_state = "frozen"
 goal = "old technical scores become candidate old_score_features for prob_up_1d_candidate"
-active_step = "post-MVP v0.2 predictive probability score route"
-active_step_scope = "candidate-only predictive probability implementation approved in separate role branch/worktree"
+active_step = "archived"
+active_step_scope = "reference-only; current active route is strategy_adoption_v0_3"
 forbidden_during_mvp_v0_1 = [
   "score formula changes",
   "normalization changes",
@@ -69,12 +72,13 @@ forbidden_during_mvp_v0_1 = [
 ]
 
 [extension.predictive_probability_v0_2]
-state = "active_candidate_implementation_step"
-permission = "post-MVP v0.2 predictive probability score route is approved for candidate-only prob_up_1d_candidate implementation in a separate role branch/worktree; production ranking, trading recommendations, final_composite_score replacement, valuation/fundamental data, and backtest metrics as model features remain forbidden"
+state = "archived_supporting_compatibility_reference"
+permission = "archived v0.2 probability route reference only; not current progress and not an active route; use quant-candidate-ml-gate only for explicit prob_up_1d_candidate compatibility tasks"
 context = "docs/extension/v0_2_predictive_probability_route.md"
+archive_context = "docs/roadmap_archive/v0_1_v0_2_archive.md"
 entry_gate = "Quant_mvp/docs/v0_2_candidate_ml_score_entry_gate.md"
-entry_gate_state = "route_only_contract_preparation"
-entry_gate_permission = "documents candidate-only completion target, timing, sidecar, and validation gates; does not change production scoring, ranking, reports, model runtime, or final score replacement"
+entry_gate_state = "archived_reference"
+entry_gate_permission = "archived compatibility reference; does not change production scoring, ranking, reports, model runtime, or final score replacement"
 label_contract = "docs/extension/v0_2_prob_up_1d_label_contract.md"
 old_score_feature_boundary = "docs/extension/v0_2_old_score_feature_boundary.md"
 probability_output_contract = "docs/extension/v0_2_probability_output_contract.md"
@@ -97,10 +101,61 @@ forbidden = [
   "valuation/fundamental data in technical_composite_score or final_composite_score",
 ]
 
+[extension.strategy_adoption_v0_3]
+state = "active_candidate_evidence_route"
+permission = "post-MVP v0.3 research-to-strategy adoption route is active for research intake, StrategyHypothesis and StrategyCandidate structure, candidate-only backtest/simulation evidence, selector/evaluator review, and AdoptionCandidate evidence packets; production activation, live trading, ranking/report connection, trading recommendations, expected-return promises, proven-alpha claims, data-ingestion expansion, universe expansion, and score replacement remain forbidden without later explicit approval"
+context = "docs/extension/v0_3_research_to_strategy_adoption_route.md"
+strategy_hypothesis_intake_contract = "docs/extension/v0_3_strategy_hypothesis_intake_contract.md"
+strategy_candidate_registry_contract = "docs/extension/v0_3_strategy_candidate_registry_contract.md"
+evaluation_evidence_contract = "docs/extension/v0_3_evaluation_evidence_contract.md"
+adoption_candidate_selector_gate = "docs/extension/v0_3_adoption_candidate_selector_gate.md"
+production_activation_decision_gate = "docs/extension/v0_3_production_activation_decision_gate.md"
+review_packet = "docs/extension/v0_3_review_packet.md"
+route_name = "Research-to-Strategy Adoption Pipeline"
+product_goal = [
+  "collect research, papers, and strategy ideas",
+  "structure ideas as quant strategy candidates",
+  "backtest or simulate each strategy candidate in an evidence-only lane",
+  "use machine learning or evaluation algorithms to select review-preferred candidates",
+  "check historical return, risk, and performance characteristics for adopted-candidate evidence",
+]
+route_flow = "research -> strategy hypothesis -> candidate registry -> backtest/simulation evidence -> selector/evaluator review -> adoption evidence"
+owner_lane = "mixed_research_quant_strategy_backtest_ml_root_governance"
+proposed_strategy_candidate_registry = "Quant_mvp/config/v0_3_strategy_candidate_registry.toml"
+proposed_evaluation_evidence_path = "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/*.md"
+proposed_candidate_comparison_path = "Quant_mvp/backtest_mvp/docs/v0_3_candidate_comparison/*.md"
+proposed_adoption_candidate_path = "docs/extension/v0_3/adoption_candidates/*.md"
+candidate_entities = [
+  "ResearchHypothesis",
+  "StrategyHypothesis",
+  "StrategyCandidate",
+  "EvaluationEvidence",
+  "AdoptionCandidate",
+]
+allowed = [
+  "research idea intake and provenance/license/evidence mapping",
+  "StrategyHypothesis drafting",
+  "StrategyCandidate registry, schema, fixtures, and validation checks",
+  "candidate-only backtest/simulation evidence in approved owner lanes",
+  "EvaluationEvidence and evidence-only candidate comparison summaries",
+  "ML or rule-based selector/evaluator outputs limited to AdoptionCandidate review packets",
+  "historical return/risk/performance summaries framed as evidence only",
+]
+blocked = [
+  "live trading or brokerage integration",
+  "production ranking activation",
+  "production report behavior connection",
+  "technical_composite_score changes",
+  "final_composite_score replacement or silent redefinition",
+  "backtest metrics as production model features, score weights, ranking inputs, or automatic production activation triggers",
+  "trading recommendations, buy/sell/hold wording, expected-return promises, proven-alpha claims, profitability-proof wording, or future-performance guarantees",
+]
+
 [extension.v0_1n_candidate_ml]
 state = "superseded_by_predictive_probability_v0_2"
-permission = "folded into post-MVP v0.2 predictive probability score route as prob_up_1d_candidate; implementation is allowed only through the approved predictive_probability_v0_2 candidate scope and does not authorize production adoption"
+permission = "archived reference folded into v0.2 prob_up_1d_candidate; not current progress and not an active implementation route"
 context = "docs/extension/v0_1n_implementation_approval_packet.md"
+archive_context = "docs/roadmap_archive/v0_1_v0_2_archive.md"
 candidate_output = "prob_up_1d_candidate"
 candidate_label = "adjusted_close[t+1] > adjusted_close[t]"
 forbidden = [

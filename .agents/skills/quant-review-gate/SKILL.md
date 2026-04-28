@@ -21,6 +21,16 @@ cheapest checks, local refactor opportunities, or duplicate-owner discovery
 unless the utility summary is missing, stale, scope-mismatched, or conflicts
 with project hard stops.
 
+If that summary reports blocked cheap checks such as denied `rg`, unavailable
+`bash`/WSL, Git Bash `Win32 error 5`, missing `pytest`, inaccessible
+temp/cache directories, or Git `safe.directory` ownership errors, consume those
+as environment blockers, not as validation evidence. Review any substitute
+evidence separately, then route remaining required validator commands to the
+selected gate, root, or subproject owner. Repeated bash/WSL/Git Bash validator
+blockers must pass through `cost-aware-review-refactor` first and then
+`.agents/skills/quant-validator-approval/SKILL.md` for an exact-command
+approval path when escalation is required.
+
 ## When To Use
 
 Use this skill:
@@ -56,6 +66,10 @@ Root must provide or reconstruct a compact task packet before review:
 - selected execution skill gate, or `quant-review-gate` as the minimal default
 - optional `cost-aware-review-refactor` summary when it was run for the same
   scope
+- optional `blocked_cheap_checks`, `substitute_evidence`, and
+  `routed_validator_requests` from the same-scope utility summary
+- optional `validator_approval_route` from the utility summary when a required
+  validator hit bash/WSL or Git Bash `Win32 error 5`
 
 The worker or sub-agent must not expand beyond the selected skill gate. If the
 packet is missing a boundary needed to judge safety, return `NEEDS FIX`.
@@ -71,6 +85,14 @@ already checked by the utility and do not recreate them inside this gate:
 - identifying narrow in-scope refactor opportunities
 - identifying duplicate process, validator, skill, or subproject owners
 
+If the utility reported blocked cheap checks, do not repeat the same blocked
+command unless it is the required validator and a safer/approved execution path
+is available. Record the blocker separately from validation status, and record
+substitute evidence separately from required validator evidence.
+For bash/WSL or Git Bash `Win32 error 5` validator blockers, require a
+same-scope cost-aware summary before using `quant-validator-approval`; the
+review gate should not jump straight from failure to escalation.
+
 This de-duplication does not waive this gate's authority checks. The gate still
 must verify scope, forbidden-boundary safety, validation evidence, score/ranking
 and report semantics safety, skill isolation, forbidden claim language, and
@@ -81,6 +103,10 @@ Required checks:
 - changed files are inside the allowed scope for the task
 - forbidden scope was not touched by the task
 - required validation commands were run, or an explicit blocker is reported
+- blocked cheap checks from the utility, if any, are separated from validation
+  status and either substituted narrowly or routed to the responsible owner
+- bash/WSL or Git Bash `Win32 error 5` validator blockers, if any, went through
+  `cost-aware-review-refactor` before `quant-validator-approval`
 - production ranking, report behavior, runtime score semantics, and score
   formulas were not changed unless explicitly authorized
 - `technical_composite_score` and `final_composite_score` were not redefined
@@ -110,6 +136,10 @@ When a same-scope cost-aware utility summary is present, skip commands used only
 to rediscover its utility findings. Run only the commands still needed for this
 gate's independent PASS rules.
 
+When `rg` is denied, targeted PowerShell `Select-String` over the same scoped
+file list is an acceptable substitute for wording/search triage. It is not a
+substitute for a required gate validator.
+
 Do not run `git fetch`, `git pull`, or `git push` in this review gate.
 
 ## PASS Rules
@@ -122,6 +152,8 @@ Return `PASS` only when all are true:
 - downstream specialist review is not required, or it already passed
 - same-scope cost-aware utility findings, when provided, were consumed as
   advisory evidence and did not replace this gate's authority checks
+- same-scope blocked cheap checks, when provided, were separated from
+  validation evidence and remaining required validators were routed or run
 - changed lines do not introduce unauthorized production ranking, report,
   runtime score, score formula, trading, profitability, or alpha claims
 - changed lines do not let another project invade Quant gates or let Quant
@@ -140,6 +172,14 @@ changed_files:
   - "<task changed file>"
 validation_evidence:
   - "<command: pass/fail/not_run with short evidence>"
+blocked_cheap_checks:
+  - "<command or none: short blocker>"
+substitute_evidence:
+  - "<substitute check or none>"
+routed_validator_requests:
+  - "<owner and command, or none>"
+validator_approval_route:
+  - "<quant-validator-approval exact command, or none>"
 remaining_risk:
   - "<none or compact risk>"
 worktree_status: "<clean | dirty with scoped/unrelated summary>"

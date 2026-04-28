@@ -12,6 +12,7 @@ def build_parser(command_handlers: Mapping[str, Callable[..., Any]]) -> argparse
     _add_collect_parser(subparsers, command_handlers)
     _add_scholar_import_parsers(subparsers, command_handlers)
     _add_pipeline_parsers(subparsers, command_handlers)
+    _add_pdf_parser(subparsers, command_handlers)
     _add_refresh_parser(subparsers, command_handlers)
     return parser
 
@@ -103,6 +104,18 @@ def _add_refresh_parser(
     refresh.add_argument("--query-sets", default=None, help="Comma-separated query sets. Defaults to the selected refresh profile.")
     refresh.add_argument("--include-valuation", action="store_true", help="Explicit opt-in for valuation/fundamental query sets.")
     refresh.set_defaults(func=command_handlers["refresh"])
+
+
+def _add_pdf_parser(
+    subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    command_handlers: Mapping[str, Callable[..., Any]],
+) -> None:
+    download = subparsers.add_parser("download-pdfs")
+    _add_run_common(download)
+    _add_pdf_options(download, set_defaults=False)
+    download.add_argument("--input-path", default=None)
+    download.add_argument("--max-records", type=int, default=None)
+    download.set_defaults(func=command_handlers["download_pdfs"])
 
 
 def _add_run_common(parser: argparse.ArgumentParser) -> None:

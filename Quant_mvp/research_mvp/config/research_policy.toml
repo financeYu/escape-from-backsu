@@ -17,6 +17,10 @@ citation_count_does_not_upgrade_confidence = true
 allow_pdf = false
 explicit_confirmation_required = true
 confirmation_phrase = "I confirm OA/license/source policy for PDF use"
+max_downloads_per_run = 1
+timeout_seconds = 30
+max_pdf_bytes = 26214400
+user_agent = "research-ingestion-pdf-downloader/1.0"
 
 [license_policy]
 intended_use = "noncommercial_research"

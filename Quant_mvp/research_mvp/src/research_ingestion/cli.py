@@ -53,6 +53,7 @@ from .cli_outputs import (
     _write_new_only_outputs,
     _write_normalized_papers,
 )
+from .pdf_downloader import cmd_download_pdfs as _cmd_download_pdfs
 from .cli_parser import build_parser as _build_parser
 from .cli_refresh import (
     _current_policy_versions,
@@ -105,6 +106,7 @@ def _command_handlers() -> dict[str, Any]:
         "report": cmd_report,
         "run_all": cmd_run_all,
         "refresh": cmd_refresh,
+        "download_pdfs": cmd_download_pdfs,
     }
 
 
@@ -184,3 +186,7 @@ def cmd_refresh(args: argparse.Namespace, config: dict[str, Any], paths: Project
         generate_cards_func=generate_evidence_cards,
         current_policy_versions_func=_current_policy_versions,
     )
+
+
+def cmd_download_pdfs(args: argparse.Namespace, config: dict[str, Any], paths: ProjectPaths) -> None:
+    return _cmd_download_pdfs(args, config, paths)

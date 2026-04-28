@@ -64,6 +64,40 @@ def assess_license_policy(license_value: str | None, policy_config: dict[str, An
     }
 
 
+def assess_pdf_fulltext_policy(license_value: str | None, policy_config: dict[str, Any] | None = None) -> dict[str, Any]:
+    policy = policy_config or {}
+    if policy.get("fulltext_download_remains_disabled", True):
+        return _pdf_blocked_result(
+            "fulltext_download_disabled_by_policy",
+            "policy에서 PDF/fulltext 다운로드가 비활성화되어 있습니다.",
+        )
+    if not normalize_license_token(license_value):
+        return _pdf_blocked_result(
+            "missing_explicit_fulltext_license",
+            "PDF/fulltext 수집에는 명시 license가 필요합니다.",
+        )
+    assessment = assess_license_policy(
+        license_value,
+        {
+            **policy,
+            "allow_metadata_without_license": False,
+        },
+    )
+    if not assessment["license_collection_allowed"] or assessment["license_manual_review_required"]:
+        return {
+            **assessment,
+            "pdf_fulltext_download_allowed": False,
+            "pdf_fulltext_use_basis": assessment["license_use_basis"],
+            "pdf_fulltext_policy_notes_ko": assessment["license_policy_notes_ko"],
+        }
+    return {
+        **assessment,
+        "pdf_fulltext_download_allowed": True,
+        "pdf_fulltext_use_basis": assessment["license_use_basis"],
+        "pdf_fulltext_policy_notes_ko": "명시 license가 정책상 허용되어 로컬 PDF 수집 후보로 인정됩니다.",
+    }
+
+
 def annotate_license_policy(paper: dict[str, Any], policy_config: dict[str, Any] | None = None) -> dict[str, Any]:
     annotated = dict(paper)
     assessment = assess_license_policy(annotated.get("license"), policy_config)
@@ -107,3 +141,16 @@ def _allowed_result(*, noncommercial_allowed: bool, basis: str, notes: str) -> d
 
 def _matches_configured_token(token: str, configured: list[Any]) -> bool:
     return token in {normalize_license_token(str(item)) for item in configured if str(item).strip()}
+
+
+def _pdf_blocked_result(basis: str, notes: str) -> dict[str, Any]:
+    return {
+        "license_collection_allowed": False,
+        "license_noncommercial_allowed": None,
+        "license_use_basis": basis,
+        "license_manual_review_required": True,
+        "license_policy_notes_ko": notes,
+        "pdf_fulltext_download_allowed": False,
+        "pdf_fulltext_use_basis": basis,
+        "pdf_fulltext_policy_notes_ko": notes,
+    }

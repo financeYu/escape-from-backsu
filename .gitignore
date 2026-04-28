@@ -53,6 +53,7 @@ Quant_mvp/data/research/indexes/*.jsonl
 Quant_mvp/data/research/indexes/*.json
 Quant_mvp/data/research/discovery/google_scholar/*_seeds.jsonl
 Quant_mvp/data/research/discovery/google_scholar/unresolved_scholar_seeds.jsonl
+Quant_mvp/data/v0_3/selector_inputs/
 
 # Quant_mvp/research_mvp research ingestion runtime artifacts
 Quant_mvp/research_mvp/data/research/raw/

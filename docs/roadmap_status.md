@@ -71,6 +71,7 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v0_3_strategy_hypothesis_intake_contract.md`
 - `docs/extension/v0_3_strategy_candidate_registry_contract.md`
 - `docs/extension/v0_3_evaluation_evidence_contract.md`
+- `docs/extension/v0_3_kospi200_historical_universe_tracking_contract.md`
 - `docs/extension/v0_3_adoption_candidate_selector_gate.md`
 - `docs/extension/v0_3_production_activation_decision_gate.md`
 - `docs/extension/v0_3_review_packet.md`

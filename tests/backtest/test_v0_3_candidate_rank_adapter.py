@@ -24,7 +24,7 @@ def candidate(strategy_type: str = "momentum", **overrides: object) -> dict[str,
         "candidate_id": "sc:test",
         "linked_strategy_hypothesis_id": "sh:test",
         "candidate_version": "v0.3.0",
-        "status": "ready_for_eval",
+        "status": "evaluable",
         "data_requirements": ["daily_ohlcv"],
         "experiment_scope": {
             "strategy_type": strategy_type,
@@ -137,10 +137,10 @@ def test_volatility_candidate_uses_rolling_volatility_state() -> None:
     assert "051910" in set(valid.sort_values("rank").head(3)["ticker"])
 
 
-def test_non_ready_candidate_is_rejected_before_snapshot() -> None:
-    with pytest.raises(ValueError, match="ready_for_eval"):
+def test_non_evaluable_candidate_is_rejected_before_snapshot() -> None:
+    with pytest.raises(ValueError, match="evaluable StrategyCandidate"):
         build_candidate_ranking_snapshot(
-            candidate("momentum", status="proposed"),
+            candidate("momentum", status="draft"),
             prices(),
         )
 

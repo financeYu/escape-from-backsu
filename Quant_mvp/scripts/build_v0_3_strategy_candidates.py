@@ -33,12 +33,11 @@ CANDIDATE_BOUNDARY = (
 )
 
 CANDIDATE_STATUSES = {
-    "proposed",
-    "ready_for_eval",
+    "draft",
+    "registered",
+    "evaluable",
     "blocked",
-    "evaluated",
-    "review_preferred",
-    "rejected",
+    "retired",
 }
 NEXT_ACTIONS = {"create_evaluation_evidence", "refine_strategy_hypothesis", "resolve_blocker", "reject"}
 
@@ -96,16 +95,16 @@ def _candidate_id(strategy_hypothesis_id: str) -> str:
 def _status(strategy_record: dict[str, Any]) -> str:
     conversion_status = _get(strategy_record, "strategy_hypothesis.conversion_status")
     if conversion_status == "ready_for_candidate_registry":
-        return "ready_for_eval"
+        return "evaluable"
     if conversion_status == "blocked":
-        return "rejected"
-    return "proposed"
+        return "blocked"
+    return "draft"
 
 
 def _next_action(status: str) -> str:
-    if status == "ready_for_eval":
+    if status == "evaluable":
         return "create_evaluation_evidence"
-    if status == "rejected":
+    if status == "retired":
         return "reject"
     if status == "blocked":
         return "resolve_blocker"
@@ -113,14 +112,14 @@ def _next_action(status: str) -> str:
 
 
 def _reason_for_next_action(status: str) -> str:
-    if status == "ready_for_eval":
+    if status == "evaluable":
         return (
             "Candidate has linked StrategyHypothesis rules, data requirements, "
             "experiment scope, and acceptance criteria sufficient for an "
             "EvaluationEvidence request."
         )
-    if status == "rejected":
-        return "Linked StrategyHypothesis is rejected or outside current v0.3 candidate scope."
+    if status == "retired":
+        return "Candidate has been retired from the current v0.3 candidate scope."
     if status == "blocked":
         return "Blocking issues must be resolved before evaluation can be requested."
     return "Linked StrategyHypothesis requires clearer signal, data route, or test rules before evaluation."
@@ -179,7 +178,7 @@ def _known_constraints(status: str, strategy_record: dict[str, Any]) -> list[str
         "evaluation_evidence_required_before_adoption_review",
     ]
     constraints.extend(str(item) for item in _as_list(strategy_record.get("blocker")) if item)
-    if status != "ready_for_eval":
+    if status != "evaluable":
         constraints.append("not_ready_for_evaluation")
     return sorted(set(constraints))
 
@@ -234,18 +233,18 @@ def _required_evidence(strategy: dict[str, Any]) -> list[str]:
 
 
 def _blocking_issues(status: str, strategy_record: dict[str, Any]) -> list[str]:
-    if status == "ready_for_eval":
+    if status == "evaluable":
         return []
     issues = [str(item) for item in _as_list(strategy_record.get("blocker")) if item]
     if issues:
         return sorted(set(issues))
-    if status == "rejected":
-        return ["linked_strategy_hypothesis_rejected_or_out_of_scope"]
+    if status == "blocked":
+        return ["linked_strategy_hypothesis_blocked_or_out_of_scope"]
     return ["strategy_hypothesis_requires_refinement_before_evaluation"]
 
 
 def _next_stage_input(candidate: dict[str, Any]) -> dict[str, Any] | None:
-    if candidate["status"] != "ready_for_eval":
+    if candidate["status"] != "evaluable":
         return None
     return {
         "next_stage": "EvaluationEvidence",
@@ -307,7 +306,7 @@ def strategy_record_to_candidate_record(strategy_record: dict[str, Any]) -> dict
         "strategy_candidate": candidate,
         "evaluation_readiness": {
             "status": status,
-            "ready_for_evaluation": status == "ready_for_eval",
+            "ready_for_evaluation": status == "evaluable",
             "required_data_present_in_contract": bool(candidate["data_requirements"]),
             "rules_present_in_contract": bool(candidate["signal_inputs"].get("entry_rule"))
             and bool(candidate["signal_inputs"].get("exit_rule")),
@@ -315,7 +314,7 @@ def strategy_record_to_candidate_record(strategy_record: dict[str, Any]) -> dict
         "required_evidence": candidate["required_evidence"],
         "next_stage_input": _next_stage_input(candidate),
         "blocker": candidate["blocking_issues"],
-        "minimal_fix": [] if status == "ready_for_eval" else _minimal_fix(status),
+        "minimal_fix": [] if status == "evaluable" else _minimal_fix(status),
         "no_feedback_check": "strategy_candidates_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
         "activation_boundary": "production_activation_requires_later_root_approved_gate",
     }
@@ -324,10 +323,10 @@ def strategy_record_to_candidate_record(strategy_record: dict[str, Any]) -> dict
 
 
 def _minimal_fix(status: str) -> list[str]:
-    if status == "rejected":
-        return ["Do not create EvaluationEvidence for this candidate unless a later route reopens it."]
     if status == "blocked":
-        return ["Resolve blocking issues and regenerate the candidate registry."]
+        return ["Resolve blocking issues or retire the candidate before requesting EvaluationEvidence."]
+    if status == "retired":
+        return ["Do not create EvaluationEvidence for this candidate unless a later route reopens it."]
     return [
         "Refine StrategyHypothesis signal, rules, data requirements, and test scope.",
         "Regenerate StrategyCandidate after the StrategyHypothesis becomes ready_for_candidate_registry.",
@@ -372,13 +371,13 @@ def validate_candidate_record(record: dict[str, Any]) -> None:
         raise ValueError(f"invalid next_action: {candidate['next_action']}")
     if not candidate.get("candidate_version"):
         raise ValueError("candidate_version is required")
-    if candidate["status"] == "ready_for_eval":
+    if candidate["status"] == "evaluable":
         if not record.get("next_stage_input"):
-            raise ValueError("ready_for_eval candidate requires next_stage_input")
+            raise ValueError("evaluable candidate requires next_stage_input")
         if candidate.get("blocking_issues"):
-            raise ValueError("ready_for_eval candidate must not have blocking_issues")
-    if candidate["status"] != "ready_for_eval" and not candidate.get("blocking_issues"):
-        raise ValueError("non-ready candidate requires blocking_issues")
+            raise ValueError("evaluable candidate must not have blocking_issues")
+    if candidate["status"] not in {"registered", "evaluable"} and not candidate.get("blocking_issues"):
+        raise ValueError("non-evaluable candidate requires blocking_issues")
     if "trading recommendation" not in str(record.get("candidate_boundary", "")):
         raise ValueError("candidate boundary disclaimer is missing")
 
@@ -431,22 +430,22 @@ def build_candidate_groups(records: list[dict[str, Any]]) -> dict[str, Any]:
     groups: dict[str, Any] = {}
     for strategy_type, group_records in sorted(grouped.items()):
         statuses = Counter(_get(record, "strategy_candidate.status") for record in group_records)
-        ready_ids = [
+        evaluable_ids = [
             _get(record, "strategy_candidate.candidate_id")
             for record in group_records
-            if _get(record, "strategy_candidate.status") == "ready_for_eval"
+            if _get(record, "strategy_candidate.status") == "evaluable"
         ]
         groups[strategy_type] = {
             "strategy_type": strategy_type,
             "record_count": len(group_records),
             "status_counts": dict(sorted(statuses.items())),
-            "ready_candidate_ids": ready_ids,
+            "evaluable_candidate_ids": evaluable_ids,
             "next_action_counts": dict(
                 sorted(Counter(_get(record, "strategy_candidate.next_action") for record in group_records).items())
             ),
             "group_management_rule": (
-                "Only ready_for_eval candidates may request EvaluationEvidence; proposed "
-                "or rejected candidates remain in refinement or reject queues."
+                "Only evaluable candidates may request EvaluationEvidence; draft, blocked, "
+                "registered, or retired candidates remain in their contract queues."
             ),
             "boundary": "candidate_registry_management_not_evaluation_evidence_not_adoption",
         }
@@ -477,7 +476,7 @@ def build_manifest(
         "record_count": len(records),
         "candidate_status_counts": dict(sorted(Counter(item["status"] for item in candidates).items())),
         "next_action_counts": dict(sorted(Counter(item["next_action"] for item in candidates).items())),
-        "ready_for_eval_count": sum(item["status"] == "ready_for_eval" for item in candidates),
+        "evaluable_count": sum(item["status"] == "evaluable" for item in candidates),
         "group_count": len(groups["groups"]),
         "candidate_boundary": CANDIDATE_BOUNDARY,
         "no_feedback_check": "strategy_candidates_must_not_feed_scores_rankings_reports_models_or_auto_adoption",

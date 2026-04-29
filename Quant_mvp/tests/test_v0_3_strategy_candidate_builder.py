@@ -71,14 +71,14 @@ def _strategy_record(**overrides):
     return payload
 
 
-def test_ready_strategy_hypothesis_becomes_ready_candidate() -> None:
+def test_ready_strategy_hypothesis_becomes_evaluable_candidate() -> None:
     record = builder.strategy_record_to_candidate_record(_strategy_record())
     candidate = record["strategy_candidate"]
 
     assert record["current_stage"] == "StrategyCandidate"
     assert candidate["candidate_id"] == "sc:ecard:test"
     assert candidate["candidate_version"] == "v0.3.0"
-    assert candidate["status"] == "ready_for_eval"
+    assert candidate["status"] == "evaluable"
     assert candidate["next_action"] == "create_evaluation_evidence"
     assert candidate["blocking_issues"] == []
     assert "daily_ohlcv" in candidate["data_requirements"]
@@ -87,7 +87,7 @@ def test_ready_strategy_hypothesis_becomes_ready_candidate() -> None:
     assert "trading recommendation" in record["candidate_boundary"]
 
 
-def test_refinement_strategy_hypothesis_becomes_proposed_candidate() -> None:
+def test_refinement_strategy_hypothesis_becomes_draft_candidate() -> None:
     record = builder.strategy_record_to_candidate_record(
         _strategy_record(
             strategy_hypothesis__conversion_status="needs_refinement",
@@ -98,13 +98,13 @@ def test_refinement_strategy_hypothesis_becomes_proposed_candidate() -> None:
     )
     candidate = record["strategy_candidate"]
 
-    assert candidate["status"] == "proposed"
+    assert candidate["status"] == "draft"
     assert candidate["next_action"] == "refine_strategy_hypothesis"
     assert record["next_stage_input"] is None
     assert "strategy_definition_not_specific_enough" in candidate["blocking_issues"]
 
 
-def test_blocked_strategy_hypothesis_becomes_rejected_candidate() -> None:
+def test_blocked_strategy_hypothesis_becomes_blocked_candidate() -> None:
     record = builder.strategy_record_to_candidate_record(
         _strategy_record(
             strategy_hypothesis__conversion_status="blocked",
@@ -115,8 +115,8 @@ def test_blocked_strategy_hypothesis_becomes_rejected_candidate() -> None:
     )
     candidate = record["strategy_candidate"]
 
-    assert candidate["status"] == "rejected"
-    assert candidate["next_action"] == "reject"
+    assert candidate["status"] == "blocked"
+    assert candidate["next_action"] == "resolve_blocker"
     assert record["next_stage_input"] is None
     assert "out_of_scope_or_rejected" in candidate["blocking_issues"]
 
@@ -126,7 +126,7 @@ def test_build_strategy_candidates_writes_outputs_and_groups(tmp_path: Path) -> 
     records = [
         _strategy_record(strategy_hypothesis__strategy_hypothesis_id="sh:ecard:ready"),
         _strategy_record(
-            strategy_hypothesis__strategy_hypothesis_id="sh:ecard:proposed",
+            strategy_hypothesis__strategy_hypothesis_id="sh:ecard:draft",
             strategy_hypothesis__conversion_status="needs_refinement",
             next_stage_input=None,
             blocker=["strategy_definition_not_specific_enough"],
@@ -150,7 +150,8 @@ def test_build_strategy_candidates_writes_outputs_and_groups(tmp_path: Path) -> 
     assert len(rows) == 2
     assert paths["csv"].exists()
     assert manifest["record_count"] == 2
-    assert manifest["candidate_status_counts"]["ready_for_eval"] == 1
-    assert manifest["candidate_status_counts"]["proposed"] == 1
-    assert groups["groups"]["momentum"]["status_counts"]["ready_for_eval"] == 1
-    assert groups["groups"]["momentum"]["status_counts"]["proposed"] == 1
+    assert manifest["candidate_status_counts"]["evaluable"] == 1
+    assert manifest["candidate_status_counts"]["draft"] == 1
+    assert manifest["evaluable_count"] == 1
+    assert groups["groups"]["momentum"]["status_counts"]["evaluable"] == 1
+    assert groups["groups"]["momentum"]["status_counts"]["draft"] == 1

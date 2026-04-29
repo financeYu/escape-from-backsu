@@ -3,8 +3,9 @@
 The contracts in this module are evaluation-only. They validate already-built
 Step 15/16-compatible technical snapshot inputs and price inputs, then hold
 Backtest MVP result objects. They do not define scores, create rankings, or use
-valuation/fundamental data. The legacy ``src.backtest`` package re-exports this
-module for compatibility.
+valuation/fundamental data. The v0.3 runner remains a ranking snapshot top_n
+conservative evaluator, not a strategy-specific entry/exit/risk engine. The
+legacy ``src.backtest`` package re-exports this module for compatibility.
 """
 
 from __future__ import annotations
@@ -313,6 +314,18 @@ class BacktestSummary:
     cumulative_return: float | None
     average_turnover_proxy: float | None
     max_drawdown: float | None
+    annualized_return: float | None
+    period_volatility: float | None
+    annualized_volatility: float | None
+    sharpe_ratio: float | None
+    sortino_ratio: float | None
+    hit_rate: float | None
+    coverage_ratio: float | None
+    exposure_stability: float | None
+    benchmark_relative_return: float | None
+    benchmark_comparison_status: str
+    warmup_period_count: int
+    oos_stability_status: str
     limitation_flags: tuple[str, ...]
 
     def to_dict(self) -> dict[str, Any]:
@@ -325,6 +338,18 @@ class BacktestSummary:
             "cumulative_return": self.cumulative_return,
             "average_turnover_proxy": self.average_turnover_proxy,
             "max_drawdown": self.max_drawdown,
+            "annualized_return": self.annualized_return,
+            "period_volatility": self.period_volatility,
+            "annualized_volatility": self.annualized_volatility,
+            "sharpe_ratio": self.sharpe_ratio,
+            "sortino_ratio": self.sortino_ratio,
+            "hit_rate": self.hit_rate,
+            "coverage_ratio": self.coverage_ratio,
+            "exposure_stability": self.exposure_stability,
+            "benchmark_relative_return": self.benchmark_relative_return,
+            "benchmark_comparison_status": self.benchmark_comparison_status,
+            "warmup_period_count": self.warmup_period_count,
+            "oos_stability_status": self.oos_stability_status,
             "limitation_flags": self.limitation_flags,
         }
 

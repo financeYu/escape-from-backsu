@@ -1,8 +1,10 @@
 """Conservative Backtest MVP runner owned by Quant_mvp.
 
 This module evaluates frozen upstream ranking snapshots against OHLCV prices.
-It does not call score formula modules, mutate upstream ranking/report outputs,
-or use valuation/fundamental data.
+It is a ranking snapshot top_n conservative evaluator: selection is rank-based,
+equal-weight, and fixed holding-period. It does not execute strategy-specific
+entry/exit/risk rules, mutate upstream ranking/report outputs, or use
+valuation/fundamental data.
 """
 
 from __future__ import annotations
@@ -127,11 +129,13 @@ def _evaluate_periods(
 def _build_result_metadata(config: BacktestConfig) -> dict[str, str]:
     return {
         "step": "Step 17",
-        "engine": "conservative_backtest_core",
+        "engine": "ranking_snapshot_top_n_conservative_evaluator",
         "boundary_notice": STEP17_BACKTEST_NOTICE,
         "upstream_inputs": "Step 15/16-compatible technical snapshots are read-only",
         "valuation_fundamental_status": "deferred_to_step18",
         "selection_policy": "top_n_by_upstream_rank_only",
+        "strategy_rule_execution_status": "not_supported_by_this_runner",
+        "benchmark_walk_forward_status": "requires_separate_approved_evaluation_input",
         "weight_method": config.weight_method,
     }
 
@@ -607,10 +611,23 @@ def _build_summary(
         for result in period_results
         if result.backtest_period_return is not None
     ]
+    period_count = len(period_returns)
     mean_period_return = (
-        sum(period_returns) / len(period_returns) if period_returns else None
+        sum(period_returns) / period_count if period_returns else None
     )
     cumulative_return = _cumulative_return(period_returns)
+    periods_per_year = 252.0 / max(float(config.holding_period_days), 1.0)
+    period_volatility = _sample_stdev(period_returns)
+    annualized_return = _annualized_return(
+        cumulative_return,
+        period_count,
+        periods_per_year,
+    )
+    annualized_volatility = (
+        period_volatility * np.sqrt(periods_per_year)
+        if period_volatility is not None
+        else None
+    )
     limitation_flags = _dedupe_flags(
         (
             *DEFAULT_DATA_LIMITATION_FLAGS,
@@ -631,6 +648,26 @@ def _build_summary(
         cumulative_return=cumulative_return,
         average_turnover_proxy=_average_turnover_proxy(period_results),
         max_drawdown=_max_drawdown(period_returns),
+        annualized_return=annualized_return,
+        period_volatility=period_volatility,
+        annualized_volatility=annualized_volatility,
+        sharpe_ratio=_annualized_sharpe(
+            mean_period_return,
+            period_volatility,
+            periods_per_year,
+        ),
+        sortino_ratio=_annualized_sortino(
+            period_returns,
+            mean_period_return,
+            periods_per_year,
+        ),
+        hit_rate=_hit_rate(period_returns),
+        coverage_ratio=_coverage_ratio(period_results),
+        exposure_stability=_exposure_stability(period_results),
+        benchmark_relative_return=None,
+        benchmark_comparison_status="not_available_without_approved_benchmark_series",
+        warmup_period_count=_leading_warmup_period_count(period_results),
+        oos_stability_status="not_available_single_pass_snapshot",
         limitation_flags=limitation_flags,
     )
 
@@ -656,6 +693,84 @@ def _max_drawdown(period_returns: Sequence[float]) -> float | None:
         drawdown = (equity / peak) - 1.0
         max_drawdown = min(max_drawdown, drawdown)
     return max_drawdown
+
+
+def _sample_stdev(values: Sequence[float]) -> float | None:
+    if len(values) < 2:
+        return None
+    mean = sum(values) / len(values)
+    variance = sum((value - mean) ** 2 for value in values) / (len(values) - 1)
+    return float(np.sqrt(variance))
+
+
+def _annualized_return(
+    total_return: float | None,
+    period_count: int,
+    periods_per_year: float,
+) -> float | None:
+    if total_return is None or period_count < 1 or total_return <= -1.0:
+        return None
+    return (1.0 + total_return) ** (periods_per_year / period_count) - 1.0
+
+
+def _annualized_sharpe(
+    mean_period_return: float | None,
+    period_volatility: float | None,
+    periods_per_year: float,
+) -> float | None:
+    if mean_period_return is None or period_volatility is None or period_volatility == 0.0:
+        return None
+    return (mean_period_return / period_volatility) * float(np.sqrt(periods_per_year))
+
+
+def _annualized_sortino(
+    period_returns: Sequence[float],
+    mean_period_return: float | None,
+    periods_per_year: float,
+) -> float | None:
+    if mean_period_return is None:
+        return None
+    downside = [min(0.0, value) for value in period_returns if value < 0.0]
+    downside_deviation = _sample_stdev(downside)
+    if downside_deviation is None or downside_deviation == 0.0:
+        return None
+    return (mean_period_return / downside_deviation) * float(np.sqrt(periods_per_year))
+
+
+def _hit_rate(period_returns: Sequence[float]) -> float | None:
+    if not period_returns:
+        return None
+    return sum(1 for value in period_returns if value > 0.0) / len(period_returns)
+
+
+def _coverage_ratio(period_results: Sequence[BacktestPeriodResult]) -> float | None:
+    selected = sum(period.selected_security_count for period in period_results)
+    if selected == 0:
+        return None
+    valid = sum(period.valid_security_count for period in period_results)
+    return valid / selected
+
+
+def _exposure_stability(period_results: Sequence[BacktestPeriodResult]) -> float | None:
+    exposures = [float(period.valid_security_count) for period in period_results]
+    if len(exposures) < 2:
+        return None
+    mean_exposure = sum(exposures) / len(exposures)
+    if mean_exposure == 0.0:
+        return None
+    volatility = _sample_stdev(exposures)
+    if volatility is None:
+        return None
+    return max(0.0, 1.0 - min(1.0, volatility / mean_exposure))
+
+
+def _leading_warmup_period_count(period_results: Sequence[BacktestPeriodResult]) -> int:
+    count = 0
+    for period in period_results:
+        if period.backtest_period_return is not None and period.valid_security_count > 0:
+            break
+        count += 1
+    return count
 
 
 def _average_turnover_proxy(

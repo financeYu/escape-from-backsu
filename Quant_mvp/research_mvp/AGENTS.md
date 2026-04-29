@@ -16,7 +16,6 @@ It runs before:
 This agent does not adopt scores.
 This agent does not backtest.
 This agent does not optimize trading strategies.
-This agent does not claim alpha.
 This agent does not perform valuation review.
 
 Its job is to collect approved research metadata, normalize papers, classify paper-derived ideas, create conservative EvidenceCards, and route those cards to the correct downstream agent.
@@ -54,10 +53,9 @@ Valuation and fundamental review remains separated in the root Codex skill:
 
 This agent may classify research as `technical`, `valuation`, `hybrid`, `diagnostic`, or `out_of_scope`, but it must not collapse those labels into the main technical `score_branch`.
 
-The broader `Quant_mvp` score-governance lane consumes this project's
+The broader `Quant_mvp` evidence-governance lane consumes this project's
 EvidenceCards and handoff files through an explicit intake contract. That
-contract does not turn EvidenceCards into score definitions or adoption
-decisions.
+contract does not turn EvidenceCards into adoption decisions.
 
 Allowed downstream routes:
 
@@ -79,7 +77,7 @@ If a task appears to require work beyond research ingestion, stop before editing
 
 Beyond-scope work includes:
 
-- score definition adoption, Research Tester implementation, normalization implementation, composite scoring, ranking, backtest, or optimization
+- downstream implementation, Research Tester implementation, backtest, or optimization
 - valuation/fundamental review, valuation verdicts, or point-in-time financial availability decisions
 - scanner runtime, chart rendering, CLI, GUI, data cache, or report-generation behavior outside research ingestion
 - root-owned policy, release, CI, Git, roadmap verdict, or cross-project routing decisions
@@ -154,8 +152,7 @@ Avoid:
 - `likely robust` without evidence
 - `cheap` when only price data exists
 - `value` when no valuation data exists
-- `adopted score` during research ingestion
-- `proven alpha` based only on paper claims
+- `adopted candidate` during research ingestion
 - `valuation-supported` without point-in-time valuation data
 
 ---
@@ -165,20 +162,19 @@ Avoid:
 When root/master delegates post-Step20 work, accept the compact task packet in
 `../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
 
-For research-ingestion work, this packet does not authorize score adoption,
-Research Tester implementation, normalization, composite scoring, ranking,
-backtest, valuation verdicts, scanner runtime changes, report behavior changes,
-or data-ingestion expansion unless the concrete post-MVP task explicitly assigns
-that scope. If the task is blank or would cross those boundaries, stop and
-report the needed clarification or root/master approval.
+For research-ingestion work, this packet does not authorize adoption decisions,
+Research Tester implementation, backtest, valuation verdicts, scanner runtime
+changes, or data-ingestion expansion unless the concrete post-MVP task
+explicitly assigns that scope. If the task is blank or would cross those
+boundaries, stop and report the needed clarification or root/master approval.
 
 Root/master may separately assign MVP v0.1 pre-freeze readiness research notes
 for future markets or asset classes. That work may clarify query labels,
 classification notes, or handoff routing for KOSDAQ, futures, options, or
 NASDAQ/overseas material, but it is Step 20 closure/freeze preparation only,
 not Step 21 entry. It remains upstream evidence preparation and must not enable
-scanner runtime, data ingestion, derivative logic, score adoption, ranking,
-backtest, valuation verdicts, or alpha claims.
+scanner runtime, data ingestion, derivative logic, adoption decisions, backtest,
+valuation verdicts, or alpha claims.
 
 Final reports must use the Korean sections defined in the packet.
 
@@ -234,8 +230,8 @@ MVP should prioritize metadata and abstracts.
 PDF fulltext download is allowed when open-access status, noncommercial license
 policy, source terms, and storage policy are explicit.
 The download path must remain opt-in at CLI/runtime, license-aware, and local
-custody only; it must not imply external upload, redistribution, score adoption,
-ranking, backtest, valuation review, or trading claims.
+custody only; it must not imply external upload, redistribution, adoption
+decisions, backtest, valuation review, or trading claims.
 
 ## Local research data custody and copyright policy
 
@@ -261,11 +257,10 @@ even when they are required for review or provenance.
 
 ## Non-goals
 
-Do not implement trading scores.
+Do not implement downstream trading logic.
 Do not implement backtests.
 Do not calculate forward returns for paper validation.
-Do not create final composite scores.
-Do not select adopted scores.
+Do not make downstream adoption decisions.
 Do not optimize strategy parameters.
 Do not scrape Google Scholar search result pages, citation pages, author pages, or pagination.
 Do not automate requests to `scholar.google.com`.
@@ -317,7 +312,7 @@ Rules:
 - `diagnostic` papers must be routed to `diagnostic_backlog`.
 - `out_of_scope` papers must be routed to `reject_log`.
 - The ingestion agent must not produce `score_branch: valuation` for the main technical Score Architect.
-- The ingestion agent must not create adopted scores.
+- The ingestion agent must not create adopted candidates.
 - The ingestion agent must not perform valuation review.
 
 ---
@@ -465,7 +460,7 @@ Google Scholar is not an approved direct metadata source. It may be used only as
 
 For the first MVP implementation, fully implementing arXiv and OpenAlex is acceptable. Crossref, Semantic Scholar, and NBER may be added as enrichment or metadata adapters later.
 
-For explicitly noncommercial research use, licensed metadata/abstract candidates may be collected when the license clearly allows noncommercial use, such as CC BY-NC family licenses. This does not authorize PDF/fulltext download, paywalled access, score adoption, valuation review, backtest, or alpha claims.
+For explicitly noncommercial research use, licensed metadata/abstract candidates may be collected when the license clearly allows noncommercial use, such as CC BY-NC family licenses. This does not authorize PDF/fulltext download, paywalled access, adoption decisions, valuation review, backtest, or alpha claims.
 
 Every source adapter must have:
 
@@ -837,11 +832,10 @@ Rules:
 
 Every candidate idea must be exported as an EvidenceCard before downstream review.
 
-EvidenceCards are not score definitions.
 EvidenceCards are not backtest results.
 EvidenceCards are not adoption decisions.
 EvidenceCards are not valuation verdicts.
-EvidenceCards must not activate score definition, score adoption, ranking, backtest, or valuation review behavior.
+EvidenceCards must not activate adoption decisions, backtest, or valuation review behavior.
 Only technical candidates that satisfy the handoff contract may be routed to the Quant Score Architect.
 
 ```yaml
@@ -1110,7 +1104,7 @@ Rules:
 - `--allow-pdf` must require explicit policy confirmation.
 - Scholar import commands must read local inputs only and must not call `scholar.google.com`.
 - Scholar resolution commands may call only approved metadata APIs.
-- `refresh` must preserve existing normalized papers, compare newly collected candidates against the current corpus, write a new-only artifact, regenerate EvidenceCards/reports, and avoid score adoption, backtest, valuation scoring, PDF fulltext, and Google Scholar live requests.
+- `refresh` must preserve existing normalized papers, compare newly collected candidates against the current corpus, write a new-only artifact, regenerate EvidenceCards/reports, and avoid adoption decisions, backtest, valuation scoring, PDF fulltext, and Google Scholar live requests.
 
 ## Periodic refresh policy
 
@@ -1124,7 +1118,7 @@ Rules:
 - The run must write a new-only artifact so reviewers can inspect which papers were added since the previous corpus state.
 - Unresolved Scholar seeds may be rechecked only through approved metadata APIs, never through direct Scholar scraping.
 - `fundamental_valuation` refresh should remain opt-in while valuation/fundamental scoring is deferred.
-- Refresh reports must state that no score adoption, backtest, alpha validation, or valuation review occurred.
+- Refresh reports must state that no adoption decision, backtest, alpha validation, or valuation review occurred.
 
 ## Research scope expansion policy
 
@@ -1139,7 +1133,7 @@ Required boundary phrases:
 - Scholar seeds are discovery inputs only.
 - PDF fulltext download is license-aware and limited to explicitly allowed
   noncommercial/open-access candidates.
-- Financial/fundamental data must not enter technical_composite_score or final_composite_score.
+- Financial/fundamental data must not be treated as technical evidence.
 
 Expanded query-set metadata must live in `config/research_queries.toml` and include:
 
@@ -1171,6 +1165,16 @@ No additional external source adapter beyond the approved configured list is all
 ---
 
 ## Testing requirements
+
+Run pytest from the repository root with the parent workspace interpreter:
+
+```powershell
+.venv\Scripts\python.exe -m pytest ...
+```
+
+Do not install pytest separately inside `Quant_mvp/research_mvp` or user-site
+paths. The root `.venv` is the shared validation environment with Codex
+sandbox ACLs and workspace-local temp handling.
 
 The MVP implementation must include tests for:
 
@@ -1278,7 +1282,7 @@ A research-ingestion task is done only if:
 - implementation readiness is explicit
 - Korean ingestion report is generated
 - handoff artifacts are exportable
-- no score adoption occurred
+- no adoption decision occurred
 - no backtest occurred
 - no alpha claim was made
 - limitations are stated explicitly

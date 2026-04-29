@@ -159,7 +159,7 @@ other project areas from an internal review task.
 - unknown:
 
 [판정]
-ACCEPT / HOLD / REJECT
+ACCEPT / DEFER / REJECT
 
 [Master에 전달할 요약]
 - ...

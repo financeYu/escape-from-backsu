@@ -25,8 +25,6 @@ Before any future activation task can be considered:
 - The packet must list unresolved blockers and required reviews.
 - No-feedback checks must pass.
 - Generated-output boundaries must be reviewed.
-- Runtime score, ranking, and report semantics must be reviewed through
-  `score-runtime-semantics-gate` if touched.
 - Candidate ML or probability inputs must route through
   `quant-candidate-ml-gate` if touched.
 - Subproject-wide audit or scope-watchdog work must route through
@@ -36,15 +34,7 @@ Before any future activation task can be considered:
 ## Still Blocked Here
 
 - automatic production activation
-- trading recommendations
-- buy/sell/hold wording
-- expected-return claims
-- proven-alpha claims
-- production ranking/report changes without explicit runtime semantic approval
-- `final_composite_score` replacement without explicit root and semantic gate
-  approval
-- backtest metrics as direct runtime model features, score weights, ranking
-  inputs, or automatic production activation triggers
+- backtest metrics as automatic production activation triggers
 
 ## Adoption vs Operational Adoption
 

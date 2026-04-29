@@ -50,9 +50,9 @@ require_grep 'current project authority|project authority' "docs/root_hard_stops
 require_grep 'prob_up_1d_candidate' "docs/root_hard_stops.md"
 require_grep 'candidate-only|candidate ML|candidate probability' "docs/root_hard_stops.md"
 require_grep '\.agents/skills/quant-candidate-ml-gate/SKILL\.md' "docs/root_hard_stops.md"
-require_grep 'technical_composite_score' "docs/root_hard_stops.md"
-require_grep 'final_composite_score' "docs/root_hard_stops.md"
-require_grep 'Trading recommendations|trading recommendations|b[u]y/s[e]ll/h[o]ld' "docs/root_hard_stops.md"
+require_grep 'live trading|order generation|brokerage' "docs/root_hard_stops.md"
+require_grep 'Valuation/fundamental scoring activation' "docs/root_hard_stops.md"
+require_grep 'New market-data ingestion|new market-data ingestion' "docs/root_hard_stops.md"
 
 require_grep 'v0\.2 predictive probability score route' "docs/roadmap_status.md"
 require_grep 'prob_up_1d_candidate' "docs/roadmap_status.md"
@@ -103,10 +103,8 @@ require_grep 'generation_implemented_in_gate_1 = false' "$GATE1_CONFIG"
 require_grep 'feeds_production_ranking = false' "$GATE1_CONFIG"
 require_grep 'feeds_reports = false' "$GATE1_CONFIG"
 require_grep 'feeds_composite_scores = false' "$GATE1_CONFIG"
-require_grep 'replace_technical_composite_score = false' "$GATE1_CONFIG"
-require_grep 'replace_final_composite_score = false' "$GATE1_CONFIG"
 
-for pattern in label target future forward_return next_day_return realized_return backtest evaluation generated_report report_output ranking_output candidate_sidecar technical_composite_score final_composite_score; do
+for pattern in label target future forward_return next_day_return realized_return backtest evaluation generated_report report_output ranking_output candidate_sidecar; do
   require_grep "\"$pattern\"" "$GATE1_CONFIG"
 done
 

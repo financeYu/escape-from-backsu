@@ -8,7 +8,7 @@ Owner lane: Quant_mvp governance with root boundary review.
 This contract defines how a `StrategyHypothesis` is registered as a
 `StrategyCandidate`. Registration means the idea is structured enough for
 candidate-only backtest/simulation evaluation. It is not an adoption decision,
-not a production signal, and not a trading recommendation.
+and not a production signal.
 
 ## Registry Boundary
 
@@ -27,10 +27,7 @@ Blocked:
 - implementation of entry/exit/risk logic
 - backtest execution or historical result recording inside the registry artifact
 - automatic adoption from backtest results
-- production ranking or report connection
-- `technical_composite_score` changes
-- `final_composite_score` replacement or silent redefinition
-- investment recommendation wording
+- automatic production activation from backtest results
 
 ## Proposed Registry Path
 
@@ -68,8 +65,6 @@ Required lineage and dependency fields:
 - `blocked_by`: list of unresolved blockers; empty only when status is
   `registered` or `evaluable`.
 - `scope_boundary_ref`: route or hard-stop document path.
-- `v0_1_boundary_check`: confirmation that frozen MVP v0.1 score/ranking/report
-  behavior is unchanged.
 - `v0_2_boundary_check`: confirmation that `prob_up_1d_candidate` is not
   replaced, reinterpreted, or used as an automatic selector.
 
@@ -87,10 +82,9 @@ Required candidate structure fields:
 - `evaluation_artifact_plan`: proposed later output path for evaluation
   evidence.
 - `no_feedback_boundary`: explicit statement that evaluation metrics must not
-  feed score weights, model features, ranking inputs, or automatic adoption.
-- `forbidden_claim_check`: confirmation that recommendation, profitability,
-  expected-return, and proven-alpha claims are absent except in blocked wording
-  policy.
+  trigger automatic production activation.
+- `production_boundary_check`: confirmation that automatic production
+  activation claims are absent.
 
 Optional fields:
 
@@ -140,19 +134,13 @@ Blocked transitions:
 
 - any status -> production activation
 - any status -> automatic adoption
-- any status -> `final_composite_score` replacement
-- any status -> production ranking/report connection
 
 ## Candidate-Only Boundary
 
 StrategyCandidate registry records must stay separate from v0.1 and v0.2:
 
-- Do not modify `technical_composite_score`.
-- Do not redefine or replace `final_composite_score`.
-- Do not connect candidates to production ranking or report behavior.
-- Do not use candidate registry status as a ranking input.
-- Do not use backtest or evaluation metrics as production model features, score
-  weights, ranking inputs, or automatic production activation triggers.
+- Do not use backtest or evaluation metrics as automatic production activation
+  triggers.
 - Do not reinterpret `prob_up_1d_candidate` as a strategy selector without a
   later candidate ML gate approval.
 - Route any probability-sidecar, feature-table, label, training/evaluation, or
@@ -177,7 +165,6 @@ source_refs = ["docs/extension/v0_3/strategy_hypotheses/example.md"]
 dependency = ["docs/extension/v0_3_strategy_candidate_registry_contract.md"]
 blocked_by = ["not_yet_reviewed"]
 scope_boundary_ref = "docs/extension/v0_3_research_to_strategy_adoption_route.md"
-v0_1_boundary_check = "no_v0_1_score_ranking_report_change"
 v0_2_boundary_check = "no_prob_up_1d_reinterpretation"
 required_data = ["daily_ohlcv_candidate_review_only"]
 universe = "KOSPI200_candidate_only"
@@ -186,8 +173,8 @@ entry_exit = "conceptual_entry_exit_review_only"
 risk_rule = "conceptual_risk_boundary_only"
 evaluation_criteria = ["later_approved_historical_evaluation_contract_required"]
 evaluation_artifact_plan = "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/example.md"
-no_feedback_boundary = "evaluation_metrics_must_not_feed_scores_models_rankings_or_auto_adoption"
-forbidden_claim_check = "no_recommendation_profitability_expected_return_or_proven_alpha_claim"
+no_feedback_boundary = "evaluation_metrics_must_not_trigger_auto_activation"
+production_boundary_check = "no_automatic_production_activation_claim"
 ```
 
 ## Schema Validation Proposal
@@ -203,11 +190,9 @@ Minimum validation should check:
 - `blocked_by` is non-empty when status is `draft` or `blocked`
 - `blocked_by` is empty when status is `registered` or `evaluable`
 - forbidden status jumps are not represented as registry states
-- forbidden wording is absent except inside explicit blocked-wording policy or
-  claim-check fields
-- no field points to production ranking/report output as an active connection
-- no field changes `technical_composite_score`, `final_composite_score`, or
-  `prob_up_1d_candidate` semantics
+- production-boundary wording is absent except inside explicit blocked-policy
+  or boundary-check fields
+- no field changes `prob_up_1d_candidate` semantics
 
 Suggested command shape for Quant_mvp-owned validation:
 
@@ -226,5 +211,4 @@ A candidate may be marked `evaluable` only when:
 - evaluation criteria are declared before any evaluation run
 - dependency and blocker fields are resolved
 - v0.1 and v0.2 boundary checks pass
-- no investment recommendation, adoption decision, or production connection is
-  present
+- no adoption decision or production connection is present

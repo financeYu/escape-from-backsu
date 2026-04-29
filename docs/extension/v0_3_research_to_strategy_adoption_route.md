@@ -20,8 +20,7 @@ available.
   supported by the adopted-candidate evidence.
 
 This route is about evidence, comparison, and adoption review. It is not live
-trading, not a brokerage connection, not a production ranking/report route, not
-a final score replacement, and not a future-performance guarantee.
+trading, not a brokerage connection, and not automatic production activation.
 
 ## Route Flow
 
@@ -192,9 +191,7 @@ Allowed outputs:
 Blocked outputs:
 
 - production activation
-- production ranking/report connection
-- trading recommendation language
-- automatic score replacement
+- automatic production activation from evidence
 - automatic model or strategy activation trigger
 
 ## Artifact Paths
@@ -219,9 +216,6 @@ small review fixtures.
 
 v0.3 must not invade the frozen v0.1 baseline:
 
-- Do not modify `technical_composite_score`.
-- Do not silently redefine MVP v0.1 `final_composite_score`.
-- Do not change production ranking or report behavior.
 - Do not expand the KOSPI200 universe without later explicit approval.
 - Do not add new market-data ingestion assumptions without later explicit
   approval.
@@ -231,8 +225,8 @@ v0.3 must not invade the v0.2 `prob_up_1d_candidate` route:
 - Do not replace or reinterpret `prob_up_1d_candidate`.
 - Do not treat v0.2 probability output as a strategy selector unless a later
   candidate ML gate explicitly approves that input contract.
-- Do not feed historical evaluation metrics into v0.2 model features, score
-  weights, ranking inputs, or automatic selector triggers.
+- Do not feed historical evaluation metrics into automatic production
+  activation triggers.
 - Route any probability-sidecar, feature-table, training/evaluation, leakage,
   or label-separated pipeline work through
   `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
@@ -282,7 +276,7 @@ Gate:
 Exit evidence:
 
 - research packet or StrategyHypothesis intake artifact
-- no adoption, ranking, report, live trading, or performance-guarantee claims
+- no adoption, ranking, report, live trading, or production activation claims
 
 ### Stage 3: Candidate Registry
 
@@ -300,8 +294,6 @@ Allowed:
 Gate:
 
 - `quant-strategy-adoption-gate`
-- `score-runtime-semantics-gate` if runtime score/ranking/report semantics are
-  touched
 - `quant-review-gate`
 
 Exit evidence:
@@ -331,7 +323,7 @@ Exit evidence:
 
 - EvaluationEvidence packet
 - comparison summary, if requested
-- no production score, ranking, report, model-feature, or activation feedback
+- no automatic production activation feedback
 
 ### Stage 5: ML or Evaluation Selector
 
@@ -348,8 +340,6 @@ Gate:
 
 - `quant-strategy-adoption-gate`
 - `quant-candidate-ml-gate` if `prob_up_1d_candidate` inputs are used
-- `score-runtime-semantics-gate` if runtime score/ranking/report semantics are
-  touched
 - `quant-review-gate`
 
 Exit evidence:
@@ -387,17 +377,7 @@ Exit evidence:
 - live trading
 - brokerage integration
 - order generation
-- production ranking or report connection
-- `technical_composite_score` changes
-- `final_composite_score` replacement or silent redefinition
 - valuation/fundamental scoring activation
 - data-ingestion expansion without later approval
 - universe expansion without later approval
-- backtest metrics as production score weights, production ranking inputs,
-  runtime model features, or automatic production activation triggers
-- trading recommendations
-- buy/sell/hold wording
-- expected-return promises
-- proven-alpha claims
-- profitability-proof wording
-- future-performance guarantees
+- backtest metrics as automatic production activation triggers

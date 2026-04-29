@@ -7,9 +7,8 @@ Owner lane: Backtest evaluation with root no-feedback review.
 
 This contract defines how a `StrategyCandidate` is evaluated against historical
 data after a separate approved owner-lane task. Evaluation output is
-evidence-only. It is not production ranking input, not a `final_composite_score`
-input, not a runtime model feature, not an adoption decision, and not proof of
-future profitability.
+evidence-only. It is not an adoption decision, not automatic production
+activation, and not proof of future profitability.
 
 ## Evaluation Boundary
 
@@ -24,18 +23,13 @@ Allowed:
   performance summaries as evidence-only artifacts
 - define no-lookahead, point-in-time, and generated-output checks
 - maintain evidence-only comparison report paths
-- maintain document or validator gates that block feedback into scoring,
-  ranking, model features, or automatic adoption
+- maintain document or validator gates that block automatic production
+  activation from evidence
 
 Blocked:
 
-- production ranking reflection
-- `final_composite_score` reflection
-- score optimization from backtest results
-- runtime model feature creation from backtest metrics
+- automatic production activation from backtest results
 - live trading or real-trade connection
-- profitability-proof wording
-- trading recommendations
 
 ## Proposed Artifact Paths
 
@@ -87,7 +81,7 @@ Required evaluation design fields:
   `not_applicable_for_contract_only`.
 - `risk_metrics`: predeclared risk metrics to report, not optimize against.
 - `performance_metrics`: predeclared historical performance metrics to report
-  as evidence, not as future-performance promises.
+  as evidence.
 - `comparison_group`: candidate IDs or cohort labels used for evidence-only
   comparison.
 - `evaluation_method_ref`: path to later approved runner/schema contract.
@@ -100,17 +94,13 @@ Required safety check fields:
 - `generated_output_check`: confirms outputs are generated artifacts, not
   default context or source-controlled runtime inputs unless explicitly
   promoted as review fixtures.
-- `no_feedback_check`: confirms results do not feed production scoring,
-  ranking, report behavior, model features, score weights, or automatic
-  adoption.
-- `v0_1_boundary_check`: confirms frozen MVP v0.1 score/ranking/report behavior
-  is unchanged.
+- `no_feedback_check`: confirms results do not trigger automatic production
+  activation.
 - `v0_2_boundary_check`: confirms `prob_up_1d_candidate` is not replaced,
   reinterpreted, or trained from evaluation metrics.
 - `failure_flags`: explicit failure or invalidation flags.
-- `forbidden_claim_check`: confirms profitability-proof, expected-return,
-  proven-alpha, and recommendation claims are absent except in blocked wording
-  policy.
+- `production_boundary_check`: confirms automatic production activation claims
+  are absent.
 
 Optional evidence fields after a separately approved run:
 
@@ -136,7 +126,7 @@ Suggested failure flags:
 - `performance_metric_missing`
 - `risk_metric_missing`
 - `candidate_contract_mismatch`
-- `unsupported_profitability_claim`
+- `unsupported_production_activation_claim`
 - `production_connection_detected`
 
 Any active failure flag must prevent `evidence_recorded` from becoming an
@@ -150,31 +140,20 @@ Candidate comparison reports must be separated from production outputs:
 - They live under `Quant_mvp/backtest_mvp/docs/v0_3_candidate_comparison/` or
   `Quant_mvp/backtest_mvp/reports/v0_3/evidence_only/`.
 - They compare candidates only for review context.
-- They must not write production ranking files.
-- They must not write `final_composite_score` fields.
-- They must not export model feature tables.
-- They must not contain recommendation, expected-return, proven-alpha, or
-  profitability-proof claims.
+- They must not contain automatic production activation claims.
 
 Required report disclaimer:
 
-`This comparison report is evidence-only. It is not a production ranking input, not a final score input, not a model feature source, not an adoption decision, and not proof of future profitability.`
+`This comparison report is evidence-only. It is not an adoption decision and not automatic production activation.`
 
 ## No-Feedback Gate Proposal
 
 Before an evaluation evidence packet can be accepted, a document or validator
 gate should check:
 
-- no output path points to production ranking or report directories
-- no output schema includes active `technical_composite_score` or
-  `final_composite_score` writes
-- no output schema exports evaluation metrics as runtime model features
 - no registry or candidate status changes automatically from metric values
-- no field connects evidence metrics to score weights, ranking inputs, or model
-  training inputs
 - `no_feedback_check` is present and explicit
-- forbidden performance or recommendation language is absent except in blocked
-  wording policy
+- production-boundary language is absent except in blocked wording policy
 
 Suggested later command shape:
 
@@ -210,11 +189,10 @@ generated_output_boundary = "Quant_mvp/backtest_mvp/reports/v0_3/evidence_only/"
 no_lookahead_check = "required_before_approved_run"
 point_in_time_check = "required_before_approved_run"
 generated_output_check = "outputs_are_generated_evidence_only"
-no_feedback_check = "must_not_feed_scores_rankings_reports_models_or_auto_adoption"
-v0_1_boundary_check = "no_v0_1_score_ranking_report_change"
+no_feedback_check = "must_not_trigger_auto_activation"
 v0_2_boundary_check = "no_prob_up_1d_training_or_reinterpretation_from_evaluation_metrics"
 failure_flags = ["not_yet_run"]
-forbidden_claim_check = "no_recommendation_profitability_expected_return_or_proven_alpha_claim"
+production_boundary_check = "no_automatic_production_activation_claim"
 ```
 
 ## Acceptance Conditions
@@ -232,5 +210,4 @@ An EvaluationEvidence packet may be accepted as evidence-only only when:
 - failure flags are absent or explicitly route the packet to `invalidated` or
   `needs_more_evidence`
 - comparison report, if present, is separated as an evidence-only artifact
-- no production ranking, final score, score optimization, runtime model feature,
-  recommendation, or live-trading connection is present
+- no automatic production activation or live-trading connection is present

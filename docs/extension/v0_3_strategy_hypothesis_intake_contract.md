@@ -34,9 +34,7 @@ Blocked:
 - signal, entry, exit, sizing, or execution implementation
 - backtest execution or simulation result claims
 - superior-strategy judgment
-- production score, ranking, or report behavior changes
-- trading recommendations, buy/sell/hold wording, expected-return wording,
-  proven-alpha wording, or profitability-proof wording
+- automatic production activation
 
 ## Input and Output Paths
 
@@ -82,14 +80,14 @@ Required fields:
   adoption, or superiority language.
 - `observable_inputs`: conceptual observable inputs, not implementation fields.
 - `evaluation_question`: what a later historical evaluation contract would ask.
-- `scope_boundaries`: universe, data, score, report, and baseline limitations.
+- `scope_boundaries`: universe, data, activation, and baseline limitations.
 - `v0_1_boundary_check`: confirmation that the frozen MVP v0.1 baseline is not
   changed.
 - `v0_2_boundary_check`: confirmation that `prob_up_1d_candidate` is not
   replaced, reinterpreted, or used as a selector without a later approved gate.
 - `duplicate_check`: normalized key and nearest known related hypotheses.
-- `forbidden_claim_check`: confirmation that forbidden wording is absent except
-  when quoted as a blocked phrase.
+- `production_boundary_check`: confirmation that automatic production
+  activation wording is absent except when quoted as a blocked phrase.
 - `next_allowed_step`: one of `revise`, `reject`, or
   `request_strategy_candidate_registration`.
 - `fixed_disclaimer`: exact disclaimer from the top of this document.
@@ -125,7 +123,7 @@ as an intake limitation and must not become implementation permission.
 
 - allowed use: hypothesis drafting and later contract review
 - blocked use: model feature input, ranking input, report content, live signal,
-  production recommendation, or adoption decision
+  or adoption decision
 
 ## Research Idea to Hypothesis Rules
 
@@ -136,8 +134,8 @@ as an intake limitation and must not become implementation permission.
 5. Record source limitations and license status before scope advancement.
 6. Check v0.1 and v0.2 boundaries before `candidate_spec_ready`.
 7. Assign `rejected` if the idea requires forbidden runtime changes, forbidden
-   data ingestion, universe expansion, live trading, or trading recommendation
-   language.
+   data ingestion, universe expansion, automatic production activation, or live
+   trading.
 8. Assign `duplicate` if the normalized hypothesis key matches an existing
    active or rejected hypothesis above the duplicate threshold.
 
@@ -146,7 +144,7 @@ Examples of permitted conversions:
 | Research idea wording | StrategyHypothesis wording |
 | --- | --- |
 | "Paper reports momentum anomaly." | "Evaluate whether a momentum-conditioned candidate has historically distinct behavior under a later approved evaluation contract." |
-| "Market commentary says reversal after sharp drops." | "Evaluate whether a reversal-condition candidate is historically measurable without changing runtime score or ranking behavior." |
+| "Market commentary says reversal after sharp drops." | "Evaluate whether a reversal-condition candidate is historically measurable under a later approved evaluation contract." |
 | "A factor may improve returns." | "Evaluate whether the factor definition is measurable and reviewable as a candidate-only hypothesis." |
 
 ## Duplicate Prevention
@@ -194,22 +192,13 @@ Allowed wording:
 - `not a profitability claim`
 - `not an evaluation result`
 
-Forbidden wording as claims:
+Production-scope wording blocked by this intake contract:
 
-- `profitable`
-- `superior`
-- `best strategy`
-- `buy`
-- `sell`
-- `hold`
-- `expected return`
-- `proven alpha`
-- `market-beating`
 - `adopted`
 - `production-ready`
 
-Forbidden phrases may appear only inside blocked-wording policy, validation, or
-rejection notes.
+Production-scope phrases may appear only inside blocked-wording policy,
+validation, or rejection notes.
 
 ## Exit Criteria
 
@@ -221,5 +210,5 @@ A StrategyHypothesis intake artifact may exit this stage only when:
 - fixed disclaimer is present exactly
 - v0.1 and v0.2 boundaries are checked
 - no StrategyCandidate registration occurred inside the intake artifact
-- no backtest, ML selector, signal, entry, exit, ranking, score, or report
-  behavior was implemented or changed
+- no backtest, ML selector, signal, entry, exit, or production activation was
+  implemented or triggered

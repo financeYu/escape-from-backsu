@@ -10,7 +10,7 @@ compatibility, hard-stop, or release-evidence checks.
 
 Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE. The product goal
 is now the end-to-end strategy discovery and evidence loop, not the standalone
-v0.2 probability score route.
+v0.2 probability route.
 
 Product goal:
 
@@ -29,8 +29,6 @@ Direction lock:
 - If a task is blocked, choose the next concrete v0.3 artifact:
   `ResearchHypothesis`, `StrategyHypothesis`, `StrategyCandidate`,
   `EvaluationEvidence`, or `AdoptionCandidate`.
-- "Superior strategy" selection is evidence-preferred candidate selection for
-  review only, not a production or future-performance claim.
 
 Current baseline facts:
 
@@ -111,15 +109,8 @@ Allowed now:
 Still blocked without later explicit approval:
 
 - live trading, brokerage integration, order generation, or real-money execution
-- production ranking/report activation
-- `final_composite_score` replacement or silent redefinition
 - valuation/fundamental scoring activation
 - new market-data ingestion or universe expansion
-- backtest metrics as production score weights, production ranking inputs,
-  runtime model features, or automatic production activation triggers
-- trading recommendations, buy/sell/hold instructions, expected-return
-  promises, proven-alpha claims, profitability-proof wording, or
-  future-performance guarantees
 
 ## Parallel Workspace Policy
 
@@ -162,22 +153,17 @@ status-control workspace unless a task explicitly selects a role worktree.
 - Archived v0.1 contracts remain frozen references.
 - MVP universe remains KOSPI200 unless a later route explicitly opens another
   universe.
-- `technical_composite_score` remains technical-only as an archived/frozen
-  baseline contract.
-- v0.1 `final_composite_score` remains frozen archive reference unless a later
-  score/runtime route explicitly changes it.
 - Backtest and simulation outputs are evaluation evidence only.
 - Generated evidence reports, runtime outputs, chart images, local caches, raw
   market data, `.env`, and secrets are not default context.
-- v0.3 evidence must not feed production scoring, ranking, report behavior,
-  runtime model features, or automatic activation.
+- v0.3 evidence must not become automatic production activation.
 
 ## Research Ingestion State
 
 - Research ingestion now supports v0.3 idea intake and StrategyHypothesis
   drafting.
-- EvidenceCards remain evidence/provenance records, not score definitions,
-  adoption decisions, or proof of future performance.
+- EvidenceCards remain evidence/provenance records, not score definitions or
+  adoption decisions.
 - Paper-reported backtests are diagnostic metadata until reproduced through an
   approved v0.3 evaluation lane.
 - PDF full-text download remains subject to license, source/access, and local
@@ -190,15 +176,10 @@ status-control workspace unless a task explicitly selects a role worktree.
 - config-first implementation
 - documented strategy candidate before evaluation
 - predeclared evaluation criteria before backtest/simulation
-- no feedback from evaluation evidence into production scores, rankings,
-  reports, model features, or automatic activation
-- no active valuation/fundamental scoring while valuation status is
+- no automatic production activation from evaluation evidence
+- no active valuation/fundamental activation while valuation status is
   candidate-only
-- no financial/fundamental data in `technical_composite_score`
-- no financial/fundamental data in `final_composite_score`
 - no price-only evidence as valuation language
-- no trading recommendation, proven-alpha, expected-return promise,
-  profitability-proof wording, or future-performance guarantee
 
 ## Detailed History Locations
 

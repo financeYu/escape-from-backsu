@@ -7,9 +7,9 @@ for the Quant project.
 
 This is a Quant-dependent subproject. It may evaluate frozen technical ranking
 snapshots against OHLCV price inputs and produce backtest-specific result
-objects or generated evaluation artifacts. It must not redefine scores,
-normalization, adoption decisions, ranking semantics, report semantics,
-valuation/fundamental scoring, or data ingestion.
+objects or generated evaluation artifacts. It must not make adoption decisions,
+activate valuation/fundamental scoring, expand data ingestion, or trigger
+production activation.
 
 Legacy imports through `src.backtest` are compatibility facades only. New code
 should import `Quant_mvp.backtest_mvp`.
@@ -25,13 +25,10 @@ should import `Quant_mvp.backtest_mvp`.
 
 ## Forbidden Work
 
-- feeding realized backtest results into score, adoption, ranking, or report
-  construction
-- tuning score formulas, weights, thresholds, or ranking criteria from
-  backtest results
+- feeding realized backtest results into automatic production activation
+- tuning production behavior from backtest results
 - activating valuation/fundamental scoring or point-in-time financial data
-- claiming alpha, profitability, expected returns, valuation, target prices, or
-  trading recommendations
+- activating valuation conclusions or target-price workflows
 - committing generated reports, raw market data, caches, chart images, or
   ad-hoc local exports
 
@@ -40,5 +37,7 @@ should import `Quant_mvp.backtest_mvp`.
 Preferred focused validation from the repository root:
 
 ```powershell
-python -m pytest -q tests/backtest tests/validation/test_step19_pipeline_guardrails.py
+.venv\Scripts\python.exe -m pytest -q tests/backtest tests/validation/test_step19_pipeline_guardrails.py
 ```
+
+Use the parent root `.venv`; do not install pytest in this subproject.

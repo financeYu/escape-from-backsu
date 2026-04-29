@@ -62,8 +62,7 @@ v0.3 is focused on the end-to-end strategy discovery and evidence loop:
   supported by the adopted-candidate evidence
 
 These goals are evidence and review goals. They do not by themselves authorize
-live trading, investment recommendations, production ranking/report changes, or
-future-performance guarantees.
+live trading or production activation.
 
 ## Direction Lock
 
@@ -77,10 +76,40 @@ future-performance guarantees.
 - A gate must return a concrete v0.3 next action or `NEEDS FIX`; it must not
   loop through archived v0.1/v0.2 context unless the task names a
   provenance/regression/compatibility check.
-- "Superior strategy" language means evidence-preferred candidate selection
-  inside v0.3 review. It must not be interpreted as a production claim,
-  trading recommendation, proven alpha, expected return, or future-performance
-  guarantee.
+
+## Decision Output Discipline
+
+Judgment-style root responses must start with a concrete conclusion. The
+conclusion must be one of:
+
+- `proceed`
+- `blocked`
+- `defer`
+- `separate approval required`
+
+"May be possible", "needs review", and "depends on the situation" are not valid
+standalone conclusions. If uncertainty exists, convert it into explicit
+validation items, blocking conditions, or the next required task.
+
+The v0.3 strategy evaluation and adoption flow must converge toward a
+review-preferred strategy candidate under the available evidence. If the
+available evidence does not support selecting one candidate, the gate must say
+`selection unavailable / evidence insufficient`, name the missing evidence, and
+name the single highest-priority next task. Do not close with an open-ended
+"multiple candidates remain possible" conclusion.
+
+At minimum, review-preferred candidate selection must consider:
+
+- performance relative to the benchmark
+- risk-adjusted performance
+- drawdown
+- volatility
+- turnover
+- exposure stability
+- cost/slippage sensitivity
+- leakage and no-lookahead risk
+- overfitting risk
+- walk-forward or out-of-sample stability
 
 ## Authorized Active Scope
 
@@ -92,7 +121,7 @@ The active v0.3 route authorizes candidate/evidence work only:
 - candidate-only strategy definition artifacts with conceptual signal,
   entry/exit, risk-rule, and evaluation criteria fields
 - approved-lane backtest or simulation execution that writes
-  `EvaluationEvidence` only, with no production score/ranking/report feedback
+  `EvaluationEvidence` only
 - evidence-only historical return, risk, drawdown, volatility, turnover, and
   comparison summaries for candidate review
 - ML or rule-based selector/evaluator work that consumes allowlisted candidate
@@ -107,22 +136,7 @@ The active v0.3 route authorizes candidate/evidence work only:
 - New market-data ingestion or live vendor assumptions.
 - Live trading, brokerage integration, order generation, or real-money
   execution.
-- Production ranking activation or ranking generation unless a later active
-  route explicitly authorizes it.
-- Production report behavior changes unless a later active route explicitly
-  authorizes them.
-- Runtime score semantic changes outside an approved score/runtime gate.
-- `final_composite_score` replacement or silent score redefinition.
-- Financial/fundamental data in `technical_composite_score` or
-  `final_composite_score`.
 - Valuation/fundamental scoring activation.
-- Backtest metrics as production score weights, production ranking inputs,
-  runtime model features, or automatic production activation triggers.
-- Backtest feedback into v0.1/v0.2 scoring, ranking, or model feature
-  construction.
-- Trading recommendations, buy/sell/hold instructions, proven-alpha claims,
-  expected-return promises, profitability-proof wording, or future-performance
-  guarantees.
 
 ## Route Ownership
 
@@ -163,8 +177,8 @@ Generated reports, runtime outputs, chart images, caches, raw market data,
 unless explicitly promoted as small review fixtures.
 
 v0.3 evidence-only outputs may be generated under documented evidence paths,
-but they must not become production score, ranking, report, model-feature, or
-activation inputs without a later explicit route approval.
+but they must not become automatic production activation inputs without a later
+explicit route approval.
 
 GPT-facing references under `docs/context/gpt/` are not refreshed by default.
 Refresh them only when the user explicitly requests a GPT or ChatGPT context

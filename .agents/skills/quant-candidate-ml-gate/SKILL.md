@@ -1,6 +1,6 @@
 ---
 name: quant-candidate-ml-gate
-description: "Use for master_mvp post-MVP v0.2 candidate ML probability gate work: prob_up_1d_candidate, candidate-only predictive probability outputs, feature table scope checks, label-separated training/evaluation checks, leakage checks, and repeatable gate contract validation. Do not use for production ranking activation, report behavior changes, final_composite_score replacement, valuation/fundamental scoring, data-ingestion expansion, or trading recommendation work."
+description: "Use for master_mvp archived/supporting v0.2 candidate ML probability compatibility work: prob_up_1d_candidate, candidate-only predictive probability outputs, feature table scope checks, label-separated training/evaluation checks, leakage checks, and repeatable gate contract validation. Do not use for production activation, valuation/fundamental scoring, data-ingestion expansion, universe expansion, live trading, or order-generation work."
 ---
 
 # Quant Candidate ML Gate
@@ -42,18 +42,12 @@ Use this skill for:
 
 Do not use this skill to authorize or implement:
 
-- production ranking activation
-- report behavior changes
-- `final_composite_score` replacement
-- `technical_composite_score` or final score semantic changes
-- valuation/fundamental scoring
-- financial/fundamental fields in technical or final composite scores
-- backtest metrics as model features
-- backtest feedback into scoring, ranking, or model construction
+- production activation
+- live trading, order generation, or brokerage integration
+- valuation/fundamental scoring activation
+- backtest metrics as automatic production activation triggers
 - new market-data ingestion
 - KOSDAQ150, futures, options, Nasdaq/overseas, or multi-universe expansion
-- trading recommendations, performance-proof claims, or forecasted-return
-  wording
 
 ## Gate Contract
 

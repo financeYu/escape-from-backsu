@@ -8,8 +8,7 @@ This packet summarizes the active v0.3 route as an evidence route, not as a
 production activation. It supports research intake, strategy candidate
 structure, candidate-only backtest/simulation evidence, selector/evaluator
 review, and adoption evidence. It does not authorize production
-ranking/report connection, `final_composite_score` replacement, live trading,
-or investment recommendations.
+activation or live trading.
 
 ## Reviewed Route Artifacts
 
@@ -60,17 +59,13 @@ Flow meaning:
 
 v0.1 frozen baseline:
 
-- No `technical_composite_score` changes are authorized.
-- No MVP v0.1 `final_composite_score` redefinition is authorized.
-- No production ranking/report behavior change is authorized.
 - No KOSPI200 universe expansion is authorized.
 - No new market-data ingestion assumption is authorized.
 
 v0.2 `prob_up_1d_candidate` route:
 
 - No replacement or reinterpretation of `prob_up_1d_candidate` is authorized.
-- No historical evaluation metric may feed v0.2 model features, score weights,
-  ranking inputs, or automatic production activation triggers.
+- No historical evaluation metric may trigger automatic production activation.
 - Probability sidecar, feature-table, label, training/evaluation, leakage, or
   label-separated pipeline work remains routed to
   `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
@@ -85,24 +80,11 @@ Generated-output boundary:
   and secrets remain outside default context unless explicitly promoted as
   small review fixtures.
 
-## Forbidden Wording and Activation Leak Check
-
-Forbidden as claims:
-
-- buy/sell/hold
-- expected-return claims
-- proven-alpha claims
-- profitability-proof claims
-- future-superiority conclusions
-- production-ready strategy claims
+## Activation Leak Check
 
 Activation leak check:
 
 - No route document authorizes automatic production activation.
-- No route document authorizes production ranking/report connection.
-- No route document authorizes `final_composite_score` replacement.
-- No route document authorizes backtest metrics as direct runtime model
-  features.
 - No route document authorizes live trading or real-trade connection.
 - `docs/extension/v0_3_production_activation_decision_gate.md` is explicitly a
   blocked separate approval route.
@@ -114,7 +96,7 @@ Local checks run during packet closure:
 - `python -c "import tomllib; tomllib.load(open('docs/context/EXTENSION_REGISTRY.toml','rb'))"` should pass before closure.
 - `git diff --check` should pass before closure.
 - Required v0.3 artifact reference checks should pass before closure.
-- Forbidden claim phrase checks should pass before closure.
+- Production activation leak checks should pass before closure.
 - Bash-based strategy/review validators are expected to remain blocked in this
   Windows workspace when WSL/bash is unavailable.
 
@@ -125,10 +107,8 @@ candidate/evidence route.
 
 It remains blocked for:
 
-- production ranking/report changes
-- `final_composite_score` changes
 - live trading
-- investment recommendations
+- automatic production activation
 
 ## Next Approval Agenda
 

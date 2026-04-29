@@ -103,7 +103,7 @@ forbidden = [
 
 [extension.strategy_adoption_v0_3]
 state = "active_candidate_evidence_route"
-permission = "post-MVP v0.3 research-to-strategy adoption route is active for research intake, StrategyHypothesis and StrategyCandidate structure, candidate-only backtest/simulation evidence, selector/evaluator review, and AdoptionCandidate evidence packets; production activation, live trading, ranking/report connection, trading recommendations, expected-return promises, proven-alpha claims, data-ingestion expansion, universe expansion, and score replacement remain forbidden without later explicit approval"
+permission = "post-MVP v0.3 research-to-strategy adoption route is active for research intake, StrategyHypothesis and StrategyCandidate structure, candidate-only backtest/simulation evidence, selector/evaluator review, and AdoptionCandidate evidence packets; production activation, live trading, data-ingestion expansion, universe expansion, and valuation/fundamental scoring activation remain forbidden without later explicit approval"
 context = "docs/extension/v0_3_research_to_strategy_adoption_route.md"
 strategy_hypothesis_intake_contract = "docs/extension/v0_3_strategy_hypothesis_intake_contract.md"
 strategy_candidate_registry_contract = "docs/extension/v0_3_strategy_candidate_registry_contract.md"
@@ -143,12 +143,10 @@ allowed = [
 ]
 blocked = [
   "live trading or brokerage integration",
-  "production ranking activation",
-  "production report behavior connection",
-  "technical_composite_score changes",
-  "final_composite_score replacement or silent redefinition",
-  "backtest metrics as production model features, score weights, ranking inputs, or automatic production activation triggers",
-  "trading recommendations, buy/sell/hold wording, expected-return promises, proven-alpha claims, profitability-proof wording, or future-performance guarantees",
+  "data-ingestion expansion without later approval",
+  "universe expansion without later approval",
+  "valuation/fundamental scoring activation",
+  "backtest metrics as automatic production activation triggers",
 ]
 
 [extension.v0_1n_candidate_ml]

@@ -41,7 +41,6 @@ require_file "docs/roadmap_status.md"
 require_file ".agents/skills/quant-candidate-ml-gate/SKILL.md"
 require_file ".agents/skills/quant-review-gate/SKILL.md"
 require_file ".agents/skills/quant-subproject-audit-gate/SKILL.md"
-require_file ".agents/skills/score-runtime-semantics-gate/SKILL.md"
 require_file "$SKILL_FILE"
 require_file "$SCRIPT_FILE"
 
@@ -51,15 +50,11 @@ require_patterns "$SKILL_FILE" \
   'proposal/candidate-only' \
   'root_hard_stops\.md.*roadmap_status\.md|roadmap_status\.md.*root_hard_stops\.md' \
   'does not activate|does not authorize' \
-  'production ranking' \
-  'report behavior' \
-  'final_composite_score' \
-  'trading recommendations|buy/sell/hold' \
+  'live trading|order generation|brokerage integration' \
   'valuation/fundamental scoring' \
   'data-ingestion expansion|market-data ingestion' \
   'universe expansion' \
   'quant-candidate-ml-gate/SKILL\.md' \
-  'score-runtime-semantics-gate/SKILL\.md' \
   'quant-subproject-audit-gate/SKILL\.md' \
   'quant-review-gate/SKILL\.md'
 
@@ -68,10 +63,7 @@ require_patterns "AGENTS.md" \
   'active v0\.3 strategy-selection/adoption' \
   'Archived v0\.1/v0\.2 material is reference-only' \
   'root_hard_stops\.md.*roadmap_status\.md|roadmap_status\.md.*root_hard_stops\.md' \
-  'score-runtime-semantics-gate' \
-  'does not authorize.*production ranking activation|production ranking activation.*does not authorize' \
-  'final_composite_score' \
-  'trading recommendations' \
+  'live trading|order execution' \
   'data-ingestion expansion' \
   'universe expansion'
 

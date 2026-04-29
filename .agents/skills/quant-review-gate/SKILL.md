@@ -1,6 +1,6 @@
 ---
 name: quant-review-gate
-description: Use before accepting master_mvp or Quant_mvp task completion. Checks scoped changed files, forbidden boundaries, validation evidence, ranking/report/score behavior safety, trading/profitability wording, and worktree status. This is the minimal default review gate when no narrower Codex skill gate matches.
+description: Use before accepting master_mvp or Quant_mvp task completion. Checks scoped changed files, forbidden boundaries, validation evidence, and worktree status. This is the minimal default review gate when no narrower Codex skill gate matches.
 ---
 
 # Quant Review Gate
@@ -94,9 +94,8 @@ same-scope cost-aware summary before using `quant-validator-approval`; the
 review gate should not jump straight from failure to escalation.
 
 This de-duplication does not waive this gate's authority checks. The gate still
-must verify scope, forbidden-boundary safety, validation evidence, score/ranking
-and report semantics safety, skill isolation, forbidden claim language, and
-worktree status.
+must verify scope, forbidden-boundary safety, validation evidence, skill
+isolation, and worktree status.
 
 Required checks:
 
@@ -107,16 +106,10 @@ Required checks:
   status and either substituted narrowly or routed to the responsible owner
 - bash/WSL or Git Bash `Win32 error 5` validator blockers, if any, went through
   `cost-aware-review-refactor` before `quant-validator-approval`
-- production ranking, report behavior, runtime score semantics, and score
-  formulas were not changed unless explicitly authorized
-- `technical_composite_score` and `final_composite_score` were not redefined
-  unless explicitly authorized
 - project-local skill isolation was preserved: Quant gates did not become
   cross-project authority, and Quant work did not edit non-Quant skill lanes
 - selected skill authority came only from this workspace's `.agents/skills`;
   external, global, user, or plugin skills were not used for project gates
-- forbidden trading, buy/sell/hold, proven-alpha, expected-return, or
-  profitability wording was not introduced as a claim
 - worktree status is reported, including unrelated pre-existing dirty files
 
 Unrelated pre-existing dirty files do not automatically fail this gate, but
@@ -154,8 +147,7 @@ Return `PASS` only when all are true:
   advisory evidence and did not replace this gate's authority checks
 - same-scope blocked cheap checks, when provided, were separated from
   validation evidence and remaining required validators were routed or run
-- changed lines do not introduce unauthorized production ranking, report,
-  runtime score, score formula, trading, profitability, or alpha claims
+- changed lines do not introduce unauthorized production activation
 - changed lines do not let another project invade Quant gates or let Quant
   tasks modify another project skill lane without explicit approval
 - worktree status is included

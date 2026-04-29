@@ -5,9 +5,9 @@ import json
 import sys
 import tomllib
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
 DEFAULT_CONFIG_PATH = Path("Quant_mvp/config/context_snapshot.toml")
@@ -282,7 +282,11 @@ def _truncate_context(text: str, *, max_chars: int) -> str:
 
 
 def _now() -> str:
-    return datetime.now(ZoneInfo("Asia/Seoul")).isoformat(timespec="seconds")
+    try:
+        tz = ZoneInfo("Asia/Seoul")
+    except ZoneInfoNotFoundError:
+        tz = timezone(timedelta(hours=9))
+    return datetime.now(tz).isoformat(timespec="seconds")
 
 
 if __name__ == "__main__":

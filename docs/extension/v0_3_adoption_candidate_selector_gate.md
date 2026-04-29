@@ -10,8 +10,7 @@ This gate defines how multiple `StrategyCandidate` records and their
 ResearchEvidence/EvaluationEvidence are compared to produce an
 `AdoptionCandidate`. The output is candidate adoption evidence only. It may
 identify a review-preferred candidate, but it is not operational strategy
-adoption, not production activation, not a ranking/report change, and not an
-investment recommendation.
+adoption and not production activation.
 
 ## Adoption Semantics
 
@@ -29,9 +28,7 @@ investment recommendation.
 - the strategy is guaranteed to be superior in the future
 - the strategy is adopted for operations
 - live or batch trading can run
-- production ranking/report behavior can change
-- `final_composite_score` can change
-- expected-return, proven-alpha, or recommendation claims are allowed
+- automatic production activation can occur
 
 ## Selector Input Allowlist
 
@@ -67,13 +64,9 @@ The selector may consume only compact, candidate-only evidence summaries:
 Blocked selector inputs:
 
 - raw backtest metric tables as runtime model features
-- generated score/ranking/report outputs
 - live market data feeds
-- production ranking files
-- `technical_composite_score` or `final_composite_score` fields
 - runtime report content
 - future labels or lookahead fields
-- recommendation, expected-return, proven-alpha, or profitability claims
 
 ## Selector Output Schema
 
@@ -87,7 +80,7 @@ Required output fields:
 - `selector_input_refs`: paths to allowlisted input summaries.
 - `selector_score_candidate`: candidate-only review score or ordinal bucket.
 - `relative_review_rank`: optional candidate-only review ordering within the
-  evaluated cohort; it must not be a production ranking.
+  evaluated cohort.
 - `confidence`: one of `low`, `medium`, or `high`; confidence is review
   confidence, not expected performance.
 - `reason_codes`: controlled list explaining why the candidate is reviewable.
@@ -97,11 +90,11 @@ Required output fields:
 - `status`: one of `proposed`, `review_required`, `rejected`, or
   `activation_blocked`.
 - `no_feedback_check`: confirmation that selector output does not feed
-  production score, ranking, report, model features, or automatic activation.
+  automatic production activation.
 - `activation_gate_ref`: always
   `docs/extension/v0_3_production_activation_decision_gate.md`.
-- `forbidden_claim_check`: confirmation that superiority, recommendation,
-  expected-return, proven-alpha, and profitability-proof claims are absent.
+- `production_boundary_check`: confirmation that automatic production
+  activation claims are absent.
 
 Optional output fields:
 
@@ -141,9 +134,6 @@ Blocked transitions:
 
 - any adoption status -> production activation
 - any adoption status -> operational strategy adoption
-- any adoption status -> production ranking/report connection
-- any adoption status -> `final_composite_score` replacement
-- any adoption status -> trading recommendation
 
 ## Reason Codes
 
@@ -180,10 +170,9 @@ Adoption gate:
 Activation gate:
 
 - is a separate root-approved production decision process
-- must verify runtime semantics, score/ranking/report behavior, safety, and
-  release boundaries
-- may require `score-runtime-semantics-gate`, `quant-candidate-ml-gate`,
-  `quant-subproject-audit-gate`, and `quant-review-gate`
+- must verify safety and release boundaries
+- may require `quant-candidate-ml-gate`, `quant-subproject-audit-gate`, and
+  `quant-review-gate`
 - is the only place where production activation could be considered
 
 The adoption gate must never silently become the activation gate.
@@ -205,8 +194,7 @@ Proposed selector validation paths:
 
 These paths are active v0.3 boundaries. Approved owner-lane tasks may implement
 or run selector/evaluator logic that stays inside these boundaries. This gate
-does not authorize runtime scoring, production ranking, production reports, or
-activation.
+does not authorize production activation.
 
 ## Minimal Fixture Proposal
 
@@ -228,9 +216,9 @@ reason_codes = ["evidence_complete_enough_for_review", "historical_performance_s
 limitations = ["contract_only_fixture", "no_runtime_activation"]
 required_review = ["root_governance_review", "activation_gate_required"]
 status = "activation_blocked"
-no_feedback_check = "must_not_feed_scores_rankings_reports_models_or_auto_activation"
+no_feedback_check = "must_not_trigger_auto_activation"
 activation_gate_ref = "docs/extension/v0_3_production_activation_decision_gate.md"
-forbidden_claim_check = "no_superiority_recommendation_expected_return_proven_alpha_or_profitability_claim"
+production_boundary_check = "no_automatic_production_activation_claim"
 ```
 
 ## Validation Proposal
@@ -242,19 +230,14 @@ Minimum validation should check:
   `activation_blocked`.
 - `selector_input_refs` point only to allowlisted hypothesis metadata, registry
   metadata, and evaluation evidence summaries.
-- Selector outputs do not include production ranking/report paths.
-- Selector outputs do not include `technical_composite_score`,
-  `final_composite_score`, model feature tables, live trading paths, or
-  recommendation fields.
-- `selector_score_candidate` is candidate-only and cannot be used as a
-  production rank or score.
-- `relative_review_rank`, when present, is candidate-only and cannot be used as
-  production ranking.
+- Selector outputs do not include live trading paths or production activation
+  fields.
+- `selector_score_candidate` is candidate-only.
+- `relative_review_rank`, when present, is candidate-only.
 - `confidence` is review confidence only.
 - `required_review` includes the production activation decision gate before any
   activation request.
-- Forbidden superiority, recommendation, expected-return, proven-alpha, and
-  profitability-proof wording is absent except in blocked wording policy.
+- Automatic production activation claims are absent.
 
 Suggested later command shape:
 
@@ -270,7 +253,5 @@ Before production activation may even be requested, all of these must be true:
 - Status is `activation_blocked` with explicit blockers, not implicitly active.
 - Activation gate document is referenced.
 - Required reviews are named.
-- No feedback into scores, rankings, reports, model features, or automatic
-  activation exists.
-- No investment recommendation or performance-proof wording exists.
+- No automatic production activation feedback exists.
 - Root explicitly opens a later production activation decision task.

@@ -2,17 +2,17 @@
 
 ## Workspace relationship
 
-If this project is used inside the parent `master_mvp` workspace, read the parent `../AGENTS.md` first. The parent master agent owns cross-project routing, Git policy, and handoff coordination. This `Quant_mvp` agent remains responsible for score governance, technical review, valuation boundaries, and quant-specific config policy.
+If this project is used inside the parent `master_mvp` workspace, read the parent `../AGENTS.md` first. The parent master agent owns cross-project routing, Git policy, and handoff coordination. This `Quant_mvp` agent remains responsible for quant evidence governance, technical review, valuation boundaries, and quant-specific config policy.
 
-`Quant_mvp` is the product-line umbrella for score governance and the canonical
-research-ingestion lane. Research ingestion lives inside
+`Quant_mvp` is the product-line umbrella for quant evidence governance and the
+canonical research-ingestion lane. Research ingestion lives inside
 `research_mvp/`; valuation review is routed to
 `../.agents/skills/valuation_review/SKILL.md`; scanner runtime remains owned by
 `../chart_mvp`.
 
 This post-MVP documentation clarification preserves the MVP v0.1 baseline. It
-does not authorize score formula, adoption, ranking, report, backtest,
-valuation, data-ingestion, or runtime behavior changes.
+does not authorize live trading, order execution, valuation/fundamental
+activation, data-ingestion, universe expansion, or production activation.
 
 ---
 
@@ -89,6 +89,22 @@ Completion acceptance uses `../.agents/skills/quant-review-gate/SKILL.md`. If no
 narrower execution skill matches, use `../.agents/skills/quant-review-gate/SKILL.md`
 as the minimal default review gate rather than inventing broad permission.
 
+For pytest validation, use the parent root workspace interpreter from the
+repository root:
+
+```powershell
+.venv\Scripts\python.exe -m pytest ...
+```
+
+Do not install pytest separately inside Quant subprojects or user-site paths.
+The root `.venv` is the shared validation environment with Codex sandbox ACLs
+and workspace-local temp handling.
+
+For v0.3 strategy-selection/adoption routing, follow the parent root discipline
+in `../docs/root_hard_stops.md#decision-output-discipline`: Quant outputs may
+prepare evidence and candidate packets, but root owns the final conclusion form,
+scope control, baseline protection, and review-preferred candidate decision.
+
 ### Codex skill isolation boundary
 
 Quant skill gates must be selected only from `../.agents/skills`. Do not load
@@ -145,8 +161,8 @@ Upstream evidence agent:
 0. **Research Ingestion Agent**
    - lives in `research_mvp/AGENTS.md`
    - owns approved paper metadata collection, local discovery seeds, metadata-source adapters, research query config, and conservative EvidenceCards
-   - routes candidates without adopting scores, running backtests, claiming alpha, or performing valuation review
-   - hands the Quant score-governance lane only explicit intake material governed by `config/research_intake.toml`
+   - routes candidates without making adoption decisions, running backtests, or performing valuation review
+   - hands the Quant evidence-governance lane only explicit intake material governed by `config/research_intake.toml`
 
 Scope check process:
 
@@ -154,7 +170,7 @@ Scope check process:
    - when a Quant worker sees that scope, roadmap, terminology, leakage, generated-output, validation, or hard-stop review is needed, stop local expansion and connect the task to `../.agents/skills/quant-subproject-audit-gate/SKILL.md`
    - send root/master the current task, allowed scope, forbidden scope, changed paths, intended output, validation commands, unresolved risks, and requested audit coverage
    - keep audit verdicts separate from validation command evidence
-   - the Codex skill gate checks score, normalization, diagnostics, selection, ranking, composite, backtest, valuation, future-return, generated-output, config, and evidence-overclaim boundaries
+   - the Codex skill gate checks scope, diagnostics, selection, backtest, valuation, future-return, generated-output, config, and evidence-overclaim boundaries
    - the Codex skill gate returns `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION`
    - the process does not implement features, repair code by default, or change roadmap state
 
@@ -184,15 +200,15 @@ validation evidence are a separate part of the handoff; they do not replace the
 audit verdict.
 
 Research ingestion is intentionally housed in `research_mvp` inside `Quant_mvp`.
-The score-governance lane may consume EvidenceCards and handoff files through
-`config/research_intake.toml`, but it must not adopt scores from EvidenceCards,
-run paper-derived backtests, claim alpha, or perform valuation review.
+The quant evidence lane may consume EvidenceCards and handoff files through
+`config/research_intake.toml`, but it must not turn them into adoption
+decisions, run paper-derived backtests, or perform valuation review.
 
-EvidenceCards are upstream evidence objects, not score definitions, adoption
-decisions, ranking inputs, alpha evidence, or valuation verdicts. A chart
-runtime implementation must not start from an EvidenceCard alone; it requires a
-Quant-owned score specification, handoff contract, or explicit root/user
-assignment that defines the allowed technical or diagnostic behavior.
+EvidenceCards are upstream evidence objects, not adoption decisions,
+EvaluationEvidence, or valuation verdicts. A chart runtime implementation must
+not start from an EvidenceCard alone; it requires a Quant-owned handoff
+contract or explicit root/user assignment that defines the allowed technical or
+diagnostic behavior.
 
 Valuation / fundamental analysis is intentionally separated into
 `../.agents/skills/valuation_review/SKILL.md`. The main technical agent may
@@ -260,10 +276,10 @@ Answers and handoffs must not repeat completed Step history. Include at most
 three confirmed context facts, then focus on the current judgment, changed
 files, validation, and remaining risks.
 
-If work touches scoring, ranking, report semantics, backtest behavior,
-valuation or fundamental boundaries, generated-output boundaries, roadmap
-verdicts, or root policy, follow the existing guardrails, worktree/branch
-separation policy, and required conflict checkpoints.
+If work touches backtest behavior, valuation or fundamental boundaries,
+generated-output boundaries, roadmap verdicts, or root policy, follow the
+existing guardrails, worktree/branch separation policy, and required conflict
+checkpoints.
 
 ---
 
@@ -272,20 +288,17 @@ separation policy, and required conflict checkpoints.
 When root/master delegates post-Step20 work, accept the compact task packet in
 `../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
 
-For Quant work, this packet does not authorize changes to score definitions,
-score formulas, normalization behavior, ranking behavior, report behavior,
-backtest behavior, valuation/fundamental activation, data ingestion, or
-cross-project routing unless the concrete post-MVP task explicitly assigns that
-scope. If the task is blank or would cross those boundaries, stop and report the
-needed clarification or root/master approval.
+For Quant work, this packet does not authorize live trading, order execution,
+valuation/fundamental activation, data ingestion, universe expansion,
+production activation, or cross-project routing unless the concrete post-MVP
+task explicitly assigns that scope. If the task is blank or would cross those
+boundaries, stop and report the needed clarification or root/master approval.
 
 Root/master may separately assign MVP v0.1 pre-freeze readiness refactors that
-make market, universe, asset-class, symbol, and provider assumptions explicit
-without adopting new scores or changing ranking semantics. Quant workers must
-treat those changes as Step 20 closure/freeze preparation, not Step 21 entry,
-and keep them contract-only unless a later approved post-freeze Step explicitly
-assigns score definition, normalization, selection, ranking, backtest,
-valuation, or derivatives implementation work.
+make market, universe, asset-class, symbol, and provider assumptions explicit.
+Quant workers must treat those changes as Step 20 closure/freeze preparation,
+not Step 21 entry, and keep them contract-only unless a later approved
+post-freeze Step explicitly assigns implementation work.
 
 Final reports must use the Korean sections defined in the packet.
 
@@ -441,7 +454,7 @@ At minimum:
 
 ### Hard rules
 The Research Tester must not:
-- invent new score definitions after seeing good results
+- invent new definitions after seeing favorable results
 - silently change ambiguous formulas in a favorable direction
 - use lookahead
 - turn failed scores into diagnostics without labeling the change
@@ -545,7 +558,7 @@ Agent 2 implements and tests only those predefined scores.
 Agent 3 reviews the tested scores from a technical perspective.
 
 ### Stage 4: adoption synthesis
-The final adopted score set must be determined from technical review, redundancy diagnostics, and implementation quality.
+The final adopted candidate set must be determined from technical review, redundancy diagnostics, and implementation quality.
 
 If valuation review is requested, hand off to
 `../.agents/skills/valuation_review/SKILL.md` as a separate workflow.
@@ -685,10 +698,9 @@ Preferred structure:
 6. shrink toward neutral when data coverage is poor
 
 ### Required composite outputs
-- `technical_composite_score`
-- `final_composite_score`
-- `coverage_metric`
-- `data_quality_flag`
+
+Composite output names and score policy are user-defined and intentionally not
+fixed by this subproject boundary document.
 
 If valuation review is needed, it should be produced by
 `../.agents/skills/valuation_review/SKILL.md` and merged only through an
@@ -884,7 +896,6 @@ A task is done only if:
 - progress/status communication rules are explicit
 - data assumptions are explicit
 - config-owned parameters are explicit
-- score definitions are explicit
 - testing outputs are reproducible
 - technical review is completed
 - overlap diagnostics are completed

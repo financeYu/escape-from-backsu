@@ -94,7 +94,7 @@ release-evidence check requires the narrowest lookup.
 Return `technical_review_required` when changed paths or text touch technical
 score definitions, candidate scores, normalization, diagnostics, usefulness,
 redundancy, stability, regime fit, or misuse of technical outputs as ranking,
-composite, backtest, advice, or alpha.
+composite, or backtest.
 
 Return `valuation_review_required` when changed paths or text touch valuation,
 fundamentals, PER, PBR, ROE, quality, profitability, accounting, revision,
@@ -106,9 +106,8 @@ adoption, downgrade, defer, reject decisions, composite membership, score
 weights, ranking semantics, or score-to-production handoff.
 
 Return `full_review_required` when more than one specialized review is
-triggered, validation fails with schema/contract/boundary risk, forbidden
-investment wording appears, the user requests full review, or root policy
-requires `review_mvp`.
+triggered, validation fails with schema/contract/boundary risk, the user
+requests full review, or root policy requires `review_mvp`.
 
 Set `review_mvp_required: true` only for high-risk code, tests, config, schemas,
 generated-output boundaries, cross-project handoffs, roadmap-gated behavior,
@@ -153,7 +152,7 @@ For gate-only documentation work, validate with targeted grep:
 - `SKILL.md` files exist
 - YAML `name:` and `description:` are present
 - gate vocabulary is present
-- forbidden wording is listed as prohibited
+- production-boundary wording is listed as blocked where applicable
 - GitHub review trigger wording is absent
 - GitHub PR review is not required
 - review skills are on-demand, not default
@@ -167,7 +166,6 @@ Escalate to a downstream skill instead of analyzing further when:
 - trigger conditions are met
 - validation/test failure indicates schema, ranking, report, backtest, PIT, or
   generated-output boundary risk
-- changed text includes forbidden investment wording
 - the gate needs more than path, summary, and compact wording checks
 - root/master asks for specialist or full review
 

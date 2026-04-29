@@ -105,13 +105,20 @@ def test_technical_daily_ohlcv_card_is_selector_eligible() -> None:
     record = builder.evidence_card_to_selector_record(_card())
 
     assert record["ml_use_status"] == "eligible_for_candidate_selector_review"
-    assert record["paper_claim_language_present"] is False
+    assert record["importance_bucket"] == "high"
+    assert record["importance_score"] >= 75
+    assert record["source_reference_id"] == "doi:10.1000/test"
+    assert "signal_family=momentum" in record["neutral_mechanism_summary"]
+    assert record["paper_claim_language_present"] is True
+    assert "paper_title" not in record
+    assert "candidate_name" not in record
+    assert "idea_summary_en" not in record
+    assert "idea_summary_ko" not in record
+    assert "evidence_snippets_short" not in record
+    assert "source_urls" not in record
     assert record["risk_flags"] == ["data_snooping_risk_flag", "transaction_cost_missing_flag"]
     assert record["blocked_reasons"] == []
     assert record["no_feedback_check"] == "must_not_feed_scores_rankings_reports_models_or_auto_adoption"
-    assert "idea_summary_en" not in record
-    assert "evidence_snippets_short" not in record
-    assert "source_urls" not in record
     assert "final_composite_score" not in record
     assert "technical_composite_score" not in record
 
@@ -142,17 +149,63 @@ def test_selector_record_requires_research_guardrails() -> None:
         builder.evidence_card_to_selector_record(_card(guardrails__no_score_adopted=False))
 
 
-def test_paper_claim_language_is_reduced_to_boolean_flag() -> None:
+def test_source_text_fields_are_redacted_from_selector_input() -> None:
     record = builder.evidence_card_to_selector_record(
         _card(
+            paper__title="Source title with buy sell profitability wording",
+            candidate_idea__candidate_name="Candidate name with outperform wording",
+            candidate_idea__idea_summary_ko="Korean summary with expected return wording",
             candidate_idea__idea_summary_en=(
-                "The paper reports a profitable trading strategy with strong performance."
-            )
+                "English summary with proven alpha wording."
+            ),
         )
     )
 
+    serialized = json.dumps(record)
     assert record["paper_claim_language_present"] is True
-    assert "profitable trading strategy" not in json.dumps(record)
+    assert "buy sell profitability" not in serialized.lower()
+    assert "outperform" not in serialized.lower()
+    assert "expected return" not in serialized.lower()
+    assert "proven alpha" not in serialized.lower()
+
+
+def test_high_importance_selector_record_creates_research_feedback_item() -> None:
+    selector_record = builder.evidence_card_to_selector_record(_card(evidence_card_id="ecard:feedback"))
+    feedback_record = builder.selector_record_to_feedback_record(selector_record)
+
+    assert feedback_record is not None
+    assert feedback_record["feedback_id"] == "rfq:ecard:feedback"
+    assert feedback_record["importance_bucket"] == "high"
+    assert feedback_record["feedback_status"] == "research_collection_requested"
+    assert feedback_record["source_reference_id"] == "doi:10.1000/test"
+    assert feedback_record["paper_claim_language_present"] is True
+    assert "paper_title" not in feedback_record
+    assert "candidate_name" not in feedback_record
+    assert feedback_record["allowed_collection_scope"] == "approved_research_metadata_and_license_review_only"
+    assert "no_market_data_ingestion" in feedback_record["blocked_collection_scope"]
+    assert "formula_details_need_collection" in feedback_record["collection_reasons"]
+    assert "transaction_cost_context_needed" in feedback_record["collection_reasons"]
+    assert "survivorship_bias_context_needed" in feedback_record["collection_reasons"]
+    assert (
+        "collect_formula_or_rule_details_from_approved_metadata_or_license_review"
+        in feedback_record["suggested_collection_actions"]
+    )
+    assert (
+        feedback_record["no_feedback_check"]
+        == "collection_feedback_must_not_feed_scores_rankings_reports_models_or_auto_adoption"
+    )
+
+
+def test_non_high_importance_record_does_not_create_feedback_item() -> None:
+    selector_record = builder.evidence_card_to_selector_record(
+        _card(
+            classification__research_branch="valuation",
+            classification__downstream_route="valuation_agent_handoff",
+        )
+    )
+
+    assert selector_record["importance_bucket"] == "not_collectable"
+    assert builder.selector_record_to_feedback_record(selector_record) is None
 
 
 def test_build_selector_inputs_writes_jsonl_csv_and_manifest(tmp_path: Path) -> None:
@@ -178,10 +231,24 @@ def test_build_selector_inputs_writes_jsonl_csv_and_manifest(tmp_path: Path) -> 
         if line.strip()
     ]
     manifest = json.loads(paths["manifest"].read_text(encoding="utf-8"))
+    feedback_rows = [
+        json.loads(line)
+        for line in paths["feedback_jsonl"].read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    feedback_manifest = json.loads(paths["feedback_manifest"].read_text(encoding="utf-8"))
 
     assert len(rows) == 2
     assert paths["csv"].exists()
+    assert paths["feedback_csv"].exists()
     assert manifest["record_count"] == 2
     assert manifest["ml_use_status_counts"]["eligible_for_candidate_selector_review"] == 1
     assert manifest["ml_use_status_counts"]["excluded_valuation_lane"] == 1
+    assert manifest["importance_bucket_counts"]["high"] == 1
+    assert manifest["importance_bucket_counts"]["not_collectable"] == 1
     assert "production ranking input" in manifest["selector_input_boundary"]
+    assert len(feedback_rows) == 1
+    assert feedback_rows[0]["evidence_card_id"] == "ecard:eligible"
+    assert feedback_manifest["record_count"] == 1
+    assert "formula_details_need_collection" in feedback_manifest["collection_reason_counts"]
+    assert "no_market_data_ingestion" in feedback_manifest["blocked_collection_scope"]

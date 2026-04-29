@@ -3,6 +3,8 @@ worktrees/**
 chart_mvp/worktrees/**
 **/.pytest_tmp/**
 tests/_tmp/**
+tmp/**
+tools/rg/**
 **/outputs/**
 
 # Generated runtime outputs that are not default context.

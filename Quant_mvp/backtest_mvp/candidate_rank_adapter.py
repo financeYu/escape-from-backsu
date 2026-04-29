@@ -28,6 +28,7 @@ V0_3_RANKING_SNAPSHOT_NOTICE = (
 )
 
 SUPPORTED_STRATEGY_TYPES = frozenset({"momentum", "reversal", "volatility", "other"})
+EVALUABLE_CANDIDATE_STATUSES = frozenset({"evaluable"})
 
 
 @dataclass(frozen=True)
@@ -102,9 +103,10 @@ def _strategy_candidate_payload(candidate_record: Mapping[str, Any]) -> Mapping[
 
 
 def _validate_candidate(candidate: Mapping[str, Any]) -> None:
-    if candidate.get("status") != "ready_for_eval":
-        raise ValueError("v0.3 ranking snapshot requires a ready_for_eval candidate")
-    if "daily_ohlcv" not in {str(item) for item in _as_list(candidate.get("data_requirements"))}:
+    if candidate.get("status") not in EVALUABLE_CANDIDATE_STATUSES:
+        raise ValueError("v0.3 ranking snapshot requires an evaluable StrategyCandidate")
+    data_requirements = {str(item) for item in _as_list(candidate.get("data_requirements"))}
+    if "daily_ohlcv" not in data_requirements and "daily_ohlcv_candidate_review_only" not in data_requirements:
         raise ValueError("v0.3 ranking snapshot requires daily_ohlcv data")
     strategy_type = _strategy_type(candidate)
     if strategy_type not in SUPPORTED_STRATEGY_TYPES:
@@ -208,8 +210,10 @@ def _ranking_snapshot_frame(
 
     frame["ranking_date"] = frame["date"].dt.date.astype(str)
     frame["candidate_id"] = candidate.get("candidate_id")
-    frame["candidate_version"] = candidate.get("candidate_version")
-    frame["linked_strategy_hypothesis_id"] = candidate.get("linked_strategy_hypothesis_id")
+    frame["candidate_version"] = candidate.get("candidate_version") or candidate.get("version")
+    frame["linked_strategy_hypothesis_id"] = (
+        candidate.get("linked_strategy_hypothesis_id") or candidate.get("hypothesis_id")
+    )
     frame["strategy_type"] = strategy_type
     frame["no_lookahead_check"] = "signal_uses_prices_available_through_ranking_date_close"
     frame["no_feedback_check"] = "ranking_snapshot_must_not_feed_scores_rankings_reports_models_or_auto_adoption"
@@ -243,6 +247,7 @@ def _rebalance_dates(dates: pd.Series, step_days: int) -> pd.DatetimeIndex:
 
 __all__ = (
     "CandidateRankingSnapshotConfig",
+    "EVALUABLE_CANDIDATE_STATUSES",
     "SUPPORTED_STRATEGY_TYPES",
     "V0_3_RANKING_SNAPSHOT_NOTICE",
     "build_candidate_ranking_snapshot",

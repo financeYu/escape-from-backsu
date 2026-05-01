@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Coordinator"
+  short_description: "Convert user intent into a compact planner prompt with project guardrails."
+  default_prompt: "Use agent-coordinator to normalize the user's request into a planner packet, preserve hard stops, and prevent worker context overflow."

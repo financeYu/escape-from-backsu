@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Planner"
+  short_description: "Convert coordinator packets into scope-locked plans for review."
+  default_prompt: "Use agent-planner to turn a coordinator_packet into an ordered plan, validation plan, and plan-review handoff without executing work."

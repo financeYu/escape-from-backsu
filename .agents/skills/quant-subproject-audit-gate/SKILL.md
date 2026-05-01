@@ -129,7 +129,7 @@ Validation can include:
 
 - task-specific validation commands from the selected execution skill gate
 - targeted docs/config/schema checks for changed files
-- `bash .agents/skills/quant-subproject-audit-gate/scripts/validate_subproject_audit_gate.sh`
+- `powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-subproject-audit-gate\scripts\validate_subproject_audit_gate.sh`
 - `git diff --check`
 - focused `rg` checks for forbidden wording and gate vocabulary
 
@@ -155,7 +155,7 @@ Validation result literals:
 - targeted `git diff -U0 -- <task files>`
 - targeted `rg`
 - task-specific validation commands from the selected execution gate
-- `bash .agents/skills/quant-subproject-audit-gate/scripts/validate_subproject_audit_gate.sh`
+- `powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-subproject-audit-gate\scripts\validate_subproject_audit_gate.sh`
 
 Do not run `git fetch`, `git pull`, or `git push` in this gate.
 

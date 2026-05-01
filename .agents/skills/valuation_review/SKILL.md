@@ -148,7 +148,7 @@ Use affected checks only. Examples:
 - targeted grep for valuation/fundamental/PER/PBR/ROE/PIT fields
 - schema or field check if financial data structures changed
 - focused docs/report grep for forbidden valuation or advice wording
-- `bash .agents/skills/valuation_review/scripts/validate_valuation_review_gate.sh`
+- `powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\valuation_review\scripts\validate_valuation_review_gate.sh`
 
 Do not run the full test suite for docs-only review.
 

@@ -93,11 +93,11 @@ Block or flag:
 3. Run the contract validator before edits for gate-level, docs, policy, or
    config work, and after edits when files changed:
 
-   ```bash
-   bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-candidate-ml-gate\scripts\validate_gate_contract.sh
    ```
 
-   If sandboxed Git Bash fails with `Win32 error 5`, use
+   If the wrapper reports `BLOCKED_BASH_VALIDATOR`, use
    `.agents/skills/quant-validator-approval/SKILL.md` and rerun only this exact
    validator command with the narrow approval prefix defined there.
 
@@ -117,8 +117,8 @@ Block or flag:
 
 Use the script as a tiny deterministic CLI:
 
-```bash
-bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-candidate-ml-gate\scripts\validate_gate_contract.sh
 ```
 
 Expected stdout:

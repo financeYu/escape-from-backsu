@@ -71,8 +71,8 @@ Do not push if:
 - `git add -- <scoped files>`
 - `git commit -m "<message>"`
 - `git rev-parse --short HEAD`
-- `bash .agents/skills/quant-git-finalize/scripts/validate_git_finalize.sh`
-- `bash .agents/skills/quant-git-finalize/scripts/validate_git_finalize.sh --self-check`
+- `powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-git-finalize\scripts\validate_git_finalize.sh`
+- `powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-git-finalize\scripts\validate_git_finalize.sh --self-check`
 
 Remote commands are allowed only in the finalization stage after explicit root
 approval and must be reported as the push result.

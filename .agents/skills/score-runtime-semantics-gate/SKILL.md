@@ -125,7 +125,7 @@ Use validation proportional to the touched lane:
 - Documentation-only semantics changes: `git diff --check` and targeted
   `rg` checks for forbidden wording.
 - Candidate ML semantics changes: run
-  `bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`
+  `powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-candidate-ml-gate\scripts\validate_gate_contract.sh`
   when applicable.
 - Completion acceptance: run `.agents/skills/quant-review-gate/SKILL.md` before
   reporting `COMPLETE`.

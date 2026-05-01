@@ -175,5 +175,5 @@ the smallest concrete repair.
 For this skill contract itself, run:
 
 ```bash
-bash .agents/skills/quant-research-artifact-review/scripts/validate_research_artifact_review.sh
+powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-research-artifact-review\scripts\validate_research_artifact_review.sh
 ```

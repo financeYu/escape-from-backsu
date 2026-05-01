@@ -128,15 +128,15 @@ Block or return `NEEDS FIX` for:
 
 For this gate itself, run:
 
-```bash
-bash .agents/skills/quant-strategy-adoption-gate/scripts/validate_strategy_adoption_gate.sh
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-strategy-adoption-gate\scripts\validate_strategy_adoption_gate.sh
 ```
 
 For candidate probability inputs, also run the candidate ML gate validator when
 applicable:
 
-```bash
-bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-candidate-ml-gate\scripts\validate_gate_contract.sh
 ```
 
 For docs/config/schema edits, run `git diff --check` and targeted forbidden

@@ -114,6 +114,10 @@ If a required validator is blocked by environment issues, route the blocker
 through `.agents/skills/cost-aware-review-refactor/SKILL.md` first. Keep
 blocked checks separate from validation status and route any remaining required
 validator request to the responsible gate/root owner.
+For project-local `.sh` validators, use
+`powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 <validator>`
+instead of bare `bash`; treat `BLOCKED_BASH_VALIDATOR` as an environment
+blocker, not validation evidence.
 
 If verification returns `FAIL`, do not proceed to commit-ready status. Run a
 fix pass and repeat diff review and verify.

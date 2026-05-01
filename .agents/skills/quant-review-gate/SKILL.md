@@ -123,7 +123,7 @@ they must be separated from task changed files and reported as remaining risk.
 - targeted `git diff -U0 -- <task files>`
 - targeted `rg`
 - task-specific validation commands from the selected execution gate
-- `bash .agents/skills/quant-review-gate/scripts/validate_review_gate.sh`
+- `powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-review-gate\scripts\validate_review_gate.sh`
 
 When a same-scope cost-aware utility summary is present, skip commands used only
 to rediscover its utility findings. Run only the commands still needed for this

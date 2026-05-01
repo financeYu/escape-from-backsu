@@ -49,35 +49,29 @@ Forbidden:
    substitute.
 5. If `Win32 error 5` or unavailable bash/WSL has not already been observed in
    the current environment and the user has not explicitly asked to avoid the
-   known sandbox failure, run the validator normally:
+   known sandbox failure, run the validator through the project wrapper:
 
-   ```bash
-   bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-candidate-ml-gate\scripts\validate_gate_contract.sh
    ```
 
-6. If the sandboxed run prints WSL installation/update output, Git Bash
+6. If the wrapper reports `BLOCKED_BASH_VALIDATOR`, or if a direct sandboxed
+   run prints WSL installation/update output, Git Bash
    `Win32 error 5`, `couldn't create signal pipe`, or `CreateFileMapping`, or if
    the error is already established for the current environment, or if the user
    explicitly asks to avoid the known sandbox failure, run the same validator
-   with `sandbox_permissions: "require_escalated"` and an exact prefix rule.
-   For the candidate ML validator, use:
+   through the wrapper with `sandbox_permissions: "require_escalated"` and an
+   exact prefix rule. For the candidate ML validator, use:
 
    ```json
-   ["bash", ".agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh"]
+   ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\\run_bash_validator.ps1", ".agents\\skills\\quant-candidate-ml-gate\\scripts\\validate_gate_contract.sh"]
    ```
 
    For another project-local gate validator, use the same exact-command shape,
    for example:
 
    ```json
-   ["bash", ".agents/skills/quant-review-gate/scripts/validate_review_gate.sh"]
-   ```
-
-   or the exact Git Bash executable plus script path when PowerShell must call
-   Git Bash directly:
-
-   ```json
-   ["C:\\Program Files\\Git\\bin\\bash.exe", ".agents/skills/quant-review-gate/scripts/validate_review_gate.sh"]
+   ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts\\run_bash_validator.ps1", ".agents\\skills\\quant-review-gate\\scripts\\validate_review_gate.sh"]
    ```
 
 7. Do not ask a separate chat question before the escalation request. Put the

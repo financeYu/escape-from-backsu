@@ -120,6 +120,12 @@ change validation, strategy, data, scoring, or production-activation authority.
 
 For required bash-based gate validators, run or request them from the parent
 repository root with the exact root-relative command named by the owning gate.
+Prefer the root wrapper for these commands:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\<gate>\scripts\<validator>.sh
+```
+
 If sandboxed bash/WSL or Git Bash fails with `Win32 error 5`, WSL
 install/update output, `couldn't create signal pipe`, or `CreateFileMapping`,
 do not keep retrying from the subproject and do not broaden approval to generic

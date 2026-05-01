@@ -111,7 +111,7 @@ If candidate ML gate files or `prob_up_1d_candidate` contracts are involved,
 run:
 
 ```bash
-bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh
+powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 .agents\skills\quant-candidate-ml-gate\scripts\validate_gate_contract.sh
 ```
 
 Before accepting completion, run or apply the review rules from:

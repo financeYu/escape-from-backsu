@@ -73,6 +73,8 @@ class PlanReviewPacket:
     task_class: str
     current_route: str
     selected_gate: str
+    scope_lock: dict[str, list[str]]
+    validation_plan: list[dict[str, str]]
     review_status: str
     checklist: list[ReviewItem]
     user_approval: dict[str, Any]
@@ -329,6 +331,13 @@ def build_plan_review_packet(packet: dict[str, Any]) -> PlanReviewPacket:
         task_class=str(packet["task_class"]),
         current_route=str(packet["current_route"]),
         selected_gate=str(packet["selected_gate"]),
+        scope_lock={
+            "allowed": _scope_values(packet, "allowed"),
+            "forbidden": _scope_values(packet, "forbidden"),
+        },
+        validation_plan=[
+            dict(item) for item in packet["validation_plan"] if isinstance(item, dict)
+        ],
         review_status=review_status,
         checklist=checklist,
         user_approval={

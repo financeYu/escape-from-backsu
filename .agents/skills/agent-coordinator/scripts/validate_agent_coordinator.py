@@ -44,6 +44,8 @@ REQUIRED_CODE_PHRASES = {
     "context firewall": "CONTEXT_FIREWALL",
     "no external yaml": "def render_yaml",
     "review request detector": "def is_review_request",
+    "supervisor request detector": "def is_supervisor_request",
+    "worker-pool request detector": "def is_worker_pool_request",
     "safe hard-stop context": "SAFE_HARD_STOP_CONTEXT_TERMS",
 }
 
@@ -67,6 +69,20 @@ BEHAVIOR_CASES = [
         "goal": "implement plan-review role",
         "task_class": "narrow edit",
         "selected_gate": ".agents/skills/agent-plan-review/SKILL.md",
+        "open_questions": ["none"],
+    },
+    {
+        "name": "supervisor routes to supervisor gate",
+        "goal": "implement supervisor role",
+        "task_class": "narrow edit",
+        "selected_gate": ".agents/skills/agent-supervisor/SKILL.md",
+        "open_questions": ["none"],
+    },
+    {
+        "name": "worker pool routes to worker-pool gate",
+        "goal": "implement worker pool role",
+        "task_class": "narrow edit",
+        "selected_gate": ".agents/skills/agent-worker-pool/SKILL.md",
         "open_questions": ["none"],
     },
     {

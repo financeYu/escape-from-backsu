@@ -108,6 +108,14 @@ plan_review_packet:
   task_class: "<from planner>"
   current_route: "<from planner>"
   selected_gate: "<from planner>"
+  scope_lock:
+    allowed:
+      - "<from planner>"
+    forbidden:
+      - "<from planner>"
+  validation_plan:
+    - command: "<from planner>"
+      purpose: "<from planner>"
   review_status: "approved_for_supervisor | needs_planner_fix | separate_approval_required | blocked"
   checklist:
     - id: "R1"

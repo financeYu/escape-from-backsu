@@ -26,8 +26,8 @@ REQUIRED_SKILL_PHRASES = {
 REQUIRED_ARCHITECTURE_PHRASES = {
     "planner phase": "Phase 2: Planner",
     "planner code surface": "Planner Code Surface",
-    "current migration": "Current state: Phase 3 plan-review introduced.",
-    "next component": "Next component: supervisor.",
+    "current migration": "Current state: Phase 5 worker pool introduced.",
+    "next component": "Next component: skill replacement.",
 }
 
 REQUIRED_CODE_PHRASES = {

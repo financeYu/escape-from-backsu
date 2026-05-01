@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Supervisor"
+  short_description: "Convert approved plan-review packets into bounded worker packets."
+  default_prompt: "Use agent-supervisor to turn an approved plan_review_packet into coder, validator, reporter, and tracker worker packets without executing worker tasks directly."

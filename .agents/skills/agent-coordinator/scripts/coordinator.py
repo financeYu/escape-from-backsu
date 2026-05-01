@@ -81,6 +81,20 @@ SAFE_HARD_STOP_CONTEXT_TERMS = [
 ]
 
 PLAN_REVIEW_TERMS = ["plan-review", "plan review", "플랜리뷰", "플랜 리뷰"]
+SUPERVISOR_TERMS = ["supervisor", "root-agent", "root agent", "수퍼바이저", "슈퍼바이저"]
+WORKER_POOL_TERMS = [
+    "worker pool",
+    "worker-pool",
+    "coder role",
+    "validator role",
+    "reporter role",
+    "tracker role",
+    "작업자",
+    "코더",
+    "밸리데이터",
+    "리포터",
+    "트래커",
+]
 
 
 @dataclass(frozen=True)
@@ -142,6 +156,10 @@ def select_gate(goal: str, task_class: str) -> str:
     text = goal.lower()
     if is_plan_review_request(text):
         return ".agents/skills/agent-plan-review/SKILL.md"
+    if is_supervisor_request(text):
+        return ".agents/skills/agent-supervisor/SKILL.md"
+    if is_worker_pool_request(text):
+        return ".agents/skills/agent-worker-pool/SKILL.md"
     if is_review_request(text):
         return ".agents/skills/review_gate/SKILL.md"
     if crosses_hard_stop(text):
@@ -174,6 +192,22 @@ def allowed_scope_for(selected_gate: str) -> list[str]:
             ".agents/skills/agent-plan-review/",
             ".agents/skills/agent-planner/ plan-review handoff wording only",
             ".agents/skills/agent-coordinator/ plan-review routing only",
+            "docs/architecture/agent_orchestration_architecture.md",
+            "AGENTS.md router line for architecture redesign only",
+        ]
+    if selected_gate.endswith("agent-supervisor/SKILL.md"):
+        return [
+            ".agents/skills/agent-supervisor/",
+            ".agents/skills/agent-plan-review/ supervisor handoff fields only",
+            ".agents/skills/agent-coordinator/ supervisor routing only",
+            "docs/architecture/agent_orchestration_architecture.md",
+            "AGENTS.md router line for architecture redesign only",
+        ]
+    if selected_gate.endswith("agent-worker-pool/SKILL.md"):
+        return [
+            ".agents/skills/agent-worker-pool/",
+            ".agents/skills/agent-supervisor/ worker packet contract only",
+            ".agents/skills/agent-coordinator/ worker-pool routing only",
             "docs/architecture/agent_orchestration_architecture.md",
             "AGENTS.md router line for architecture redesign only",
         ]
@@ -228,6 +262,24 @@ def validation_for(selected_gate: str, task_class: str) -> list[str]:
             1,
             ".venv\\Scripts\\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json \"<json>\" --format json",
         )
+    elif selected_gate.endswith("agent-supervisor/SKILL.md"):
+        checks.insert(
+            0,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-supervisor/scripts/validate_agent_supervisor.py --dry-run",
+        )
+        checks.insert(
+            1,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-supervisor/scripts/supervisor.py --plan-review-packet-json \"<json>\" --format json",
+        )
+    elif selected_gate.endswith("agent-worker-pool/SKILL.md"):
+        checks.insert(
+            0,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-worker-pool/scripts/validate_agent_worker_pool.py --dry-run",
+        )
+        checks.insert(
+            1,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-worker-pool/scripts/worker_pool.py --supervisor-packet-json \"<json>\" --format json",
+        )
     elif selected_gate.endswith("quant-candidate-ml-gate/SKILL.md"):
         checks.insert(
             0,
@@ -272,6 +324,16 @@ def is_review_request(text: str) -> bool:
 def is_plan_review_request(text: str) -> bool:
     """Return true for the architecture role, not a generic code review."""
     return any(term in text for term in PLAN_REVIEW_TERMS)
+
+
+def is_supervisor_request(text: str) -> bool:
+    """Return true for the supervisor architecture role."""
+    return any(term in text for term in SUPERVISOR_TERMS)
+
+
+def is_worker_pool_request(text: str) -> bool:
+    """Return true for the worker-pool architecture role."""
+    return any(term in text for term in WORKER_POOL_TERMS)
 
 
 def build_packet(user_goal: str) -> CoordinatorPacket:

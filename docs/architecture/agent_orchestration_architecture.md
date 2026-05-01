@@ -143,9 +143,32 @@ approval.
 
 ## Phase 4: Supervisor
 
-The supervisor/root-agent will execute the approved plan by assigning bounded
-work packets to workers. It owns workflow order, retry decisions, fix passes,
-and final acceptance routing.
+The supervisor/root-agent consumes only an approved `plan_review_packet` and
+prepares bounded worker packets. It owns workflow order, retry decisions, fix
+passes, and final acceptance routing, but it does not perform the worker tasks
+itself.
+
+Supervisor responsibilities:
+
+- consume only the plan-review packet
+- execute only when `review_status` is `approved_for_supervisor`
+- execute only when `supervisor_handoff.ready` is `true`
+- block when `user_approval.required` is `true`
+- preserve current route, selected gate, scope lock, validation plan, hard
+  stops, and context firewall
+- create bounded worker packets for `coder`, `validator`, `reporter`, and
+  `tracker`
+- require compact worker results only: `status`, `changed_scope`, `evidence`,
+  and `next_request`
+- keep Git remote and finalize actions disabled
+
+Supervisor non-goals:
+
+- no code implementation
+- no direct validation execution
+- no final completion acceptance
+- no raw worker-context ingestion
+- no commits, fetches, pulls, or pushes
 
 ## Phase 5: Worker Pool
 
@@ -155,6 +178,28 @@ Workers are tools for the supervisor, not independent route owners.
 - `validator`: runs assigned checks and returns validation evidence
 - `reporter`: produces compact final reports from approved summaries
 - `tracker`: records state, dependencies, blockers, and next action
+
+Worker Pool responsibilities:
+
+- consume only the supervisor packet
+- verify the worker packet set contains `coder`, `validator`, `reporter`, and
+  `tracker`
+- verify supervisor execution policy keeps fetch, pull, push, commit, and
+  stage disabled
+- verify every worker has allowed scope, forbidden scope, validation commands,
+  required output, and compact result contract
+- normalize every worker packet into a role spec
+- block worker execution when supervisor is blocked, worker packets are
+  incomplete, execution policy is unsafe, or result contracts leak raw context
+
+Worker Pool non-goals:
+
+- no code implementation
+- no validator execution
+- no final report generation
+- no persistent tracking store
+- no raw worker-context ingestion
+- no commits, fetches, pulls, or pushes
 
 Workers must return compact summaries, not raw context.
 
@@ -253,11 +298,39 @@ set `supervisor_handoff.ready` to `true`; failed review items return to the
 planner with exact fixes, and separate-approval boundaries stay blocked until
 approved.
 
+## Supervisor Code Surface
+
+The first executable supervisor surface is:
+
+```powershell
+.venv\Scripts\python.exe .agents/skills/agent-supervisor/scripts/supervisor.py --plan-review-packet-json "<json>" --format yaml
+.venv\Scripts\python.exe .agents/skills/agent-coordinator/scripts/coordinator.py --user-goal "<goal>" --format json | .venv\Scripts\python.exe .agents/skills/agent-planner/scripts/planner.py --coordinator-packet-json - --format json | .venv\Scripts\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json - --format json | .venv\Scripts\python.exe .agents/skills/agent-supervisor/scripts/supervisor.py --plan-review-packet-json - --format yaml
+```
+
+It emits a `supervisor_packet` only. It does not edit files, execute workers,
+validate final outputs, stage, commit, fetch, pull, or push. A clean supervisor
+packet prepares bounded worker packets for `coder`, `validator`, `reporter`,
+and `tracker`; blocked plan-review or user-approval states produce blocked
+worker packets.
+
+## Worker Pool Code Surface
+
+The first executable worker-pool surface is:
+
+```powershell
+.venv\Scripts\python.exe .agents/skills/agent-worker-pool/scripts/worker_pool.py --supervisor-packet-json "<json>" --format yaml
+.venv\Scripts\python.exe .agents/skills/agent-coordinator/scripts/coordinator.py --user-goal "<goal>" --format json | .venv\Scripts\python.exe .agents/skills/agent-planner/scripts/planner.py --coordinator-packet-json - --format json | .venv\Scripts\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json - --format json | .venv\Scripts\python.exe .agents/skills/agent-supervisor/scripts/supervisor.py --plan-review-packet-json - --format json | .venv\Scripts\python.exe .agents/skills/agent-worker-pool/scripts/worker_pool.py --supervisor-packet-json - --format yaml
+```
+
+It emits a `worker_pool_packet` only. It does not edit files, execute worker
+tasks, run validators, write final reports, persist tracker state, stage,
+commit, fetch, pull, or push.
+
 ## Current Migration State
 
-Current state: Phase 3 plan-review introduced.
+Current state: Phase 5 worker pool introduced.
 
-Next component: supervisor.
+Next component: skill replacement.
 
 Existing skill replacement status: not started. Existing project-local gates
 remain authoritative.

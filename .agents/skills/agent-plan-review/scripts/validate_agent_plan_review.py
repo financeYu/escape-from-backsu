@@ -27,8 +27,8 @@ REQUIRED_SKILL_PHRASES = {
 REQUIRED_ARCHITECTURE_PHRASES = {
     "plan review phase": "Phase 3: Plan Review",
     "plan review code surface": "Plan Review Code Surface",
-    "current migration": "Current state: Phase 3 plan-review introduced.",
-    "next component": "Next component: supervisor.",
+    "current migration": "Current state: Phase 5 worker pool introduced.",
+    "next component": "Next component: skill replacement.",
     "approval policy": "Do not require user approval for every clean plan.",
 }
 

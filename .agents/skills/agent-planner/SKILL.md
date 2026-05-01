@@ -26,8 +26,8 @@ user
   -> coordinator
   -> planner
   <-> plan-review
-  -> user approval or feedback
-  -> supervisor/root-agent
+  -> supervisor/root-agent when plan-review passes without approval triggers
+  -> user only when review fixes or separate approvals are required
   -> workers: coder, validator, reporter, tracker
 ```
 
@@ -121,7 +121,7 @@ planner_packet:
     approval_question: "<none or exact approval needed>"
   supervisor_handoff:
     ready: false
-    reason: "waiting for plan-review and user approval | blocked by coordinator approval request"
+    reason: "waiting for plan-review decision | blocked by coordinator approval request"
   korean_final_report: true
 ```
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Plan Review"
+  short_description: "Review planner packets before supervisor execution."
+  default_prompt: "Use agent-plan-review to check a planner_packet for scope, route, gate, validation, context-firewall, and approval-trigger safety before supervisor handoff."

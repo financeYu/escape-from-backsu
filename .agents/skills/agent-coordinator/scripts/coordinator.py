@@ -80,6 +80,8 @@ SAFE_HARD_STOP_CONTEXT_TERMS = [
     "가드레일",
 ]
 
+PLAN_REVIEW_TERMS = ["plan-review", "plan review", "플랜리뷰", "플랜 리뷰"]
+
 
 @dataclass(frozen=True)
 class CoordinatorPacket:
@@ -138,6 +140,8 @@ def classify_task(goal: str) -> str:
 def select_gate(goal: str, task_class: str) -> str:
     """Select the current compatibility gate; do not replace gate authority."""
     text = goal.lower()
+    if is_plan_review_request(text):
+        return ".agents/skills/agent-plan-review/SKILL.md"
     if is_review_request(text):
         return ".agents/skills/review_gate/SKILL.md"
     if crosses_hard_stop(text):
@@ -162,6 +166,14 @@ def allowed_scope_for(selected_gate: str) -> list[str]:
     if selected_gate.endswith("agent-coordinator/SKILL.md"):
         return [
             ".agents/skills/agent-coordinator/",
+            "docs/architecture/agent_orchestration_architecture.md",
+            "AGENTS.md router line for architecture redesign only",
+        ]
+    if selected_gate.endswith("agent-plan-review/SKILL.md"):
+        return [
+            ".agents/skills/agent-plan-review/",
+            ".agents/skills/agent-planner/ plan-review handoff wording only",
+            ".agents/skills/agent-coordinator/ plan-review routing only",
             "docs/architecture/agent_orchestration_architecture.md",
             "AGENTS.md router line for architecture redesign only",
         ]
@@ -207,15 +219,24 @@ def validation_for(selected_gate: str, task_class: str) -> list[str]:
             1,
             ".venv\\Scripts\\python.exe .agents/skills/agent-coordinator/scripts/coordinator.py --user-goal \"<goal>\" --format json",
         )
+    elif selected_gate.endswith("agent-plan-review/SKILL.md"):
+        checks.insert(
+            0,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-plan-review/scripts/validate_agent_plan_review.py --dry-run",
+        )
+        checks.insert(
+            1,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json \"<json>\" --format json",
+        )
     elif selected_gate.endswith("quant-candidate-ml-gate/SKILL.md"):
         checks.insert(
             0,
-            "bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh",
+            "powershell -ExecutionPolicy Bypass -File scripts\\run_bash_validator.ps1 .agents\\skills\\quant-candidate-ml-gate\\scripts\\validate_gate_contract.sh",
         )
     elif selected_gate.endswith("quant-strategy-adoption-gate/SKILL.md"):
         checks.insert(
             0,
-            "bash .agents/skills/quant-strategy-adoption-gate/scripts/validate_strategy_adoption_gate.sh",
+            "powershell -ExecutionPolicy Bypass -File scripts\\run_bash_validator.ps1 .agents\\skills\\quant-strategy-adoption-gate\\scripts\\validate_strategy_adoption_gate.sh",
         )
     elif selected_gate.endswith("quant-work-cycle/SKILL.md"):
         checks.insert(
@@ -245,7 +266,12 @@ def crosses_hard_stop(text: str) -> bool:
 
 def is_review_request(text: str) -> bool:
     """Return true when the request should be routed as review/read-only."""
-    return any(term in text for term in REVIEW_TERMS)
+    return not is_plan_review_request(text) and any(term in text for term in REVIEW_TERMS)
+
+
+def is_plan_review_request(text: str) -> bool:
+    """Return true for the architecture role, not a generic code review."""
+    return any(term in text for term in PLAN_REVIEW_TERMS)
 
 
 def build_packet(user_goal: str) -> CoordinatorPacket:

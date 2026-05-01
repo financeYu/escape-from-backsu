@@ -212,7 +212,7 @@ def build_planner_packet(packet: dict[str, Any]) -> PlannerPacket:
             "ready": False,
             "reason": "blocked by coordinator approval request"
             if blocked
-            else "waiting for plan-review and user approval",
+            else "waiting for plan-review decision",
         },
         korean_final_report=bool(packet["korean_final_report"]),
     )

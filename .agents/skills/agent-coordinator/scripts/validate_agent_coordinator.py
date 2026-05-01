@@ -63,6 +63,13 @@ BEHAVIOR_CASES = [
         "open_questions": ["none"],
     },
     {
+        "name": "plan-review routes to plan-review gate",
+        "goal": "implement plan-review role",
+        "task_class": "narrow edit",
+        "selected_gate": ".agents/skills/agent-plan-review/SKILL.md",
+        "open_questions": ["none"],
+    },
+    {
         "name": "safe hard-stop documentation is allowed",
         "goal": "프로덕션 활성화 금지 문구를 문서에 추가해",
         "task_class": "narrow edit",

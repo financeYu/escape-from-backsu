@@ -13,8 +13,8 @@ user
   -> coordinator
   -> planner
   <-> plan-review
-  -> user approval or feedback
-  -> supervisor/root-agent
+  -> supervisor/root-agent when plan-review passes without approval triggers
+  -> user only when review fixes or separate approvals are required
   -> worker pool
        -> coder
        -> validator
@@ -111,9 +111,35 @@ Planner non-goals:
 
 ## Phase 3: Plan Review
 
-Plan Review will inspect planner output before implementation. It checks
-direction, scope, hard stops, route alignment, missing validation, and whether
-the plan can be safely handed to the supervisor.
+Plan Review consumes only the planner packet and inspects it before
+implementation. It checks direction, scope, hard stops, route alignment,
+missing validation, context-firewall compliance, and whether the plan can be
+safely handed to the supervisor.
+
+Plan Review responsibilities:
+
+- consume only the planner packet
+- verify current route and selected gate are preserved
+- verify scope lock allowed and forbidden boundaries are present
+- verify hard stops remain forbidden unless separate approval is required
+- verify ordered plan and validation plan are present
+- verify planner did not pre-approve supervisor execution
+- return exact planner fixes for failed review items
+- approve supervisor handoff only when review passes and no approval trigger
+  exists
+
+Plan Review non-goals:
+
+- no code implementation
+- no plan mutation
+- no worker supervision
+- no final validation acceptance
+- no commits, fetches, pulls, or pushes
+
+Do not require user approval for every clean plan. Require user approval only
+when a review item failed and the plan must be changed before execution, or
+when the requested change crosses a boundary that already requires separate
+approval.
 
 ## Phase 4: Supervisor
 
@@ -212,11 +238,26 @@ The first executable planner surface is:
 It emits a `planner_packet` only. It does not edit files, call workers, approve
 its own plan, validate task outputs, stage, commit, fetch, pull, or push.
 
+## Plan Review Code Surface
+
+The first executable plan-review surface is:
+
+```powershell
+.venv\Scripts\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json "<json>" --format yaml
+.venv\Scripts\python.exe .agents/skills/agent-coordinator/scripts/coordinator.py --user-goal "<goal>" --format json | .venv\Scripts\python.exe .agents/skills/agent-planner/scripts/planner.py --coordinator-packet-json - --format json | .venv\Scripts\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json - --format yaml
+```
+
+It emits a `plan_review_packet` only. It does not edit files, call workers,
+validate task outputs, stage, commit, fetch, pull, or push. A clean review may
+set `supervisor_handoff.ready` to `true`; failed review items return to the
+planner with exact fixes, and separate-approval boundaries stay blocked until
+approved.
+
 ## Current Migration State
 
-Current state: Phase 2 planner introduced.
+Current state: Phase 3 plan-review introduced.
 
-Next component: plan-review.
+Next component: supervisor.
 
 Existing skill replacement status: not started. Existing project-local gates
 remain authoritative.

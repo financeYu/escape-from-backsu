@@ -5,11 +5,11 @@
 `Quant_mvp/backtest_mvp` owns the conservative, evaluation-only backtest module
 for the Quant project.
 
-This is a Quant-dependent subproject. It may evaluate frozen technical ranking
-snapshots against OHLCV price inputs and produce backtest-specific result
-objects or generated evaluation artifacts. It must not make adoption decisions,
-activate valuation/fundamental scoring, expand data ingestion, or trigger
-production activation.
+This is a Quant-dependent subproject. In the active v0.3 route, it may evaluate
+approved `StrategyCandidate` inputs or frozen technical ranking snapshots
+against OHLCV price inputs and produce evidence-only `EvaluationEvidence`
+artifacts. It must not make adoption decisions, activate valuation/fundamental
+scoring, expand data ingestion, or trigger production activation.
 
 Legacy imports through `src.backtest` are compatibility facades only. New code
 should import `Quant_mvp.backtest_mvp`.
@@ -21,7 +21,8 @@ should import `Quant_mvp.backtest_mvp`.
 - validate ranking and price inputs for the evaluation-only boundary
 - preserve KOSPI200/Naver six-character alphanumeric ticker handling by default
   while allowing explicit injected symbol policies for extension contracts
-- expose generated evaluation artifacts only under generated-output paths
+- expose generated `EvaluationEvidence` artifacts only under generated-output
+  paths
 
 ## Forbidden Work
 

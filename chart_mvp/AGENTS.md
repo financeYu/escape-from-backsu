@@ -79,7 +79,8 @@ This agent must not:
 - hardcode personal machine paths
 
 If a change requires score taxonomy, score contract changes, formula adoption,
-or valuation interpretation, route it to `Quant_mvp` first.
+or valuation interpretation, route it to root/master so the narrowest Quant
+skill gate can be selected before implementation.
 
 ---
 
@@ -107,27 +108,28 @@ If a generated sample is needed in Git, place the smallest possible fixture unde
 
 ---
 
-## Post-MVP v0.1 task packet intake
+## Active route task packet intake
 
-When root/master delegates post-Step20 work, accept the compact task packet in
-`../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+When root/master delegates current work, accept the compact task packet from
+the latest root instruction, `../docs/root_hard_stops.md`, and
+`../docs/roadmap_status.md`. Treat old post-Step20 packets as archive-only
+unless root explicitly names a provenance, regression, freeze, or compatibility
+check.
 
-For chart runtime work, this packet does not authorize changes to scanner
+For chart runtime work, the active packet does not authorize changes to scanner
 runtime behavior, scoring, ranking, report behavior, backtest behavior,
 valuation/fundamental activation, data ingestion, cache semantics, or generated
-output policy unless the concrete post-MVP task explicitly assigns that scope.
+output policy unless the concrete task explicitly assigns that scope.
 If the task is blank or would cross those boundaries, stop and report the needed
 clarification or root/master approval.
 
-When root/master explicitly assigns MVP v0.1 pre-freeze readiness work, chart
-workers may make KOSPI200/Naver/Korean ticker assumptions configurable through
-small policy objects and deterministic tests. This is Step 20 closure/freeze
-preparation only, not Step 21 entry: do not add live KOSDAQ, futures, options,
+Archive provenance or compatibility work may clarify KOSPI200/Naver/Korean
+ticker assumptions, but it must not add live KOSDAQ, futures, options,
 NASDAQ/overseas providers, ticker lists, derivative pricing logic, or
-cross-universe comparison outputs unless a later approved post-freeze Step
-assigns that implementation scope.
+cross-universe comparison outputs unless a later approved route assigns that
+implementation scope.
 
-Final reports must use the Korean sections defined in the packet.
+Final reports must use the Korean format named by root for the current packet.
 
 ---
 

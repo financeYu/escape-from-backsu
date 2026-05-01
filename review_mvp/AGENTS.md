@@ -99,9 +99,11 @@ review usage for this local policy.
 - edit another subproject or root-owned file from an internal `review_mvp` task
 - apply cross-project/root fixes unless explicitly assigned by the source subproject or master/root as a code-review repair
 - invent new scores
-- implement scores before allowed roadmap step
-- run or design backtests before allowed roadmap step
-- introduce valuation/fundamental scoring before allowed roadmap step
+- implement scores outside an explicitly approved active route lane
+- run or design backtests outside an explicitly approved v0.3
+  evaluation-evidence lane
+- introduce valuation/fundamental scoring without explicit active-route
+  approval
 
 ### Cross-project modification boundary
 
@@ -202,20 +204,23 @@ Avoid low-value comments about formatting, naming, or broad cleanup unless they 
 
 ---
 
-## Post-MVP v0.1 task packet intake
+## Active route task packet intake
 
-When root/master delegates post-Step20 work, accept the compact task packet in
-`../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+When root/master delegates current work, accept the compact task packet from
+the latest root instruction, `../docs/root_hard_stops.md`, and
+`../docs/roadmap_status.md`. Treat old post-Step20 packets as archive-only
+unless root explicitly names a provenance, regression, freeze, or compatibility
+check.
 
-For specialist review work, this packet authorizes review, risk classification,
-and minimal findings only. It does not authorize repairs in root-owned files or
-other subprojects, scoring/ranking/report/backtest changes, valuation activation,
-or data-ingestion changes unless the concrete post-MVP task and active
-workspace manifest explicitly assign that repair scope. If the task is blank or
+For specialist review work, the active packet authorizes review, risk
+classification, and minimal findings only. It does not authorize repairs in
+root-owned files or other subprojects, scoring/ranking/report/backtest changes,
+valuation activation, or data-ingestion changes unless the concrete task and
+active root packet explicitly assign that repair scope. If the task is blank or
 would cross those boundaries, stop and report the needed clarification or
 root/master approval.
 
-Final reports must use the Korean sections defined in the packet.
+Final reports must use the Korean format named by root for the current packet.
 
 ---
 

@@ -10,9 +10,12 @@ canonical research-ingestion lane. Research ingestion lives inside
 `../.agents/skills/valuation_review/SKILL.md`; scanner runtime remains owned by
 `../chart_mvp`.
 
-This post-MVP documentation clarification preserves the MVP v0.1 baseline. It
-does not authorize live trading, order execution, valuation/fundamental
-activation, data-ingestion, universe expansion, or production activation.
+Active work follows the parent v0.3 research-to-strategy adoption route. The
+v0.1 technical scanner and v0.2 probability route are archived or supporting
+references only unless root names a provenance, regression, or compatibility
+check. This document does not authorize live trading, order execution,
+valuation/fundamental activation, data-ingestion expansion, universe expansion,
+or production activation.
 
 ---
 
@@ -100,6 +103,18 @@ Do not install pytest separately inside Quant subprojects or user-site paths.
 The root `.venv` is the shared validation environment with Codex sandbox ACLs
 and workspace-local temp handling.
 
+For required bash-based gate validators, run or request them from the parent
+repository root with the exact root-relative command named by the owning gate.
+If sandboxed bash/WSL or Git Bash fails with `Win32 error 5`, WSL
+install/update output, `couldn't create signal pipe`, or `CreateFileMapping`,
+do not keep retrying from the subproject and do not broaden approval to generic
+`bash`, `python`, or PowerShell launchers. Record the blocked command, short
+error, and affected Quant scope through
+`../.agents/skills/cost-aware-review-refactor/SKILL.md`, then route the same
+exact validator command through
+`../.agents/skills/quant-validator-approval/SKILL.md`. Treat validation as
+passed only when the approved run prints the validator's expected PASS line.
+
 For v0.3 strategy-selection/adoption routing, follow the parent root discipline
 in `../docs/root_hard_stops.md#decision-output-discipline`: Quant outputs may
 prepare evidence and candidate packets, but root owns the final conclusion form,
@@ -121,9 +136,15 @@ failed, or root has not explicitly confirmed remote finalization.
 
 ## Purpose
 
-This repository uses Codex as a **multi-agent conservative quant engineering system** for a **KOSPI200 constituent-level stock scanner**.
+This repository uses Codex as a **multi-agent conservative quant engineering
+system** for the active v0.3 research-to-strategy adoption route. The current
+objective is to convert research into `ResearchHypothesis`,
+`StrategyHypothesis`, `StrategyCandidate`, `EvaluationEvidence`, and
+`AdoptionCandidate` review artifacts without activating production behavior.
 
-The main objective is to build an **explainable, modular, backtest-friendly technical multi-score engine** that ranks KOSPI200 constituent stocks using:
+The archived v0.1 baseline remains an **explainable, modular,
+backtest-friendly technical multi-score engine** that ranks KOSPI200
+constituent stocks using:
 - daily OHLCV-derived technical/statistical signals
 - explicit regime, diagnostic, and composite scoring logic
 
@@ -131,11 +152,11 @@ This is **not** a single-strategy repository.
 This is **not** an "AI black box alpha" repository.
 Valuation / fundamental review is handled by a separate agent, not by this main technical agent.
 
-The goal is to:
-1. define candidate scores clearly
-2. implement and test them conservatively
-3. compare them from a technical usefulness, stability, and redundancy perspective
-4. adopt only the strongest and most defensible technical score set
+The active goal is to:
+1. structure research ideas into explicit hypotheses and strategy candidates
+2. evaluate candidates only through approved evidence lanes
+3. compare allowlisted evidence without lookahead, feedback, or overclaiming
+4. emit review packets for root-owned adoption decisions
 
 Prioritize:
 1. implementation realism
@@ -152,9 +173,11 @@ Prefer explicit downgrades, deferrals, or narrower implementations.
 
 ## Multi-agent operating model
 
-This repository owns one internal research-ingestion subproject, uses a
-Codex-skill-gated scope check process, and has **three distinct technical agents** with different
-responsibilities.
+This repository owns one internal research-ingestion subproject and uses a
+Codex-skill-gated scope check process. The historical technical-score workflow
+has **three distinct technical agents** with different responsibilities; use
+those roles for archived baseline compatibility or explicitly assigned
+technical-score work, not as the default v0.3 route.
 
 Upstream evidence agent:
 
@@ -237,6 +260,26 @@ Unknowns must be labeled as unknown.
 Inferences must be labeled as inference.
 Weak evidence must not be polished into a strong claim.
 
+### v0.3 ML/evaluator risk controls
+
+ML or rule-based evaluator work is allowed only in the v0.3 evidence lane when
+it consumes allowlisted `EvaluationEvidence` summaries and emits
+`AdoptionCandidate` review packets. It must not activate runtime ranking,
+scanner reports, trading, order generation, valuation/fundamental scoring, data
+ingestion expansion, or production behavior.
+
+Before implementation, require:
+
+- documented `StrategyCandidate` inputs and predeclared evaluation criteria
+- explicit label/feature separation and as-of-date availability checks
+- no-lookahead and no-feedback validation
+- out-of-sample, walk-forward, or equivalent stability evidence when model
+  selection is claimed
+- calibration or comparison metrics labeled as evaluation evidence, not proof
+  of future return
+- a clear fallback to `selection unavailable / evidence insufficient` when
+  evidence cannot support a review-preferred candidate
+
 ---
 
 ## Communication policy
@@ -283,24 +326,25 @@ checkpoints.
 
 ---
 
-## Post-MVP v0.1 task packet intake
+## Active route task packet intake
 
-When root/master delegates post-Step20 work, accept the compact task packet in
-`../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+When root/master delegates current work, accept the compact task packet from
+the latest root instruction, `../docs/root_hard_stops.md`, and
+`../docs/roadmap_status.md`. Treat old post-Step20 packets as archive-only
+unless root explicitly names a provenance, regression, freeze, or compatibility
+check.
 
-For Quant work, this packet does not authorize live trading, order execution,
-valuation/fundamental activation, data ingestion, universe expansion,
-production activation, or cross-project routing unless the concrete post-MVP
+For Quant work, the active packet does not authorize live trading, order
+execution, valuation/fundamental activation, data ingestion expansion, universe
+expansion, production activation, or cross-project routing unless the concrete
 task explicitly assigns that scope. If the task is blank or would cross those
 boundaries, stop and report the needed clarification or root/master approval.
 
-Root/master may separately assign MVP v0.1 pre-freeze readiness refactors that
-make market, universe, asset-class, symbol, and provider assumptions explicit.
-Quant workers must treat those changes as Step 20 closure/freeze preparation,
-not Step 21 entry, and keep them contract-only unless a later approved
-post-freeze Step explicitly assigns implementation work.
+Root/master may separately assign archive provenance or compatibility work for
+v0.1/v0.2 assumptions. Keep that work contract-only unless a later approved
+route explicitly assigns implementation.
 
-Final reports must use the Korean sections defined in the packet.
+Final reports must use the Korean format named by root for the current packet.
 
 ---
 
@@ -332,7 +376,8 @@ Out of scope unless explicitly requested:
 - intraday / tick / order book strategies
 - execution algos
 - options / volatility surface systems
-- opaque ML pipelines
+- opaque ML pipelines that lack evidence contracts, leakage checks,
+  label/feature separation, or selector/evaluator review boundaries
 - unsupervised latent-factor marketing language
 - discretionary judgment disguised as rules
 - live valuation review inside the main technical agent

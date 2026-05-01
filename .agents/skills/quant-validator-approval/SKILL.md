@@ -22,6 +22,8 @@ Allowed:
   Git Bash fails with `Win32 error 5`, when that error is already established
   for the current environment, or when the user explicitly asks to avoid or
   persist the known validator approval path
+- Quant_mvp subproject validator handoffs that preserve the exact
+  root-relative validator command and affected subproject scope
 
 Forbidden:
 
@@ -39,7 +41,13 @@ Forbidden:
    bash/WSL/Git Bash command to escalation.
 3. If the work is candidate ML gate work, use
    `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
-4. If `Win32 error 5` or unavailable bash/WSL has not already been observed in
+4. For Quant_mvp subproject work, keep the validator command root-relative
+   from `C:\Users\jjaew\Project\master_mvp`. The subproject worker records the
+   affected Quant scope and the exact command; root runs or escalates only that
+   same command. Do not rewrite the validator, switch to a broader shell
+   prefix, or approve a subproject-local Python or bash launcher as a
+   substitute.
+5. If `Win32 error 5` or unavailable bash/WSL has not already been observed in
    the current environment and the user has not explicitly asked to avoid the
    known sandbox failure, run the validator normally:
 
@@ -47,7 +55,7 @@ Forbidden:
    bash .agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh
    ```
 
-5. If the sandboxed run prints WSL installation/update output, Git Bash
+6. If the sandboxed run prints WSL installation/update output, Git Bash
    `Win32 error 5`, `couldn't create signal pipe`, or `CreateFileMapping`, or if
    the error is already established for the current environment, or if the user
    explicitly asks to avoid the known sandbox failure, run the same validator
@@ -72,10 +80,10 @@ Forbidden:
    ["C:\\Program Files\\Git\\bin\\bash.exe", ".agents/skills/quant-review-gate/scripts/validate_review_gate.sh"]
    ```
 
-6. Do not ask a separate chat question before the escalation request. Put the
+7. Do not ask a separate chat question before the escalation request. Put the
    approval question in the tool `justification` field so the user can allow or
    persist this exact prefix for future validator runs.
-7. Treat validation as passed only when stdout includes the validator's expected
+8. Treat validation as passed only when stdout includes the validator's expected
    PASS line, such as:
 
    ```text

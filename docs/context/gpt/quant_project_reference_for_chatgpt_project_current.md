@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-04-28T05:11:01+09:00
+Generated at: 2026-04-28T22:59:08+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -25,29 +25,24 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Post-MVP `v0.2 predictive probability score route` Step is open for the
-approved candidate-only implementation of `prob_up_1d_candidate` in a separate
-role branch/worktree. Step 20 is complete, and the KOSPI200 technical MVP v0.1
-baseline is frozen.
+Post-MVP `v0.2 predictive probability score route` is active for the approved candidate-only `prob_up_1d_candidate` route. Step 20 is complete, and the KOSPI200 technical MVP v0.1 baseline is frozen.
+
 - Current baseline: MVP v0.1 frozen KOSPI200 technical-only scanner baseline.
 - Current active Step: post-MVP `v0.2 predictive probability score route`.
-- Current active route skill:
-  `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
-- Current repeatable route validation:
-  `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`.
-- Current gate: this Step authorizes only the scoped implementation of
-  `prob_up_1d_candidate` feature table, label-separated training/evaluation
-- omitted 5 additional lines for compact context
+- Current active route skill: `.agents/skills/quant-candidate-ml-gate/SKILL.md`.
+- Current repeatable route validation: `.agents/skills/quant-candidate-ml-gate/scripts/validate_gate_contract.sh`.
+- Current completion state: v0.2 `final_composite_score` prob_up_1d semantic route completed after quant-review-gate PASS.
+- In `v0_2_prob_up_1d`, `final_composite_score` is the calibrated estimated probability that `adjusted_close` will be higher on the next business day than on the feature observation business day.
+- Production ranking activation, report behavior changes, data-ingestion expansion, valuation/fundamental scoring activation, and trading recommendations remain blocked unless explicitly authorized by the active route and hard stops.
 
 ## Current Baseline
 
-- MVP universe는 KOSPI200 only다.
-- `technical_composite_score`는 technical-only이며 MVP v0.1에서 `final_composite_score`와 같다.
-- Valuation/fundamental data는 candidate-only이며 technical/final composite에 들어가지 않는다.
-- Backtest output은 evaluation-only이며 upstream scoring/ranking에 feedback하지 않는다.
-- Generated reports, runtime outputs, chart images, local caches, raw market data는 default context가 아니다.
-- MVP v0.1 frozen baseline 변경은 금지한다. 이후 변경은 `v0.2+` 또는 별도
-- omitted 1 additional lines for compact context
+- MVP universe: KOSPI200 only.
+- `technical_composite_score` is technical-only; in MVP v0.1, `final_composite_score` equals it.
+- Valuation/fundamental data is candidate-only and must not enter technical or final composite scores.
+- Backtest output is evaluation-only and must not feed upstream scoring, ranking, or model feature construction.
+- Generated reports, runtime outputs, chart images, local caches, and raw market data are not default context.
+- MVP v0.1 frozen baseline changes are prohibited; later changes must be managed as `v0.2+` or a separate post-MVP version/Step.
 
 ## Cross-Step Conflict Checkpoint
 
@@ -58,18 +53,15 @@ baseline is frozen.
 
 - KOSDAQ150, futures, options, Nasdaq/overseas, or multi-universe activation.
 - New market-data ingestion or live vendor assumptions.
-- Production ranking activation or ranking generation unless the active route
-  explicitly authorizes it.
-- Report behavior changes or runtime score semantic changes outside the active
-  candidate ML gate.
+- Production ranking activation or ranking generation unless the active route explicitly authorizes it.
+- Report behavior changes or runtime score semantic changes outside the active candidate ML gate.
 - `final_composite_score` replacement or silent score redefinition.
-- Financial/fundamental data in `technical_composite_score` or
-  `final_composite_score`.
+- `final_composite_score` replacement remains prohibited except under `QG_APPROVED_FINAL_SCORE_PROB_UP_1D_V0_2` and only after all v0.2 final score gates pass.
+- Financial/fundamental data in `technical_composite_score` or `final_composite_score`.
 - Valuation/fundamental scoring activation.
 - Backtest metrics as model features.
 - Backtest feedback into scoring, ranking, or model feature construction.
-- Trading recommendations, buy/sell/hold, proven-alpha, or expected-return
-  wording.
+- Trading recommendations, buy/sell/hold, proven-alpha, or expected-return wording.
 
 ## Route-Only References
 

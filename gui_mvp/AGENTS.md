@@ -8,7 +8,8 @@ APIs without changing their domain semantics.
 Current scope:
 
 - chart Top-N viewer extracted from `chart_mvp`
-- Step 17 conservative backtest evaluation viewer
+- archived Step 17 conservative backtest evaluation viewer, maintained only as
+  an assigned compatibility surface
 
 `gui_mvp` currently runs from the repository checkout. Do not broaden package
 metadata or make standalone installation claims unless chart runtime packaging
@@ -22,8 +23,8 @@ must not:
 - redefine score formulas, weights, normalization, ranking, reports, backtest
   semantics, valuation, or data ingestion
 - feed backtest results into upstream scoring or ranking
-- treat chart runtime `latest_top*` outputs as canonical Step 20 ranking
-  evidence
+- treat chart runtime `latest_top*` outputs as canonical archived Step 20
+  ranking evidence or current v0.3 adoption evidence
 - activate valuation/fundamental scoring or mix financial data into
   `technical_composite_score` or `final_composite_score`
 - commit generated chart images, market caches, runtime reports, secrets, or

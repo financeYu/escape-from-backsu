@@ -77,6 +77,7 @@ review_mvp/tests/workspace/
 
 # Generated media and ad-hoc exports
 docs/current_review_packet.md
+tmp/
 *.log
 *.tmp
 

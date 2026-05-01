@@ -11,7 +11,7 @@ Generated only after an explicit user request with a non-empty request string.
 
 ## Current Request
 
-- Task: gpt용 컨텍스트 갱신해
+- Task: gpt용 레퍼런스 갱신
 - Decision needed: focus on the current request, not old roadmap narration.
 
 ## Do Not Repeat
@@ -28,7 +28,7 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 ## Route-Only References
 
 - `docs/context/MVP_V0_1_BASELINE.md` - FOUND
-- add task-specific file paths only when needed
+- Add task-specific file paths only when needed.
 
 ## Missing Referenced Files
 

@@ -157,26 +157,27 @@ Avoid:
 
 ---
 
-## Post-MVP v0.1 task packet intake
+## Active route task packet intake
 
-When root/master delegates post-Step20 work, accept the compact task packet in
-`../docs/context/POST_MVP_AGENT_TASK_PACKET.md`.
+When root/master delegates current work, accept the compact task packet from
+the latest root instruction, `../../docs/root_hard_stops.md`, and
+`../../docs/roadmap_status.md`. Treat old post-Step20 packets as archive-only
+unless root explicitly names a provenance, regression, freeze, or compatibility
+check.
 
-For research-ingestion work, this packet does not authorize adoption decisions,
+For research-ingestion work, the active packet does not authorize adoption decisions,
 Research Tester implementation, backtest, valuation verdicts, scanner runtime
-changes, or data-ingestion expansion unless the concrete post-MVP task
-explicitly assigns that scope. If the task is blank or would cross those
-boundaries, stop and report the needed clarification or root/master approval.
+changes, or data-ingestion expansion unless the concrete task explicitly
+assigns that scope. If the task is blank or would cross those boundaries, stop
+and report the needed clarification or root/master approval.
 
-Root/master may separately assign MVP v0.1 pre-freeze readiness research notes
-for future markets or asset classes. That work may clarify query labels,
+Archive provenance or compatibility work may clarify query labels,
 classification notes, or handoff routing for KOSDAQ, futures, options, or
-NASDAQ/overseas material, but it is Step 20 closure/freeze preparation only,
-not Step 21 entry. It remains upstream evidence preparation and must not enable
-scanner runtime, data ingestion, derivative logic, adoption decisions, backtest,
-valuation verdicts, or alpha claims.
+NASDAQ/overseas material. It remains upstream evidence preparation and must not
+enable scanner runtime, data ingestion, derivative logic, adoption decisions,
+backtest, valuation verdicts, or alpha claims.
 
-Final reports must use the Korean sections defined in the packet.
+Final reports must use the Korean format named by root for the current packet.
 
 ---
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Quant Work Cycle"
+  short_description: "Run the Quant implement-review-fix-verify loop without committing."
+  default_prompt: "Use quant-work-cycle to scope, implement, review, fix, verify, and report commit-ready status without staging, committing, or pushing."

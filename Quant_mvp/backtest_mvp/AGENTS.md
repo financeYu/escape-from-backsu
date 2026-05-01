@@ -42,3 +42,13 @@ Preferred focused validation from the repository root:
 ```
 
 Use the parent root `.venv`; do not install pytest in this subproject.
+
+For repository text search on Windows, do not rely on bare `rg` if it resolves
+to a Codex WindowsApps bundled executable. From the repository root, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Quant_mvp\scripts\quant_rg.ps1 ...
+```
+
+If bare `rg` fails with access denied, record it as a blocked cheap check under
+the root cost-aware protocol and continue with the Quant wrapper above.

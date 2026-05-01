@@ -103,6 +103,21 @@ Do not install pytest separately inside Quant subprojects or user-site paths.
 The root `.venv` is the shared validation environment with Codex sandbox ACLs
 and workspace-local temp handling.
 
+For Quant-wide text search on Windows, do not rely on bare `rg` if the Codex
+session resolves it to the WindowsApps bundled executable. Use the parent
+project-local ripgrep path or the Quant wrapper from the repository root:
+
+```powershell
+tools\rg\rg.exe ...
+powershell -ExecutionPolicy Bypass -File Quant_mvp\scripts\quant_rg.ps1 ...
+```
+
+If bare `rg` fails with access denied, record it as a blocked cheap check
+through `../.agents/skills/cost-aware-review-refactor/SKILL.md` and continue
+with the project-local command above instead of retrying the blocked
+WindowsApps executable. This is a search-tool environment fix only; it does not
+change validation, strategy, data, scoring, or production-activation authority.
+
 For required bash-based gate validators, run or request them from the parent
 repository root with the exact root-relative command named by the owning gate.
 If sandboxed bash/WSL or Git Bash fails with `Win32 error 5`, WSL

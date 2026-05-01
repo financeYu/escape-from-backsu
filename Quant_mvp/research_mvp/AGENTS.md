@@ -34,6 +34,16 @@ This research agent is the canonical Quant research-ingestion owner and lives at
 Quant_mvp/research_mvp/AGENTS.md
 ```
 
+For repository text search on Windows, do not rely on bare `rg` if it resolves
+to a Codex WindowsApps bundled executable. From the repository root, use:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File Quant_mvp\scripts\quant_rg.ps1 ...
+```
+
+If bare `rg` fails with access denied, record it as a blocked cheap check under
+the root cost-aware protocol and continue with the Quant wrapper above.
+
 `Quant_mvp/research_mvp` is the upstream research and evidence lane inside the
 broader Quant product umbrella. It owns source policy, metadata adapters, seed
 lifecycle, EvidenceCard generation, research query config, and

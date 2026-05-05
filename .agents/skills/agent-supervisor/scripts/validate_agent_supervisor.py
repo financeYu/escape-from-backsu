@@ -19,15 +19,17 @@ REQUIRED_SKILL_PHRASES = {
     "responsibilities": "The supervisor must:",
     "worker firewall": "## Worker Context Firewall",
     "packet contract": "## Supervisor Packet Contract",
-    "replacement policy": "Existing project-local gates remain the authority",
+    "replacement policy": "domain authorities as compatibility targets",
     "korean output": "Answer in Korean",
 }
 
 REQUIRED_ARCHITECTURE_PHRASES = {
     "supervisor phase": "Phase 4: Supervisor",
     "supervisor code surface": "Supervisor Code Surface",
-    "current migration": "Current state: Phase 5 worker pool introduced.",
-    "next component": "Next component: skill replacement.",
+    "current migration": (
+        "Current state: Phase 7 skill replacement completed in active compatibility mode."
+    ),
+    "next component": "Next component: none",
 }
 
 REQUIRED_CODE_PHRASES = {
@@ -35,6 +37,8 @@ REQUIRED_CODE_PHRASES = {
     "worker dataclass": "class WorkerPacket",
     "build packet": "def build_supervisor_packet",
     "worker packets": "def build_worker_packets",
+    "ordered plan": "def _ordered_plan",
+    "assigned steps": "assigned_plan_steps",
     "block reason": "def block_reason_for",
     "approval": "def user_approval_required",
     "handoff": "def supervisor_handoff_ready",
@@ -57,6 +61,20 @@ READY_PLAN_REVIEW_PACKET = {
             "valuation/fundamental scoring activation without explicit approval",
         ],
     },
+    "ordered_plan": [
+        {
+            "id": "P1",
+            "role": "planner",
+            "action": "confirm scoped implementation target",
+            "output": "scope-locked summary",
+        },
+        {
+            "id": "P4",
+            "role": "supervisor",
+            "action": "assign implementation only inside locked scope",
+            "output": "bounded coder packet",
+        },
+    ],
     "validation_plan": [
         {"command": "git diff --check", "purpose": "check patch formatting"}
     ],
@@ -157,15 +175,23 @@ def behavior_failures(supervisor_code_path: Path) -> list[str]:
         failures.append("supervisor did not create four worker packets")
     if [worker.worker_role for worker in ready.worker_packets] != [
         "coder",
+        "tracker",
         "validator",
         "reporter",
-        "tracker",
     ]:
         failures.append("worker packet order or roles are wrong")
     if any(ready.execution_policy.values()):
         failures.append("execution policy allowed a forbidden Git operation")
     if not all(worker.result_contract["upward_allowed"] == module.UPWARD_ALLOWED for worker in ready.worker_packets):
         failures.append("worker result contracts do not preserve upward allowed fields")
+    coder = [worker for worker in ready.worker_packets if worker.worker_role == "coder"][0]
+    validator = [worker for worker in ready.worker_packets if worker.worker_role == "validator"][0]
+    if not coder.assigned_plan_steps:
+        failures.append("coder packet did not receive approved planner steps")
+    if not validator.assigned_plan_steps:
+        failures.append("validator packet did not receive planner steps for quality checks")
+    if "assigned_plan_steps" not in coder.required_output:
+        failures.append("coder required_output does not require assigned_plan_steps evidence")
 
     blocked = module.build_supervisor_packet(BLOCKED_REVIEW_PACKET)
     if blocked.supervisor_status != "blocked":
@@ -190,9 +216,12 @@ def behavior_failures(supervisor_code_path: Path) -> list[str]:
         failures.append("bad gate packet did not block supervisor")
 
     read_only = module.build_supervisor_packet(READ_ONLY_PACKET)
-    coder = [worker for worker in read_only.worker_packets if worker.worker_role == "coder"][0]
-    if coder.ready is not False:
-        failures.append("planning/read-only packet incorrectly prepared coder")
+    if read_only.supervisor_status != "blocked":
+        failures.append("planning/read-only packet opened worker execution")
+    if read_only.block_reason != "planning/read-only does not open worker execution":
+        failures.append("planning/read-only packet used unexpected block reason")
+    if any(worker.ready for worker in read_only.worker_packets):
+        failures.append("planning/read-only packet prepared ready workers")
 
     try:
         module.unwrap_plan_review_packet({"plan_review_packet": {"user_goal": "missing"}})
@@ -238,7 +267,7 @@ def validate(
             "approval-required packet blocks workers",
             "approval blocker gate fails closed even with inconsistent approval fields",
             "bad gate packet fails closed",
-            "planning/read-only packet does not prepare coder",
+            "planning/read-only packet does not open worker execution",
             "missing plan-review fields fail closed",
         ],
     }

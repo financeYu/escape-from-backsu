@@ -74,6 +74,7 @@ class PlanReviewPacket:
     current_route: str
     selected_gate: str
     scope_lock: dict[str, list[str]]
+    ordered_plan: list[dict[str, str]]
     validation_plan: list[dict[str, str]]
     review_status: str
     checklist: list[ReviewItem]
@@ -335,6 +336,9 @@ def build_plan_review_packet(packet: dict[str, Any]) -> PlanReviewPacket:
             "allowed": _scope_values(packet, "allowed"),
             "forbidden": _scope_values(packet, "forbidden"),
         },
+        ordered_plan=[
+            dict(item) for item in packet["ordered_plan"] if isinstance(item, dict)
+        ],
         validation_plan=[
             dict(item) for item in packet["validation_plan"] if isinstance(item, dict)
         ],

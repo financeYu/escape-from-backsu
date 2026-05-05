@@ -15,9 +15,9 @@ This skill is an intake and routing compiler only. It does not implement code,
 review plans, supervise workers, validate outputs, report completion, commit,
 fetch, pull, push, or replace existing project gates by itself.
 
-The coordinator is the first compatibility layer before the existing Codex
-skills are replaced. During the transition, it must select or name the current
-project-local gate skill that still owns execution authority.
+The coordinator is now the default root intake layer for active compatibility
+mode. It selects or names the current project-local domain gate as a
+compatibility target under the architecture chain.
 
 ## Architecture Position
 
@@ -28,7 +28,12 @@ user
   <-> plan-review
   -> user approval or feedback
   -> supervisor/root-agent
-  -> workers: coder, validator, reporter, tracker
+  -> worker pool
+       -> coder
+       -> validator
+       -> reporter
+       -> tracker
+  -> reporter result collection
 ```
 
 ## Required Inputs
@@ -130,22 +135,13 @@ coordinator_packet:
 
 ## Replacement Policy
 
-The coordinator starts the architecture replacement path but must not delete,
-rename, or bypass existing Codex skills until the new architecture has all of
-these roles documented and validated:
+The coordinator is part of the active architecture replacement path. It must
+not delete, rename, or weaken existing Codex skills. Those gates remain domain
+authorities until their responsibilities are represented in the architecture
+chain and root accepts each migration.
 
-- coordinator
-- planner
-- plan-review
-- supervisor/root-agent
-- coder
-- validator
-- reporter
-- tracker
-
-Until then, the coordinator wraps the existing project-local gates as
-compatibility targets. Existing gates remain the authority for execution,
-validation, review, and finalization.
+The coordinator wraps existing project-local gates as compatibility targets.
+Existing gates are no longer the default root entry point for routine work.
 
 ## Validation
 
@@ -181,7 +177,7 @@ context_firewall:
     - "<blocked context type>"
 validation:
   - "<command: pass/fail/not_run>"
-next_architecture_component: "planner | plan-review | supervisor | worker | none"
+next_architecture_component: "planner | plan-review | supervisor | worker-pool | reporter | worker | none"
 remaining_risk:
   - "<none or compact risk>"
 ```

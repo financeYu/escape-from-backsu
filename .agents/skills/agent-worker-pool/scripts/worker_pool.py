@@ -32,15 +32,25 @@ REQUIRED_SUPERVISOR_FIELDS = [
 ACTIVE_ROUTE = "post-MVP v0.3 research-to-strategy adoption route"
 PROJECT_LOCAL_GATE_PREFIX = ".agents/skills/"
 APPROVAL_GATE = "separate root approval required before gate selection"
-EXPECTED_WORKER_ROLES = ["coder", "validator", "reporter", "tracker"]
+EXPECTED_WORKER_ROLES = ["coder", "tracker", "validator", "reporter"]
 UPWARD_ALLOWED = ["status", "changed_scope", "evidence", "next_request"]
+DEFAULT_UPWARD_FORBIDDEN = ["raw worker logs"]
 FORBIDDEN_EXECUTION_FLAGS = ["fetch", "pull", "push", "commit", "stage"]
 
 ROLE_PURPOSES = {
     "coder": "implement only inside the assigned scope",
-    "validator": "run assigned checks and return validation evidence only",
-    "reporter": "produce compact Korean reports from approved summaries only",
-    "tracker": "record workflow status, blockers, dependencies, and next_request",
+    "validator": (
+        "check coder output against project direction, hard stops, scope lock, "
+        "assigned_plan_steps, and assigned validation commands"
+    ),
+    "reporter": (
+        "collect approved worker_result summaries and produce compact "
+        "Korean supervisor/user reports only"
+    ),
+    "tracker": (
+        "record coder completion, advance validation, record validator "
+        "completion, and advance the next worker request"
+    ),
 }
 
 
@@ -51,6 +61,7 @@ class WorkerRoleSpec:
     purpose: str
     allowed_scope: list[str]
     forbidden_scope: list[str]
+    assigned_plan_steps: list[dict[str, str]]
     required_input: str
     required_output: str
     validation_commands: list[str]
@@ -120,6 +131,30 @@ def execution_policy_is_safe(packet: dict[str, Any]) -> bool:
     return all(policy.get(flag) is False for flag in FORBIDDEN_EXECUTION_FLAGS)
 
 
+def context_firewall_is_safe(context_firewall: dict[str, Any]) -> bool:
+    """Return true when the top-level context firewall blocks raw context."""
+    upward_allowed = _string_list(context_firewall.get("upward_allowed", []))
+    upward_forbidden = _string_list(context_firewall.get("upward_forbidden", []))
+    return (
+        upward_allowed == UPWARD_ALLOWED
+        and bool(upward_forbidden)
+        and "raw worker logs" not in upward_allowed
+    )
+
+
+def normalized_context_firewall(context_firewall: dict[str, Any]) -> dict[str, list[str]]:
+    """Return a safe top-level context firewall for worker-pool output."""
+    if context_firewall_is_safe(context_firewall):
+        return {
+            "upward_allowed": _string_list(context_firewall.get("upward_allowed", [])),
+            "upward_forbidden": _string_list(context_firewall.get("upward_forbidden", [])),
+        }
+    return {
+        "upward_allowed": UPWARD_ALLOWED,
+        "upward_forbidden": DEFAULT_UPWARD_FORBIDDEN,
+    }
+
+
 def worker_packets_by_role(packet: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """Index worker packets by role, ignoring malformed items."""
     indexed: dict[str, dict[str, Any]] = {}
@@ -167,9 +202,24 @@ def worker_contract_is_safe(worker_packet: dict[str, Any]) -> bool:
     contract = _as_dict(worker_packet.get("result_contract", {}))
     upward_allowed = _string_list(contract.get("upward_allowed", []))
     upward_forbidden = _string_list(contract.get("upward_forbidden", []))
+    worker_role = str(worker_packet.get("worker_role", ""))
+    assigned_plan_steps = _as_list(worker_packet.get("assigned_plan_steps", []))
+    worker_ready = bool(worker_packet.get("ready", False))
+    coder_has_steps = worker_role != "coder" or not worker_ready or (
+        bool(assigned_plan_steps)
+        and all(
+            isinstance(step, dict)
+            and str(step.get("id", "")).strip()
+            and str(step.get("action", "")).strip()
+            for step in assigned_plan_steps
+        )
+    )
     return (
         bool(_string_list(worker_packet.get("allowed_scope", [])))
         and bool(_string_list(worker_packet.get("forbidden_scope", [])))
+        and coder_has_steps
+        and bool(str(worker_packet.get("required_output", "")).strip())
+        and bool(_string_list(worker_packet.get("validation_commands", [])))
         and upward_allowed == UPWARD_ALLOWED
         and bool(upward_forbidden)
         and "raw worker logs" not in upward_allowed
@@ -188,25 +238,29 @@ def block_reason_for(packet: dict[str, Any]) -> str:
     selected_gate = str(packet["selected_gate"])
     if current_route != ACTIVE_ROUTE:
         return "current route is not active v0.3 route"
-    if selected_gate != APPROVAL_GATE and not selected_gate_is_project_local(selected_gate):
+    if selected_gate == APPROVAL_GATE:
+        return "supervisor blocked: user approval required"
+    if not selected_gate_is_project_local(selected_gate):
         return "selected gate is outside project-local authority"
     if not execution_policy_is_safe(packet):
         return "unsafe execution policy"
+    if not context_firewall_is_safe(_as_dict(packet.get("context_firewall", {}))):
+        return "unsafe context firewall"
     unexpected_roles = unexpected_worker_roles(packet)
     if unexpected_roles:
         return "worker packet set invalid: unexpected " + ", ".join(unexpected_roles)
     duplicate_roles = duplicate_worker_roles(packet)
     if duplicate_roles:
         return "worker packet set invalid: duplicate " + ", ".join(duplicate_roles)
+    if str(packet["supervisor_status"]) != "ready_for_workers":
+        return "supervisor blocked: " + str(packet.get("block_reason", "unknown"))
+    if str(packet.get("block_reason", "none")) != "none":
+        return "supervisor blocked: " + str(packet["block_reason"])
     missing_roles = missing_worker_roles(packet)
     if missing_roles:
         return "worker packet set incomplete: " + ", ".join(missing_roles)
     if not all_worker_contracts_safe(packet):
         return "unsafe worker contract"
-    if str(packet["supervisor_status"]) != "ready_for_workers":
-        return "supervisor blocked: " + str(packet.get("block_reason", "unknown"))
-    if str(packet.get("block_reason", "none")) != "none":
-        return "supervisor blocked: " + str(packet["block_reason"])
     return "none"
 
 
@@ -214,13 +268,21 @@ def role_spec_from_worker(worker_packet: dict[str, Any], blocked: bool) -> Worke
     """Convert a supervisor worker packet into a normalized role spec."""
     worker_role = str(worker_packet.get("worker_role", "unknown"))
     contract = _as_dict(worker_packet.get("result_contract", {}))
+    required_input = "supervisor worker packet only"
+    if worker_role in {"coder", "validator"}:
+        required_input = "supervisor worker packet with approved assigned_plan_steps only"
     return WorkerRoleSpec(
         worker_role=worker_role,
         ready=bool(worker_packet.get("ready", False)) and not blocked,
         purpose=ROLE_PURPOSES.get(worker_role, "unknown worker role"),
         allowed_scope=_string_list(worker_packet.get("allowed_scope", [])),
         forbidden_scope=_string_list(worker_packet.get("forbidden_scope", [])),
-        required_input="supervisor worker packet only",
+        assigned_plan_steps=[
+            dict(step)
+            for step in _as_list(worker_packet.get("assigned_plan_steps", []))
+            if isinstance(step, dict)
+        ],
+        required_input=required_input,
         required_output=str(worker_packet.get("required_output", "")),
         validation_commands=_string_list(worker_packet.get("validation_commands", [])),
         result_contract={
@@ -254,10 +316,7 @@ def build_worker_pool_packet(packet: dict[str, Any]) -> WorkerPoolPacket:
         worker_pool_status="blocked" if blocked else "ready_for_worker_execution",
         block_reason=block_reason,
         role_specs=build_role_specs(packet, blocked),
-        context_firewall={
-            "upward_allowed": _string_list(context_firewall.get("upward_allowed", [])),
-            "upward_forbidden": _string_list(context_firewall.get("upward_forbidden", [])),
-        },
+        context_firewall=normalized_context_firewall(context_firewall),
         korean_final_report=bool(packet["korean_final_report"]),
     )
 

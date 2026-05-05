@@ -44,6 +44,21 @@ Current active route skill:
 
 - `.agents/skills/quant-strategy-adoption-gate/SKILL.md`
 
+Current active root orchestration:
+
+- `.agents/skills/agent-coordinator/SKILL.md`
+- `.agents/skills/agent-planner/SKILL.md`
+- `.agents/skills/agent-plan-review/SKILL.md`
+- `.agents/skills/agent-supervisor/SKILL.md`
+- `.agents/skills/agent-worker-pool/SKILL.md`
+- `.agents/skills/agent-reporter/SKILL.md`
+- `.agents/skills/agent-replacement/SKILL.md`
+
+The architecture chain is now the default root work process. Existing
+project-local route and review gates remain domain authorities, but routine
+work reaches them as compatibility targets selected and bounded by the
+architecture chain.
+
 Completion review gate:
 
 - `.agents/skills/quant-review-gate/SKILL.md`

@@ -15,9 +15,9 @@ This skill is planning-only. It does not implement code, approve its own plan,
 supervise workers, validate final outputs, report completion, commit, fetch,
 pull, push, or replace existing project gates by itself.
 
-During the transition, existing project-local Codex skills remain authoritative
-for execution, validation, review, and finalization. The planner may name them
-as compatibility targets but must not bypass them.
+In active compatibility mode, existing project-local Codex skills remain
+domain authorities selected by the coordinator. The planner may name them as
+compatibility targets but must not bypass the architecture chain.
 
 ## Architecture Position
 
@@ -127,10 +127,10 @@ planner_packet:
 
 ## Replacement Policy
 
-The planner is part of the replacement path, but it must not delete, rename, or
-bypass existing Codex skills. Existing project-local gates remain the authority
-until coordinator, planner, plan-review, supervisor, coder, validator, reporter,
-and tracker roles are all documented, validated, and accepted.
+The planner is part of the active replacement path, but it must not delete,
+rename, or weaken existing Codex skills. Existing project-local gates remain
+domain authorities as compatibility targets selected and bounded by the
+architecture chain.
 
 ## Validation
 

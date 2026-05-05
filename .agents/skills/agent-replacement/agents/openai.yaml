@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Replacement"
+  short_description: "Migrate existing project-local Codex skill entry points into the active agent architecture."
+  default_prompt: "Use agent-replacement to activate or migrate old project-local skill/process entry points under the coordinator-to-reporter architecture without deleting domain gates."

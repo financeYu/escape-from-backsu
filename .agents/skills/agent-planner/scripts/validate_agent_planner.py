@@ -19,15 +19,17 @@ REQUIRED_SKILL_PHRASES = {
     "planner responsibilities": "The planner must produce:",
     "context firewall": "## Context Firewall",
     "planner contract": "## Planner Packet Contract",
-    "replacement policy": "Existing project-local gates remain the authority",
+    "replacement policy": "domain authorities as compatibility targets",
     "korean output": "Answer in Korean",
 }
 
 REQUIRED_ARCHITECTURE_PHRASES = {
     "planner phase": "Phase 2: Planner",
     "planner code surface": "Planner Code Surface",
-    "current migration": "Current state: Phase 5 worker pool introduced.",
-    "next component": "Next component: skill replacement.",
+    "current migration": (
+        "Current state: Phase 7 skill replacement completed in active compatibility mode."
+    ),
+    "next component": "Next component: none",
 }
 
 REQUIRED_CODE_PHRASES = {

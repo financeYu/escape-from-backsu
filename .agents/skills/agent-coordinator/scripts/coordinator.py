@@ -80,8 +80,47 @@ SAFE_HARD_STOP_CONTEXT_TERMS = [
     "가드레일",
 ]
 
+PLANNER_TERMS = [
+    "planner",
+    "planning",
+    "plan this",
+    "make a plan",
+    "계획",
+    "계획 세워",
+    "플래너",
+]
 PLAN_REVIEW_TERMS = ["plan-review", "plan review", "플랜리뷰", "플랜 리뷰"]
-SUPERVISOR_TERMS = ["supervisor", "root-agent", "root agent", "수퍼바이저", "슈퍼바이저"]
+SUPERVISOR_TERMS = [
+    "supervisor",
+    "root-agent",
+    "root agent",
+    "orchestrate",
+    "orchestration",
+    "root orchestration",
+    "수퍼바이저",
+    "슈퍼바이저",
+    "오케스트레이션",
+    "루트 오케스트레이션",
+    "작업 지휘",
+    "실행 지휘",
+]
+REPORTER_TERMS = [
+    "reporter",
+    "reporter role",
+    "agent-reporter",
+    "worker result",
+    "worker_result",
+    "result collection",
+    "reporter contract",
+    "supervisor/user report",
+    "final reporting",
+    "final report",
+    "리포터",
+    "보고서",
+    "최종 보고",
+    "최종 리포트",
+    "결과 보고",
+]
 WORKER_POOL_TERMS = [
     "worker pool",
     "worker-pool",
@@ -89,11 +128,30 @@ WORKER_POOL_TERMS = [
     "validator role",
     "reporter role",
     "tracker role",
+    "direct implementation",
+    "direct validation",
+    "workflow status",
     "작업자",
     "코더",
     "밸리데이터",
     "리포터",
     "트래커",
+    "직접 구현",
+    "직접 검증",
+    "워크플로우 상태",
+]
+REPLACEMENT_TERMS = [
+    "replacement",
+    "replace",
+    "migration",
+    "migrate",
+    "skill replacement",
+    "process replacement",
+    "agent-replacement",
+    "대체",
+    "마이그레이션",
+    "프로세스 전환",
+    "프로세스 교체",
 ]
 
 
@@ -137,6 +195,14 @@ def classify_task(goal: str) -> str:
         "fix",
         "refactor",
         "write code",
+        "skillize",
+        "codex skill",
+        "스킬화",
+        "제작",
+        "적용",
+        "대체",
+        "전환",
+        "교체",
         "코드",
         "구현",
         "수정",
@@ -154,16 +220,22 @@ def classify_task(goal: str) -> str:
 def select_gate(goal: str, task_class: str) -> str:
     """Select the current compatibility gate; do not replace gate authority."""
     text = goal.lower()
+    if crosses_hard_stop(text):
+        return "separate root approval required before gate selection"
+    if is_replacement_request(text):
+        return ".agents/skills/agent-replacement/SKILL.md"
     if is_plan_review_request(text):
         return ".agents/skills/agent-plan-review/SKILL.md"
+    if is_planner_request(text):
+        return ".agents/skills/agent-planner/SKILL.md"
     if is_supervisor_request(text):
         return ".agents/skills/agent-supervisor/SKILL.md"
+    if is_reporter_request(text):
+        return ".agents/skills/agent-reporter/SKILL.md"
     if is_worker_pool_request(text):
         return ".agents/skills/agent-worker-pool/SKILL.md"
     if is_review_request(text):
         return ".agents/skills/review_gate/SKILL.md"
-    if crosses_hard_stop(text):
-        return "separate root approval required before gate selection"
     if any(term in text for term in ["coordinator", "planner", "architecture", "아키텍쳐", "아키텍처"]):
         return ".agents/skills/agent-coordinator/SKILL.md"
     if any(term in text for term in ["prob_up_1d", "probability", "확률", "candidate ml"]):
@@ -186,6 +258,13 @@ def allowed_scope_for(selected_gate: str) -> list[str]:
             ".agents/skills/agent-coordinator/",
             "docs/architecture/agent_orchestration_architecture.md",
             "AGENTS.md router line for architecture redesign only",
+        ]
+    if selected_gate.endswith("agent-planner/SKILL.md"):
+        return [
+            ".agents/skills/agent-planner/",
+            ".agents/skills/agent-coordinator/ planner routing only",
+            "docs/architecture/agent_orchestration_architecture.md",
+            "AGENTS.md architecture routing lines only",
         ]
     if selected_gate.endswith("agent-plan-review/SKILL.md"):
         return [
@@ -210,6 +289,29 @@ def allowed_scope_for(selected_gate: str) -> list[str]:
             ".agents/skills/agent-coordinator/ worker-pool routing only",
             "docs/architecture/agent_orchestration_architecture.md",
             "AGENTS.md router line for architecture redesign only",
+        ]
+    if selected_gate.endswith("agent-reporter/SKILL.md"):
+        return [
+            ".agents/skills/agent-reporter/",
+            ".agents/skills/agent-supervisor/ reporter worker contract only",
+            ".agents/skills/agent-worker-pool/ reporter role contract only",
+            ".agents/skills/agent-coordinator/ reporter routing only",
+            "docs/architecture/agent_orchestration_architecture.md",
+            "AGENTS.md router line for architecture redesign only",
+        ]
+    if selected_gate.endswith("agent-replacement/SKILL.md"):
+        return [
+            ".agents/skills/agent-replacement/",
+            ".agents/skills/agent-coordinator/ replacement routing only",
+            ".agents/skills/agent-planner/ replacement handoff wording only",
+            ".agents/skills/agent-plan-review/ replacement review checks only",
+            ".agents/skills/agent-supervisor/ replacement packet contract only",
+            ".agents/skills/agent-worker-pool/ replacement worker contract only",
+            ".agents/skills/agent-reporter/ replacement report contract only",
+            "docs/architecture/agent_orchestration_architecture.md",
+            "docs/root_hard_stops.md architecture process wording only",
+            "docs/roadmap_status.md architecture process wording only",
+            "AGENTS.md architecture routing lines only",
         ]
     if selected_gate.endswith("quant-candidate-ml-gate/SKILL.md"):
         return [
@@ -253,6 +355,15 @@ def validation_for(selected_gate: str, task_class: str) -> list[str]:
             1,
             ".venv\\Scripts\\python.exe .agents/skills/agent-coordinator/scripts/coordinator.py --user-goal \"<goal>\" --format json",
         )
+    elif selected_gate.endswith("agent-planner/SKILL.md"):
+        checks.insert(
+            0,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-planner/scripts/validate_agent_planner.py --dry-run",
+        )
+        checks.insert(
+            1,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-planner/scripts/planner.py --coordinator-packet-json \"<json>\" --format json",
+        )
     elif selected_gate.endswith("agent-plan-review/SKILL.md"):
         checks.insert(
             0,
@@ -279,6 +390,24 @@ def validation_for(selected_gate: str, task_class: str) -> list[str]:
         checks.insert(
             1,
             ".venv\\Scripts\\python.exe .agents/skills/agent-worker-pool/scripts/worker_pool.py --supervisor-packet-json \"<json>\" --format json",
+        )
+    elif selected_gate.endswith("agent-reporter/SKILL.md"):
+        checks.insert(
+            0,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-reporter/scripts/validate_agent_reporter.py --dry-run",
+        )
+        checks.insert(
+            1,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-reporter/scripts/reporter.py --worker-pool-packet-json \"<json>\" --worker-results-json \"<json>\" --format json",
+        )
+    elif selected_gate.endswith("agent-replacement/SKILL.md"):
+        checks.insert(
+            0,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-replacement/scripts/validate_agent_replacement.py --dry-run",
+        )
+        checks.insert(
+            1,
+            ".venv\\Scripts\\python.exe .agents/skills/agent-coordinator/scripts/coordinator.py --user-goal \"<replacement goal>\" --format json",
         )
     elif selected_gate.endswith("quant-candidate-ml-gate/SKILL.md"):
         checks.insert(
@@ -326,6 +455,11 @@ def is_plan_review_request(text: str) -> bool:
     return any(term in text for term in PLAN_REVIEW_TERMS)
 
 
+def is_planner_request(text: str) -> bool:
+    """Return true for manual planning requests."""
+    return any(term in text for term in PLANNER_TERMS)
+
+
 def is_supervisor_request(text: str) -> bool:
     """Return true for the supervisor architecture role."""
     return any(term in text for term in SUPERVISOR_TERMS)
@@ -334,6 +468,16 @@ def is_supervisor_request(text: str) -> bool:
 def is_worker_pool_request(text: str) -> bool:
     """Return true for the worker-pool architecture role."""
     return any(term in text for term in WORKER_POOL_TERMS)
+
+
+def is_reporter_request(text: str) -> bool:
+    """Return true for the reporter worker-result collection role."""
+    return any(term in text for term in REPORTER_TERMS)
+
+
+def is_replacement_request(text: str) -> bool:
+    """Return true for active architecture replacement work."""
+    return any(term in text for term in REPLACEMENT_TERMS)
 
 
 def build_packet(user_goal: str) -> CoordinatorPacket:

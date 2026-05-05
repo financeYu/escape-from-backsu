@@ -12,8 +12,9 @@ here.
 2. `AGENTS.md` for the always-on router.
 3. `docs/root_hard_stops.md` for active project authority and hard stops.
 4. `docs/roadmap_status.md` for current route state.
-5. A triggered Codex skill, affected subproject `AGENTS.md`, one active packet,
-   one needed domain stub, and targeted files.
+5. The active agent architecture skill chain, the selected project/domain gate,
+   affected subproject `AGENTS.md`, one active packet, one needed domain stub,
+   and targeted files.
 
 The user's prompt defines only this gate's concrete goal and requested
 deliverables. Reusable process, guardrail, validation policy, and route state
@@ -36,6 +37,14 @@ belong in docs or project-local skills.
   explicitly requests archived/supporting `prob_up_1d_candidate` compatibility,
   candidate probability sidecars, feature tables, label-separated
   training/evaluation, or leakage checks.
+- The active root work process is the agent architecture chain:
+  `agent-coordinator` -> `agent-planner` -> `agent-plan-review` ->
+  `agent-supervisor` -> `agent-worker-pool` -> `agent-reporter`, with
+  `agent-replacement` governing migration of existing Codex skill entry points.
+  Existing project-local gates remain domain authorities as compatibility
+  targets selected and bounded by that chain. Routine work must treat these as
+  compatibility targets selected and bounded by the active architecture chain,
+  not as direct root entry points.
 
 ## Archive Separation
 
@@ -164,11 +173,12 @@ Default task context is:
 
 1. this file
 2. `docs/roadmap_status.md`
-3. triggered skill from `.agents/skills`
-4. affected subproject `AGENTS.md`
-5. one active packet
-6. one domain stub only when needed
-7. targeted files
+3. active architecture skill from `.agents/skills`
+4. selected project/domain gate from `.agents/skills`
+5. affected subproject `AGENTS.md`
+6. one active packet
+7. one domain stub only when needed
+8. targeted files
 
 ## Generated Output Boundary
 

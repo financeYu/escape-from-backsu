@@ -2,7 +2,9 @@
 """Build supervisor worker packets from an approved plan-review packet.
 
 The supervisor does not execute workers. It prepares bounded worker packets only
-after plan-review approval opens the supervisor handoff.
+after plan-review approval opens the supervisor handoff. Worker execution order
+is coder -> tracker -> validator -> tracker -> reporter. Reporter owns
+worker-result collection for supervisor/user reporting.
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ REQUIRED_PLAN_REVIEW_FIELDS = [
     "current_route",
     "selected_gate",
     "scope_lock",
+    "ordered_plan",
     "validation_plan",
     "review_status",
     "user_approval",
@@ -33,7 +36,7 @@ REQUIRED_PLAN_REVIEW_FIELDS = [
 ACTIVE_ROUTE = "post-MVP v0.3 research-to-strategy adoption route"
 PROJECT_LOCAL_GATE_PREFIX = ".agents/skills/"
 APPROVAL_GATE = "separate root approval required before gate selection"
-WORKER_ROLES = ["coder", "validator", "reporter", "tracker"]
+WORKER_ROLES = ["coder", "tracker", "validator", "reporter"]
 UPWARD_ALLOWED = ["status", "changed_scope", "evidence", "next_request"]
 
 
@@ -43,6 +46,7 @@ class WorkerPacket:
     ready: bool
     allowed_scope: list[str]
     forbidden_scope: list[str]
+    assigned_plan_steps: list[dict[str, str]]
     required_output: str
     validation_commands: list[str]
     result_contract: dict[str, list[str]]
@@ -110,6 +114,22 @@ def _validation_commands(packet: dict[str, Any]) -> list[str]:
     return commands or ["not_applicable until worker validation is assigned"]
 
 
+def _ordered_plan(packet: dict[str, Any]) -> list[dict[str, str]]:
+    """Return approved planner steps preserved by plan-review."""
+    steps: list[dict[str, str]] = []
+    for item in _as_list(packet.get("ordered_plan", [])):
+        if isinstance(item, dict):
+            steps.append(
+                {
+                    "id": str(item.get("id", "")),
+                    "role": str(item.get("role", "")),
+                    "action": str(item.get("action", "")),
+                    "output": str(item.get("output", "")),
+                }
+            )
+    return steps
+
+
 def selected_gate_is_project_local(selected_gate: str) -> bool:
     """Return true for project-local skill gates only."""
     return selected_gate.startswith(PROJECT_LOCAL_GATE_PREFIX) and selected_gate.endswith(
@@ -143,6 +163,8 @@ def block_reason_for(packet: dict[str, Any]) -> str:
         return "plan-review not approved"
     if not supervisor_handoff_ready(packet):
         return "supervisor handoff not ready"
+    if str(packet["task_class"]) == "planning/read-only":
+        return "planning/read-only does not open worker execution"
     if not _scope_values(packet, "allowed") or not _scope_values(packet, "forbidden"):
         return "scope lock missing"
     return "none"
@@ -162,20 +184,33 @@ def build_worker_packets(packet: dict[str, Any], ready: bool) -> list[WorkerPack
     allowed = _scope_values(packet, "allowed")
     forbidden = _scope_values(packet, "forbidden")
     commands = _validation_commands(packet)
+    assigned_plan_steps = _ordered_plan(packet)
     contract = result_contract(_as_dict(packet.get("context_firewall", {})))
-    task_class = str(packet["task_class"])
-    coder_ready = ready and task_class != "planning/read-only"
 
     return [
         WorkerPacket(
             worker_role="coder",
-            ready=coder_ready,
+            ready=ready,
             allowed_scope=allowed,
             forbidden_scope=forbidden,
-            required_output="implementation summary and changed_scope only"
-            if coder_ready
-            else "not_applicable for planning/read-only or blocked supervisor packet",
+            assigned_plan_steps=assigned_plan_steps if ready else [],
+            required_output="implementation summary, changed_scope, and completed assigned_plan_steps only"
+            if ready
+            else "not_applicable for blocked supervisor packet",
             validation_commands=["not_applicable for coder"],
+            result_contract=contract,
+        ),
+        WorkerPacket(
+            worker_role="tracker",
+            ready=ready,
+            allowed_scope=allowed,
+            forbidden_scope=forbidden,
+            assigned_plan_steps=assigned_plan_steps if ready else [],
+            required_output=(
+                "coder completion tracking, validation-stage handoff, "
+                "validator completion tracking, and next_request"
+            ),
+            validation_commands=["not_applicable for tracker"],
             result_contract=contract,
         ),
         WorkerPacket(
@@ -183,7 +218,12 @@ def build_worker_packets(packet: dict[str, Any], ready: bool) -> list[WorkerPack
             ready=ready,
             allowed_scope=allowed,
             forbidden_scope=forbidden,
-            required_output="validation evidence only; no final acceptance",
+            assigned_plan_steps=assigned_plan_steps if ready else [],
+            required_output=(
+                "validation evidence for coder output, project direction, "
+                "hard-stop safety, scope lock, and assigned_plan_steps only; "
+                "no final acceptance"
+            ),
             validation_commands=commands,
             result_contract=contract,
         ),
@@ -192,17 +232,12 @@ def build_worker_packets(packet: dict[str, Any], ready: bool) -> list[WorkerPack
             ready=ready,
             allowed_scope=allowed,
             forbidden_scope=forbidden,
-            required_output="compact Korean report from approved worker summaries only",
+            assigned_plan_steps=[],
+            required_output=(
+                "collect approved worker_result summaries and draft compact "
+                "Korean supervisor/user report only"
+            ),
             validation_commands=["not_applicable for reporter"],
-            result_contract=contract,
-        ),
-        WorkerPacket(
-            worker_role="tracker",
-            ready=ready,
-            allowed_scope=allowed,
-            forbidden_scope=forbidden,
-            required_output="workflow status, blockers, dependencies, and next_request",
-            validation_commands=["not_applicable for tracker"],
             result_contract=contract,
         ),
     ]

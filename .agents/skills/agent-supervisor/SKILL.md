@@ -15,10 +15,9 @@ This skill is orchestration-only. It does not implement code, validate final
 outputs, write final reports, track long-running state outside the packet,
 commit, fetch, pull, push, or replace existing project gates by itself.
 
-During the transition, existing project-local Codex skills remain authoritative
-for execution, validation, review, and finalization. Existing project-local gates remain the authority.
-The supervisor may name those gates as compatibility targets, but it must not
-bypass them.
+In active compatibility mode, existing project-local Codex skills remain
+domain authorities selected by the coordinator. The supervisor may name those
+gates as compatibility targets, but it must not bypass the architecture chain.
 
 ## Architecture Position
 
@@ -40,6 +39,7 @@ The supervisor accepts only a compact `plan_review_packet` with:
 - `current_route`
 - `selected_gate`
 - `scope_lock`
+- `ordered_plan`
 - `validation_plan`
 - `review_status`
 - `user_approval`
@@ -61,7 +61,10 @@ The supervisor must:
 - block when `user_approval.required` is `true`
 - preserve current route, selected gate, scope lock, validation plan, hard
   stops, and context firewall
+- preserve the approved planner `ordered_plan` as worker `assigned_plan_steps`
 - create worker packets for `coder`, `validator`, `reporter`, and `tracker`
+- route worker-result collection and final report drafting to the `reporter`
+  worker only
 - keep every worker packet bounded by the same allowed and forbidden scope
 - require compact worker outputs only: `status`, `changed_scope`, `evidence`,
   and `next_request`
@@ -124,6 +127,11 @@ supervisor_packet:
         - "<from scope lock>"
       forbidden_scope:
         - "<from scope lock>"
+      assigned_plan_steps:
+        - id: "<from ordered_plan>"
+          role: "<from ordered_plan>"
+          action: "<from ordered_plan>"
+          output: "<from ordered_plan>"
       required_output: "<bounded worker output>"
       validation_commands:
         - "<command or not_applicable>"
@@ -146,13 +154,25 @@ supervisor_packet:
   korean_final_report: true
 ```
 
+Worker order:
+
+1. `coder` performs scoped implementation by following `assigned_plan_steps`
+   and returns changed scope plus a compact implementation summary.
+2. `tracker` records coder completion and advances the workflow to validator.
+3. `validator` checks coder output against project direction, hard stops,
+   scope lock, assigned validation commands, and `assigned_plan_steps`; then
+   returns validation or quality evidence.
+4. `tracker` records validator completion and advances the workflow to
+   reporter.
+5. `reporter` collects approved `worker_result` summaries and drafts the
+   supervisor/user report.
+
 ## Replacement Policy
 
-The supervisor is part of the replacement path, but it must not delete, rename,
-or bypass existing Codex skills. Existing project-local gates remain the
-authority until coordinator, planner, plan-review, supervisor, coder,
-validator, reporter, and tracker roles are all documented, validated, and
-accepted.
+The supervisor is part of the active replacement path, but it must not delete,
+rename, or weaken existing Codex skills. Existing project-local gates remain
+domain authorities as compatibility targets selected and bounded by the
+architecture chain.
 
 ## Validation
 

@@ -20,15 +20,17 @@ REQUIRED_SKILL_PHRASES = {
     "user approval policy": "Do not require user approval for every clean plan.",
     "context firewall": "## Context Firewall",
     "packet contract": "## Plan Review Packet Contract",
-    "replacement policy": "Existing project-local gates remain the authority",
+    "replacement policy": "domain authorities as compatibility targets",
     "korean output": "Answer in Korean",
 }
 
 REQUIRED_ARCHITECTURE_PHRASES = {
     "plan review phase": "Phase 3: Plan Review",
     "plan review code surface": "Plan Review Code Surface",
-    "current migration": "Current state: Phase 5 worker pool introduced.",
-    "next component": "Next component: skill replacement.",
+    "current migration": (
+        "Current state: Phase 7 skill replacement completed in active compatibility mode."
+    ),
+    "next component": "Next component: none",
     "approval policy": "Do not require user approval for every clean plan.",
 }
 
@@ -37,6 +39,7 @@ REQUIRED_CODE_PHRASES = {
     "review item dataclass": "class ReviewItem",
     "build packet": "def build_plan_review_packet",
     "checklist": "def build_checklist",
+    "ordered plan preserved": "ordered_plan: list[dict[str, str]]",
     "approval": "def requires_separate_approval",
     "active route": "ACTIVE_ROUTE",
     "project-local gate": "def selected_gate_is_project_local",
@@ -168,6 +171,8 @@ def behavior_failures(plan_review_code_path: Path) -> list[str]:
         failures.append("clean review did not set supervisor handoff ready")
     if ready.user_approval["required"] is not False:
         failures.append("clean review incorrectly required user approval")
+    if ready.ordered_plan != READY_PLANNER_PACKET["ordered_plan"]:
+        failures.append("plan-review packet did not preserve ordered_plan")
 
     bad_ready = module.build_plan_review_packet(BAD_READY_PLANNER_PACKET)
     if bad_ready.review_status != "needs_planner_fix":

@@ -16,10 +16,10 @@ This skill is review-only. It does not implement code, change the plan, run
 workers, validate final task outputs, report final completion, commit, fetch,
 pull, push, or replace existing project gates by itself.
 
-During the transition, existing project-local Codex skills remain authoritative
-for execution, validation, review, and finalization. Plan Review may approve a
-supervisor handoff only when the reviewed plan stays inside those existing
-gate boundaries.
+In active compatibility mode, existing project-local Codex skills remain
+domain authorities selected by the coordinator. Plan Review may approve a
+supervisor handoff only when the reviewed plan stays inside those selected
+gate boundaries and the architecture chain.
 
 ## Architecture Position
 
@@ -113,6 +113,11 @@ plan_review_packet:
       - "<from planner>"
     forbidden:
       - "<from planner>"
+  ordered_plan:
+    - id: "<from planner>"
+      role: "<from planner>"
+      action: "<from planner>"
+      output: "<from planner>"
   validation_plan:
     - command: "<from planner>"
       purpose: "<from planner>"
@@ -146,10 +151,10 @@ plan_review_packet:
 
 ## Replacement Policy
 
-Plan Review is part of the replacement path, but it must not delete, rename, or
-bypass existing Codex skills. Existing project-local gates remain the authority
-until coordinator, planner, plan-review, supervisor, coder, validator,
-reporter, and tracker roles are all documented, validated, and accepted.
+Plan Review is part of the active replacement path, but it must not delete,
+rename, or weaken existing Codex skills. Existing project-local gates remain
+domain authorities as compatibility targets selected and bounded by the
+architecture chain.
 
 ## Validation
 

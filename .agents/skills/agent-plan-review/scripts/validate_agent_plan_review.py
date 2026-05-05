@@ -41,6 +41,8 @@ REQUIRED_CODE_PHRASES = {
     "checklist": "def build_checklist",
     "ordered plan preserved": "ordered_plan: list[dict[str, str]]",
     "approval": "def requires_separate_approval",
+    "previous review approval": "def previous_review_requires_user_approval",
+    "revised plan approval": "def revised_plan_needs_user_approval",
     "active route": "ACTIVE_ROUTE",
     "project-local gate": "def selected_gate_is_project_local",
     "hard-stop categories": "REQUIRED_HARD_STOP_CATEGORIES",
@@ -123,6 +125,24 @@ BAD_ROUTE_GATE_PLANNER_PACKET = {
 PARTIAL_HARD_STOP_PLANNER_PACKET = {
     **READY_PLANNER_PACKET,
     "scope_lock": {"allowed": [".agents/skills/agent-plan-review/"], "forbidden": ["live trading only"]},
+}
+
+REVISED_AFTER_FIX_PLANNER_PACKET = {
+    **READY_PLANNER_PACKET,
+    "user_goal": "revised plan after plan-review fixes",
+    "revision_context": {
+        "revised_after_review_fix": True,
+        "user_approval_ack": False,
+    },
+}
+
+APPROVED_REVISED_AFTER_FIX_PLANNER_PACKET = {
+    **REVISED_AFTER_FIX_PLANNER_PACKET,
+    "revision_context": {
+        "revised_after_review_fix": True,
+        "user_approval_ack": True,
+        "user_approval_evidence": "root/user approved revised plan",
+    },
 }
 
 
@@ -215,6 +235,39 @@ def behavior_failures(plan_review_code_path: Path) -> list[str]:
     if "R4" not in [item.id for item in partial_hard_stop.checklist if not item.passed]:
         failures.append("partial hard-stop packet did not fail R4")
 
+    revised_without_ack = module.build_plan_review_packet(
+        READY_PLANNER_PACKET,
+        previous_review=module.asdict(partial_hard_stop),
+    )
+    if revised_without_ack.review_status != "separate_approval_required":
+        failures.append("revised plan after failed review did not require approval")
+    if revised_without_ack.user_approval["required"] is not True:
+        failures.append("revised plan after failed review did not mark approval required")
+    if revised_without_ack.supervisor_handoff["ready"] is not False:
+        failures.append("revised plan without approval allowed supervisor handoff")
+
+    revised_still_bad = module.build_plan_review_packet(
+        INCOMPLETE_PLANNER_PACKET,
+        previous_review=module.asdict(partial_hard_stop),
+    )
+    if revised_still_bad.review_status != "needs_planner_fix":
+        failures.append("bad revised plan asked for approval before planner fixes")
+
+    revised_marker_without_ack = module.build_plan_review_packet(
+        REVISED_AFTER_FIX_PLANNER_PACKET
+    )
+    if revised_marker_without_ack.review_status != "separate_approval_required":
+        failures.append("revision marker without approval did not require approval")
+
+    revised_with_ack = module.build_plan_review_packet(
+        APPROVED_REVISED_AFTER_FIX_PLANNER_PACKET,
+        previous_review=module.asdict(partial_hard_stop),
+    )
+    if revised_with_ack.review_status != "approved_for_supervisor":
+        failures.append("approved revised plan did not reach supervisor approval")
+    if revised_with_ack.user_approval["required"] is not False:
+        failures.append("approved revised plan still required user approval")
+
     try:
         module.unwrap_planner_packet({"planner_packet": {"user_goal": "missing"}})
         failures.append("missing planner fields did not raise ValueError")
@@ -259,6 +312,8 @@ def validate(
             "separate approval packet blocks supervisor",
             "bad route/gate packet fails closed",
             "partial hard-stop packet fails closed",
+            "revised plan after failed review requires user approval",
+            "approved revised plan may proceed to supervisor",
             "missing planner fields fail closed",
         ],
     }

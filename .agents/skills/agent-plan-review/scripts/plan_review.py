@@ -88,6 +88,7 @@ class PlanReviewPacket:
     scope_lock: dict[str, list[str]]
     ordered_plan: list[dict[str, str]]
     validation_plan: list[dict[str, str]]
+    revision_context: dict[str, Any]
     review_status: str
     checklist: list[ReviewItem]
     user_approval: dict[str, Any]
@@ -117,6 +118,29 @@ def load_packet(args: argparse.Namespace) -> dict[str, Any]:
         packet_path = Path(args.planner_packet_file)
         return unwrap_planner_packet(json.loads(packet_path.read_text(encoding="utf-8")))
     raise ValueError("provide --planner-packet-json or --planner-packet-file")
+
+
+def unwrap_previous_plan_review_packet(raw_packet: dict[str, Any]) -> dict[str, Any]:
+    """Accept either the previous packet itself or {"plan_review_packet": packet}."""
+    if "plan_review_packet" in raw_packet:
+        raw_packet = raw_packet["plan_review_packet"]
+    return raw_packet
+
+
+def load_previous_review(args: argparse.Namespace) -> dict[str, Any] | None:
+    """Load an optional previous plan-review packet for revised-plan approval checks."""
+    if args.previous_plan_review_packet_json:
+        if args.previous_plan_review_packet_json == "-":
+            raise ValueError("previous plan-review packet cannot also read stdin")
+        return unwrap_previous_plan_review_packet(
+            json.loads(args.previous_plan_review_packet_json)
+        )
+    if args.previous_plan_review_packet_file:
+        packet_path = Path(args.previous_plan_review_packet_file)
+        return unwrap_previous_plan_review_packet(
+            json.loads(packet_path.read_text(encoding="utf-8"))
+        )
+    return None
 
 
 def _as_list(value: Any) -> list[Any]:
@@ -157,6 +181,57 @@ def _planner_supervisor_ready(packet: dict[str, Any]) -> bool:
     return bool(handoff.get("ready", False))
 
 
+def _revision_context(packet: dict[str, Any]) -> dict[str, Any]:
+    context = packet.get("revision_context", {})
+    return context if isinstance(context, dict) else {}
+
+
+def _revision_user_approval_ack(packet: dict[str, Any]) -> bool:
+    """Return true when the revised plan carries explicit user/root approval."""
+    revision_context = _revision_context(packet)
+    if bool(revision_context.get("user_approval_ack", False)):
+        return True
+    handoff = packet.get("plan_review_handoff", {})
+    if isinstance(handoff, dict) and bool(handoff.get("user_approval_ack", False)):
+        return True
+    return False
+
+
+def _planner_marks_revised_after_fix(packet: dict[str, Any]) -> bool:
+    """Return true when the planner says this packet revises a failed review."""
+    revision_context = _revision_context(packet)
+    if bool(revision_context.get("revised_after_review_fix", False)):
+        return True
+    handoff = packet.get("plan_review_handoff", {})
+    if isinstance(handoff, dict) and bool(handoff.get("revised_after_review_fix", False)):
+        return True
+    return False
+
+
+def previous_review_requires_user_approval(
+    previous_review: dict[str, Any] | None,
+) -> bool:
+    """Return true when the previous review said fixes require user approval."""
+    if not previous_review:
+        return False
+    user_approval = previous_review.get("user_approval", {})
+    if not isinstance(user_approval, dict):
+        return False
+    return bool(user_approval.get("required_after_planner_fix", False))
+
+
+def revised_plan_needs_user_approval(
+    packet: dict[str, Any],
+    previous_review: dict[str, Any] | None,
+) -> bool:
+    """Return true when a fixed/revised plan cannot proceed without user approval."""
+    if _revision_user_approval_ack(packet):
+        return False
+    return previous_review_requires_user_approval(
+        previous_review
+    ) or _planner_marks_revised_after_fix(packet)
+
+
 def selected_gate_is_project_local(selected_gate: str) -> bool:
     """Return true for project-local skill gates only."""
     return selected_gate.startswith(PROJECT_LOCAL_GATE_PREFIX) and selected_gate.endswith(
@@ -173,8 +248,19 @@ def missing_hard_stop_categories(forbidden_text: str) -> list[str]:
     return missing
 
 
-def requires_separate_approval(packet: dict[str, Any]) -> bool:
+def requires_separate_approval(
+    packet: dict[str, Any], previous_review: dict[str, Any] | None = None
+) -> bool:
     """Return true when the plan already names a separate approval boundary."""
+    if requires_guarded_boundary_approval(packet):
+        return True
+    if revised_plan_needs_user_approval(packet, previous_review):
+        return not _revision_user_approval_ack(packet)
+    return False
+
+
+def requires_guarded_boundary_approval(packet: dict[str, Any]) -> bool:
+    """Return true when the plan names a hard-stop or out-of-scope approval."""
     selected_gate = str(packet["selected_gate"])
     approval_question = _approval_question(packet).lower()
     if selected_gate == "separate root approval required before gate selection":
@@ -303,22 +389,30 @@ def build_checklist(packet: dict[str, Any]) -> list[ReviewItem]:
     return checklist
 
 
-def review_status_for(packet: dict[str, Any], checklist: list[ReviewItem]) -> str:
+def review_status_for(
+    packet: dict[str, Any],
+    checklist: list[ReviewItem],
+    previous_review: dict[str, Any] | None = None,
+) -> str:
     """Derive the review status from checklist and approval triggers."""
-    if requires_separate_approval(packet):
+    if requires_guarded_boundary_approval(packet):
         return "separate_approval_required"
     if str(packet["plan_status"]) == "blocked":
         return "blocked"
     if any(not item.passed for item in checklist):
         return "needs_planner_fix"
+    if revised_plan_needs_user_approval(packet, previous_review):
+        return "separate_approval_required"
     return "approved_for_supervisor"
 
 
-def build_plan_review_packet(packet: dict[str, Any]) -> PlanReviewPacket:
+def build_plan_review_packet(
+    packet: dict[str, Any], previous_review: dict[str, Any] | None = None
+) -> PlanReviewPacket:
     """Build the supervisor-facing or planner-feedback plan-review packet."""
     checklist = build_checklist(packet)
     resource_usage_profile = packet.get("resource_usage_profile", RESOURCE_USAGE_PROFILE)
-    review_status = review_status_for(packet, checklist)
+    review_status = review_status_for(packet, checklist, previous_review)
     failed_items = [item for item in checklist if not item.passed]
     planner_fixes = [item.required_fix for item in failed_items if item.required_fix != "none"]
 
@@ -327,7 +421,10 @@ def build_plan_review_packet(packet: dict[str, Any]) -> PlanReviewPacket:
     user_approval_required = separate_approval
     user_approval_reason = "none"
     if separate_approval:
-        user_approval_reason = "separate approval required"
+        if revised_plan_needs_user_approval(packet, previous_review):
+            user_approval_reason = "review_fix_required_after_plan_change"
+        else:
+            user_approval_reason = "separate approval required"
     elif review_fix:
         user_approval_reason = "review_fix_required_after_plan_change"
 
@@ -356,6 +453,16 @@ def build_plan_review_packet(packet: dict[str, Any]) -> PlanReviewPacket:
         validation_plan=[
             dict(item) for item in packet["validation_plan"] if isinstance(item, dict)
         ],
+        revision_context={
+            "revised_after_review_fix": bool(
+                previous_review_requires_user_approval(previous_review)
+                or _planner_marks_revised_after_fix(packet)
+            ),
+            "user_approval_ack": _revision_user_approval_ack(packet),
+            "previous_review_required_user_approval": previous_review_requires_user_approval(
+                previous_review
+            ),
+        },
         review_status=review_status,
         checklist=checklist,
         user_approval={
@@ -410,6 +517,17 @@ def main() -> int:
     )
     parser.add_argument("--planner-packet-file", help="Path to planner packet JSON.")
     parser.add_argument(
+        "--previous-plan-review-packet-json",
+        help=(
+            "Previous plan-review packet JSON. When it required approval after "
+            "planner fixes, the revised planner packet must carry user_approval_ack."
+        ),
+    )
+    parser.add_argument(
+        "--previous-plan-review-packet-file",
+        help="Path to the previous plan-review packet JSON.",
+    )
+    parser.add_argument(
         "--format",
         choices=["json", "yaml"],
         default="yaml",
@@ -419,8 +537,11 @@ def main() -> int:
 
     try:
         planner_packet = load_packet(args)
+        previous_review = load_previous_review(args)
         plan_review_packet = {
-            "plan_review_packet": asdict(build_plan_review_packet(planner_packet))
+            "plan_review_packet": asdict(
+                build_plan_review_packet(planner_packet, previous_review)
+            )
         }
     except (json.JSONDecodeError, OSError, ValueError) as exc:
         print(f"plan-review error: {exc}", file=sys.stderr)

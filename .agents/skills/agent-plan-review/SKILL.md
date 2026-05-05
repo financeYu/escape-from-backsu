@@ -50,6 +50,11 @@ Plan Review accepts only a compact `planner_packet` with:
 - `supervisor_handoff`
 - `korean_final_report`
 
+For a planner packet that revises a prior `needs_planner_fix` result, Plan
+Review must also receive the previous `plan_review_packet` or a compact
+`revision_context` in the planner packet. The revised packet may not move to
+supervisor until it carries explicit `user_approval_ack: true`.
+
 Do not read archives, generated outputs, raw data, caches, charts, logs,
 release evidence, subproject files, worker logs, or implementation details
 while reviewing unless the planner packet explicitly names that exception.
@@ -83,7 +88,10 @@ When review passes and no approval trigger exists, Plan Review may set
 When review fails, Plan Review must set `supervisor_handoff.ready` to `false`
 and send the packet back to the planner with exact fixes. If the planner later
 changes the plan to resolve failed review items, that revised plan requires
-user approval before supervisor execution.
+user approval before supervisor execution. The reviewer must enforce this by
+checking the previous `plan_review_packet` or the revised packet's
+`revision_context`; without `user_approval_ack: true`, the revised plan returns
+`separate_approval_required` and cannot reach the supervisor.
 
 ## Context Firewall
 
@@ -122,6 +130,10 @@ plan_review_packet:
   validation_plan:
     - command: "<from planner>"
       purpose: "<from planner>"
+  revision_context:
+    revised_after_review_fix: false
+    user_approval_ack: false
+    user_approval_evidence: "<none or compact approval source>"
   review_status: "approved_for_supervisor | needs_planner_fix | separate_approval_required | blocked"
   checklist:
     - id: "R1"
@@ -164,6 +176,7 @@ For this skill, run:
 ```powershell
 .venv\Scripts\python.exe .agents/skills/agent-plan-review/scripts/validate_agent_plan_review.py --dry-run
 .venv\Scripts\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json "<json>" --format json
+.venv\Scripts\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json "<revised-json>" --previous-plan-review-packet-json "<prior-review-json>" --format json
 .venv\Scripts\python.exe .agents/skills/agent-coordinator/scripts/coordinator.py --user-goal "<goal>" --format json | .venv\Scripts\python.exe .agents/skills/agent-planner/scripts/planner.py --coordinator-packet-json - --format json | .venv\Scripts\python.exe .agents/skills/agent-plan-review/scripts/plan_review.py --planner-packet-json - --format json
 ```
 

@@ -136,6 +136,20 @@ exact validator command through
 `../.agents/skills/quant-validator-approval/SKILL.md`. Treat validation as
 passed only when the approved run prints the validator's expected PASS line.
 
+For GitHub CLI work delegated inside `Quant_mvp` or its subprojects, do not
+call bare `gh` from a Windows session that may contain duplicate environment
+keys such as `PATH` and `Path`. From the parent repository root, use:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_gh.ps1 -- <gh args>
+```
+
+The wrapper creates a clean child-process environment for `gh`, keeps token-like
+values redacted from wrapper output, and avoids project-wide recurrence of the
+same environment-variable failure. If it reports `BLOCKED_GH_ENV`, record the
+blocked command as environment evidence and set `PROJECT_GH` to the full
+`gh.exe` path or install GitHub CLI before retrying through the wrapper.
+
 For v0.3 strategy-selection/adoption routing, follow the parent root discipline
 in `../docs/root_hard_stops.md#decision-output-discipline`: Quant outputs may
 prepare evidence and candidate packets, but root owns the final conclusion form,

@@ -52,3 +52,15 @@ powershell -ExecutionPolicy Bypass -File Quant_mvp\scripts\quant_rg.ps1 ...
 
 If bare `rg` fails with access denied, record it as a blocked cheap check under
 the root cost-aware protocol and continue with the Quant wrapper above.
+
+For GitHub CLI calls from this backtest subproject, run them from the repository
+root through the project wrapper instead of bare `gh`:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_gh.ps1 -- <gh args>
+```
+
+The wrapper normalizes duplicate Windows environment keys such as `PATH`/`Path`
+before launching `gh` and redacts token-like values from wrapper output. If it
+reports `BLOCKED_GH_ENV`, treat it as an environment blocker rather than a
+backtest validation result.

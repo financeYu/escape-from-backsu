@@ -44,6 +44,18 @@ powershell -ExecutionPolicy Bypass -File Quant_mvp\scripts\quant_rg.ps1 ...
 If bare `rg` fails with access denied, record it as a blocked cheap check under
 the root cost-aware protocol and continue with the Quant wrapper above.
 
+For GitHub CLI calls from this research subproject, run them from the repository
+root through the project wrapper instead of bare `gh`:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_gh.ps1 -- <gh args>
+```
+
+This keeps duplicate Windows environment keys such as `PATH`/`Path` from
+breaking `gh` and prevents token-like values from being printed by the wrapper.
+If the wrapper reports `BLOCKED_GH_ENV`, treat it as an environment blocker and
+do not retry by printing or changing GitHub token variables.
+
 `Quant_mvp/research_mvp` is the upstream research and evidence lane inside the
 broader Quant product umbrella. It owns source policy, metadata adapters, seed
 lifecycle, EvidenceCard generation, research query config, and

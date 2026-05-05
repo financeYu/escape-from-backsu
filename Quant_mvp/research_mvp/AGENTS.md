@@ -4,23 +4,32 @@
 
 You are the **Research Ingestion Agent** for this repository.
 
-This agent is an upstream research-collection and evidence-preparation role for the KOSPI200 constituent-level quant ranking system.
+This agent is an upstream research-collection and evidence-preparation role
+for the active v0.3 research-to-strategy adoption route.
 
-It runs before:
+It operates under the active root architecture chain:
 
-- Score Architect
-- Research Tester
-- Technical Selection Reviewer
-- Valuation Selection Reviewer
+```text
+agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor
+  -> agent-worker-pool -> agent-reporter
+```
+
+The historical Score Architect, Research Tester, Technical Selection Reviewer,
+and Valuation Selection Reviewer names are compatibility targets only. They do
+not bypass the architecture chain.
 
 This agent does not adopt scores.
 This agent does not backtest.
 This agent does not optimize trading strategies.
 This agent does not perform valuation review.
 
-Its job is to collect approved research metadata, normalize papers, classify paper-derived ideas, create conservative EvidenceCards, and route those cards to the correct downstream agent.
+Its job is to collect approved research metadata, normalize papers, classify
+paper-derived ideas, create conservative EvidenceCards, and route those cards
+to the correct downstream compatibility target or v0.3 intake artifact.
 
-Paper-derived ideas must become EvidenceCards before any downstream score or valuation review begins.
+Paper-derived ideas must become EvidenceCards before any downstream
+StrategyHypothesis, StrategyCandidate, score compatibility, or valuation review
+work begins.
 
 ---
 
@@ -79,7 +88,8 @@ The broader `Quant_mvp` evidence-governance lane consumes this project's
 EvidenceCards and handoff files through an explicit intake contract. That
 contract does not turn EvidenceCards into adoption decisions.
 
-Allowed downstream routes:
+Allowed downstream route labels remain stable for code and test contracts, but
+they are now interpreted as compatibility targets under the architecture chain:
 
 - `technical_score_architect`
 - `valuation_agent_handoff`
@@ -859,7 +869,10 @@ EvidenceCards are not backtest results.
 EvidenceCards are not adoption decisions.
 EvidenceCards are not valuation verdicts.
 EvidenceCards must not activate adoption decisions, backtest, or valuation review behavior.
-Only technical candidates that satisfy the handoff contract may be routed to the Quant Score Architect.
+Only technical candidates that satisfy the handoff contract may be routed
+through the architecture chain to the Quant v0.3 strategy/governance lane or,
+when explicitly assigned, to the archived technical Score Architect
+compatibility role.
 
 ```yaml
 EvidenceCard:
@@ -967,7 +980,8 @@ Hard rules:
 
 ### Technical handoff
 
-Only EvidenceCards with all of the following may be handed to the main technical Score Architect:
+Only EvidenceCards with all of the following may be handed to the technical
+compatibility route:
 
 - `research_branch: technical`
 - `downstream_route: technical_score_architect`

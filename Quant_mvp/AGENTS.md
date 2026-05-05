@@ -68,29 +68,43 @@ The subproject must not delegate ordinary local correctness review to master by 
 
 The subproject must submit a master-up summary using the required template in the workspace root `docs/master_up_template.md`.
 
-## Codex skill-gated task intake
+## Architecture-gated Codex task intake
 
-Root/master remains responsible for assigning sub-agent tasks and selecting the
-matching Codex skill gate before execution.
+All Quant task intake must enter through the active root architecture chain
+before any sub-agent, domain gate, implementation, validation, or completion
+acceptance begins:
+
+```text
+agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor
+  -> agent-worker-pool -> agent-reporter
+```
+
+Root/master remains responsible for assigning sub-agent tasks, but the matching
+Codex skill gate is now selected as a domain compatibility target under that
+chain rather than as a direct entry point.
 
 Every delegated packet must include:
 
 - current task
+- selected architecture gate
+- selected domain compatibility gate
 - allowed scope
 - forbidden scope
 - required output
 - validation commands
 - Korean final report format
-- selected Codex skill gate
 
-Quant sub-agents must not expand beyond the selected skill gate. Candidate ML
-probability work uses `../.agents/skills/quant-candidate-ml-gate/SKILL.md`.
+Quant sub-agents must not expand beyond the supervisor-approved scope or the
+selected compatibility gate. Candidate ML probability work uses
+`../.agents/skills/quant-candidate-ml-gate/SKILL.md`.
 Subproject-wide audit or scope-watchdog work uses
 `../.agents/skills/quant-subproject-audit-gate/SKILL.md`, with audit and
 validation reported as separate parts.
-Completion acceptance uses `../.agents/skills/quant-review-gate/SKILL.md`. If no
-narrower execution skill matches, use `../.agents/skills/quant-review-gate/SKILL.md`
-as the minimal default review gate rather than inventing broad permission.
+Completion acceptance uses `../.agents/skills/quant-review-gate/SKILL.md` only
+after the architecture chain has reached the review/acceptance stage. If no
+narrower execution skill matches, use
+`../.agents/skills/quant-review-gate/SKILL.md` as the minimal default
+compatibility gate rather than inventing broad permission.
 
 For pytest validation, use the parent root workspace interpreter from the
 repository root:
@@ -208,11 +222,16 @@ Prefer explicit downgrades, deferrals, or narrower implementations.
 
 ## Multi-agent operating model
 
-This repository owns one internal research-ingestion subproject and uses a
-Codex-skill-gated scope check process. The historical technical-score workflow
-has **three distinct technical agents** with different responsibilities; use
-those roles for archived baseline compatibility or explicitly assigned
-technical-score work, not as the default v0.3 route.
+This repository owns one internal research-ingestion subproject and uses the
+active root architecture chain for task intake, planning, review, supervision,
+worker execution, tracking, validation, and reporting. Existing Quant gates and
+technical roles remain domain compatibility targets selected and bounded by
+that chain.
+
+The historical technical-score workflow has **three distinct technical
+compatibility roles** with different responsibilities; use those roles for
+archived baseline compatibility or explicitly assigned technical-score work,
+not as the default v0.3 route.
 
 Upstream evidence agent:
 
@@ -225,14 +244,15 @@ Upstream evidence agent:
 Scope check process:
 
 0a. **Quant scope check to Codex skill gate**
-   - when a Quant worker sees that scope, roadmap, terminology, leakage, generated-output, validation, or hard-stop review is needed, stop local expansion and connect the task to `../.agents/skills/quant-subproject-audit-gate/SKILL.md`
-   - send root/master the current task, allowed scope, forbidden scope, changed paths, intended output, validation commands, unresolved risks, and requested audit coverage
+   - when a Quant worker sees that scope, roadmap, terminology, leakage, generated-output, validation, or hard-stop review is needed, stop local expansion and return a compact `worker_result` to the supervisor/reporter path
+   - the supervisor may then connect the task to `../.agents/skills/quant-subproject-audit-gate/SKILL.md` as the selected compatibility target
+   - send root/master only compact fields: current task, allowed scope, forbidden scope, changed paths, intended output, validation commands, unresolved risks, and requested audit coverage
    - keep audit verdicts separate from validation command evidence
    - the Codex skill gate checks scope, diagnostics, selection, backtest, valuation, future-return, generated-output, config, and evidence-overclaim boundaries
    - the Codex skill gate returns `PASS`, `WARNING`, `BLOCKING_ISSUE`, or `NEEDS_CLARIFICATION`
    - the process does not implement features, repair code by default, or change roadmap state
 
-Technical workflow agents:
+Historical technical compatibility roles:
 
 1. **Score Architect**
    - defines and classifies candidate scores

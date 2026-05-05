@@ -2,105 +2,113 @@
 
 ## Source of truth
 
-The workflow follows `AGENTS.md`.
+The workflow follows `AGENTS.md`, `../docs/root_hard_stops.md`, and
+`../docs/roadmap_status.md`.
 
-The `.codex` files define the Step 1 custom agent setup for the technical-first phase.
+The active root process is the agent architecture chain:
 
-## Active technical agents
+```text
+agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor
+  -> agent-worker-pool -> agent-reporter
+```
 
-Step 1 configures three active technical agents:
+Existing Quant gates and historical technical roles remain compatibility
+targets selected and bounded by that chain. They are not direct root entry
+points for routine work.
 
-1. `score-architect`
-2. `research-tester`
-3. `technical-selection-reviewer`
+## Active route
 
-No active valuation reviewer agent is created in Step 1.
+The current route is post-MVP `v0.3 research-to-strategy adoption route`.
+Routine work should produce or protect one of these active artifacts:
 
-## Stage 1: Score Architect
+- `ResearchHypothesis`
+- `StrategyHypothesis`
+- `StrategyCandidate`
+- `EvaluationEvidence`
+- `AdoptionCandidate`
 
-The Score Architect defines and classifies technical score candidates.
+The archived v0.1 technical scanner and v0.2 probability route remain
+reference-only unless root names a provenance, regression, freeze, or
+compatibility check.
 
-Required output before handoff:
-- score name
-- score family
-- score branch
-- purpose
-- raw input features
-- raw formula design
-- normalization candidates
-- minimum history needed
-- overlap risk
-- failure modes
-- data requirements
-- interpretability notes
+## Architecture stages
 
-The Score Architect must not implement, backtest, optimize, or create valuation claims.
+### Stage 1: Coordinator
 
-## Stage 2: Research Tester
+`agent-coordinator` normalizes the user goal, classifies the task as
+`planning/read-only`, `narrow edit`, or `Step/gate closure`, selects the
+project-local compatibility gate, and sets the context firewall.
 
-The Research Tester activates only after score definitions are explicit and approved.
+### Stage 2: Planner
 
-Its later responsibilities include:
-- faithful implementation of predefined technical scores
-- raw and normalized score generation
-- time-series normalization
-- cross-sectional normalization
-- NaN, warmup, coverage, outlier, stability, turnover, and correlation diagnostics
+`agent-planner` turns the coordinator packet into an ordered plan, scope lock,
+validation plan, and plan-review handoff. It does not implement or approve its
+own plan.
 
-During Step 1, the Research Tester is configured only.
-It must not implement scores, run backtests, or touch data loaders.
+### Stage 3: Plan Review
 
-## Stage 3: Technical Selection Reviewer
+`agent-plan-review` checks route alignment, selected-gate compatibility,
+hard-stop safety, validation completeness, and whether separate approval is
+needed before supervisor execution.
 
-The Technical Selection Reviewer activates only after reproducible technical score outputs and diagnostics exist.
+### Stage 4: Supervisor
 
-It reviews:
-- interpretability
-- signal clarity
-- technical distinctiveness
-- regime fit
-- stability
-- coverage
-- turnover
-- cost sensitivity
-- redundancy
-- contribution to the technical composite
+`agent-supervisor` converts an approved plan-review packet into bounded worker
+packets. Git remote work, staging, and commits remain disabled.
 
-It must not claim valuation support or merge valuation outputs.
+### Stage 5: Worker Pool
 
-## Stage 4: Adoption Synthesis
+`agent-worker-pool` normalizes the supervisor packet into bounded `coder`,
+`validator`, `tracker`, and `reporter` contracts. Workers return only compact
+`status`, `changed_scope`, `evidence`, and `next_request` fields.
 
-Adoption synthesis happens only after technical review is complete.
+### Stage 6: Reporter
 
-Allowed final states:
-- `core_adopted`
-- `conditional_adopted`
-- `technical_only`
-- `regime_only`
-- `diagnostic_only`
-- `research_only`
-- `rejected`
-- `blocked_by_data`
+`agent-reporter` collects compact worker results and prepares the Korean
+supervisor/user report. It must reject raw logs, raw context, generated-output
+dumps, archive context, and long exploratory notes.
 
-## Valuation deferral
+## Compatibility targets
 
-Valuation and fundamental analysis are deferred until the technical scanner, technical diagnostics, technical selection review, and adoption synthesis are complete.
+Use the narrowest project-local gate under the architecture chain:
 
-Current rules:
-- do not create `.codex/agents/valuation-reviewer.toml`
-- route valuation review through `../.agents/skills/valuation_review/SKILL.md`
-- do not implement valuation scores
-- do not merge valuation output into `technical_composite_score`
-- do not merge valuation output into `final_composite_score`
+- `agent-replacement` for architecture migration and entry-point replacement
+- `quant-work-cycle` for implementation cycles
+- `quant-strategy-adoption-gate` for active v0.3 strategy adoption work
+- `quant-candidate-ml-gate` only for explicitly requested archived/supporting
+  `prob_up_1d_candidate` compatibility
+- `quant-subproject-audit-gate` for Quant-wide audit or scope-watchdog work
+- `quant-review-gate` before accepting completion
+
+## Historical technical roles
+
+The old technical workflow is preserved only as a compatibility model for
+archived baseline checks or explicitly assigned technical-score work:
+
+- Score Architect defines and classifies technical score candidates.
+- Research Tester implements predefined score definitions and diagnostics.
+- Technical Selection Reviewer compares reproducible score outputs.
+
+These roles must not bypass the architecture chain and must not be used as the
+default v0.3 entry point.
+
+## Valuation boundary
+
+Valuation and fundamental analysis remain separated in
+`../.agents/skills/valuation_review/SKILL.md`. Quant technical or research work
+must not perform valuation review, activate valuation/fundamental scoring, or
+claim valuation support from price-only evidence.
 
 ## Global guardrails
 
-All active technical agents must enforce:
+All active work must enforce:
+
 - conservative quant engineering
 - config-first implementation
 - no lookahead
 - no future data
-- no silent score redefinition
+- no silent score or route redefinition
 - no valuation claims from price-only evidence
-- technical analysis first
-- valuation deferred
+- evidence-only v0.3 adoption outputs
+- no live trading, order generation, data-ingestion expansion, universe
+  expansion, or production activation without explicit approval

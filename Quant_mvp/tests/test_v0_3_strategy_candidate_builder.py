@@ -6,6 +6,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 
 SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "build_v0_3_strategy_candidates.py"
 SPEC = importlib.util.spec_from_file_location("build_v0_3_strategy_candidates", SCRIPT_PATH)
@@ -79,6 +81,8 @@ def test_ready_strategy_hypothesis_becomes_evaluable_candidate() -> None:
     assert candidate["candidate_id"] == "sc:ecard:test"
     assert candidate["candidate_version"] == "v0.3.0"
     assert candidate["status"] == "evaluable"
+    assert record["linked_strategy_hypothesis"]["status"] == "candidate_spec_ready"
+    assert "conversion_status" not in record["linked_strategy_hypothesis"]
     assert candidate["next_action"] == "create_evaluation_evidence"
     assert candidate["blocking_issues"] == []
     assert "daily_ohlcv" in candidate["data_requirements"]
@@ -99,6 +103,7 @@ def test_refinement_strategy_hypothesis_becomes_draft_candidate() -> None:
     candidate = record["strategy_candidate"]
 
     assert candidate["status"] == "draft"
+    assert record["linked_strategy_hypothesis"]["status"] == "draft"
     assert candidate["next_action"] == "refine_strategy_hypothesis"
     assert record["next_stage_input"] is None
     assert "strategy_definition_not_specific_enough" in candidate["blocking_issues"]
@@ -116,6 +121,7 @@ def test_blocked_strategy_hypothesis_becomes_blocked_candidate() -> None:
     candidate = record["strategy_candidate"]
 
     assert candidate["status"] == "blocked"
+    assert record["linked_strategy_hypothesis"]["status"] == "rejected"
     assert candidate["next_action"] == "resolve_blocker"
     assert record["next_stage_input"] is None
     assert "out_of_scope_or_rejected" in candidate["blocking_issues"]
@@ -155,3 +161,37 @@ def test_build_strategy_candidates_writes_outputs_and_groups(tmp_path: Path) -> 
     assert manifest["evaluable_count"] == 1
     assert groups["groups"]["momentum"]["status_counts"]["evaluable"] == 1
     assert groups["groups"]["momentum"]["status_counts"]["draft"] == 1
+
+
+def test_latest_strategy_hypothesis_status_names_are_accepted() -> None:
+    record = _strategy_record()
+    record["strategy_hypothesis"].pop("conversion_status")
+    record["strategy_hypothesis"]["status"] = "candidate_spec_ready"
+
+    output = builder.strategy_record_to_candidate_record(record)
+
+    assert output["strategy_candidate"]["status"] == "evaluable"
+    assert output["linked_strategy_hypothesis"]["status"] == "candidate_spec_ready"
+
+
+def test_duplicate_strategy_hypothesis_becomes_retired_candidate() -> None:
+    record = _strategy_record()
+    record["strategy_hypothesis"].pop("conversion_status")
+    record["strategy_hypothesis"]["status"] = "duplicate"
+    record["next_stage_input"] = None
+    record["blocker"] = ["duplicate_strategy_hypothesis"]
+
+    output = builder.strategy_record_to_candidate_record(record)
+
+    assert output["strategy_candidate"]["status"] == "retired"
+    assert output["strategy_candidate"]["next_action"] == "reject"
+    assert output["linked_strategy_hypothesis"]["status"] == "duplicate"
+
+
+def test_unknown_strategy_hypothesis_status_fails_closed() -> None:
+    record = _strategy_record()
+    record["strategy_hypothesis"].pop("conversion_status")
+    record["strategy_hypothesis"]["status"] = "candidate_spec_reddy"
+
+    with pytest.raises(ValueError, match="invalid StrategyHypothesis status"):
+        builder.strategy_record_to_candidate_record(record)

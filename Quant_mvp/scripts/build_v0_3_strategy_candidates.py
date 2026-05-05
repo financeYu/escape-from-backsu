@@ -39,6 +39,18 @@ CANDIDATE_STATUSES = {
     "blocked",
     "retired",
 }
+STRATEGY_HYPOTHESIS_STATUSES = {
+    "draft",
+    "scope_checked",
+    "candidate_spec_ready",
+    "rejected",
+    "duplicate",
+}
+STRATEGY_HYPOTHESIS_STATUS_ALIASES = {
+    "ready_for_candidate_registry": "candidate_spec_ready",
+    "needs_refinement": "draft",
+    "blocked": "rejected",
+}
 NEXT_ACTIONS = {"create_evaluation_evidence", "refine_strategy_hypothesis", "resolve_blocker", "reject"}
 
 
@@ -92,12 +104,26 @@ def _candidate_id(strategy_hypothesis_id: str) -> str:
     return f"sc:{strategy_hypothesis_id.removeprefix('sh:')}"
 
 
+def _strategy_hypothesis_status(strategy_record: dict[str, Any]) -> str:
+    raw_status = (
+        _get(strategy_record, "strategy_hypothesis.status")
+        or _get(strategy_record, "strategy_hypothesis.conversion_status")
+        or "draft"
+    )
+    status = STRATEGY_HYPOTHESIS_STATUS_ALIASES.get(str(raw_status), str(raw_status))
+    if status not in STRATEGY_HYPOTHESIS_STATUSES:
+        raise ValueError(f"invalid StrategyHypothesis status: {raw_status}")
+    return status
+
+
 def _status(strategy_record: dict[str, Any]) -> str:
-    conversion_status = _get(strategy_record, "strategy_hypothesis.conversion_status")
-    if conversion_status == "ready_for_candidate_registry":
+    strategy_status = _strategy_hypothesis_status(strategy_record)
+    if strategy_status == "candidate_spec_ready":
         return "evaluable"
-    if conversion_status == "blocked":
+    if strategy_status == "rejected":
         return "blocked"
+    if strategy_status == "duplicate":
+        return "retired"
     return "draft"
 
 
@@ -300,7 +326,7 @@ def strategy_record_to_candidate_record(strategy_record: dict[str, Any]) -> dict
         "linked_strategy_hypothesis": {
             "strategy_hypothesis_id": linked_strategy_id,
             "strategy_type": strategy.get("strategy_type"),
-            "conversion_status": strategy.get("conversion_status"),
+            "status": _strategy_hypothesis_status(strategy_record),
             "primary_metric": strategy.get("primary_metric"),
         },
         "strategy_candidate": candidate,
@@ -329,7 +355,7 @@ def _minimal_fix(status: str) -> list[str]:
         return ["Do not create EvaluationEvidence for this candidate unless a later route reopens it."]
     return [
         "Refine StrategyHypothesis signal, rules, data requirements, and test scope.",
-        "Regenerate StrategyCandidate after the StrategyHypothesis becomes ready_for_candidate_registry.",
+        "Regenerate StrategyCandidate after the StrategyHypothesis becomes candidate_spec_ready.",
     ]
 
 
@@ -369,6 +395,13 @@ def validate_candidate_record(record: dict[str, Any]) -> None:
         raise ValueError(f"invalid candidate status: {candidate['status']}")
     if candidate["next_action"] not in NEXT_ACTIONS:
         raise ValueError(f"invalid next_action: {candidate['next_action']}")
+    linked_strategy = record.get("linked_strategy_hypothesis")
+    if not isinstance(linked_strategy, dict):
+        raise ValueError("linked_strategy_hypothesis must be an object")
+    if linked_strategy.get("status") not in STRATEGY_HYPOTHESIS_STATUSES:
+        raise ValueError(f"invalid linked StrategyHypothesis status: {linked_strategy.get('status')}")
+    if "conversion_status" in linked_strategy:
+        raise ValueError("linked StrategyHypothesis status must use latest status field")
     if not candidate.get("candidate_version"):
         raise ValueError("candidate_version is required")
     if candidate["status"] == "evaluable":

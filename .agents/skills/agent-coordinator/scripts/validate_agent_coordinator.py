@@ -69,6 +69,20 @@ BEHAVIOR_CASES = [
         "open_questions": ["none"],
     },
     {
+        "name": "Korean inspection routes as read-only replacement review",
+        "goal": "코덱스 스킬 대체 점검",
+        "task_class": "planning/read-only",
+        "selected_gate": ".agents/skills/agent-replacement/SKILL.md",
+        "open_questions": ["none"],
+    },
+    {
+        "name": "Korean conflict inspection stays read-only architecture review",
+        "goal": "아키텍처와 코덱스 스킬 충돌 점검",
+        "task_class": "planning/read-only",
+        "selected_gate": ".agents/skills/agent-coordinator/SKILL.md",
+        "open_questions": ["none"],
+    },
+    {
         "name": "plan-review routes to plan-review gate",
         "goal": "implement plan-review role",
         "task_class": "narrow edit",
@@ -161,7 +175,7 @@ BEHAVIOR_CASES = [
     },
     {
         "name": "Korean architecture skillization is an edit",
-        "goal": "새로 제작한 아키텍쳐 코덱스 스킬화, 적용 전 점검",
+        "goal": "새로운 아키텍처 코덱스 스킬 적용해",
         "task_class": "narrow edit",
         "selected_gate": ".agents/skills/agent-coordinator/SKILL.md",
         "open_questions": ["none"],

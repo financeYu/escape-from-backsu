@@ -1,3 +1,4 @@
-name: agent-reporter
-model: gpt-5.3-codex
-reasoning_effort: medium
+interface:
+  display_name: "Agent Reporter"
+  short_description: "Collect compact worker results for Korean supervisor and user reports."
+  default_prompt: "Use agent-reporter to collect approved coder, validator, and tracker worker_results, enforce the context firewall, and produce compact Korean supervisor/user reporting."

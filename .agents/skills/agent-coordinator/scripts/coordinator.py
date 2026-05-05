@@ -57,6 +57,8 @@ HARD_STOP_TERMS = [
 REVIEW_TERMS = [
     "review",
     "code review",
+    "점검",
+    "검토",
     "코드리뷰",
     "리뷰",
     "검토",
@@ -149,6 +151,9 @@ REPLACEMENT_TERMS = [
     "process replacement",
     "agent-replacement",
     "대체",
+    "교체",
+    "마이그레이션",
+    "대체",
     "마이그레이션",
     "프로세스 전환",
     "프로세스 교체",
@@ -197,6 +202,10 @@ def classify_task(goal: str) -> str:
         "write code",
         "skillize",
         "codex skill",
+        "수정",
+        "구현",
+        "정리",
+        "적용",
         "스킬화",
         "제작",
         "적용",
@@ -234,10 +243,12 @@ def select_gate(goal: str, task_class: str) -> str:
         return ".agents/skills/agent-reporter/SKILL.md"
     if is_worker_pool_request(text):
         return ".agents/skills/agent-worker-pool/SKILL.md"
-    if is_review_request(text):
-        return ".agents/skills/review_gate/SKILL.md"
+    if "아키텍처" in text:
+        return ".agents/skills/agent-coordinator/SKILL.md"
     if any(term in text for term in ["coordinator", "planner", "architecture", "아키텍쳐", "아키텍처"]):
         return ".agents/skills/agent-coordinator/SKILL.md"
+    if is_review_request(text):
+        return ".agents/skills/review_gate/SKILL.md"
     if any(term in text for term in ["prob_up_1d", "probability", "확률", "candidate ml"]):
         return ".agents/skills/quant-candidate-ml-gate/SKILL.md"
     if any(term in text for term in ["strategy", "adoption", "v0.3", "전략", "채택"]):

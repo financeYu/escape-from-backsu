@@ -1,6 +1,6 @@
 [policy_metadata]
 policy_version = "research_policy.v3"
-evidence_schema_version = "evidence_card.v1"
+evidence_schema_version = "evidence_card.v2"
 
 [guardrails]
 no_score_adoption = true

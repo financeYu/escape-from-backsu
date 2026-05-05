@@ -84,6 +84,7 @@ def _card(**overrides):
             "survivorship_bias_discussed": False,
         },
         "risks": {
+            "project_internal_risk_readable": False,
             "data_snooping_risk_flag": True,
             "lookahead_risk_flag": False,
             "transaction_cost_missing_flag": True,
@@ -119,6 +120,7 @@ def test_technical_card_converts_to_research_hypothesis_with_next_stage_input() 
     assert "정보 반영 지연" in hypothesis["market_mechanism"]
     assert record["next_stage_input"]["next_stage"] == "StrategyHypothesis"
     assert record["blocker"] == []
+    assert record["main_risks"] == []
     assert "production ranking input" in record["research_boundary"]
     assert "trading recommendation" in record["research_boundary"]
 

@@ -27,6 +27,9 @@ def test_evidence_card_schema_and_hard_guardrails(sample_paper):
     assert card["extraction"]["fulltext_used"] is False
     assert card["extraction"]["pdf_downloaded"] is False
     assert card["backtest_context"]["paper_reported_backtest_treatment"] == "diagnostic_note_only"
+    assert card["risks"]["project_internal_risk_readable"] is False
+    assert card["risks"]["data_snooping_risk_flag"] is False
+    assert card["risks"]["transaction_cost_missing_flag"] is False
 
 
 def test_evidence_card_preserves_nber_identifier(sample_paper):

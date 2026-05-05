@@ -96,7 +96,7 @@ def _build_extraction_section(paper: dict[str, Any], abstract: str | None) -> di
         "fulltext_used": False,
         "pdf_downloaded": False,
         "evidence_snippets_short": _abstract_snippets(abstract),
-        "extraction_limitations_ko": "MVP에서는 metadata와 abstract만 사용했습니다. Google Scholar snippet은 evidence로 사용하지 않았고, PDF fulltext는 기본 비활성화입니다.",
+        "extraction_limitations_ko": "Metadata and abstract only. Scholar snippets and PDF fulltext are not used by default.",
     }
 
 
@@ -156,29 +156,32 @@ def _build_valuation_boundary_section(branch: str) -> dict[str, Any]:
         "valuation_status": "unavailable" if branch in {"valuation", "hybrid"} else "not_applicable",
         "valuation_verdict": "unavailable" if branch in {"valuation", "hybrid"} else "not_applicable",
         "valuation_agent_required": branch in {"valuation", "hybrid"},
-        "point_in_time_requirements_ko": "point-in-time fundamentals 검증이 필요합니다." if branch in {"valuation", "hybrid"} else None,
+        "point_in_time_requirements_ko": "point-in-time fundamentals validation is required." if branch in {"valuation", "hybrid"} else None,
     }
 
 
 def _build_risks_section(candidate: dict[str, Any], branch: str) -> dict[str, Any]:
+    del candidate, branch
     return {
-        "lookahead_risk_flag": branch in {"valuation", "hybrid"},
-        "data_snooping_risk_flag": True,
-        "transaction_cost_missing_flag": True,
-        "turnover_risk_flag": True,
-        "universe_mismatch_flag": True,
-        "survivorship_bias_risk_flag": True,
-        "point_in_time_data_risk_flag": branch in {"valuation", "hybrid"},
-        "publication_bias_risk_flag": True,
+        "project_internal_risk_readable": False,
+        "risk_interpretation": "research_caution_only_not_project_runtime_risk",
+        "lookahead_risk_flag": False,
+        "data_snooping_risk_flag": False,
+        "transaction_cost_missing_flag": False,
+        "turnover_risk_flag": False,
+        "universe_mismatch_flag": False,
+        "survivorship_bias_risk_flag": False,
+        "point_in_time_data_risk_flag": False,
+        "publication_bias_risk_flag": False,
         "redundancy_risk_flag": False,
-        "lookahead_risk": branch in {"valuation", "hybrid"},
-        "data_snooping_risk": True,
-        "transaction_cost_risk": True,
-        "survivorship_bias_risk": True,
-        "publication_bias_risk": True,
+        "lookahead_risk": False,
+        "data_snooping_risk": False,
+        "transaction_cost_risk": False,
+        "survivorship_bias_risk": False,
+        "publication_bias_risk": False,
         "redundancy_risk": False,
-        "universe_mismatch_risk": bool(candidate.get("universe_mismatch_risk", True)),
-        "notes_ko": "논문 claim은 아직 검증된 alpha가 아니며, score adoption 전 별도 검토가 필요합니다.",
+        "universe_mismatch_risk": False,
+        "notes_ko": "Paper refresh metadata is research caution only and must not be read as a project runtime risk.",
     }
 
 
@@ -193,7 +196,7 @@ def _build_backtest_context_section(paper: dict[str, Any], classification: dict[
         "survivorship_bias_discussed": _contains(paper, "survivorship"),
         "lookahead_bias_discussed": _contains(paper, "lookahead"),
         "reproducibility_level": "not_reported",
-        "limitations_ko": "Paper-reported backtest is diagnostic metadata only; repository backtest 또는 alpha 검증을 수행하지 않았습니다.",
+        "limitations_ko": "Paper-reported backtest remains diagnostic metadata only; repository backtest and alpha validation are not performed here.",
     }
 
 
@@ -204,14 +207,14 @@ def _build_guardrails_section() -> dict[str, Any]:
         "no_backtest_performed": True,
         "valuation_not_inferred_from_price": True,
         "citation_count_metadata_only": True,
-        "notes_ko": "EvidenceCard만 생성했고 score 채택, backtest, valuation review는 수행하지 않았습니다.",
+        "notes_ko": "EvidenceCard only. No score adoption, backtest, or valuation review is performed here.",
     }
 
 
 def _mark_retracted_card(card: dict[str, Any]) -> None:
     card["classification"]["downstream_route"] = "reject_log"
     card["classification"]["manual_review_required"] = True
-    card["guardrails"]["notes_ko"] += " retracted flag가 있어 보수적으로 차단/검토 대상으로 표시했습니다."
+    card["guardrails"]["notes_ko"] += " Retracted source remains blocked for conservative review."
 
 
 def generate_evidence_cards(

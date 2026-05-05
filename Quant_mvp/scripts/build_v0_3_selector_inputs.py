@@ -140,6 +140,8 @@ def _risk_flags(card: dict[str, Any]) -> list[str]:
     risks = _get(card, "risks", {})
     if not isinstance(risks, dict):
         return []
+    if _as_bool(risks.get("project_internal_risk_readable")) is not True:
+        return []
     return sorted(key for key, value in risks.items() if key.endswith("_flag") and _as_bool(value))
 
 

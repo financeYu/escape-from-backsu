@@ -80,6 +80,7 @@ def _card(**overrides):
             "survivorship_bias_discussed": False,
         },
         "risks": {
+            "project_internal_risk_readable": False,
             "data_snooping_risk_flag": True,
             "lookahead_risk_flag": False,
             "transaction_cost_missing_flag": True,
@@ -116,7 +117,7 @@ def test_technical_daily_ohlcv_card_is_selector_eligible() -> None:
     assert "idea_summary_ko" not in record
     assert "evidence_snippets_short" not in record
     assert "source_urls" not in record
-    assert record["risk_flags"] == ["data_snooping_risk_flag", "transaction_cost_missing_flag"]
+    assert record["risk_flags"] == []
     assert record["blocked_reasons"] == []
     assert record["no_feedback_check"] == "must_not_feed_scores_rankings_reports_models_or_auto_adoption"
     assert "final_composite_score" not in record

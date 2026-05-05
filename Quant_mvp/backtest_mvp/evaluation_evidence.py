@@ -210,6 +210,7 @@ def build_evaluation_evidence_record(
         "v0_2_boundary_check": "no_prob_up_1d_training_or_reinterpretation_from_evaluation_metrics",
         "failure_flags": [],
         "production_boundary_check": "no_automatic_production_activation_claim",
+        "required_evaluation_checks": _recorded_evaluation_checks(metric_summary),
         "metric_summary": metric_summary,
         "risk_metric_summary": {
             key: metric_summary[key]
@@ -243,6 +244,99 @@ def build_evaluation_evidence_record(
     if metric_summary["valid_security_count"] == 0:
         evidence["status"] = "invalidated"
         evidence["failure_flags"] = ["performance_metric_missing"]
+    _validate_evaluation_window_within_candidate_contract(candidate, evidence["evaluation_window"])
+    return evidence
+
+
+def build_contract_only_evaluation_evidence_packet(
+    candidate_record: Mapping[str, Any],
+    *,
+    evaluation_id: str | None = None,
+    created_at: str | None = None,
+    source_refs: Sequence[str] | None = None,
+    cohort_id: str = "v0_3_candidate_review_cohort",
+    generated_output_boundary: str = DEFAULT_GENERATED_OUTPUT_BOUNDARY,
+    evaluation_method_ref: str = DEFAULT_EVALUATION_METHOD_REF,
+) -> dict[str, Any]:
+    """Build a minimal contract-only EvaluationEvidence packet.
+
+    This is for approved cohort setup before any backtest/simulation metrics are
+    recorded. It validates the candidate is evaluable but deliberately leaves
+    performance evidence as not-yet-run.
+    """
+
+    candidate = strategy_candidate_payload(candidate_record)
+    validate_evaluable_candidate(candidate)
+
+    candidate_id = str(candidate.get("candidate_id") or "")
+    candidate_version = str(candidate.get("candidate_version") or candidate.get("version") or "")
+    hypothesis_id = str(
+        candidate.get("linked_strategy_hypothesis_id")
+        or candidate.get("hypothesis_id")
+        or ""
+    )
+    created = created_at or date.today().isoformat()
+    scope = candidate.get("experiment_scope")
+    benchmark = scope.get("benchmark") if isinstance(scope, Mapping) else None
+    default_source_refs = (
+        "docs/extension/v0_3_evaluation_evidence_contract.md",
+        "docs/extension/v0_3_strategy_candidate_registry_contract.md",
+        "Quant_mvp/data/v0_3/strategy_candidates/v0_3_strategy_candidate_registry.jsonl",
+        evaluation_method_ref,
+    )
+    evidence = {
+        "schema_version": "v0_3_evaluation_evidence_0_1",
+        "evaluation_boundary": EVALUATION_EVIDENCE_DISCLAIMER,
+        "evaluation_id": evaluation_id or _evaluation_id(candidate_id, created),
+        "candidate_id": candidate_id,
+        "candidate_version": candidate_version,
+        "hypothesis_id": hypothesis_id,
+        "status": "contract_only",
+        "owner": "backtest_evaluation",
+        "created_at": created,
+        "updated_at": created,
+        "source_refs": list(source_refs or default_source_refs),
+        "evaluation_window": _contract_only_evaluation_window(candidate),
+        "universe": str(
+            candidate.get("target_universe")
+            or candidate.get("universe")
+            or "KOSPI200_candidate_only"
+        ),
+        "assumptions": _contract_only_assumptions(candidate),
+        "transaction_cost_assumption": "not_applicable_for_contract_only",
+        "risk_metrics": [
+            "max_drawdown",
+            "annualized_volatility",
+            "turnover_proxy",
+            "coverage_ratio",
+        ],
+        "performance_metrics": [
+            "total_return",
+            "annualized_return",
+            "hit_rate",
+            "benchmark_relative_return",
+        ],
+        "comparison_group": _contract_only_comparison_group(cohort_id, benchmark),
+        "evaluation_method_ref": evaluation_method_ref,
+        "generated_output_boundary": generated_output_boundary,
+        "no_lookahead_check": "required_before_approved_run",
+        "point_in_time_check": "required_before_approved_run",
+        "generated_output_check": "outputs_are_generated_evidence_only_not_runtime_inputs",
+        "no_feedback_check": "evaluation_metrics_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
+        "v0_2_boundary_check": "no_prob_up_1d_training_or_reinterpretation_from_evaluation_metrics",
+        "failure_flags": ["not_yet_run"],
+        "production_boundary_check": "no_automatic_production_activation_claim",
+        "required_evaluation_checks": _contract_only_required_evaluation_checks(),
+        "known_limitations": [
+            "contract_only_no_backtest_or_simulation_metrics_recorded",
+            "approved_evaluation_run_required_before_evidence_recorded_status",
+        ],
+        "review_notes": [
+            "minimal packet reserves the EvaluationEvidence contract for the selected cohort",
+            "no adoption decision is implied by contract_only status",
+        ],
+    }
+    validate_evaluation_evidence_record(evidence)
     return evidence
 
 
@@ -372,6 +466,40 @@ def _evaluation_window(backtest_result: ConservativeBacktestResult) -> dict[str,
     }
 
 
+def _contract_only_evaluation_window(candidate: Mapping[str, Any]) -> dict[str, str | None]:
+    start, end = _candidate_test_period_window(candidate)
+    return {
+        "start": start,
+        "end": end,
+        "rationale": "predeclared_candidate_contract_window_pending_approved_run",
+    }
+
+
+def _candidate_test_period_window(candidate: Mapping[str, Any]) -> tuple[str | None, str | None]:
+    test_period = str(candidate.get("test_period") or "")
+    dates = re.findall(r"\d{4}-\d{2}-\d{2}", test_period)
+    if len(dates) < 2:
+        return (None, None)
+    return (dates[0], dates[1])
+
+
+def _validate_evaluation_window_within_candidate_contract(
+    candidate: Mapping[str, Any],
+    evaluation_window: Mapping[str, Any],
+) -> None:
+    contract_start, contract_end = _candidate_test_period_window(candidate)
+    actual_start = evaluation_window.get("start")
+    actual_end = evaluation_window.get("end")
+    if contract_start and actual_start and str(actual_start) < contract_start:
+        raise ValueError(
+            f"EvaluationEvidence window starts before predeclared test_period: {actual_start} < {contract_start}"
+        )
+    if contract_end and actual_end and str(actual_end) > contract_end:
+        raise ValueError(
+            f"EvaluationEvidence window exceeds predeclared test_period: {actual_end} > {contract_end}"
+        )
+
+
 def _transaction_cost_assumption(config: BacktestConfig) -> dict[str, Any]:
     return {
         "model": "round_trip_cost_and_slippage_subtracted_from_holding_return",
@@ -392,10 +520,108 @@ def _assumptions(candidate: Mapping[str, Any], backtest_result: ConservativeBack
     return list(dict.fromkeys(assumptions))
 
 
+def _contract_only_assumptions(candidate: Mapping[str, Any]) -> list[str]:
+    assumptions = [
+        "candidate_only_interpretation",
+        "no_runtime_connection",
+        "contract_only_minimal_packet",
+        "approved_evaluation_run_required_before_metrics",
+    ]
+    assumptions.extend(str(item) for item in _as_list(candidate.get("known_constraints")) if item)
+    return list(dict.fromkeys(assumptions))
+
+
+def _contract_only_required_evaluation_checks() -> dict[str, dict[str, Any]]:
+    return {
+        "cost": {
+            "status": "required_before_approved_run",
+            "check": "transaction_cost_and_slippage_sensitivity",
+            "metric_refs": ["transaction_cost_assumption"],
+        },
+        "drawdown": {
+            "status": "required_before_approved_run",
+            "check": "maximum_drawdown_must_be_reported_as_evidence",
+            "metric_refs": ["risk_metrics.max_drawdown"],
+        },
+        "volatility": {
+            "status": "required_before_approved_run",
+            "check": "annualized_volatility_must_be_reported_as_evidence",
+            "metric_refs": ["risk_metrics.annualized_volatility"],
+        },
+        "turnover": {
+            "status": "required_before_approved_run",
+            "check": "turnover_proxy_must_be_reported_with_cost_context",
+            "metric_refs": ["risk_metrics.turnover_proxy"],
+        },
+        "oos_walk_forward_stability": {
+            "status": "required_before_adoption_review",
+            "check": "walk_forward_or_out_of_sample_stability_must_be_recorded_or_explicitly_limited",
+            "failure_flag_if_missing": "oos_walk_forward_stability_missing",
+        },
+        "no_lookahead": {
+            "status": "required_before_approved_run",
+            "check": "signals_and_inputs_must_use_only_data_available_before_decision_time",
+            "metric_refs": ["no_lookahead_check", "point_in_time_check"],
+        },
+        "no_feedback": {
+            "status": "active_boundary_check",
+            "check": "evaluation_metrics_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
+            "metric_refs": ["no_feedback_check", "generated_output_check"],
+        },
+    }
+
+
+def _recorded_evaluation_checks(metric_summary: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    return {
+        "cost": {
+            "status": "recorded",
+            "check": "transaction_cost_and_slippage_sensitivity",
+            "metric_refs": ["metric_summary.cost_slippage_bps_round_trip"],
+        },
+        "drawdown": {
+            "status": "recorded",
+            "check": "maximum_drawdown_reported_as_evidence",
+            "metric_refs": ["risk_metric_summary.max_drawdown"],
+        },
+        "volatility": {
+            "status": "recorded",
+            "check": "annualized_volatility_reported_as_evidence",
+            "metric_refs": ["risk_metric_summary.annualized_volatility"],
+        },
+        "turnover": {
+            "status": "recorded",
+            "check": "turnover_proxy_reported_with_cost_context",
+            "metric_refs": ["risk_metric_summary.turnover_proxy"],
+        },
+        "oos_walk_forward_stability": {
+            "status": str(metric_summary.get("oos_stability_status") or "not_available"),
+            "check": "walk_forward_or_out_of_sample_stability_must_be_recorded_or_explicitly_limited",
+            "required_next_action": "run_walk_forward_or_oos_stability_check_before_adoption_review",
+        },
+        "no_lookahead": {
+            "status": "recorded_boundary_check",
+            "check": "ranking_snapshot_uses_prices_available_through_ranking_date_close",
+            "metric_refs": ["no_lookahead_check", "point_in_time_check"],
+        },
+        "no_feedback": {
+            "status": "active_boundary_check",
+            "check": "evaluation_metrics_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
+            "metric_refs": ["no_feedback_check", "generated_output_check"],
+        },
+    }
+
+
 def _comparison_group(candidate: Mapping[str, Any]) -> list[str]:
     scope = candidate.get("experiment_scope")
     benchmark = scope.get("benchmark") if isinstance(scope, Mapping) else None
     values = ["v0_3_candidate_review_cohort"]
+    if benchmark:
+        values.append(str(benchmark))
+    return values
+
+
+def _contract_only_comparison_group(cohort_id: str, benchmark: Any) -> list[str]:
+    values = [cohort_id]
     if benchmark:
         values.append(str(benchmark))
     return values
@@ -440,6 +666,7 @@ __all__ = (
     "EVALUABLE_STATUSES",
     "EVALUATION_EVIDENCE_DISCLAIMER",
     "EvaluationEvidenceResult",
+    "build_contract_only_evaluation_evidence_packet",
     "build_evaluation_evidence_record",
     "run_v0_3_evaluation_evidence",
     "strategy_candidate_payload",

@@ -1,19 +1,19 @@
 # Research Ingestion Report
 
-- run_id: `changed_criteria_resume_20260428_b5_valuation`
-- run timestamp: `2026-04-28T06:46:54Z`
-- selected sources: openalex, crossref, semantic_scholar, nber
-- selected query-set: `fundamental_valuation`
-- raw records by source: crossref=50, nber=0, openalex=50, semantic_scholar=0
-- collection relevance rejected: 46
-- collection relevance manual review: 28
+- run_id: `refresh_20260505_risk_safe`
+- run timestamp: `2026-05-05T08:15:35Z`
+- selected sources: openalex
+- selected query-set: `technical_momentum,technical_mean_reversion,technical_breakout,technical_volatility_liquidity,technical_trend_efficiency,technical_volume_price_confirmation`
+- raw records by source: openalex=300
+- collection relevance rejected: 224
+- collection relevance manual review: 17
 - enrichment target count: 0
 - enrichment records by source: 없음
 - normalized paper count: 691
 - deduped paper count: 691
-- EvidenceCard count: 698
+- EvidenceCard count: 691
 - rejected item count: 106
-- manual review required: 552
+- manual review required: 534
 - retracted / blocked paper count: 0
 - unresolved Scholar seed count: 0
 - PDF fulltext used: no
@@ -27,18 +27,18 @@
 - EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.
 
 ## branch별 분류 건수
-- diagnostic: 253
+- diagnostic: 272
 - hybrid: 82
 - out_of_scope: 106
-- technical: 195
-- valuation: 62
+- technical: 168
+- valuation: 63
 
 ## downstream_route별 건수
-- diagnostic_backlog: 253
+- diagnostic_backlog: 272
 - hybrid_split_required: 82
 - reject_log: 106
-- technical_score_architect: 195
-- valuation_agent_handoff: 62
+- technical_score_architect: 168
+- valuation_agent_handoff: 63
 
 ## source 오류 / rate-limit 요약
 - 기록된 오류/rate-limit 요약이 없습니다. 자세한 내용은 source_health.md를 확인하세요.

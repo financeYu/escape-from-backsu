@@ -1,7 +1,12 @@
 # Rejected Items
 
-- run_id: `changed_criteria_resume_20260428_b5_valuation`
+- run_id: `refresh_20260505_risk_safe`
 
+- Size, Value, and Momentum in Developed Country Equity Returns: Macroeconomic and Liquidity Exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Size, Value, and Momentum in Developed Country Equity Returns: Macroeconomic and Liquidity Exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Size, Value, and Momentum in Polish Equity Returns: Local or International Factors? / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Long run Adjustment of Size, Value, Momentum and Growth Premium in Equity Returns: Evidence from South Asian Emerging Markets / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Size, value, and momentum in developed country equity returns: Macroeconomic and liquidity exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Physical Momentum in the Indian Stock Market / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - From microscopic price dynamics to multidimensional rough volatility models / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - A Generalization of the Robust Positive Expectation Theorem for Stock Trading via Feedback Control / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
@@ -11,11 +16,6 @@
 - Dynamic Factor Allocation Leveraging Regime-Switching Signals / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Constructing Time-Series Momentum Portfolios with Deep Multi-Task Learning / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - Spatio-Temporal Momentum: Jointly Learning Time-Series and Cross-Sectional Strategies / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
-- Size, Value, and Momentum in Developed Country Equity Returns: Macroeconomic and Liquidity Exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
-- Size, Value, and Momentum in Developed Country Equity Returns: Macroeconomic and Liquidity Exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
-- Size, Value, and Momentum in Polish Equity Returns: Local or International Factors? / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
-- Long run Adjustment of Size, Value, Momentum and Growth Premium in Equity Returns: Evidence from South Asian Emerging Markets / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
-- Size, value, and momentum in developed country equity returns: Macroeconomic and liquidity exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Nonlinear dynamics of U.S. equity factor portfolios / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Dynamic Trading with Predictable Returns and Transaction Costs / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - Technical analysis: An asset allocation perspective on the use of moving averages☆ / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
@@ -30,8 +30,6 @@
 - Dynamic portfolio optimization with liquidity cost and market impact: a simulation-and-regression approach / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Liquidity effects of COVID-19 in the European tourism industry / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - LIQUIDITY ANALYSIS AND LEVERAGE OF RETURNS OF STOCK COMPANIES LISTED IN INDONESIA STOCK EXCHANGE / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
-- Stock Investment and Excess Returns: A Critical Review in the Light of the Efficient Market Hypothesis / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
-- U-Shaped Returns and Long–Short Profits from Market Order Imbalance: Evidence from the Korean Stock Market / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - The Eco-Efficiency Premium Puzzle / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - Risk Everywhere: Modeling and Managing Volatility / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - A Review of IPO Activity, Pricing and Allocations / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
@@ -102,6 +100,8 @@
 - Is bitcoin a near stock? Linear and non-linear causal evidence from a price–volume relationship / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Dynamic relation of Chinese stock price-volume pre- and post- the Split Share Structure Reform / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Exploring Realized Volatility through High-Frequency Data: The Role of Liquidity, Transaction Costs, and Influencing Factors. / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
+- Stock Investment and Excess Returns: A Critical Review in the Light of the Efficient Market Hypothesis / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
+- Generalized Mean Absolute Directional Loss as a Solution to Overfitting and High Transaction Costs in Machine Learning Models Used in High-Frequency Algorithmic Investment Strategies / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - Replicating Anomalies / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Interpretable Hypothesis-Driven Trading:A Rigorous Walk-Forward Validation Framework for Market Microstructure Signals / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Analysis of Stock Market Prediction Models Using Deep Learning / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.

@@ -78,6 +78,8 @@ def _risk_flags(card: dict[str, Any]) -> list[str]:
     risks = _get(card, "risks", {})
     if not isinstance(risks, dict):
         return []
+    if _as_bool(risks.get("project_internal_risk_readable")) is not True:
+        return []
     return sorted(key for key, value in risks.items() if key.endswith("_flag") and _as_bool(value))
 
 
@@ -306,8 +308,6 @@ def _reason_for_next_action(action: str, blocked_reasons: list[str]) -> str:
 
 def _main_risks(card: dict[str, Any], blocked_reasons: list[str]) -> list[str]:
     risks = _risk_flags(card) + blocked_reasons
-    if not risks:
-        risks.append("insufficient_reproduction_evidence")
     return sorted(set(risks))
 
 

@@ -1,0 +1,151 @@
+# v0.3 Candidate ML Input Contract
+
+Status: active candidate-level ML input contract.
+Parent route: `docs/extension/v0_3_research_to_strategy_adoption_route.md`.
+Selector gate: `docs/extension/v0_3_adoption_candidate_selector_gate.md`.
+Evidence input: `docs/extension/v0_3_evaluation_evidence_contract.md`.
+Owner lane: ML/evaluator selector with root adoption semantics review.
+
+This contract defines one ML-ready row per `candidate_id` for the v0.3
+candidate/evidence route. The row may combine allowlisted selector metadata,
+StrategyCandidate registry metadata, and EvaluationEvidence contract metadata.
+It must not treat surrogate or pseudo-model values as ground-truth labels.
+
+## Boundary
+
+Allowed:
+
+- candidate-level ML input schema definition
+- one row per StrategyCandidate `candidate_id`
+- selector, registry, StrategyCandidate, and EvaluationEvidence contract
+  metadata only
+- actual outcome labels only from approved `evidence_recorded`
+  EvaluationEvidence with `metric_summary`
+- separate surrogate prediction columns for evaluation prioritization,
+  active learning, uncertainty ranking, and review triage
+- time-aware split metadata for later leakage-controlled training
+
+Blocked:
+
+- training a performance model before approved metric summaries exist
+- copying `pred_*` values into `actual_*` labels
+- treating `label_source=pseudo_model` rows as supervised labels
+- using prediction fields for adoption approval
+- random train/validation/test split unless duplication groups are explicitly
+  isolated
+- runtime ranking, report, backtest, trading, or production activation
+
+## Required Row Shape
+
+Identity and lineage fields:
+
+- `schema_version`
+- `candidate_id`
+- `candidate_version`
+- `hypothesis_id`
+- `evidence_card_id`
+- `selector_input_ref`
+- `registry_ref`
+- `evaluation_evidence_ref`
+- `row_generated_at`
+
+Feature metadata fields may include only allowlisted contract metadata such as:
+
+- `candidate_status`
+- `strategy_type`
+- `ml_use_status`
+- `importance_score`
+- `importance_bucket`
+- `research_branch`
+- `downstream_route`
+- `signal_family_candidate`
+- `formula_clarity`
+- `implementation_readiness`
+- `classification_confidence`
+- `evidence_status`
+- `reproducibility_level`
+- `transaction_costs_discussed`
+- `lookahead_bias_discussed`
+- `survivorship_bias_discussed`
+- `risk_flag_count`
+- `blocked_reason_count`
+- `candidate_blocker_count`
+- `candidate_feature_requirement_count`
+- `required_evaluation_check_ids`
+- `evaluation_status`
+- `evaluation_window_start`
+- `evaluation_window_end`
+- `evaluation_failure_flags`
+
+Actual label fields:
+
+- `actual_total_return`
+- `actual_max_drawdown`
+- `actual_volatility`
+- `actual_turnover`
+- `actual_sharpe`
+- `actual_oos_stability`
+- `actual_label_source`
+- `actual_label_evidence_id`
+- `actual_label_generated_at`
+
+Prediction fields:
+
+- `pred_total_return`
+- `pred_max_drawdown`
+- `pred_volatility`
+- `pred_turnover`
+- `pred_sharpe`
+- `pred_oos_stability`
+- `prediction_uncertainty`
+- `prediction_model_version`
+- `prediction_generated_at`
+- `prediction_allowed_uses`
+
+Split and leakage-control fields:
+
+- `publication_date`
+- `created_at`
+- `candidate_created_at`
+- `evaluation_created_at`
+- `evaluation_window_start`
+- `evaluation_window_end`
+- `split_policy`
+- `split_name`
+- `time_aware_split_ready`
+- `random_split_allowed`
+- `candidate_research_group_id`
+- `duplication_group_id`
+- `supervised_label_eligible`
+- `adoption_review_eligible`
+
+## Validator Rules
+
+1. `actual_*` columns may be populated only when the source
+   EvaluationEvidence is `evidence_recorded`, has `metric_summary`, has no
+   active failure flags, and is marked through `actual_label_source` as
+   `approved_evaluation_evidence`.
+2. `pred_*` columns must never be copied into `actual_*` columns. If actual
+   labels are present without an approved evidence source, validation fails.
+3. Rows with `label_source=pseudo_model` are not eligible supervised training
+   labels.
+4. `pred_*` values are allowed only for `evaluation_prioritization`,
+   `active_learning`, `uncertainty_ranking`, and `review_triage`.
+5. `adoption_review_eligible=true` requires actual EvaluationEvidence labels,
+   not pseudo evidence or surrogate predictions.
+6. Train/validation/test split assignment must be time-aware and use
+   `publication_date`, `candidate_created_at`, and `evaluation_window` fields
+   where available to prevent leakage.
+7. Random split is disallowed unless `random_split_allowed=true` and
+   candidate/research duplication groups are explicitly isolated.
+
+## Current Execution State
+
+The current momentum cohort EvaluationEvidence packets are `contract_only`.
+They have no `metric_summary`, so all `actual_*` label columns must remain
+null and performance model training must remain blocked.
+
+The next permitted step without model training is to materialize the
+candidate-level ML-ready input table and validate that actual labels and
+prediction columns remain separated. Converting contract-only packets into
+actual EvaluationEvidence runs requires a separate approved owner-lane task.

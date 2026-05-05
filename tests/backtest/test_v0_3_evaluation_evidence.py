@@ -20,8 +20,26 @@ runner = importlib.util.module_from_spec(RUNNER_SPEC)
 assert RUNNER_SPEC.loader is not None
 RUNNER_SPEC.loader.exec_module(runner)
 
+COHORT_SCRIPT = PROJECT_ROOT / "Quant_mvp" / "scripts" / "build_v0_3_momentum_evaluation_evidence_packets.py"
+COHORT_SPEC = importlib.util.spec_from_file_location("build_v0_3_momentum_evaluation_evidence_packets", COHORT_SCRIPT)
+assert COHORT_SPEC is not None
+cohort_builder = importlib.util.module_from_spec(COHORT_SPEC)
+assert COHORT_SPEC.loader is not None
+COHORT_SPEC.loader.exec_module(cohort_builder)
+
+RUN_COHORT_SCRIPT = PROJECT_ROOT / "Quant_mvp" / "scripts" / "run_v0_3_momentum_evaluation_evidence_cohort.py"
+RUN_COHORT_SPEC = importlib.util.spec_from_file_location(
+    "run_v0_3_momentum_evaluation_evidence_cohort",
+    RUN_COHORT_SCRIPT,
+)
+assert RUN_COHORT_SPEC is not None
+run_cohort = importlib.util.module_from_spec(RUN_COHORT_SPEC)
+assert RUN_COHORT_SPEC.loader is not None
+RUN_COHORT_SPEC.loader.exec_module(run_cohort)
+
 from Quant_mvp.backtest_mvp import (  # noqa: E402
     CandidateRankingSnapshotConfig,
+    build_contract_only_evaluation_evidence_packet,
     run_v0_3_evaluation_evidence,
     validate_evaluation_evidence_record,
     write_evaluation_evidence_markdown,
@@ -76,6 +94,25 @@ def prices() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def write_daily_price_csv(path: Path, dates: pd.DatetimeIndex) -> None:
+    path.write_text(
+        "date,close,change,open,high,low,volume\n"
+        + "\n".join(
+            f"{date.date().isoformat()},{100 + index * 2},0,{99 + index * 2},"
+            f"{101 + index * 2},{98 + index * 2},1000"
+            for index, date in enumerate(dates)
+        )
+        + "\n",
+        encoding="utf-8-sig",
+    )
+
+
+def read_evidence_payload(path: Path) -> dict[str, object]:
+    text = path.read_text(encoding="utf-8")
+    payload = text.split("```json", 1)[1].split("```", 1)[0]
+    return json.loads(payload)
+
+
 def test_v0_3_candidate_runs_to_evaluation_evidence_record() -> None:
     result = run_v0_3_evaluation_evidence(
         {"strategy_candidate": candidate()},
@@ -112,6 +149,18 @@ def test_v0_3_candidate_runs_to_evaluation_evidence_record() -> None:
     assert "benchmark_relative_return" in evidence["performance_metric_summary"]
     assert evidence["metric_summary"]["benchmark_comparison"] == "not_available_without_approved_benchmark_series"
     assert evidence["metric_summary"]["oos_stability_status"] == "not_available_single_pass_snapshot"
+    assert set(evidence["required_evaluation_checks"]) == {
+        "cost",
+        "drawdown",
+        "volatility",
+        "turnover",
+        "oos_walk_forward_stability",
+        "no_lookahead",
+        "no_feedback",
+    }
+    assert evidence["required_evaluation_checks"]["oos_walk_forward_stability"]["status"] == (
+        "not_available_single_pass_snapshot"
+    )
     assert evidence["comparison_group"] == [
         "v0_3_candidate_review_cohort",
         "equal_weight_kospi200_candidate_proxy",
@@ -120,6 +169,47 @@ def test_v0_3_candidate_runs_to_evaluation_evidence_record() -> None:
     assert "must_not_feed" in evidence["no_feedback_check"]
     assert evidence["production_boundary_check"] == "no_automatic_production_activation_claim"
     assert not result.ranking_snapshot.empty
+
+
+def test_contract_only_evaluation_evidence_packet_is_minimal_and_valid() -> None:
+    evidence = build_contract_only_evaluation_evidence_packet(
+        candidate(test_period="2015-01-01 through 2025-12-31"),
+        cohort_id="momentum_evaluable_cohort_1",
+        created_at="2026-04-29",
+    )
+
+    validate_evaluation_evidence_record(evidence)
+
+    assert evidence["status"] == "contract_only"
+    assert evidence["failure_flags"] == ["not_yet_run"]
+    assert evidence["transaction_cost_assumption"] == "not_applicable_for_contract_only"
+    assert evidence["comparison_group"] == [
+        "momentum_evaluable_cohort_1",
+        "equal_weight_kospi200_candidate_proxy",
+    ]
+    assert evidence["evaluation_window"] == {
+        "start": "2015-01-01",
+        "end": "2025-12-31",
+        "rationale": "predeclared_candidate_contract_window_pending_approved_run",
+    }
+    checks = evidence["required_evaluation_checks"]
+    assert set(checks) == {
+        "cost",
+        "drawdown",
+        "volatility",
+        "turnover",
+        "oos_walk_forward_stability",
+        "no_lookahead",
+        "no_feedback",
+    }
+    assert checks["cost"]["status"] == "required_before_approved_run"
+    assert checks["drawdown"]["metric_refs"] == ["risk_metrics.max_drawdown"]
+    assert checks["volatility"]["metric_refs"] == ["risk_metrics.annualized_volatility"]
+    assert checks["turnover"]["metric_refs"] == ["risk_metrics.turnover_proxy"]
+    assert checks["oos_walk_forward_stability"]["status"] == "required_before_adoption_review"
+    assert checks["no_lookahead"]["status"] == "required_before_approved_run"
+    assert checks["no_feedback"]["status"] == "active_boundary_check"
+    assert "metric_summary" not in evidence
 
 
 def test_v0_3_evaluation_evidence_materializes_generator_prices_once() -> None:
@@ -245,3 +335,230 @@ def test_cli_writes_evidence_only_packet(tmp_path: Path) -> None:
     text = output_path.read_text(encoding="utf-8")
     assert "ee_v0_3_cli_test" in text
     assert "not automatic production activation" in text
+
+
+def test_momentum_cohort_builder_writes_expected_contract_only_packets(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    records = [
+        {"strategy_candidate": candidate(candidate_id="sc_v0_3_a", strategy_type="ignored")},
+        {
+            "strategy_candidate": candidate(
+                candidate_id="sc_v0_3_b",
+                hypothesis_id="sh_v0_3_b",
+                status="draft",
+            )
+        },
+        {
+            "strategy_candidate": candidate(
+                candidate_id="sc_v0_3_c",
+                hypothesis_id="sh_v0_3_c",
+                experiment_scope={
+                    "strategy_type": "reversal",
+                    "benchmark": "equal_weight_kospi200_candidate_proxy",
+                },
+            )
+        },
+    ]
+    registry_path.write_text(
+        "\n".join(json.dumps(record, ensure_ascii=False) for record in records) + "\n",
+        encoding="utf-8",
+    )
+
+    output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_momentum")
+    exit_code = cohort_builder.main(
+        [
+            "--registry",
+            str(registry_path),
+            "--output-dir",
+            str(output_dir),
+            "--project-root",
+            str(tmp_path),
+            "--created-at",
+            "2026-04-29",
+        ]
+    )
+
+    assert exit_code == 0
+    manifest = tmp_path / output_dir / "manifest.json"
+    packet_paths = list((tmp_path / output_dir).glob("ee_v0_3_*.md"))
+    assert len(packet_paths) == 1
+    manifest_payload = json.loads(manifest.read_text(encoding="utf-8"))
+    assert manifest_payload["candidate_count"] == 1
+    assert manifest_payload["required_evaluation_check_ids"] == [
+        "cost",
+        "drawdown",
+        "no_feedback",
+        "no_lookahead",
+        "oos_walk_forward_stability",
+        "turnover",
+        "volatility",
+    ]
+    assert "contract_only" in packet_paths[0].read_text(encoding="utf-8")
+
+    first_packet = packet_paths[0]
+    exit_code = cohort_builder.main(
+        [
+            "--registry",
+            str(registry_path),
+            "--output-dir",
+            str(output_dir),
+            "--project-root",
+            str(tmp_path),
+            "--expected-count",
+            "1",
+            "--created-at",
+            "2026-04-30",
+        ]
+    )
+
+    assert exit_code == 0
+    packet_paths = list((tmp_path / output_dir).glob("ee_v0_3_*.md"))
+    assert len(packet_paths) == 1
+    assert packet_paths[0].name.endswith("sc_v0_3_a.md")
+    assert "20260430" in packet_paths[0].name
+    assert not first_packet.exists()
+
+
+def test_momentum_cohort_runner_writes_actual_evidence_packets(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps({"strategy_candidate": candidate(candidate_id="sc_v0_3_a")}, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "prices"
+    prices_dir.mkdir()
+    price_path = prices_dir / "005930_daily_prices.csv"
+    price_path.write_text(
+        "날짜,종가,전일비,시가,고가,저가,거래량\n"
+        + "\n".join(
+            f"{date.date().isoformat()},{100 + index * 2},0,{99 + index * 2},"
+            f"{101 + index * 2},{98 + index * 2},1000"
+            for index, date in enumerate(pd.bdate_range("2026-01-02", periods=45))
+        )
+        + "\n",
+        encoding="utf-8-sig",
+    )
+    output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_actual_momentum")
+
+    result = run_cohort.run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        output_dir=output_dir,
+        project_root=tmp_path,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=1,
+    )
+
+    assert result["candidate_count"] == 1
+    assert result["status_counts"] == {"evidence_recorded": 1}
+    manifest = json.loads((tmp_path / output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["status"] == "evidence_recorded"
+    assert manifest["price_row_count"] == 45
+    packet_text = next((tmp_path / output_dir).glob("ee_v0_3_*.md")).read_text(encoding="utf-8")
+    assert '"status": "evidence_recorded"' in packet_text
+    assert '"metric_summary"' in packet_text
+
+
+def test_momentum_cohort_runner_caps_actual_run_to_candidate_test_period(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "strategy_candidate": candidate(
+                    candidate_id="sc_v0_3_window_capped",
+                    test_period="2015-01-01 through 2025-12-31",
+                )
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "prices"
+    prices_dir.mkdir()
+    write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2025-09-01", periods=130))
+    output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_window_capped")
+
+    result = run_cohort.run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        output_dir=output_dir,
+        project_root=tmp_path,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=1,
+    )
+
+    assert result["candidate_count"] == 1
+    payload = read_evidence_payload(next((tmp_path / output_dir).glob("ee_v0_3_*.md")))
+    assert payload["evaluation_window"]["end"] <= "2025-12-31"
+    manifest = json.loads((tmp_path / output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["price_row_count"] > 0
+
+
+def test_momentum_cohort_runner_marks_shared_rule_proxy_not_supervised(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    records = [
+        {"strategy_candidate": candidate(candidate_id="sc_v0_3_shared_a", hypothesis_id="sh_v0_3_shared_a")},
+        {"strategy_candidate": candidate(candidate_id="sc_v0_3_shared_b", hypothesis_id="sh_v0_3_shared_b")},
+    ]
+    registry_path.write_text(
+        "\n".join(json.dumps(record, ensure_ascii=False) for record in records) + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "prices"
+    prices_dir.mkdir()
+    write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2026-01-02", periods=60))
+    output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_shared_proxy")
+
+    result = run_cohort.run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        output_dir=output_dir,
+        project_root=tmp_path,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=2,
+    )
+
+    assert result["candidate_count"] == 2
+    payloads = [read_evidence_payload(path) for path in sorted((tmp_path / output_dir).glob("ee_v0_3_*.md"))]
+    assert {payload["label_use_status"] for payload in payloads} == {"generic_momentum_proxy_not_supervised"}
+    assert all(payload["metric_summary"]["label_role"] == "generic_momentum_proxy" for payload in payloads)
+    manifest = json.loads((tmp_path / output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["label_use_status_counts"] == {"generic_momentum_proxy_not_supervised": 2}
+
+
+def test_momentum_cohort_runner_rejects_invalidated_actual_label_packets(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "strategy_candidate": candidate(
+                    candidate_id="sc_v0_3_insufficient_window",
+                    test_period="2015-01-01 through 2025-12-31",
+                )
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "prices"
+    prices_dir.mkdir()
+    write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2025-11-27", periods=24))
+    output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_invalidated_guard")
+
+    with pytest.raises(ValueError, match="did not produce candidate-level metric_summary labels"):
+        run_cohort.run_momentum_evaluation_evidence_cohort(
+            registry=registry_path,
+            prices_dir=prices_dir,
+            output_dir=output_dir,
+            project_root=tmp_path,
+            cohort_id="test_momentum",
+            created_at="2026-05-06",
+            expected_count=1,
+        )
+
+    assert not (tmp_path / output_dir).exists()

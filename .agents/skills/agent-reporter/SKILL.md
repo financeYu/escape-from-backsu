@@ -116,6 +116,7 @@ reporter_packet:
   task_class: "<from worker pool>"
   current_route: "<from worker pool>"
   selected_gate: "<from worker pool>"
+  resource_usage_profile: "<from worker pool>"
   reporter_status: "ready_for_supervisor_summary | blocked | needs_worker_fix"
   block_reason: "none | worker pool blocked | worker result contract violation | unauthorized worker context"
   worker_summaries:

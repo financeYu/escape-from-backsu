@@ -30,6 +30,17 @@ REQUIRED_COORDINATOR_FIELDS = [
     "open_questions",
 ]
 
+RESOURCE_USAGE_PROFILE = {
+    "coordinator": "medium",
+    "planner": "xhigh",
+    "plan_review": "high",
+    "supervisor": "xhigh",
+    "coder": "medium",
+    "validator": "medium",
+    "reporter": "low",
+    "tracker": "low",
+}
+
 DEFAULT_PLAN_REVIEW_CHECKS = [
     "scope lock",
     "hard-stop safety",
@@ -59,6 +70,7 @@ class PlannerPacket:
     task_class: str
     current_route: str
     selected_gate: str
+    resource_usage_profile: dict[str, str]
     plan_status: str
     scope_lock: dict[str, list[str]]
     ordered_plan: list[PlanStep]
@@ -188,6 +200,7 @@ def build_validation_plan(packet: dict[str, Any]) -> list[ValidationItem]:
 def build_planner_packet(packet: dict[str, Any]) -> PlannerPacket:
     """Build the plan-review-facing planner packet."""
     blocked = is_blocked(packet)
+    resource_usage_profile = packet.get("resource_usage_profile", RESOURCE_USAGE_PROFILE)
     approval_question = "none"
     if blocked:
         approval_question = "; ".join(str(item) for item in packet.get("open_questions", []))
@@ -196,6 +209,7 @@ def build_planner_packet(packet: dict[str, Any]) -> PlannerPacket:
         task_class=str(packet["task_class"]),
         current_route=str(packet["current_route"]),
         selected_gate=str(packet["selected_gate"]),
+        resource_usage_profile=dict(resource_usage_profile),
         plan_status="blocked" if blocked else "ready_for_plan_review",
         scope_lock={
             "allowed": list(packet["allowed_scope"]),

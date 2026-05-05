@@ -48,6 +48,7 @@ packet:
   `Step/gate closure`
 - selected architecture gate
 - selected domain compatibility gate, or `none`
+- role-level resource usage profile
 - allowed scope
 - forbidden scope
 - validation commands

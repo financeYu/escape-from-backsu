@@ -27,6 +27,17 @@ REQUIRED_WORKER_POOL_FIELDS = [
     "korean_final_report",
 ]
 
+RESOURCE_USAGE_PROFILE = {
+    "coordinator": "medium",
+    "planner": "xhigh",
+    "plan_review": "high",
+    "supervisor": "xhigh",
+    "coder": "medium",
+    "validator": "medium",
+    "reporter": "low",
+    "tracker": "low",
+}
+
 REQUIRED_INPUT_WORKER_ROLES = ["coder", "validator", "tracker"]
 VALID_RESULT_STATUSES = ["complete", "partial", "failed", "blocked"]
 UPWARD_ALLOWED = ["status", "changed_scope", "evidence", "next_request"]
@@ -82,6 +93,7 @@ class ReporterPacket:
     task_class: str
     current_route: str
     selected_gate: str
+    resource_usage_profile: dict[str, str]
     reporter_status: str
     block_reason: str
     worker_summaries: list[WorkerSummary]
@@ -378,6 +390,9 @@ def build_reporter_packet(
     worker_pool_packet: dict[str, Any], worker_results: list[dict[str, Any]]
 ) -> ReporterPacket:
     """Build a reporter packet from worker-pool output and worker results."""
+    resource_usage_profile = worker_pool_packet.get(
+        "resource_usage_profile", RESOURCE_USAGE_PROFILE
+    )
     if str(worker_pool_packet["worker_pool_status"]) != "ready_for_worker_execution":
         supervisor_summary = {
             "status": "blocked",
@@ -390,6 +405,7 @@ def build_reporter_packet(
             task_class=str(worker_pool_packet["task_class"]),
             current_route=str(worker_pool_packet["current_route"]),
             selected_gate=str(worker_pool_packet["selected_gate"]),
+            resource_usage_profile=dict(resource_usage_profile),
             reporter_status="blocked",
             block_reason="worker pool blocked: "
             + str(worker_pool_packet.get("block_reason", "unknown")),
@@ -417,6 +433,7 @@ def build_reporter_packet(
             task_class=str(worker_pool_packet["task_class"]),
             current_route=str(worker_pool_packet["current_route"]),
             selected_gate=str(worker_pool_packet["selected_gate"]),
+            resource_usage_profile=dict(resource_usage_profile),
             reporter_status="blocked",
             block_reason="unsafe context firewall",
             worker_summaries=[],
@@ -467,6 +484,7 @@ def build_reporter_packet(
             task_class=str(worker_pool_packet["task_class"]),
             current_route=str(worker_pool_packet["current_route"]),
             selected_gate=str(worker_pool_packet["selected_gate"]),
+            resource_usage_profile=dict(resource_usage_profile),
             reporter_status="blocked",
             block_reason=block_reason,
             worker_summaries=summaries,
@@ -484,6 +502,7 @@ def build_reporter_packet(
         task_class=str(worker_pool_packet["task_class"]),
         current_route=str(worker_pool_packet["current_route"]),
         selected_gate=str(worker_pool_packet["selected_gate"]),
+        resource_usage_profile=dict(resource_usage_profile),
         reporter_status="ready_for_supervisor_summary",
         block_reason="none",
         worker_summaries=summaries,

@@ -90,6 +90,7 @@ planner_packet:
   task_class: "<from coordinator>"
   current_route: "<from coordinator>"
   selected_gate: "<from coordinator>"
+  resource_usage_profile: "<from coordinator>"
   plan_status: "ready_for_plan_review | blocked"
   scope_lock:
     allowed:

@@ -33,6 +33,17 @@ REQUIRED_PLAN_REVIEW_FIELDS = [
     "korean_final_report",
 ]
 
+RESOURCE_USAGE_PROFILE = {
+    "coordinator": "medium",
+    "planner": "xhigh",
+    "plan_review": "high",
+    "supervisor": "xhigh",
+    "coder": "medium",
+    "validator": "medium",
+    "reporter": "low",
+    "tracker": "low",
+}
+
 ACTIVE_ROUTE = "post-MVP v0.3 research-to-strategy adoption route"
 PROJECT_LOCAL_GATE_PREFIX = ".agents/skills/"
 APPROVAL_GATE = "separate root approval required before gate selection"
@@ -43,6 +54,7 @@ UPWARD_ALLOWED = ["status", "changed_scope", "evidence", "next_request"]
 @dataclass(frozen=True)
 class WorkerPacket:
     worker_role: str
+    resource_usage: str
     ready: bool
     allowed_scope: list[str]
     forbidden_scope: list[str]
@@ -58,6 +70,7 @@ class SupervisorPacket:
     task_class: str
     current_route: str
     selected_gate: str
+    resource_usage_profile: dict[str, str]
     supervisor_status: str
     block_reason: str
     execution_policy: dict[str, bool]
@@ -186,10 +199,12 @@ def build_worker_packets(packet: dict[str, Any], ready: bool) -> list[WorkerPack
     commands = _validation_commands(packet)
     assigned_plan_steps = _ordered_plan(packet)
     contract = result_contract(_as_dict(packet.get("context_firewall", {})))
+    resource_usage_profile = packet.get("resource_usage_profile", RESOURCE_USAGE_PROFILE)
 
     return [
         WorkerPacket(
             worker_role="coder",
+            resource_usage=str(resource_usage_profile.get("coder", "medium")),
             ready=ready,
             allowed_scope=allowed,
             forbidden_scope=forbidden,
@@ -202,6 +217,7 @@ def build_worker_packets(packet: dict[str, Any], ready: bool) -> list[WorkerPack
         ),
         WorkerPacket(
             worker_role="tracker",
+            resource_usage=str(resource_usage_profile.get("tracker", "low")),
             ready=ready,
             allowed_scope=allowed,
             forbidden_scope=forbidden,
@@ -215,6 +231,7 @@ def build_worker_packets(packet: dict[str, Any], ready: bool) -> list[WorkerPack
         ),
         WorkerPacket(
             worker_role="validator",
+            resource_usage=str(resource_usage_profile.get("validator", "medium")),
             ready=ready,
             allowed_scope=allowed,
             forbidden_scope=forbidden,
@@ -229,6 +246,7 @@ def build_worker_packets(packet: dict[str, Any], ready: bool) -> list[WorkerPack
         ),
         WorkerPacket(
             worker_role="reporter",
+            resource_usage=str(resource_usage_profile.get("reporter", "low")),
             ready=ready,
             allowed_scope=allowed,
             forbidden_scope=forbidden,
@@ -248,11 +266,13 @@ def build_supervisor_packet(packet: dict[str, Any]) -> SupervisorPacket:
     block_reason = block_reason_for(packet)
     ready = block_reason == "none"
     context_firewall = _as_dict(packet["context_firewall"])
+    resource_usage_profile = packet.get("resource_usage_profile", RESOURCE_USAGE_PROFILE)
     return SupervisorPacket(
         user_goal=str(packet["user_goal"]),
         task_class=str(packet["task_class"]),
         current_route=str(packet["current_route"]),
         selected_gate=str(packet["selected_gate"]),
+        resource_usage_profile=dict(resource_usage_profile),
         supervisor_status="ready_for_workers" if ready else "blocked",
         block_reason=block_reason,
         execution_policy={

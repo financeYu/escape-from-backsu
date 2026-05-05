@@ -29,6 +29,17 @@ REQUIRED_SUPERVISOR_FIELDS = [
     "korean_final_report",
 ]
 
+RESOURCE_USAGE_PROFILE = {
+    "coordinator": "medium",
+    "planner": "xhigh",
+    "plan_review": "high",
+    "supervisor": "xhigh",
+    "coder": "medium",
+    "validator": "medium",
+    "reporter": "low",
+    "tracker": "low",
+}
+
 ACTIVE_ROUTE = "post-MVP v0.3 research-to-strategy adoption route"
 PROJECT_LOCAL_GATE_PREFIX = ".agents/skills/"
 APPROVAL_GATE = "separate root approval required before gate selection"
@@ -57,6 +68,7 @@ ROLE_PURPOSES = {
 @dataclass(frozen=True)
 class WorkerRoleSpec:
     worker_role: str
+    resource_usage: str
     ready: bool
     purpose: str
     allowed_scope: list[str]
@@ -75,6 +87,7 @@ class WorkerPoolPacket:
     task_class: str
     current_route: str
     selected_gate: str
+    resource_usage_profile: dict[str, str]
     worker_pool_status: str
     block_reason: str
     role_specs: list[WorkerRoleSpec]
@@ -273,6 +286,11 @@ def role_spec_from_worker(worker_packet: dict[str, Any], blocked: bool) -> Worke
         required_input = "supervisor worker packet with approved assigned_plan_steps only"
     return WorkerRoleSpec(
         worker_role=worker_role,
+        resource_usage=str(
+            worker_packet.get(
+                "resource_usage", RESOURCE_USAGE_PROFILE.get(worker_role, "medium")
+            )
+        ),
         ready=bool(worker_packet.get("ready", False)) and not blocked,
         purpose=ROLE_PURPOSES.get(worker_role, "unknown worker role"),
         allowed_scope=_string_list(worker_packet.get("allowed_scope", [])),
@@ -308,11 +326,13 @@ def build_worker_pool_packet(packet: dict[str, Any]) -> WorkerPoolPacket:
     block_reason = block_reason_for(packet)
     blocked = block_reason != "none"
     context_firewall = _as_dict(packet["context_firewall"])
+    resource_usage_profile = packet.get("resource_usage_profile", RESOURCE_USAGE_PROFILE)
     return WorkerPoolPacket(
         user_goal=str(packet["user_goal"]),
         task_class=str(packet["task_class"]),
         current_route=str(packet["current_route"]),
         selected_gate=str(packet["selected_gate"]),
+        resource_usage_profile=dict(resource_usage_profile),
         worker_pool_status="blocked" if blocked else "ready_for_worker_execution",
         block_reason=block_reason,
         role_specs=build_role_specs(packet, blocked),

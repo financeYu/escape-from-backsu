@@ -31,6 +31,17 @@ REQUIRED_PLANNER_FIELDS = [
     "korean_final_report",
 ]
 
+RESOURCE_USAGE_PROFILE = {
+    "coordinator": "medium",
+    "planner": "xhigh",
+    "plan_review": "high",
+    "supervisor": "xhigh",
+    "coder": "medium",
+    "validator": "medium",
+    "reporter": "low",
+    "tracker": "low",
+}
+
 ACTIVE_ROUTE = "post-MVP v0.3 research-to-strategy adoption route"
 PROJECT_LOCAL_GATE_PREFIX = ".agents/skills/"
 APPROVAL_GATE = "separate root approval required before gate selection"
@@ -73,6 +84,7 @@ class PlanReviewPacket:
     task_class: str
     current_route: str
     selected_gate: str
+    resource_usage_profile: dict[str, str]
     scope_lock: dict[str, list[str]]
     ordered_plan: list[dict[str, str]]
     validation_plan: list[dict[str, str]]
@@ -305,6 +317,7 @@ def review_status_for(packet: dict[str, Any], checklist: list[ReviewItem]) -> st
 def build_plan_review_packet(packet: dict[str, Any]) -> PlanReviewPacket:
     """Build the supervisor-facing or planner-feedback plan-review packet."""
     checklist = build_checklist(packet)
+    resource_usage_profile = packet.get("resource_usage_profile", RESOURCE_USAGE_PROFILE)
     review_status = review_status_for(packet, checklist)
     failed_items = [item for item in checklist if not item.passed]
     planner_fixes = [item.required_fix for item in failed_items if item.required_fix != "none"]
@@ -332,6 +345,7 @@ def build_plan_review_packet(packet: dict[str, Any]) -> PlanReviewPacket:
         task_class=str(packet["task_class"]),
         current_route=str(packet["current_route"]),
         selected_gate=str(packet["selected_gate"]),
+        resource_usage_profile=dict(resource_usage_profile),
         scope_lock={
             "allowed": _scope_values(packet, "allowed"),
             "forbidden": _scope_values(packet, "forbidden"),

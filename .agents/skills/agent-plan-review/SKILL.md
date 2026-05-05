@@ -108,6 +108,7 @@ plan_review_packet:
   task_class: "<from planner>"
   current_route: "<from planner>"
   selected_gate: "<from planner>"
+  resource_usage_profile: "<from planner>"
   scope_lock:
     allowed:
       - "<from planner>"

@@ -112,6 +112,7 @@ supervisor_packet:
   task_class: "<from plan-review>"
   current_route: "<from plan-review>"
   selected_gate: "<from plan-review>"
+  resource_usage_profile: "<from plan-review>"
   supervisor_status: "ready_for_workers | blocked"
   block_reason: "none | plan-review not approved | user approval required | supervisor handoff not ready"
   execution_policy:
@@ -122,6 +123,7 @@ supervisor_packet:
     stage: false
   worker_packets:
     - worker_role: "coder"
+      resource_usage: "<from resource_usage_profile>"
       ready: true
       allowed_scope:
         - "<from scope lock>"

@@ -32,6 +32,22 @@ domain gates are still used, but only as selected domain gates inside the
 architecture packet. This starts replacement without deleting existing gate
 authority.
 
+## Resource Usage Profile
+
+Architecture packets carry this role-level resource profile. The stored values
+use the runtime effort vocabulary: `low`, `medium`, `high`, and `xhigh`.
+
+| Role | Resource usage |
+| --- | --- |
+| `coordinator` | `medium` |
+| `planner` | `xhigh` |
+| `plan_review` | `high` |
+| `supervisor` | `xhigh` |
+| `coder` | `medium` |
+| `validator` | `medium` |
+| `reporter` | `low` |
+| `tracker` | `low` |
+
 ## Target Shape
 
 ```text
@@ -335,6 +351,15 @@ coordinator_packet:
   task_class: "planning/read-only | narrow edit | Step/gate closure"
   current_route: "<active route or named exception>"
   selected_gate: "<project-local skill gate or none yet>"
+  resource_usage_profile:
+    coordinator: "medium"
+    planner: "xhigh"
+    plan_review: "high"
+    supervisor: "xhigh"
+    coder: "medium"
+    validator: "medium"
+    reporter: "low"
+    tracker: "low"
   allowed_scope:
     - "<file, directory, or role boundary>"
   forbidden_scope:

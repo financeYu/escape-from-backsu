@@ -17,6 +17,17 @@ from typing import Any
 
 ACTIVE_ROUTE = "post-MVP v0.3 research-to-strategy adoption route"
 
+RESOURCE_USAGE_PROFILE = {
+    "coordinator": "medium",
+    "planner": "xhigh",
+    "plan_review": "high",
+    "supervisor": "xhigh",
+    "coder": "medium",
+    "validator": "medium",
+    "reporter": "low",
+    "tracker": "low",
+}
+
 CONTEXT_FIREWALL = {
     "upward_allowed": ["status", "changed_scope", "evidence", "next_request"],
     "upward_forbidden": [
@@ -150,6 +161,8 @@ REPLACEMENT_TERMS = [
     "skill replacement",
     "process replacement",
     "agent-replacement",
+    "resource usage",
+    "resource profile",
     "대체",
     "교체",
     "마이그레이션",
@@ -166,6 +179,7 @@ class CoordinatorPacket:
     task_class: str
     current_route: str
     selected_gate: str
+    resource_usage_profile: dict[str, str]
     allowed_scope: list[str]
     forbidden_scope: list[str]
     planner_must_output: list[str]
@@ -197,6 +211,11 @@ def classify_task(goal: str) -> str:
         "implement",
         "add",
         "modify",
+        "update",
+        "change",
+        "configure",
+        "resource usage",
+        "resource profile",
         "fix",
         "refactor",
         "write code",
@@ -501,6 +520,7 @@ def build_packet(user_goal: str) -> CoordinatorPacket:
         task_class=task_class,
         current_route=ACTIVE_ROUTE,
         selected_gate=selected_gate,
+        resource_usage_profile=dict(RESOURCE_USAGE_PROFILE),
         allowed_scope=allowed_scope_for(selected_gate),
         forbidden_scope=BASE_FORBIDDEN_SCOPE,
         planner_must_output=[

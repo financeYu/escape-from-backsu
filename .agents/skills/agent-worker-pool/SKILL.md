@@ -199,10 +199,12 @@ worker_pool_packet:
   task_class: "<from supervisor>"
   current_route: "<from supervisor>"
   selected_gate: "<from supervisor>"
+  resource_usage_profile: "<from supervisor>"
   worker_pool_status: "ready_for_worker_execution | blocked"
   block_reason: "none | supervisor blocked | worker packet set incomplete | unsafe execution policy | unsafe worker contract | unsafe context firewall"
   role_specs:
     - worker_role: "coder"
+      resource_usage: "<from supervisor worker packet>"
       ready: true
       purpose: "<role purpose>"
       allowed_scope:

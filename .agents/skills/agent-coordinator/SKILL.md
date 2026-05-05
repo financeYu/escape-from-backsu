@@ -107,6 +107,15 @@ coordinator_packet:
   task_class: "planning/read-only | narrow edit | Step/gate closure"
   current_route: "<active route or named exception>"
   selected_gate: "<project-local skill gate or none yet>"
+  resource_usage_profile:
+    coordinator: "medium"
+    planner: "xhigh"
+    plan_review: "high"
+    supervisor: "xhigh"
+    coder: "medium"
+    validator: "medium"
+    reporter: "low"
+    tracker: "low"
   allowed_scope:
     - "<file, directory, or role boundary>"
   forbidden_scope:

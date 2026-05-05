@@ -10,11 +10,12 @@ tooling to generate a short GPT context brief.
 Define internal rules for generating GPT-facing context briefs with low token
 waste, clear baseline trust, and no repetitive reuse of old Step summaries.
 
-## Current Baseline Rule
+## Current Route Rule
 
-- Step 20 is complete.
-- KOSPI200 technical MVP v0.1 is frozen.
-- GPT-facing context must treat Step 1-20 as trusted baseline.
+- Post-MVP v0.3 research-to-strategy adoption is the active route.
+- KOSPI200 technical MVP v0.1 is frozen archive baseline.
+- v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only.
+- GPT-facing context must treat Step 1-20 as trusted archive baseline.
 - Completed Step 1-20 history is archive-only.
 - GPT-facing context must not repeat completed Step history by default.
 
@@ -70,11 +71,12 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 
 Compress baseline context to the smallest useful set. Prefer:
 
-- Step 20 complete; MVP v0.1 is frozen.
-- KOSPI200 v0.1 is technical-only.
-- Valuation/fundamental, KOSDAQ150, futures/options, Nasdaq, and trading
-  recommendation work remain outside the current baseline unless a later routed
-  task explicitly opens them.
+- v0.3 research-to-strategy adoption is the active route.
+- v0.1 is frozen KOSPI200 technical baseline; v0.2 `prob_up_1d_candidate` is
+  archived/supporting compatibility only.
+- Valuation/fundamental activation, universe expansion, new data ingestion,
+  production activation, live trading, and trading recommendation work remain
+  outside scope unless a later routed task explicitly opens them.
 
 ## Context Fact Limit
 
@@ -114,6 +116,8 @@ discussion or diff paths instead of pasting long bodies.
 
 GPT-facing context must not claim or imply:
 
+- v0.2 is the active route unless the task is an explicit archived/supporting
+  compatibility check
 - active valuation/fundamental scoring
 - KOSDAQ150, futures, options, or Nasdaq implementation
 - score formula changes
@@ -158,6 +162,8 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 ## Validation Requirements
 
 - `docs/context/GPT_CONTEXT_GENERATION_RULES.md` exists.
+- `.agents/skills/gpt-context-refresh/SKILL.md` exists and preserves explicit
+  user-request, local-only, latest-only, and v0.3 route controls.
 - Rules include max 3 confirmed context facts.
 - Rules include default GPT input = compact baseline + one active request packet.
 - GPT-facing output refresh commands require `--user-requested`; GPT submission

@@ -112,6 +112,8 @@ def test_gpt_brief_mode_generates_route_only_context(tmp_path: Path) -> None:
     assert len(text.splitlines()) <= 80
     assert "Generated only after an explicit user request" in text
     assert "Draft a GPT prompt." in text
+    assert "Post-MVP v0.3 research-to-strategy adoption is the active route." in text
+    assert "v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only" in text
     assert "Do not repeat completed Step history" in text
     assert "`docs/context/MVP_V0_1_BASELINE.md` - FOUND" in text
     assert "GPT_CONTEXT_GENERATION_RULES.md" not in text

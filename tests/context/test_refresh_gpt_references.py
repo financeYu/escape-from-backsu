@@ -34,8 +34,11 @@ def test_refresh_gpt_references_updates_both_gpt_files(tmp_path: Path) -> None:
     brief_text = gpt_brief.read_text(encoding="utf-8")
     assert "Quant Project Current Context" in project_text
     assert "Refresh only when the user explicitly requests this ChatGPT reference update." in project_text
+    assert "Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE." in project_text
+    assert ".agents/skills/quant-strategy-adoption-gate/SKILL.md" in project_text
     assert "GPT Context Quant" in brief_text
     assert "Prepare a focused GPT reference for the candidate ML gate." in brief_text
+    assert "Post-MVP v0.3 research-to-strategy adoption is the active route." in brief_text
     assert len(brief_text.splitlines()) <= 80
 
 
@@ -87,6 +90,22 @@ def _write_minimal_project(root: Path) -> None:
         encoding="utf-8",
     )
     (root / "docs/roadmap_status.md").write_text(
+        "# Roadmap Status\n\n"
+        "## Current Route State\n\n"
+        "Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE.\n\n"
+        "- Current active route skill: `.agents/skills/quant-strategy-adoption-gate/SKILL.md`.\n"
+        "- v0.2 `prob_up_1d_candidate` remains archived/supporting compatibility only.\n\n"
+        "## Active v0.3 Work Lanes\n\n"
+        "| Lane | Active purpose | Primary output |\n"
+        "| --- | --- | --- |\n"
+        "| Research intake | collect papers | `ResearchHypothesis` |\n\n"
+        "## Current Authorization\n\n"
+        "Allowed now:\n\n"
+        "- v0.3 route docs, contracts, schemas, validators, fixtures, and review packets\n\n"
+        "Still blocked without later explicit approval:\n\n"
+        "- live trading, brokerage integration, order generation, or real-money execution\n\n"
+        "## Parallel Workspace Policy\n\n"
+        "- separated by role branch/worktree.\n\n"
         "# 로드맵 상태\n\n"
         "## 현재 로드맵 상태\n\n"
         "Post-MVP `v0.2 predictive probability score route` is active.\n\n"

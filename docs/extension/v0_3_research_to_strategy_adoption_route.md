@@ -30,6 +30,21 @@ Entity flow:
 
 `ResearchHypothesis -> StrategyHypothesis -> StrategyCandidate -> EvaluationEvidence -> AdoptionCandidate`
 
+## Architecture Routing
+
+All v0.3 work enters through the active root architecture chain before any
+domain gate, worker, implementation, validation, or completion acceptance:
+
+`agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor -> agent-worker-pool -> agent-reporter`
+
+The selected domain compatibility target for routine v0.3 route work is
+`quant-strategy-adoption-gate` unless a narrower project-local gate is required
+by the task. Completion acceptance still requires `quant-review-gate`.
+
+The supervisor handoff must name the current task, allowed scope, forbidden
+scope, required output, validation commands, and Korean final report format
+before any worker or owner-lane execution begins.
+
 ## Authority Boundary
 
 Root/master owns:

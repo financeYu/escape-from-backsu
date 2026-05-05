@@ -212,6 +212,7 @@ def classify_task(goal: str) -> str:
         "add",
         "modify",
         "update",
+        "갱신",
         "change",
         "configure",
         "resource usage",
@@ -507,7 +508,11 @@ def is_reporter_request(text: str) -> bool:
 
 def is_replacement_request(text: str) -> bool:
     """Return true for active architecture replacement work."""
-    return any(term in text for term in REPLACEMENT_TERMS)
+    if any(term in text for term in REPLACEMENT_TERMS):
+        return True
+    return any(term in text for term in ["아키텍처", "아키텍쳐", "architecture"]) and any(
+        term in text for term in ["산출물", "artifacts", "outputs", "갱신", "update"]
+    )
 
 
 def build_packet(user_goal: str) -> CoordinatorPacket:

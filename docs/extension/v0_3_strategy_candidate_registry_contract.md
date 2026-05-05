@@ -10,6 +10,19 @@ This contract defines how a `StrategyHypothesis` is registered as a
 candidate-only backtest/simulation evaluation. It is not an adoption decision,
 and not a production signal.
 
+## Architecture Routing
+
+StrategyCandidate registry work must pass through the active root architecture
+chain before Quant governance execution or validation begins:
+
+`agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor -> agent-worker-pool -> agent-reporter`
+
+The default domain compatibility target is `quant-strategy-adoption-gate`.
+Completion acceptance requires `quant-review-gate`. The supervisor handoff must
+lock allowed scope, forbidden scope, required output, validation commands, and
+Korean final report format before registry files, fixtures, or schema checks are
+created or updated.
+
 ## Registry Boundary
 
 Allowed:

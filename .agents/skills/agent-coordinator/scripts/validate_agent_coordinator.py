@@ -181,6 +181,13 @@ BEHAVIOR_CASES = [
         "open_questions": ["none"],
     },
     {
+        "name": "Korean architecture artifacts update routes to replacement gate",
+        "goal": "새로운 아키텍처에 맞춰서 산출물들 갱신해",
+        "task_class": "narrow edit",
+        "selected_gate": ".agents/skills/agent-replacement/SKILL.md",
+        "open_questions": ["none"],
+    },
+    {
         "name": "replacement routes to replacement gate",
         "goal": "기존 코덱스 스킬 및 작업 프로세스를 새로운 아키텍쳐로 대체하는 작업 시작",
         "task_class": "narrow edit",

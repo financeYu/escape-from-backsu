@@ -26,6 +26,11 @@ REQUIRED_ARCHITECTURE_PHRASES = {
     "activation state": "## Replacement Activation State",
     "active compatibility": "Status: `active_compatibility_mode`",
     "replacement owner": "`agent-replacement` governs migration",
+    "execution gate invariant": "Execution gate invariant",
+    "supervisor approval before work": (
+        "may not start a worker, selected domain\n"
+        "gate, implementation, validation, or completion acceptance until"
+    ),
     "migration map": "## Migration Map",
     "phase 7 completed": "Phase 7 skill replacement completed",
 }
@@ -46,11 +51,14 @@ REQUIRED_ROADMAP_PHRASES = {
     "root orchestration": "Current active root orchestration",
     "replacement skill": ".agents/skills/agent-replacement/SKILL.md",
     "default process": "default root work process",
+    "execution invariant": "Current execution invariant",
+    "supervisor handoff": "supervisor handoff",
 }
 
 REQUIRED_STATUS_PHRASES = {
     "status title": "# Agent Replacement Migration Status",
     "root task intake complete": "| 1 | Root task intake | `agent-coordinator` | selected domain gate | `COMPLETE` |",
+    "root task intake supervisor approval": "before supervisor approval",
     "manual planning complete": "| 2 | Manual planning | `agent-planner` | selected validation plan | `COMPLETE` |",
     "plan review complete": "| 3 | Plan review | `agent-plan-review` | selected hard-stop/scope checks | `COMPLETE` |",
     "root orchestration complete": "| 4 | Root orchestration | `agent-supervisor` | `quant-work-cycle` for implementation | `COMPLETE` |",

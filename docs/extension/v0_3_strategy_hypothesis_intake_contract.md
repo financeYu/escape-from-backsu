@@ -17,6 +17,18 @@ Fixed disclaimer for every produced hypothesis:
 Machine-checkable fixed disclaimer:
 `This is not a profitability claim, not an adoption decision, and not an evaluation result. It is a pre-evaluation StrategyHypothesis intake artifact.`
 
+## Architecture Routing
+
+StrategyHypothesis intake work must pass through the active root architecture
+chain before research-lane execution or validation begins:
+
+`agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor -> agent-worker-pool -> agent-reporter`
+
+The default domain compatibility target is `quant-strategy-adoption-gate`.
+Completion acceptance requires `quant-review-gate`. The supervisor handoff must
+lock allowed scope, forbidden scope, required output, validation commands, and
+Korean final report format before any intake artifact is created or updated.
+
 ## Intake Boundary
 
 Allowed:

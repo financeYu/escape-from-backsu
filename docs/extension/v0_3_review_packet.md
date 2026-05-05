@@ -55,6 +55,23 @@ Flow meaning:
   limitations, reason codes, confidence, relative review ordering when present,
   and required review; production activation remains blocked.
 
+## Architecture Routing Review
+
+The active root work process for this route is:
+
+`agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor -> agent-worker-pool -> agent-reporter`
+
+Routine v0.3 work reaches `quant-strategy-adoption-gate` only as a selected
+domain compatibility target under that chain. `quant-review-gate` remains the
+completion acceptance gate.
+
+Review finding:
+
+- No v0.3 worker, owner-lane execution, validation, or completion acceptance may
+  begin before the supervisor handoff is approved and names the current task,
+  allowed scope, forbidden scope, required output, validation commands, and
+  Korean final report format.
+
 ## Scope Conflict Check
 
 v0.1 frozen baseline:

@@ -10,6 +10,20 @@ data after a separate approved owner-lane task. Evaluation output is
 evidence-only. It is not an adoption decision, not automatic production
 activation, and not proof of future profitability.
 
+## Architecture Routing
+
+EvaluationEvidence work must pass through the active root architecture chain
+before any backtest/simulation owner-lane execution or validation begins:
+
+`agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor -> agent-worker-pool -> agent-reporter`
+
+The default domain compatibility target is `quant-strategy-adoption-gate`.
+Subproject-wide audit or scope-watchdog work still routes to
+`quant-subproject-audit-gate` when applicable, and completion acceptance
+requires `quant-review-gate`. The supervisor handoff must lock allowed scope,
+forbidden scope, required output, validation commands, and Korean final report
+format before any approved run or evidence artifact update.
+
 ## Evaluation Boundary
 
 Allowed:

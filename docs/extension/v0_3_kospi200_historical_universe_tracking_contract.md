@@ -12,6 +12,20 @@ work. It does not authorize new market-data ingestion, live vendor assumptions,
 production ranking behavior changes, report behavior changes, or automatic
 production activation.
 
+## Architecture Routing
+
+Historical universe tracking work must pass through the active root
+architecture chain before governance, chart handoff, implementation, or
+validation begins:
+
+`agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor -> agent-worker-pool -> agent-reporter`
+
+The default domain compatibility target is `quant-strategy-adoption-gate`.
+Cross-subproject chart runtime work requires explicit root/master approval and
+must remain a separate handoff. Completion acceptance requires
+`quant-review-gate`. The supervisor handoff must lock allowed scope, forbidden
+scope, required output, validation commands, and Korean final report format.
+
 ## Boundary
 
 Allowed:

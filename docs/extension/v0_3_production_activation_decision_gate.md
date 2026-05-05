@@ -8,6 +8,18 @@ strategy adoption. The active v0.3 route may produce adoption evidence and
 historical return/risk/performance summaries, but this document does not
 authorize production activation.
 
+## Architecture Routing
+
+Any future production activation request must pass through the active root
+architecture chain before a domain gate, worker, implementation, validation, or
+completion acceptance can begin:
+
+`agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor -> agent-worker-pool -> agent-reporter`
+
+This document remains a blocked separate approval route. It does not let
+`quant-strategy-adoption-gate`, `quant-review-gate`, or the architecture chain
+activate production behavior without an explicit root-opened activation task.
+
 ## Purpose
 
 Production activation is a future, separate root-approved route. It may be

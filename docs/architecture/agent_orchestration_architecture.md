@@ -32,6 +32,12 @@ domain gates are still used, but only as selected domain gates inside the
 architecture packet. This starts replacement without deleting existing gate
 authority.
 
+Execution gate invariant: routine work may not start a worker, selected domain
+gate, implementation, validation, or completion acceptance until
+`agent-coordinator` -> `agent-planner` -> `agent-plan-review` ->
+`agent-supervisor` has selected and approved the route. Worker-pool and
+reporter activity remains downstream of that approved supervisor handoff.
+
 ## Resource Usage Profile
 
 Architecture packets carry this role-level resource profile. The stored values

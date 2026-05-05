@@ -113,6 +113,22 @@ adoption_candidate_selector_gate = "docs/extension/v0_3_adoption_candidate_selec
 production_activation_decision_gate = "docs/extension/v0_3_production_activation_decision_gate.md"
 review_packet = "docs/extension/v0_3_review_packet.md"
 route_name = "Research-to-Strategy Adoption Pipeline"
+architecture_status = "active_compatibility_mode"
+architecture_chain = [
+  "agent-coordinator",
+  "agent-planner",
+  "agent-plan-review",
+  "agent-supervisor",
+  "agent-worker-pool",
+  "agent-reporter",
+]
+architecture_replacement_gate = ".agents/skills/agent-replacement/SKILL.md"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+architecture_entry_policy = "routine v0.3 work reaches project-local domain gates only after coordinator, planner, plan-review, and supervisor approve the route"
+worker_execution_precondition = "no worker, domain gate, implementation, validation, or completion acceptance begins before an approved supervisor handoff names task, scope, forbidden scope, required output, validation commands, and Korean final report format"
+korean_final_report_required = true
+git_policy = "fetch=false; pull=false; push=false; commit=false; stage=false"
 product_goal = [
   "collect research, papers, and strategy ideas",
   "structure ideas as quant strategy candidates",

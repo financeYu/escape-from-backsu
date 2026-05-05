@@ -45,6 +45,11 @@ belong in docs or project-local skills.
   targets selected and bounded by that chain. Routine work must treat these as
   compatibility targets selected and bounded by the active architecture chain,
   not as direct root entry points.
+- Future root instructions must pass through at least
+  `agent-coordinator` -> `agent-planner` -> `agent-plan-review` ->
+  `agent-supervisor` before any worker, selected domain gate, implementation,
+  validation, or completion acceptance begins. Worker-pool and reporter steps
+  are downstream of the approved supervisor handoff.
 
 ## Archive Separation
 

@@ -1,7 +1,7 @@
 1. Read `docs/root_hard_stops.md` and `docs/roadmap_status.md` before every task; read nothing else by default.
 2. Treat `docs/root_hard_stops.md` as project authority and `docs/roadmap_status.md` as current route state.
 3. Treat the user prompt as this gate's local goal/output only; reusable rules live in docs or skills.
-4. Classify as `planning/read-only`, `narrow edit`, or `Step/gate closure`, then route through the active agent architecture first: coordinator -> planner -> plan-review -> supervisor -> worker pool -> reporter. The coordinator selects the narrowest project/domain Codex skill gate as a compatibility target under that chain; before any sub-agent executes, root must name the matching architecture gate and selected domain gate, and provide current task, allowed scope, forbidden scope, required output, validation commands, and Korean final report format.
+4. Classify as `planning/read-only`, `narrow edit`, or `Step/gate closure`, then route through the active agent architecture first for every current and future instruction: coordinator -> planner -> plan-review -> supervisor -> worker pool -> reporter. At minimum, no worker, domain gate, implementation, validation, or completion acceptance may begin before the coordinator -> planner -> plan-review -> supervisor process has selected and approved the route. The coordinator selects the narrowest project/domain Codex skill gate as a compatibility target under that chain; before any sub-agent executes, root must name the matching architecture gate and selected domain gate, and provide current task, allowed scope, forbidden scope, required output, validation commands, and Korean final report format.
 5. For candidate ML/probability gate work, use `.agents/skills/quant-candidate-ml-gate/SKILL.md` and run its contract validator when applicable.
 6. For Quant subproject-wide audit/scope-watchdog work, use `.agents/skills/quant-subproject-audit-gate/SKILL.md`; keep audit verdict and validation evidence as separate parts.
 For implementation tasks, route the work through `.agents/skills/quant-work-cycle/SKILL.md` before improvising locally: lock scope, implement, run diff review, fix, verify, and report commit-ready status without staging, committing, fetching, pulling, or pushing.
@@ -18,6 +18,16 @@ Cost-aware utility: use `.agents/skills/cost-aware-review-refactor/SKILL.md` onl
 When a cheap check or validator is blocked by missing `pytest`, unavailable `bash`/WSL, Git Bash `Win32 error 5`, denied `rg`, inaccessible temp/cache directories, or Git `safe.directory` ownership errors, route the incident through `.agents/skills/cost-aware-review-refactor/SKILL.md` first. Keep blocked-check findings separate from validation status, record substitute evidence when available, and route remaining required validator requests to the responsible project/root agent. For repeated Git Bash `Win32 error 5` validator runs, use `.agents/skills/quant-validator-approval/SKILL.md` after the cost-aware utility records the blocker; never broaden approval beyond the exact required validator command.
 Validation environment: when `pytest` is required from root or any subproject, prefer the root workspace interpreter `.venv\Scripts\python.exe -m pytest ...`. Do not install pytest separately in subproject-local or user-site paths. The root `.venv` owns the Codex sandbox ACL and routes Python temp files to the workspace-local `.pytest_tmp/` path.
 For project-local bash validators, prefer `powershell -ExecutionPolicy Bypass -File scripts\run_bash_validator.ps1 <root-relative .agents/skills/*/scripts/*.sh> ...` instead of bare `bash ...`. If the wrapper reports `BLOCKED_BASH_VALIDATOR`, record that blocker through cost-aware review first, then use `quant-validator-approval` for the exact required validator command only.
+
+For GitHub CLI use from this workspace or its subprojects, prefer the
+project-local wrapper instead of bare `gh`:
+`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\run_gh.ps1 -- <gh args>`.
+The wrapper normalizes duplicate Windows process environment keys such as
+`PATH`/`Path`, disables interactive prompts/update notices for repeatable local
+runs, and redacts token-like values from wrapper output. If it reports
+`BLOCKED_GH_ENV`, treat that as an environment blocker; do not print token
+values, and set `PROJECT_GH` to the full `gh.exe` path or install GitHub CLI
+before retrying through the wrapper.
 
 7. For subproject work, read only that subproject `AGENTS.md`, one active packet, one needed domain stub, and targeted files.
 8. Obey hard stops: no universe/data-ingestion expansion, active valuation/fundamental activation, live trading/order execution, or production activation unless explicitly authorized.

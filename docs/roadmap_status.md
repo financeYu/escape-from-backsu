@@ -59,6 +59,12 @@ project-local route and review gates remain domain authorities, but routine
 work reaches them as compatibility targets selected and bounded by the
 architecture chain.
 
+Current execution invariant: no worker, selected domain gate, implementation,
+validation, or completion acceptance begins before `agent-coordinator` ->
+`agent-planner` -> `agent-plan-review` -> `agent-supervisor` has selected and
+approved the route. Worker-pool and reporter steps run only after that approved
+supervisor handoff.
+
 Completion review gate:
 
 - `.agents/skills/quant-review-gate/SKILL.md`

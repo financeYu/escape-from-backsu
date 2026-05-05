@@ -12,6 +12,20 @@ ResearchEvidence/EvaluationEvidence are compared to produce an
 identify a review-preferred candidate, but it is not operational strategy
 adoption and not production activation.
 
+## Architecture Routing
+
+Selector/evaluator work must pass through the active root architecture chain
+before ML/evaluator execution, validation, or AdoptionCandidate packet updates:
+
+`agent-coordinator -> agent-planner -> agent-plan-review -> agent-supervisor -> agent-worker-pool -> agent-reporter`
+
+The default domain compatibility target is `quant-strategy-adoption-gate`.
+Archived/supporting probability inputs still require `quant-candidate-ml-gate`
+when explicitly touched, and completion acceptance requires `quant-review-gate`.
+The supervisor handoff must lock allowed scope, forbidden scope, required
+output, validation commands, and Korean final report format before selector
+work begins.
+
 ## Adoption Semantics
 
 `AdoptionCandidate` means:

@@ -17,6 +17,9 @@ import sys
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 LOCAL_TEMP_ROOT = REPO_ROOT / ".pytest_tmp" / "local_validation"
+WORKSPACE_VENV = REPO_ROOT / ".venv"
+WORKSPACE_PYTHON = WORKSPACE_VENV / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+WORKSPACE_RG = REPO_ROOT / "tools" / "rg"
 
 PYTEST_SUITES: dict[str, tuple[str, ...]] = {
     "smoke": (
@@ -53,16 +56,17 @@ UNITTEST_SUITES: dict[str, tuple[str, ...]] = {
 def build_validation_command(
     suite: str,
     *,
-    python_executable: str = sys.executable,
+    python_executable: str | None = None,
     run_id: str = "manual",
 ) -> list[str]:
     """Return the command used for one named validation suite."""
 
+    resolved_python = python_executable or resolve_workspace_python()
     if suite in PYTEST_SUITES:
         basetemp = _suite_temp_root(suite, run_id=run_id) / "basetemp"
         targets = PYTEST_SUITES[suite]
         return [
-            python_executable,
+            resolved_python,
             "-m",
             "pytest",
             "-q",
@@ -75,7 +79,7 @@ def build_validation_command(
     if suite in UNITTEST_SUITES:
         (target,) = UNITTEST_SUITES[suite]
         return [
-            python_executable,
+            resolved_python,
             "-m",
             "unittest",
             "discover",
@@ -96,13 +100,20 @@ def build_validation_env(
 
     env = dict(os.environ if base_env is None else base_env)
     temp_dir = _suite_temp_root(suite, run_id=run_id) / "env"
+    resolved_python = resolve_workspace_python()
+    env["PYTHON"] = resolved_python
+    env["VIRTUAL_ENV"] = str(WORKSPACE_VENV)
+    env["PYTHONUTF8"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
     env["TMP"] = str(temp_dir)
     env["TEMP"] = str(temp_dir)
     env["PYTEST_DEBUG_TEMPROOT"] = str(temp_dir)
+    _normalize_path_env(env)
+    _prepend_pythonpath(env)
     return env
 
 
-def run_suite(suite: str, *, python_executable: str = sys.executable) -> int:
+def run_suite(suite: str, *, python_executable: str | None = None) -> int:
     """Run one validation suite and return its process exit code."""
 
     run_id = str(os.getpid())
@@ -123,6 +134,43 @@ def _suite_temp_root(suite: str, *, run_id: str) -> Path:
     return LOCAL_TEMP_ROOT / f"{safe_suite}-{safe_run_id}"
 
 
+def resolve_workspace_python() -> str:
+    """Return the root venv interpreter, falling back only if it is unavailable."""
+
+    if WORKSPACE_PYTHON.exists():
+        return str(WORKSPACE_PYTHON)
+    return sys.executable
+
+
+def _normalize_path_env(env: dict[str, str]) -> None:
+    path_key = "Path" if "Path" in env else "PATH"
+    existing_path = env.get(path_key) or env.get("PATH") or env.get("Path") or ""
+    for duplicate_key in ("PATH", "Path"):
+        if duplicate_key != path_key:
+            env.pop(duplicate_key, None)
+    preferred_entries = [WORKSPACE_VENV / "Scripts", WORKSPACE_RG]
+    existing_entries = [entry for entry in existing_path.split(os.pathsep) if entry]
+    normalized_entries = [str(entry) for entry in preferred_entries if entry.exists()]
+    normalized_entries.extend(
+        entry for entry in existing_entries if entry.lower() not in {item.lower() for item in normalized_entries}
+    )
+    env[path_key] = os.pathsep.join(normalized_entries)
+
+
+def _prepend_pythonpath(env: dict[str, str]) -> None:
+    preferred_entries = [
+        REPO_ROOT,
+        REPO_ROOT / "chart_mvp" / "src",
+        REPO_ROOT / "Quant_mvp" / "research_mvp" / "src",
+    ]
+    existing_entries = [entry for entry in env.get("PYTHONPATH", "").split(os.pathsep) if entry]
+    normalized_entries = [str(entry) for entry in preferred_entries if entry.exists()]
+    normalized_entries.extend(
+        entry for entry in existing_entries if entry.lower() not in {item.lower() for item in normalized_entries}
+    )
+    env["PYTHONPATH"] = os.pathsep.join(normalized_entries)
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run local validation with repository-local temp paths.")
     parser.add_argument(
@@ -133,8 +181,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "--python",
-        default=sys.executable,
-        help="Python executable to use for subprocess validation.",
+        default=None,
+        help="Python executable to use for subprocess validation. Defaults to the repository root .venv.",
     )
     return parser.parse_args(argv)
 

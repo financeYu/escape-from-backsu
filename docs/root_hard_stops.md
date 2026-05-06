@@ -22,7 +22,12 @@ belong in docs or project-local skills.
 
 ## Current Baseline
 
-- The active route is post-MVP `v0.3 research-to-strategy adoption route`.
+- The active route is post-MVP `v0.3 research-to-strategy adoption route` for
+  evidence preparation and input artifact ownership.
+- The active selector-application route is `v0.4 ML selector application`.
+  v0.4 consumes v0.3 feature matrix and label manifest artifacts as read-only
+  inputs for trainability checks, optional baseline model fitting, optional
+  selector scoring, and `AdoptionCandidate` review prioritization.
 - v0.1 and v0.2 are archived reference states. They are not current progress
   and must not be loaded into active context unless a named
   provenance/regression/compatibility check requires them.
@@ -31,8 +36,9 @@ belong in docs or project-local skills.
 - v0.2 `prob_up_1d_candidate` remains an archived/supporting compatibility
   artifact only. It is not the product goal and is not an active route.
 - Use `.agents/skills/quant-strategy-adoption-gate/SKILL.md` for v0.3
-  strategy-selection/adoption work and `.agents/skills/quant-review-gate/SKILL.md`
-  before accepting completion.
+  strategy-selection/adoption work and v0.4 evidence-only selector
+  application work. Use `.agents/skills/quant-review-gate/SKILL.md` before
+  accepting completion.
 - Use `.agents/skills/quant-candidate-ml-gate/SKILL.md` only when a task
   explicitly requests archived/supporting `prob_up_1d_candidate` compatibility,
   candidate probability sidecars, feature tables, label-separated
@@ -55,7 +61,9 @@ belong in docs or project-local skills.
 
 - v0.1 and v0.2 are separated from active v0.3 progress in
   `docs/roadmap_archive/v0_1_v0_2_archive.md`.
-- Default work must treat v0.3 as the only active route.
+- Default evidence-preparation work must treat v0.3 as the active input route.
+  Default ML/rule selector application work must treat v0.4 as the active
+  evidence-only application route and must not modify v0.3 input artifacts.
 - Archived v0.1/v0.2 files are lookup references only, not active task packets,
   roadmaps, implementation instructions, or current progress status.
 - Do not import archived v0.1/v0.2 context into active GPT/Codex context by
@@ -77,6 +85,12 @@ v0.3 is focused on the end-to-end strategy discovery and evidence loop:
 
 These goals are evidence and review goals. They do not by themselves authorize
 live trading or production activation.
+
+v0.4 starts after v0.3 feature matrix and label manifest preparation. It may
+check trainability, fit a baseline selector only when positive and negative
+classes and candidate-level evidence exist, and emit review-prioritization
+manifests. It is not a future-return prediction claim, trade signal, runtime
+ranking activation, or production activation path.
 
 ## Direction Lock
 
@@ -140,6 +154,9 @@ The active v0.3 route authorizes candidate/evidence work only:
   comparison summaries for candidate review
 - ML or rule-based selector/evaluator work that consumes allowlisted candidate
   evidence summaries and emits `AdoptionCandidate` review packets only
+- v0.4 trainability manifests, model manifests when training succeeds, and
+  selector score manifests framed only as `AdoptionCandidate` review
+  prioritization inputs
 - validation tests, route validators, no-lookahead checks, point-in-time checks,
   no-feedback checks, and review packets
 - work in the approved separate role branch/worktree for the owning lane
@@ -150,16 +167,25 @@ The active v0.3 route authorizes candidate/evidence work only:
 - New market-data ingestion or live vendor assumptions.
 - Live trading, brokerage integration, order generation, or real-money
   execution.
+- Buy/sell recommendation language or trade-signal framing for selector
+  outputs.
 - Valuation/fundamental scoring activation.
 
 ## Route Ownership
 
 - Research lane owns source intake, EvidenceCard linkage, and
-  `ResearchHypothesis` drafting.
+  `ResearchHypothesis` drafting. The active research-ingestion implementation
+  lives under `Quant_mvp/research_mvp` as a Quant_mvp subfunction lane.
 - Quant strategy/governance lane owns `StrategyHypothesis` and
   `StrategyCandidate` contracts, registry fields, and scope boundaries.
 - Backtest/simulation lane owns approved candidate-only historical evaluation
   runs and `EvaluationEvidence` output.
+- Chart/runtime/data-support lane owns KOSPI200 chart runtime, local daily
+  price collection/cache mechanics, chart outputs, and runtime scanners as a
+  Quant_mvp subfunction lane, currently housed at `chart_mvp` for packaging
+  and runtime separation. Quant-approved chart price outputs may be handed to
+  Quant evidence lanes through explicit owner-lane scope locks and validation;
+  this is a Quant-local handoff, not a cross-project handoff.
 - ML/evaluator lane owns selector or evaluation algorithms that compare
   allowlisted evidence summaries and produce `AdoptionCandidate` review output.
 - Root/master owns route state, cross-lane handoff shape, activation boundaries,

@@ -79,6 +79,37 @@ class QuantLocalPriceInputTests(unittest.TestCase):
             self.assertTrue((root / "local_price_input_manifest.json").exists())
             self.assertTrue((root / "README.generated.md").exists())
 
+    def test_syncs_price_files_to_quant_output_and_reuses_existing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            input_dir = root / "chart_prices"
+            output_dir = root / "quant_price_inputs"
+            input_dir.mkdir()
+            output_dir.mkdir()
+            self._write_price_csv(input_dir, "005930")
+            self._write_price_csv(input_dir, "000660")
+            self._write_price_csv(output_dir, "005930")
+
+            manifest = build_quant_local_price_input_tables(
+                config=QuantLocalPriceInputConfig(
+                    input_dir=input_dir,
+                    output_dir=output_dir,
+                    min_history_length=20,
+                    workers=1,
+                    sync_price_files=True,
+                    reuse_existing=True,
+                ),
+                generated_at_utc="2026-05-06T00:00:00+00:00",
+            )
+
+            source = pd.read_csv(output_dir / "quant_local_price_source_rows.csv", dtype={"ticker": str})
+
+            self.assertEqual(int(manifest["price_files_copied"]), 1)
+            self.assertEqual(int(manifest["price_files_reused"]), 1)
+            self.assertTrue((output_dir / "000660_daily_prices.csv").exists())
+            self.assertTrue((output_dir / "005930_daily_prices.csv").exists())
+            self.assertTrue(source["source_file"].str.startswith(str(output_dir)).all())
+
 
 if __name__ == "__main__":
     unittest.main()

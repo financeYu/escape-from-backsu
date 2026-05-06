@@ -36,8 +36,8 @@ must not:
 `python -m app.run_gui` users. New direct entrypoints should use:
 
 ```powershell
-python -m gui_mvp chart
-python -m gui_mvp backtest
+.venv\Scripts\python.exe -m gui_mvp chart
+.venv\Scripts\python.exe -m gui_mvp backtest
 ```
 
 ## Verification
@@ -45,5 +45,5 @@ python -m gui_mvp backtest
 Use focused tests for GUI helper functions and import compatibility:
 
 ```powershell
-python -m pytest -q -p no:cacheprovider tests/gui_mvp chart_mvp/tests/test_gui_financials.py
+.venv\Scripts\python.exe -m pytest -q -p no:cacheprovider tests/gui_mvp chart_mvp/tests/test_gui_financials.py
 ```

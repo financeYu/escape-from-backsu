@@ -80,6 +80,14 @@ null_statuses = [
 ]
 missing_is_null = true
 
+[supervised_label_rules]
+positive_requires_oos_pass = true
+positive_minimum_benchmark_relative_return = 0.0
+negative_on_oos_fail = true
+negative_on_non_positive_benchmark_relative_return = true
+adoption_review_requires_metric_gate = true
+note = "Binary supervised labels may use candidate-specific metric summaries plus recorded OOS/walk-forward stability. Adoption review remains locked behind the stricter metric gate."
+
 [safety_rules]
 blocking_failure_flags = [
   "lookahead_risk_detected",

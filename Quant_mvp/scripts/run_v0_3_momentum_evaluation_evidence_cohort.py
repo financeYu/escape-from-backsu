@@ -25,6 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from Quant_mvp.backtest_mvp.candidate_rank_adapter import CandidateRankingSnapshotConfig
+from Quant_mvp.backtest_mvp.candidate_rank_adapter import SUPPORTED_STRATEGY_TYPES
 from Quant_mvp.backtest_mvp.evaluation_evidence import (
     run_v0_3_evaluation_evidence,
     strategy_candidate_payload,
@@ -36,7 +37,6 @@ from Quant_mvp.scripts.build_v0_3_momentum_evaluation_evidence_packets import (
     DEFAULT_OUTPUT_DIR,
     DEFAULT_REGISTRY,
     load_registry,
-    select_momentum_evaluable_candidates,
 )
 from Quant_mvp.scripts.v0_3_ml_label_policy import (
     GENERIC_PROXY_LABEL_ROLE,
@@ -48,6 +48,7 @@ from Quant_mvp.scripts.v0_3_ml_label_policy import (
 
 DEFAULT_PRICES_DIR = Path("Quant_mvp/data/v0_3/local_price_inputs")
 DEFAULT_PRICE_GLOB = "*_daily_prices.csv"
+DEFAULT_STRATEGY_TYPES = ("momentum",)
 DEFAULT_MOMENTUM_WINDOW = 20
 DEFAULT_REBALANCE_STEP_DAYS = 20
 DEFAULT_ENTRY_PERCENTILE_THRESHOLD = 0.80
@@ -56,6 +57,8 @@ DEFAULT_EXECUTION_LAG_DAYS = 1
 DEFAULT_TRANSACTION_COST_BPS = 10.0
 DEFAULT_SLIPPAGE_BPS = 5.0
 RECORDED_EVIDENCE_STATUS = "evidence_recorded"
+DRY_RUN_ACTUAL_METRIC_SOURCE = "candidate_level_evaluation_evidence_dry_run"
+DRY_RUN_ACTUAL_METRIC_ROLE = "candidate_level_metric_not_label"
 EVALUATION_EVIDENCE_CONTRACT_REF = "docs/extension/v0_3_evaluation_evidence_contract.md"
 STRATEGY_CANDIDATE_REGISTRY_CONTRACT_REF = (
     "docs/extension/v0_3_strategy_candidate_registry_contract.md"
@@ -87,6 +90,21 @@ IDENTICAL_DUPLICATE_EXCEPTION_POLICY = (
     "remain blockers and source CSV files are not modified"
 )
 DUPLICATE_PRICE_COLUMNS = ("open", "high", "low", "close", "volume")
+BENCHMARK_REFERENCE_COMPARISON_STATUS = "available_equal_weight_local_price_input_reference"
+BENCHMARK_REFERENCE_ROLE = "benchmark_reference_feature_not_label"
+BENCHMARK_REFERENCE_METHOD = (
+    "equal_weight_return_over_candidate_evaluation_periods_from_existing_"
+    "Quant_mvp_local_price_inputs"
+)
+WALK_FORWARD_STABILITY_METHOD = (
+    "chronological_fold_stability_over_existing_candidate_evaluation_periods_"
+    "using_no_lookahead_backtest_period_returns"
+)
+WALK_FORWARD_FOLD_COUNT = 3
+WALK_FORWARD_MIN_VALID_PERIODS = 6
+WALK_FORWARD_MIN_PASS_RATIO = 2 / 3
+WALK_FORWARD_PASS_STATUS = "recorded_walk_forward_pass"
+WALK_FORWARD_FAIL_STATUS = "recorded_walk_forward_fail"
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -97,6 +115,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--cohort-id", default=DEFAULT_COHORT_ID)
+    parser.add_argument(
+        "--strategy-types",
+        default=",".join(DEFAULT_STRATEGY_TYPES),
+        help=(
+            "Comma-separated strategy_type filter for evaluable StrategyCandidates. "
+            "Default preserves the historical momentum cohort."
+        ),
+    )
     parser.add_argument("--expected-count", type=int, help="Optional selected-candidate count guard.")
     parser.add_argument("--created-at", default=date.today().isoformat(), help="YYYY-MM-DD evidence date.")
     parser.add_argument("--max-date", help="Optional YYYY-MM-DD upper bound for price rows.")
@@ -106,6 +132,48 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Run candidate evaluations and print a compact status summary without writing evidence files.",
     )
     return parser.parse_args(argv)
+
+
+def parse_strategy_types(value: str | list[str] | tuple[str, ...] | None) -> tuple[str, ...]:
+    if value is None:
+        return DEFAULT_STRATEGY_TYPES
+    if isinstance(value, str):
+        raw_items = value.split(",")
+    else:
+        raw_items = list(value)
+    strategy_types = tuple(
+        dict.fromkeys(item.strip() for item in raw_items if item and item.strip())
+    )
+    if not strategy_types:
+        raise ValueError("at least one strategy type is required")
+    unsupported = sorted(set(strategy_types) - set(SUPPORTED_STRATEGY_TYPES))
+    if unsupported:
+        raise ValueError(f"unsupported v0.3 strategy_types for OHLCV adapter: {unsupported}")
+    return strategy_types
+
+
+def select_evaluable_candidates_by_strategy_type(
+    rows: list[dict[str, Any]],
+    *,
+    strategy_types: tuple[str, ...] = DEFAULT_STRATEGY_TYPES,
+) -> list[dict[str, Any]]:
+    allowed = set(strategy_types)
+    selected: list[dict[str, Any]] = []
+    for row in rows:
+        candidate = strategy_candidate_payload(row)
+        scope = candidate.get("experiment_scope")
+        strategy_type = scope.get("strategy_type") if isinstance(scope, dict) else None
+        if candidate.get("status") == "evaluable" and strategy_type in allowed:
+            selected.append(row)
+    return sorted(
+        selected,
+        key=lambda row: str(strategy_candidate_payload(row).get("candidate_id") or ""),
+    )
+
+
+def strategy_type_from_candidate(candidate: dict[str, Any]) -> str:
+    scope = candidate.get("experiment_scope")
+    return str(scope.get("strategy_type") or "unknown") if isinstance(scope, dict) else "unknown"
 
 
 def load_chart_daily_prices(
@@ -517,6 +585,339 @@ def candidate_rule_fingerprint(candidate: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False, sort_keys=True)
 
 
+def _cumulative_return(values: list[float]) -> float | None:
+    if not values:
+        return None
+    equity = 1.0
+    for value in values:
+        equity *= 1.0 + value
+    return equity - 1.0
+
+
+def _period_reference_window(period_result: Any) -> tuple[str, str] | None:
+    valid = [
+        security
+        for security in getattr(period_result, "security_results", ())
+        if getattr(security, "execution_date", None)
+        and getattr(security, "exit_date", None)
+        and getattr(security, "skipped", True) is False
+    ]
+    if not valid:
+        return None
+    execution_dates = sorted({str(security.execution_date) for security in valid})
+    exit_dates = sorted({str(security.exit_date) for security in valid})
+    if len(execution_dates) != 1 or len(exit_dates) != 1:
+        return None
+    return execution_dates[0], exit_dates[0]
+
+
+def _equal_weight_reference_period_return(
+    price_by_date: dict[str, pd.DataFrame],
+    *,
+    execution_date: str,
+    exit_date: str,
+    execution_price_policy: str,
+    exit_price_policy: str,
+    round_trip_drag: float,
+) -> tuple[float | None, int]:
+    entry = price_by_date.get(execution_date)
+    exit_ = price_by_date.get(exit_date)
+    if entry is None or exit_ is None:
+        return None, 0
+    entry = entry[["ticker", execution_price_policy]].copy()
+    exit_ = exit_[["ticker", exit_price_policy]].copy()
+    if entry.empty or exit_.empty:
+        return None, 0
+    entry[execution_price_policy] = pd.to_numeric(entry[execution_price_policy], errors="coerce")
+    exit_[exit_price_policy] = pd.to_numeric(exit_[exit_price_policy], errors="coerce")
+    merged = entry.merge(exit_, on="ticker", how="inner", suffixes=("_entry", "_exit"))
+    if merged.empty:
+        return None, 0
+    entry_column = f"{execution_price_policy}_entry"
+    exit_column = f"{exit_price_policy}_exit"
+    if entry_column not in merged:
+        entry_column = execution_price_policy
+    if exit_column not in merged:
+        exit_column = exit_price_policy
+    valid = merged.loc[
+        merged[entry_column].notna()
+        & merged[exit_column].notna()
+        & merged[entry_column].gt(0)
+        & merged[exit_column].gt(0)
+    ].copy()
+    if valid.empty:
+        return None, 0
+    returns = (valid[exit_column] / valid[entry_column]) - 1.0 - round_trip_drag
+    return float(returns.mean()), int(len(valid))
+
+
+def equal_weight_reference_summary(price_frame: pd.DataFrame, backtest_result: Any) -> dict[str, Any]:
+    config = backtest_result.config
+    round_trip_drag = 2.0 * (config.transaction_cost_bps + config.slippage_bps) / 10_000.0
+    price_lookup = price_frame.copy()
+    price_lookup["date"] = price_lookup["date"].astype(str)
+    price_by_date = {
+        str(date_value): group
+        for date_value, group in price_lookup.groupby("date", sort=False)
+    }
+    period_returns: list[float] = []
+    period_counts: list[int] = []
+    missing_period_count = 0
+    for period_result in backtest_result.period_results:
+        window = _period_reference_window(period_result)
+        if window is None:
+            missing_period_count += 1
+            continue
+        period_return, security_count = _equal_weight_reference_period_return(
+            price_by_date,
+            execution_date=window[0],
+            exit_date=window[1],
+            execution_price_policy=config.execution_price_policy,
+            exit_price_policy=config.exit_price_policy,
+            round_trip_drag=round_trip_drag,
+        )
+        if period_return is None:
+            missing_period_count += 1
+            continue
+        period_returns.append(period_return)
+        period_counts.append(security_count)
+    benchmark_return = _cumulative_return(period_returns)
+    return {
+        "status": (
+            BENCHMARK_REFERENCE_COMPARISON_STATUS
+            if benchmark_return is not None
+            else "not_available_without_reference_price_overlap"
+        ),
+        "method": BENCHMARK_REFERENCE_METHOD,
+        "benchmark_return": benchmark_return,
+        "proxy_return": benchmark_return,
+        "period_count": len(period_returns),
+        "missing_period_count": missing_period_count,
+        "average_reference_security_count": (
+            sum(period_counts) / len(period_counts) if period_counts else None
+        ),
+        "reference_role": BENCHMARK_REFERENCE_ROLE,
+    }
+
+
+def _period_reference_rows(price_frame: pd.DataFrame, backtest_result: Any) -> list[dict[str, Any]]:
+    config = backtest_result.config
+    round_trip_drag = 2.0 * (config.transaction_cost_bps + config.slippage_bps) / 10_000.0
+    price_lookup = price_frame.copy()
+    price_lookup["date"] = price_lookup["date"].astype(str)
+    price_by_date = {
+        str(date_value): group
+        for date_value, group in price_lookup.groupby("date", sort=False)
+    }
+    rows: list[dict[str, Any]] = []
+    for period_result in sorted(backtest_result.period_results, key=lambda period: str(period.decision_date)):
+        strategy_return = getattr(period_result, "backtest_period_return", None)
+        window = _period_reference_window(period_result)
+        reference_return = None
+        reference_security_count = 0
+        if window is not None:
+            reference_return, reference_security_count = _equal_weight_reference_period_return(
+                price_by_date,
+                execution_date=window[0],
+                exit_date=window[1],
+                execution_price_policy=config.execution_price_policy,
+                exit_price_policy=config.exit_price_policy,
+                round_trip_drag=round_trip_drag,
+            )
+        relative_return = (
+            float(strategy_return) - float(reference_return)
+            if strategy_return is not None and reference_return is not None
+            else None
+        )
+        rows.append(
+            {
+                "decision_date": str(period_result.decision_date),
+                "strategy_return": strategy_return,
+                "reference_return": reference_return,
+                "relative_return": relative_return,
+                "valid_security_count": int(getattr(period_result, "valid_security_count", 0) or 0),
+                "reference_security_count": reference_security_count,
+            }
+        )
+    return rows
+
+
+def _walk_forward_folds(rows: list[dict[str, Any]], *, fold_count: int = WALK_FORWARD_FOLD_COUNT) -> list[list[dict[str, Any]]]:
+    if not rows:
+        return []
+    resolved_fold_count = max(1, min(fold_count, len(rows)))
+    base_size, remainder = divmod(len(rows), resolved_fold_count)
+    folds: list[list[dict[str, Any]]] = []
+    start = 0
+    for index in range(resolved_fold_count):
+        size = base_size + (1 if index < remainder else 0)
+        folds.append(rows[start : start + size])
+        start += size
+    return folds
+
+
+def _fold_summary(index: int, rows: list[dict[str, Any]]) -> dict[str, Any]:
+    strategy_returns = [float(row["strategy_return"]) for row in rows if row.get("strategy_return") is not None]
+    reference_returns = [float(row["reference_return"]) for row in rows if row.get("reference_return") is not None]
+    strategy_return = _cumulative_return(strategy_returns)
+    reference_return = _cumulative_return(reference_returns)
+    relative_return = (
+        strategy_return - reference_return
+        if strategy_return is not None and reference_return is not None
+        else None
+    )
+    dates = [str(row["decision_date"]) for row in rows]
+    return {
+        "fold_index": index,
+        "start": min(dates) if dates else None,
+        "end": max(dates) if dates else None,
+        "period_count": len(rows),
+        "strategy_return": strategy_return,
+        "reference_return": reference_return,
+        "relative_return": relative_return,
+        "relative_return_positive": relative_return is not None and relative_return > 0,
+        "valid_security_count": sum(int(row.get("valid_security_count") or 0) for row in rows),
+        "reference_security_count": sum(int(row.get("reference_security_count") or 0) for row in rows),
+    }
+
+
+def walk_forward_stability_summary(price_frame: pd.DataFrame, backtest_result: Any) -> dict[str, Any]:
+    period_rows = [
+        row
+        for row in _period_reference_rows(price_frame, backtest_result)
+        if row.get("strategy_return") is not None and row.get("reference_return") is not None
+    ]
+    fold_summaries = [
+        _fold_summary(index, rows)
+        for index, rows in enumerate(_walk_forward_folds(period_rows), start=1)
+        if rows
+    ]
+    passing_fold_count = sum(1 for fold in fold_summaries if fold["relative_return_positive"] is True)
+    valid_fold_count = len(fold_summaries)
+    pass_ratio = passing_fold_count / valid_fold_count if valid_fold_count else 0.0
+    aggregate_strategy_return = _cumulative_return(
+        [float(row["strategy_return"]) for row in period_rows if row.get("strategy_return") is not None]
+    )
+    aggregate_reference_return = _cumulative_return(
+        [float(row["reference_return"]) for row in period_rows if row.get("reference_return") is not None]
+    )
+    aggregate_relative_return = (
+        aggregate_strategy_return - aggregate_reference_return
+        if aggregate_strategy_return is not None and aggregate_reference_return is not None
+        else None
+    )
+    passed = (
+        len(period_rows) >= WALK_FORWARD_MIN_VALID_PERIODS
+        and valid_fold_count >= 2
+        and pass_ratio >= WALK_FORWARD_MIN_PASS_RATIO
+        and aggregate_relative_return is not None
+        and aggregate_relative_return > 0
+    )
+    status = WALK_FORWARD_PASS_STATUS if passed else WALK_FORWARD_FAIL_STATUS
+    return {
+        "status": status,
+        "method": WALK_FORWARD_STABILITY_METHOD,
+        "period_count": len(period_rows),
+        "fold_count": valid_fold_count,
+        "passing_fold_count": passing_fold_count,
+        "passing_fold_ratio": pass_ratio,
+        "minimum_valid_periods": WALK_FORWARD_MIN_VALID_PERIODS,
+        "minimum_pass_ratio": WALK_FORWARD_MIN_PASS_RATIO,
+        "aggregate_strategy_return": aggregate_strategy_return,
+        "aggregate_reference_return": aggregate_reference_return,
+        "aggregate_relative_return": aggregate_relative_return,
+        "folds": fold_summaries,
+        "label_role": "candidate_level_oos_walk_forward_stability_check",
+    }
+
+
+def attach_walk_forward_stability_check(
+    evidence: dict[str, Any],
+    *,
+    price_frame: pd.DataFrame,
+    backtest_result: Any,
+) -> None:
+    summary = walk_forward_stability_summary(price_frame, backtest_result)
+    status = str(summary["status"])
+    evidence["walk_forward_stability_summary"] = summary
+    for payload_name in ("metric_summary", "performance_metric_summary"):
+        payload = evidence.setdefault(payload_name, {})
+        payload["oos_stability_status"] = status
+        payload["walk_forward_passing_fold_ratio"] = summary["passing_fold_ratio"]
+        payload["walk_forward_passing_fold_count"] = summary["passing_fold_count"]
+        payload["walk_forward_fold_count"] = summary["fold_count"]
+        payload["walk_forward_aggregate_relative_return"] = summary["aggregate_relative_return"]
+    evidence.setdefault("required_evaluation_checks", {})["oos_walk_forward_stability"] = {
+        "status": status,
+        "check": "walk_forward_or_out_of_sample_stability_recorded_for_candidate_level_labeling",
+        "method": WALK_FORWARD_STABILITY_METHOD,
+        "metric_refs": [
+            "metric_summary.oos_stability_status",
+            "walk_forward_stability_summary",
+        ],
+    }
+    notes = [
+        note
+        for note in evidence.get("review_notes", [])
+        if note != "walk_forward_or_out_of_sample_stability remains a downstream evidence requirement"
+    ]
+    notes.append(
+        "walk-forward stability is recorded from existing candidate-only evaluation periods; "
+        "it is label evidence only and not production activation"
+    )
+    evidence["review_notes"] = notes
+
+
+def attach_benchmark_reference_comparison(
+    evidence: dict[str, Any],
+    *,
+    price_frame: pd.DataFrame,
+    backtest_result: Any,
+) -> None:
+    reference = equal_weight_reference_summary(price_frame, backtest_result)
+    if reference["benchmark_return"] is None:
+        evidence.setdefault("known_limitations", []).append("benchmark_reference_comparison_missing")
+        evidence.setdefault("review_notes", []).append(
+            "benchmark/reference comparison could not be computed from existing local price inputs"
+        )
+        return
+
+    metric_summary = evidence.setdefault("metric_summary", {})
+    performance_summary = evidence.setdefault("performance_metric_summary", {})
+    total_return = _metric_value(evidence, "performance_metric_summary.total_return", "metric_summary.total_return")
+    benchmark_return = float(reference["benchmark_return"])
+    benchmark_relative_return = (
+        float(total_return) - benchmark_return
+        if total_return is not None
+        else None
+    )
+    for payload in (metric_summary, performance_summary):
+        payload["benchmark_return"] = benchmark_return
+        payload["proxy_return"] = benchmark_return
+        payload["benchmark_relative_return"] = benchmark_relative_return
+        payload["excess_return_vs_proxy"] = benchmark_relative_return
+        payload["benchmark_comparison"] = BENCHMARK_REFERENCE_COMPARISON_STATUS
+        payload["benchmark_reference_role"] = BENCHMARK_REFERENCE_ROLE
+    evidence["benchmark_reference_summary"] = reference | {
+        "benchmark_relative_return": benchmark_relative_return,
+        "generic_momentum_proxy_role": "benchmark_reference_context_only_not_label",
+    }
+    evidence.setdefault("required_evaluation_checks", {})["benchmark_reference_comparison"] = {
+        "status": "recorded",
+        "method": BENCHMARK_REFERENCE_METHOD,
+        "metric_role": BENCHMARK_REFERENCE_ROLE,
+    }
+    notes = [
+        note
+        for note in evidence.get("review_notes", [])
+        if note != "benchmark series comparison is not computed unless an approved benchmark input is supplied later"
+    ]
+    notes.append(
+        "benchmark/reference comparison uses existing Quant_mvp local price inputs only and remains a reference feature"
+    )
+    evidence["review_notes"] = notes
+
+
 def mark_generic_proxy_label(evidence: dict[str, Any]) -> None:
     evidence["label_use_status"] = GENERIC_PROXY_LABEL_STATUS
     evidence["supervised_label_eligible"] = False
@@ -560,6 +961,7 @@ def write_manifest(
     cohort_id: str,
     prices_dir: Path,
     price_row_count: int,
+    strategy_types: tuple[str, ...] = DEFAULT_STRATEGY_TYPES,
     zero_ohlcv_exception: dict[str, Any] | None = None,
     duplicate_ticker_date_exception: dict[str, Any] | None = None,
 ) -> Path:
@@ -574,10 +976,13 @@ def write_manifest(
     )
     label_use_status_counts = Counter(str(record.get("label_use_status") or "candidate_specific") for record in evidence_records)
     status_counts = Counter(str(record["status"]) for record in evidence_records)
+    strategy_type_counts = Counter(str(record.get("strategy_type") or "unknown") for record in evidence_records)
     manifest_status = next(iter(status_counts)) if len(status_counts) == 1 else "mixed"
     manifest = {
         "schema_version": "v0_3_evaluation_evidence_cohort_manifest_0_2",
         "cohort_id": cohort_id,
+        "strategy_types": list(strategy_types),
+        "strategy_type_counts": dict(sorted(strategy_type_counts.items())),
         "status": manifest_status,
         "candidate_count": len(evidence_records),
         "evaluation_ids": [str(record["evaluation_id"]) for record in evidence_records],
@@ -630,11 +1035,15 @@ def run_momentum_evaluation_evidence_cohort(
     price_glob: str = DEFAULT_PRICE_GLOB,
     max_date: str | None = None,
     expected_count: int | None = None,
+    strategy_types: tuple[str, ...] = DEFAULT_STRATEGY_TYPES,
 ) -> dict[str, Any]:
     registry_rows = load_registry(registry)
-    selected = select_momentum_evaluable_candidates(registry_rows)
+    selected = select_evaluable_candidates_by_strategy_type(registry_rows, strategy_types=strategy_types)
     if expected_count is not None and len(selected) != expected_count:
-        raise ValueError(f"expected {expected_count} momentum evaluable candidates, found {len(selected)}")
+        raise ValueError(
+            f"expected {expected_count} evaluable candidates for strategy_types={list(strategy_types)}, "
+            f"found {len(selected)}"
+        )
 
     prices_dir = validate_quant_local_prices_dir(prices_dir, project_root=project_root)
     raw_price_frame = load_chart_daily_prices(prices_dir, price_glob=price_glob, max_date=max_date or created_at)
@@ -669,6 +1078,17 @@ def run_momentum_evaluation_evidence_cohort(
             source_refs=source_refs_for_run(registry, prices_dir),
         )
         evidence = evidence_result.to_dict()
+        evidence["strategy_type"] = strategy_type_from_candidate(candidate)
+        attach_benchmark_reference_comparison(
+            evidence,
+            price_frame=candidate_price_frame,
+            backtest_result=evidence_result.backtest_result,
+        )
+        attach_walk_forward_stability_check(
+            evidence,
+            price_frame=candidate_price_frame,
+            backtest_result=evidence_result.backtest_result,
+        )
         evidence["zero_ohlcv_exception_summary"] = zero_ohlcv_exception
         evidence["duplicate_ticker_date_exception_summary"] = duplicate_ticker_date_exception
         if zero_ohlcv_exception["excluded_row_count"]:
@@ -683,7 +1103,10 @@ def run_momentum_evaluation_evidence_cohort(
             )
         require_recorded_candidate_evidence(evidence)
         if candidate_rule_counts[candidate_rule_fingerprint(candidate)] > 1:
-            mark_generic_proxy_label(evidence)
+            evidence.setdefault("review_notes", []).append(
+                "shared generic momentum proxy is retained only as a benchmark/reference feature; "
+                "this recorded row remains candidate-level EvaluationEvidence"
+            )
         packet_path = resolved_output_dir / f"{evidence['evaluation_id']}.md"
         paths.append(
             write_evaluation_evidence_markdown(
@@ -700,6 +1123,7 @@ def run_momentum_evaluation_evidence_cohort(
         output_dir=output_dir,
         project_root=project_root,
         cohort_id=cohort_id,
+        strategy_types=strategy_types,
         prices_dir=prices_dir,
         price_row_count=len(price_frame),
         zero_ohlcv_exception=zero_ohlcv_exception,
@@ -707,7 +1131,16 @@ def run_momentum_evaluation_evidence_cohort(
     )
     return {
         "cohort_id": cohort_id,
+        "strategy_types": list(strategy_types),
         "candidate_count": len(evidence_records),
+        "strategy_type_counts": dict(
+            sorted(
+                Counter(
+                    str(record.get("strategy_type") or "unknown")
+                    for record in evidence_records
+                ).items()
+            )
+        ),
         "status_counts": dict(sorted(Counter(str(record["status"]) for record in evidence_records).items())),
         "manifest": str(manifest_path),
         "packet_paths": [str(path) for path in paths],
@@ -729,6 +1162,102 @@ def _candidate_dry_run_summary(evidence: dict[str, Any]) -> dict[str, Any]:
         "valid_security_count": metric_summary.get("valid_security_count"),
         "label_use_status": evidence.get("label_use_status") or "candidate_specific",
         "failure_flags": list(evidence.get("failure_flags", [])),
+    }
+
+
+def _metric_value(evidence: dict[str, Any], *paths: str) -> Any:
+    for path in paths:
+        current: Any = evidence
+        for part in path.split("."):
+            if not isinstance(current, dict) or part not in current:
+                current = None
+                break
+            current = current[part]
+        if current is not None:
+            return current
+    return None
+
+
+def _candidate_level_evidence_row(evidence: dict[str, Any]) -> dict[str, Any]:
+    candidate_id = str(evidence.get("candidate_id") or "")
+    metric_subject_id = candidate_id
+    total_return = _metric_value(
+        evidence,
+        "performance_metric_summary.total_return",
+        "metric_summary.total_return",
+    )
+    proxy_return = _metric_value(
+        evidence,
+        "performance_metric_summary.proxy_return",
+        "metric_summary.proxy_return",
+        "performance_metric_summary.benchmark_return",
+        "metric_summary.benchmark_return",
+    )
+    excess_return_vs_proxy = _metric_value(
+        evidence,
+        "performance_metric_summary.excess_return_vs_proxy",
+        "metric_summary.excess_return_vs_proxy",
+        "performance_metric_summary.benchmark_relative_return",
+        "metric_summary.benchmark_relative_return",
+    )
+    if excess_return_vs_proxy is None and total_return is not None and proxy_return is not None:
+        excess_return_vs_proxy = float(total_return) - float(proxy_return)
+    return {
+        "candidate_id": candidate_id,
+        "evidence_id": evidence.get("evaluation_id"),
+        "evidence_status": evidence.get("status"),
+        "metric_subject_type": "strategy_candidate",
+        "metric_subject_id": metric_subject_id,
+        "candidate_metric_match": metric_subject_id == candidate_id,
+        "candidate_metric_match_reason": (
+            "candidate_id_matches_candidate_level_evaluation_evidence"
+            if metric_subject_id == candidate_id
+            else "evidence_candidate_id_mismatch"
+        ),
+        "total_return": total_return,
+        "benchmark_return": _metric_value(
+            evidence,
+            "performance_metric_summary.benchmark_return",
+            "metric_summary.benchmark_return",
+        ),
+        "proxy_return": proxy_return,
+        "excess_return_vs_proxy": excess_return_vs_proxy,
+        "max_drawdown": _metric_value(
+            evidence,
+            "risk_metric_summary.max_drawdown",
+            "metric_summary.max_drawdown",
+        ),
+        "sharpe": _metric_value(
+            evidence,
+            "risk_metric_summary.sharpe_ratio",
+            "metric_summary.sharpe_ratio",
+        ),
+        "turnover": _metric_value(
+            evidence,
+            "risk_metric_summary.turnover_proxy",
+            "metric_summary.turnover_proxy",
+        ),
+        "failure_flags": list(evidence.get("failure_flags", [])),
+        "actual_metric_source": DRY_RUN_ACTUAL_METRIC_SOURCE,
+        "actual_metric_role": DRY_RUN_ACTUAL_METRIC_ROLE,
+        "excluded_untradable": False,
+        "excluded_untradable_row_count": int(
+            _metric_value(evidence, "zero_ohlcv_exception_summary.excluded_row_count") or 0
+        ),
+        "label_source": "not_generated_dry_run_metric_only",
+        "supervised_label_eligible": False,
+    }
+
+
+def generic_proxy_reference_feature() -> dict[str, Any]:
+    return {
+        "metric_subject_type": "generic_proxy",
+        "metric_subject_id": GENERIC_PROXY_LABEL_ROLE,
+        "metric_use_status": "benchmark_reference_feature_candidate",
+        "candidate_metric_match": False,
+        "candidate_metric_match_reason": GENERIC_PROXY_LIMITATION,
+        "label_source": "unlabeled",
+        "supervised_label_eligible": False,
     }
 
 
@@ -756,11 +1285,15 @@ def dry_run_momentum_evaluation_evidence_cohort(
     max_date: str | None = None,
     expected_count: int | None = None,
     project_root: Path = PROJECT_ROOT,
+    strategy_types: tuple[str, ...] = DEFAULT_STRATEGY_TYPES,
 ) -> dict[str, Any]:
     registry_rows = load_registry(registry)
-    selected = select_momentum_evaluable_candidates(registry_rows)
+    selected = select_evaluable_candidates_by_strategy_type(registry_rows, strategy_types=strategy_types)
     if expected_count is not None and len(selected) != expected_count:
-        raise ValueError(f"expected {expected_count} momentum evaluable candidates, found {len(selected)}")
+        raise ValueError(
+            f"expected {expected_count} evaluable candidates for strategy_types={list(strategy_types)}, "
+            f"found {len(selected)}"
+        )
 
     prices_dir = validate_quant_local_prices_dir(prices_dir, project_root=project_root)
     price_load_error: str | None = None
@@ -776,6 +1309,7 @@ def dry_run_momentum_evaluation_evidence_cohort(
         for registry_record in selected
     )
     summaries: list[dict[str, Any]] = []
+    candidate_level_evidence_rows: list[dict[str, Any]] = []
     blocked: list[dict[str, Any]] = []
     for registry_record in selected:
         candidate = dict(strategy_candidate_payload(registry_record))
@@ -819,6 +1353,17 @@ def dry_run_momentum_evaluation_evidence_cohort(
                 source_refs=source_refs_for_run(registry, prices_dir),
             )
             evidence = evidence_result.to_dict()
+            evidence["strategy_type"] = strategy_type_from_candidate(candidate)
+            attach_benchmark_reference_comparison(
+                evidence,
+                price_frame=candidate_price_frame,
+                backtest_result=evidence_result.backtest_result,
+            )
+            attach_walk_forward_stability_check(
+                evidence,
+                price_frame=candidate_price_frame,
+                backtest_result=evidence_result.backtest_result,
+            )
             evidence["zero_ohlcv_exception_summary"] = zero_ohlcv_exception
             evidence["duplicate_ticker_date_exception_summary"] = duplicate_ticker_date_exception
             if zero_ohlcv_exception["excluded_row_count"]:
@@ -833,15 +1378,28 @@ def dry_run_momentum_evaluation_evidence_cohort(
                 )
             require_recorded_candidate_evidence(evidence)
             if candidate_rule_counts[candidate_rule_fingerprint(candidate)] > 1:
-                mark_generic_proxy_label(evidence)
+                evidence.setdefault("review_notes", []).append(
+                    "shared generic momentum proxy is retained only as a benchmark/reference feature; "
+                    "this dry-run row remains candidate-level and is not a supervised label"
+                )
             summary = _candidate_dry_run_summary(evidence)
             summary["preflight"] = preflight
             summaries.append(summary)
+            candidate_level_evidence_rows.append(_candidate_level_evidence_row(evidence))
         except ValueError as exc:
             blocked.append(_blocked_candidate_summary(candidate_id=candidate_id, error=exc, preflight=preflight))
 
     status_counts = Counter(str(summary["status"]) for summary in summaries)
     label_use_status_counts = Counter(str(summary["label_use_status"]) for summary in summaries)
+    candidate_metric_match_true_count = sum(
+        row.get("candidate_metric_match") is True
+        for row in candidate_level_evidence_rows
+    )
+    candidate_level_excluded_untradable_row_count = sum(
+        int(row.get("excluded_untradable_row_count") or 0)
+        for row in candidate_level_evidence_rows
+    )
+    excluded_untradable_count = int(zero_ohlcv_exception.get("excluded_row_count") or 0)
     next_condition = (
         "all candidates passed dry-run coverage; actual EvaluationEvidence run still requires approved owner-lane execution"
         if not blocked
@@ -854,9 +1412,22 @@ def dry_run_momentum_evaluation_evidence_cohort(
         "next_evaluation_condition": next_condition,
         "advisory": DRY_RUN_ADVISORY if blocked else "dry_run_only_no_evidence_file_written",
         "cohort_id": cohort_id,
+        "strategy_types": list(strategy_types),
         "candidate_count": len(selected),
+        "strategy_type_counts": dict(
+            sorted(
+                Counter(
+                    strategy_type_from_candidate(dict(strategy_candidate_payload(registry_record)))
+                    for registry_record in selected
+                ).items()
+            )
+        ),
         "recorded_count": len(summaries),
         "blocked_count": len(blocked),
+        "candidate_level_evidence_count": len(candidate_level_evidence_rows),
+        "candidate_metric_match_true_count": candidate_metric_match_true_count,
+        "excluded_untradable_count": excluded_untradable_count,
+        "candidate_level_excluded_untradable_row_count": candidate_level_excluded_untradable_row_count,
         "evidence_status_counts": dict(sorted(status_counts.items())),
         "label_use_status_counts": dict(sorted(label_use_status_counts.items())),
         "price_input_ref": str(prices_dir),
@@ -869,8 +1440,11 @@ def dry_run_momentum_evaluation_evidence_cohort(
         "zero_ohlcv_exception_summary": zero_ohlcv_exception,
         "duplicate_ticker_date_exception_summary": duplicate_ticker_date_exception,
         "candidate_summaries": summaries,
+        "candidate_level_evidence_rows": candidate_level_evidence_rows,
+        "benchmark_reference_features": [generic_proxy_reference_feature()],
         "blocked_candidates": blocked,
         "model_training_status": "not_run_metric_summary_generation_only",
+        "label_generation_status": "not_run_candidate_level_metric_dry_run_only",
         "no_feedback_check": "evaluation_metrics_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
         "production_boundary_check": "no_automatic_production_activation_claim",
     }
@@ -878,6 +1452,7 @@ def dry_run_momentum_evaluation_evidence_cohort(
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
+    strategy_types = parse_strategy_types(args.strategy_types)
     if args.dry_run:
         result = dry_run_momentum_evaluation_evidence_cohort(
             registry=args.registry,
@@ -888,6 +1463,7 @@ def main(argv: list[str] | None = None) -> int:
             max_date=args.max_date,
             expected_count=args.expected_count,
             project_root=args.project_root,
+            strategy_types=strategy_types,
         )
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
@@ -901,6 +1477,7 @@ def main(argv: list[str] | None = None) -> int:
         price_glob=args.price_glob,
         max_date=args.max_date,
         expected_count=args.expected_count,
+        strategy_types=strategy_types,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
     return 0

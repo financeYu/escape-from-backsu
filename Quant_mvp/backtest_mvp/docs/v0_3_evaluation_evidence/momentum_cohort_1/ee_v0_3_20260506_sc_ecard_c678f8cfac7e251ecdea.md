@@ -15,7 +15,21 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
     "evaluation_evidence_required_before_adoption_review",
     "no_universe_expansion_without_later_approval"
   ],
+  "benchmark_reference_summary": {
+    "average_reference_security_count": 270.03636363636366,
+    "benchmark_relative_return": 1.218551215836248,
+    "benchmark_return": -0.270661347208625,
+    "generic_momentum_proxy_role": "benchmark_reference_context_only_not_label",
+    "method": "equal_weight_return_over_candidate_evaluation_periods_from_existing_Quant_mvp_local_price_inputs",
+    "missing_period_count": 25,
+    "period_count": 110,
+    "proxy_return": -0.270661347208625,
+    "reference_role": "benchmark_reference_feature_not_label",
+    "status": "available_equal_weight_local_price_input_reference"
+  },
   "candidate_id": "sc:ecard:c678f8cfac7e251ecdea",
+  "candidate_metric_match": true,
+  "candidate_metric_match_reason": "candidate_id_matches_candidate_level_evaluation_evidence",
   "candidate_version": "v0.3.0",
   "comparison_group": [
     "v0_3_candidate_review_cohort",
@@ -144,25 +158,30 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
     "insufficient_price_history",
     "missing_exit_price",
     "suspended_or_delisted_like_price_rows_excluded",
-    "identical_duplicate_ticker_date_rows_collapsed",
-    "shared_strategy_rule_fingerprint_not_candidate_specific_label"
+    "identical_duplicate_ticker_date_rows_collapsed"
   ],
-  "label_use_status": "generic_momentum_proxy_not_supervised",
+  "label_use_status": "candidate_level_supervised_label_candidate",
+  "metric_subject_id": "sc:ecard:c678f8cfac7e251ecdea",
+  "metric_subject_type": "strategy_candidate",
   "metric_summary": {
     "annualized_return": 0.0647010863566937,
     "annualized_volatility": 0.2968075686560764,
-    "benchmark_comparison": "not_available_without_approved_benchmark_series",
-    "benchmark_relative_return": null,
+    "benchmark_comparison": "available_equal_weight_local_price_input_reference",
+    "benchmark_reference_role": "benchmark_reference_feature_not_label",
+    "benchmark_relative_return": 1.218551215836248,
+    "benchmark_return": -0.270661347208625,
     "cost_slippage_bps_round_trip": 30.0,
     "coverage_ratio": 0.9916334661354582,
+    "excess_return_vs_proxy": 1.218551215836248,
     "exposure_stability": 0.728353191352448,
     "hit_rate": 0.5223880597014925,
-    "label_role": "generic_momentum_proxy",
+    "label_role": "candidate_specific",
     "max_drawdown": -0.6092164024086726,
     "mean_period_return": 0.008437385306810749,
-    "oos_stability_status": "not_available_single_pass_snapshot",
+    "oos_stability_status": "recorded_walk_forward_fail",
     "period_count": 135,
     "period_volatility": 0.08361605982843641,
+    "proxy_return": -0.270661347208625,
     "selected_security_count": 2510,
     "sharpe_ratio": 0.35818175172278915,
     "skipped_security_count": 29079,
@@ -170,6 +189,10 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
     "total_return": 0.9478898686276229,
     "turnover_proxy": 0.8618159203980099,
     "valid_security_count": 2489,
+    "walk_forward_aggregate_relative_return": -0.06091757266211684,
+    "walk_forward_fold_count": 3,
+    "walk_forward_passing_fold_count": 1,
+    "walk_forward_passing_fold_ratio": 0.3333333333333333,
     "warmup_period_count": 1
   },
   "no_feedback_check": "evaluation_metrics_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
@@ -177,10 +200,20 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
   "owner": "backtest_evaluation",
   "performance_metric_summary": {
     "annualized_return": 0.0647010863566937,
-    "benchmark_relative_return": null,
+    "benchmark_comparison": "available_equal_weight_local_price_input_reference",
+    "benchmark_reference_role": "benchmark_reference_feature_not_label",
+    "benchmark_relative_return": 1.218551215836248,
+    "benchmark_return": -0.270661347208625,
+    "excess_return_vs_proxy": 1.218551215836248,
     "hit_rate": 0.5223880597014925,
     "mean_period_return": 0.008437385306810749,
-    "total_return": 0.9478898686276229
+    "oos_stability_status": "recorded_walk_forward_fail",
+    "proxy_return": -0.270661347208625,
+    "total_return": 0.9478898686276229,
+    "walk_forward_aggregate_relative_return": -0.06091757266211684,
+    "walk_forward_fold_count": 3,
+    "walk_forward_passing_fold_count": 1,
+    "walk_forward_passing_fold_ratio": 0.3333333333333333
   },
   "performance_metrics": [
     "total_return",
@@ -192,6 +225,11 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
   "point_in_time_check": "point_in_time_constituent_membership_unverified_limitation_recorded",
   "production_boundary_check": "no_automatic_production_activation_claim",
   "required_evaluation_checks": {
+    "benchmark_reference_comparison": {
+      "method": "equal_weight_return_over_candidate_evaluation_periods_from_existing_Quant_mvp_local_price_inputs",
+      "metric_role": "benchmark_reference_feature_not_label",
+      "status": "recorded"
+    },
     "cost": {
       "check": "transaction_cost_and_slippage_sensitivity",
       "metric_refs": [
@@ -223,9 +261,13 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
       "status": "recorded_boundary_check"
     },
     "oos_walk_forward_stability": {
-      "check": "walk_forward_or_out_of_sample_stability_must_be_recorded_or_explicitly_limited",
-      "required_next_action": "run_walk_forward_or_oos_stability_check_before_adoption_review",
-      "status": "not_available_single_pass_snapshot"
+      "check": "walk_forward_or_out_of_sample_stability_recorded_for_candidate_level_labeling",
+      "method": "chronological_fold_stability_over_existing_candidate_evaluation_periods_using_no_lookahead_backtest_period_returns",
+      "metric_refs": [
+        "metric_summary.oos_stability_status",
+        "walk_forward_stability_summary"
+      ],
+      "status": "recorded_walk_forward_fail"
     },
     "turnover": {
       "check": "turnover_proxy_reported_with_cost_context",
@@ -243,11 +285,11 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
     }
   },
   "review_notes": [
-    "benchmark series comparison is not computed unless an approved benchmark input is supplied later",
-    "walk_forward_or_out_of_sample_stability remains a downstream evidence requirement",
+    "benchmark/reference comparison uses existing Quant_mvp local price inputs only and remains a reference feature",
+    "walk-forward stability is recorded from existing candidate-only evaluation periods; it is label evidence only and not production activation",
     "non-positive open/high/low/volume rows were excluded from EvaluationEvidence inputs and summarized",
     "identical duplicate ticker/date price rows were collapsed before EvaluationEvidence inputs",
-    "metric_summary is a shared generic momentum proxy and must not be used as a candidate-level supervised label"
+    "shared generic momentum proxy is retained only as a benchmark/reference feature; this recorded row remains candidate-level EvaluationEvidence"
   ],
   "risk_metric_summary": {
     "annualized_volatility": 0.2968075686560764,
@@ -278,7 +320,7 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
     "Quant_mvp/backtest_mvp/evaluation_evidence.py"
   ],
   "status": "evidence_recorded",
-  "supervised_label_eligible": false,
+  "strategy_type": "momentum",
   "transaction_cost_assumption": {
     "model": "round_trip_cost_and_slippage_subtracted_from_holding_return",
     "slippage_bps": 5.0,
@@ -287,6 +329,58 @@ This EvaluationEvidence record is evidence-only. It is not an adoption decision 
   "universe": "Candidate-only test universe: approved KOSPI200 daily OHLCV universe by default; source target noted as equity; daily_or_unspecified. Any wider universe requires explicit later approval.",
   "updated_at": "2026-05-06",
   "v0_2_boundary_check": "no_prob_up_1d_training_or_reinterpretation_from_evaluation_metrics",
+  "walk_forward_stability_summary": {
+    "aggregate_reference_return": -0.270661347208625,
+    "aggregate_relative_return": -0.06091757266211684,
+    "aggregate_strategy_return": -0.33157891987074184,
+    "fold_count": 3,
+    "folds": [
+      {
+        "end": "2018-11-29",
+        "fold_index": 1,
+        "period_count": 37,
+        "reference_return": -0.15397767517928884,
+        "reference_security_count": 7960,
+        "relative_return": -0.07150108532408406,
+        "relative_return_positive": false,
+        "start": "2015-01-30",
+        "strategy_return": -0.2254787605033729,
+        "valid_security_count": 587
+      },
+      {
+        "end": "2022-07-25",
+        "fold_index": 2,
+        "period_count": 37,
+        "reference_return": -0.2250374320330718,
+        "reference_security_count": 10772,
+        "relative_return": -0.12734959993821326,
+        "relative_return_positive": false,
+        "start": "2018-12-28",
+        "strategy_return": -0.35238703197128507,
+        "valid_security_count": 740
+      },
+      {
+        "end": "2025-11-04",
+        "fold_index": 3,
+        "period_count": 36,
+        "reference_return": 0.11241460292313632,
+        "reference_security_count": 10972,
+        "relative_return": 0.2201898785180132,
+        "relative_return_positive": true,
+        "start": "2022-08-23",
+        "strategy_return": 0.3326044814411495,
+        "valid_security_count": 719
+      }
+    ],
+    "label_role": "candidate_level_oos_walk_forward_stability_check",
+    "method": "chronological_fold_stability_over_existing_candidate_evaluation_periods_using_no_lookahead_backtest_period_returns",
+    "minimum_pass_ratio": 0.6666666666666666,
+    "minimum_valid_periods": 6,
+    "passing_fold_count": 1,
+    "passing_fold_ratio": 0.3333333333333333,
+    "period_count": 110,
+    "status": "recorded_walk_forward_fail"
+  },
   "zero_ohlcv_exception_summary": {
     "affected_ticker_count": 120,
     "excluded_row_count": 3745,

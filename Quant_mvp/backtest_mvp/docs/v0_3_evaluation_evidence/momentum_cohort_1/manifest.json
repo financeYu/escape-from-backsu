@@ -172,13 +172,12 @@
     "insufficient_price_history": 27,
     "missing_exit_price": 27,
     "non_point_in_time_constituent_warning": 27,
-    "shared_strategy_rule_fingerprint_not_candidate_specific_label": 27,
     "suspended_or_delisted_like_price_rows_excluded": 27,
     "universe_survivorship_bias_warning": 27,
     "upstream_row_blocked": 27
   },
   "label_use_status_counts": {
-    "generic_momentum_proxy_not_supervised": 27
+    "candidate_level_supervised_label_candidate": 27
   },
   "model_training_status": "not_run_metric_summary_generation_only",
   "no_feedback_check": "evaluation_metrics_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
@@ -215,6 +214,7 @@
   "price_row_count": 766100,
   "production_boundary_check": "no_automatic_production_activation_claim",
   "required_evaluation_check_ids": [
+    "benchmark_reference_comparison",
     "cost",
     "drawdown",
     "no_feedback",
@@ -225,6 +225,12 @@
   ],
   "schema_version": "v0_3_evaluation_evidence_cohort_manifest_0_2",
   "status": "evidence_recorded",
+  "strategy_type_counts": {
+    "momentum": 27
+  },
+  "strategy_types": [
+    "momentum"
+  ],
   "zero_ohlcv_exception_summary": {
     "affected_ticker_count": 120,
     "excluded_row_count": 3745,

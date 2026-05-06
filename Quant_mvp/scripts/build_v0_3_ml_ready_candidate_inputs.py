@@ -532,21 +532,42 @@ def _selector_label_result(
         result["label_null_reason"] = RULE_INCONCLUSIVE
         return result
 
-    minimum_pass = (
+    strict_metric_gate_pass = (
         relative_return > minimum_relative
         and sharpe >= minimum_sharpe
         and max_drawdown >= minimum_drawdown
     )
-    result["label_pass_minimum_gate"] = 1 if minimum_pass else 0
-    if not minimum_pass:
+    oos_status = _oos_rule_status(evidence, label_rules)
+    passing_statuses = {item.lower() for item in _compact_list(_get(label_rules, "oos_rule.passing_statuses"))}
+    failing_statuses = {item.lower() for item in _compact_list(_get(label_rules, "oos_rule.failing_statuses"))}
+    supervised_rules = _get(label_rules, "supervised_label_rules", {})
+    positive_minimum_relative = _as_float(
+        _get(supervised_rules, "positive_minimum_benchmark_relative_return")
+    )
+    if positive_minimum_relative is None:
+        positive_minimum_relative = minimum_relative
+    supervised_positive = (
+        relative_return > positive_minimum_relative
+        and oos_status in passing_statuses
+    )
+    supervised_negative = (
+        oos_status in failing_statuses
+        or relative_return <= positive_minimum_relative
+        or not strict_metric_gate_pass
+    )
+
+    result["label_pass_minimum_gate"] = 1 if strict_metric_gate_pass else 0
+    if supervised_positive:
+        result["label_review_preferred"] = 1
+        result["label_decision"] = LABEL_POSITIVE
+        result["supervised_label_eligible"] = True
+        return result
+    if supervised_negative:
         result["label_review_preferred"] = 0
         result["label_decision"] = LABEL_NEGATIVE
         result["supervised_label_eligible"] = True
         return result
 
-    oos_status = _oos_rule_status(evidence, label_rules)
-    passing_statuses = {item.lower() for item in _compact_list(_get(label_rules, "oos_rule.passing_statuses"))}
-    failing_statuses = {item.lower() for item in _compact_list(_get(label_rules, "oos_rule.failing_statuses"))}
     if oos_status in passing_statuses:
         result["label_review_preferred"] = 1
         result["label_decision"] = LABEL_POSITIVE
@@ -745,6 +766,7 @@ def build_ml_ready_row(
         "adoption_review_eligible": bool(
             label_result["supervised_label_eligible"]
             and label_result["label_review_preferred"] == 1
+            and label_result["label_pass_minimum_gate"] == 1
             and evidence_status == "evidence_recorded"
             and metric_summary_available
             and not failure_flags

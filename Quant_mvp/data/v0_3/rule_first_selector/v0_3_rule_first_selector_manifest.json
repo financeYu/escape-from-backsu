@@ -1,0 +1,77 @@
+{
+  "activation_boundary": "production_activation_requires_later_root_approved_gate",
+  "generated_at_utc": "2026-05-06T14:04:56+00:00",
+  "generic_proxy_policy": "generic_momentum_proxy_rows_are_reference_features_only_not_selector_scores",
+  "hard_excluded_count": 636,
+  "hard_gate_reason_counts": {
+    "missing_candidate_level_evidence": 636,
+    "passed_hard_exclusion": 62
+  },
+  "hard_gate_status_counts": {
+    "excluded": 636,
+    "pass": 62
+  },
+  "input_ref": "Quant_mvp\\data\\v0_3\\ml_ready_candidate_inputs\\v0_3_ml_ready_candidate_input.jsonl",
+  "minimum_gate_reason_counts": {
+    "hard_gate_not_passed": 636,
+    "passed_minimum_evidence_gate": 62
+  },
+  "minimum_gate_status_counts": {
+    "blocked": 636,
+    "pass": 62
+  },
+  "missing_evidence_policy": "missing_candidate_level_evidence_rows_receive_no_score_or_rank",
+  "ml_scored_candidate_count": 0,
+  "no_feedback_check": "rule_first_selector_must_not_feed_runtime_ranking_reports_backtests_trading_or_auto_adoption",
+  "output_fields": [
+    "selector_version",
+    "selector_run_id",
+    "candidate_id",
+    "candidate_version",
+    "evidence_id",
+    "metric_subject_type",
+    "metric_subject_id",
+    "candidate_metric_match",
+    "candidate_metric_match_reason",
+    "hard_gate_status",
+    "hard_gate_reason",
+    "minimum_gate_status",
+    "minimum_gate_reason",
+    "rule_score",
+    "ml_selector_score",
+    "final_selector_score",
+    "selector_score_source",
+    "selector_rank",
+    "review_priority",
+    "actual_metric_source",
+    "actual_metric_role",
+    "actual_total_return",
+    "actual_max_drawdown",
+    "actual_sharpe",
+    "actual_turnover",
+    "actual_volatility",
+    "failure_flags",
+    "adoption_candidate_boundary",
+    "no_feedback_check",
+    "activation_boundary"
+  ],
+  "ranked_candidate_count": 62,
+  "rule_scored_candidate_count": 62,
+  "run_id": "relabel_current_rule_first_selector_20260506",
+  "schema_version": "v0_3_rule_first_selector_manifest_0_1",
+  "selection_status": "review_candidates_available",
+  "selector_score_source_counts": {
+    "blocked_no_candidate_level_evidence": 636,
+    "rule_only": 62
+  },
+  "selector_score_sources": [
+    "blocked_insufficient_labels",
+    "blocked_no_candidate_level_evidence",
+    "hybrid_ml_rule",
+    "ml_model",
+    "rule_only"
+  ],
+  "selector_version": "v0_3_rule_first_selector_0_1",
+  "top_review_candidates_count": 10,
+  "total_candidates": 698
+}

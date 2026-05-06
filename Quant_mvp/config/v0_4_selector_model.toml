@@ -1,0 +1,52 @@
+selector_model_version = "v0_4_selector_baseline_v0_1"
+model_stage = "v0_4_ml_selector_application"
+default_mode = "trainability_check_first"
+baseline_model = "logistic_regression"
+fallback_selector = "rule_only"
+
+training_feature_columns = [
+  "total_return",
+  "excess_return_vs_proxy",
+  "max_drawdown_abs",
+  "sharpe",
+  "turnover",
+  "volatility",
+]
+
+blocked_if = [
+  "positive_rows == 0",
+  "negative_rows == 0",
+  "training_eligible_rows == 0",
+  "label leakage columns found",
+  "missing required core feature",
+  "generic_proxy_used_as_label",
+]
+
+allowed_output = [
+  "trainability_manifest",
+  "model_manifest_only_if_trained",
+  "selector_score_manifest_only_if_score_generated",
+  "readiness_report",
+]
+
+[paths]
+feature_matrix_jsonl = "Quant_mvp/data/v0_3/selector_feature_matrix/v0_3_selector_feature_matrix.jsonl"
+feature_matrix_manifest = "Quant_mvp/data/v0_3/selector_feature_matrix/v0_3_selector_feature_matrix_manifest.json"
+training_output_dir = "Quant_mvp/data/v0_4/selector_model_training"
+score_output_dir = "Quant_mvp/data/v0_4/selector_scores"
+
+[model_defaults]
+class_weight = "balanced"
+max_iter = 1000
+limited_training_rows_threshold = 100
+high_feature_correlation_threshold = 0.95
+
+[boundaries]
+allowed_use = "AdoptionCandidate review prioritization only"
+prediction_claim = "none"
+trade_signal_claim = "none"
+production_activation = false
+live_trading = false
+order_generation = false
+new_market_data_ingestion = false
+generic_proxy_as_label = false

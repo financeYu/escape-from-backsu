@@ -2,21 +2,23 @@
 
 ## Purpose
 
-`chart_mvp` is the executable scanner-runtime project and the downstream
-runtime lane for Quant-reviewed product specifications.
+`chart_mvp` is the executable scanner-runtime and chart/data-support lane under
+the Quant_mvp product umbrella. It is a Quant_mvp subfunction lane, not a
+separate cross-project domain.
 
 It owns the local KOSPI200 data-fetching pipeline, CSV cache behavior, technical indicator calculation, ranking output, chart rendering, command-line runner, GUI runner, and tests.
 
-Read the workspace root `AGENTS.md` before making cross-project changes.
+Read the workspace root `AGENTS.md` and `Quant_mvp/AGENTS.md` before making
+changes that affect Quant evidence, data handoff, scoring, ranking, or route
+ownership.
 
 ---
 
 ## Why this project exists
 
-This project turns Quant-reviewed specs into runnable scanner behavior. It may
-operate under the Quant product umbrella, but it remains the downstream
-implementation lane rather than the owner of score definitions, adoption
-decisions, or valuation interpretation.
+This project turns Quant-reviewed specs into runnable scanner behavior. It is
+the Quant chart/runtime implementation lane rather than the owner of score
+definitions, adoption decisions, or valuation interpretation.
 
 It is intentionally separate from research and score-governance documents because scanner code produces runtime artifacts such as CSV caches, JSON outputs, and chart images. Those artifacts are useful locally, but they should not be confused with source-controlled project state.
 
@@ -63,10 +65,11 @@ The subproject must submit a master-up summary using the required template in th
 ### Chart Scope Approval Gate
 
 `chart_mvp` workers must not expand implementation or repair scope beyond the
-`chart_mvp` ownership boundary without explicit root/master approval. If a task
-requires edits or implementation decisions in another subproject or root-owned
-policy area, stop at the boundary, report the required crossing, and wait for
-root/master permission before proceeding.
+approved chart/runtime/data-support boundary without explicit root/master or
+Quant supervisor approval. If a task requires edits or implementation decisions
+in Quant governance, another separate project, or root-owned policy area, stop
+at the boundary, report the required crossing, and wait for permission before
+proceeding.
 
 This agent must not:
 
@@ -79,8 +82,9 @@ This agent must not:
 - hardcode personal machine paths
 
 If a change requires score taxonomy, score contract changes, formula adoption,
-or valuation interpretation, route it to root/master so the narrowest Quant
-skill gate can be selected before implementation.
+valuation interpretation, or use of chart-collected data as v0.3
+EvaluationEvidence input, route it through root/master so the narrowest Quant
+skill gate and owner-lane handoff can be selected before implementation.
 
 ---
 
@@ -148,7 +152,7 @@ Final reports must use the Korean format named by root for the current packet.
 Preferred baseline verification:
 
 ```powershell
-python -m unittest discover -s tests -v
+..\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
 Use narrower tests when the change is localized.

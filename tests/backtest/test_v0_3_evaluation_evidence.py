@@ -447,6 +447,69 @@ def test_momentum_cohort_builder_writes_expected_contract_only_packets(tmp_path:
     assert not first_packet.exists()
 
 
+def test_cohort_runner_selects_configured_evaluable_strategy_types() -> None:
+    records = [
+        {"strategy_candidate": candidate(candidate_id="sc_v0_3_momentum")},
+        {
+            "strategy_candidate": candidate(
+                candidate_id="sc_v0_3_reversal",
+                hypothesis_id="sh_v0_3_reversal",
+                experiment_scope={
+                    "strategy_type": "reversal",
+                    "benchmark": "equal_weight_kospi200_candidate_proxy",
+                },
+            )
+        },
+        {
+            "strategy_candidate": candidate(
+                candidate_id="sc_v0_3_volatility",
+                hypothesis_id="sh_v0_3_volatility",
+                experiment_scope={
+                    "strategy_type": "volatility",
+                    "benchmark": "equal_weight_kospi200_candidate_proxy",
+                },
+            )
+        },
+        {
+            "strategy_candidate": candidate(
+                candidate_id="sc_v0_3_other",
+                hypothesis_id="sh_v0_3_other",
+                experiment_scope={
+                    "strategy_type": "other",
+                    "benchmark": "equal_weight_kospi200_candidate_proxy",
+                },
+            )
+        },
+        {
+            "strategy_candidate": candidate(
+                candidate_id="sc_v0_3_draft",
+                hypothesis_id="sh_v0_3_draft",
+                status="draft",
+                experiment_scope={
+                    "strategy_type": "reversal",
+                    "benchmark": "equal_weight_kospi200_candidate_proxy",
+                },
+            )
+        },
+    ]
+
+    assert [
+        row["strategy_candidate"]["candidate_id"]
+        for row in run_cohort.select_evaluable_candidates_by_strategy_type(records)
+    ] == ["sc_v0_3_momentum"]
+
+    selected = run_cohort.select_evaluable_candidates_by_strategy_type(
+        records,
+        strategy_types=run_cohort.parse_strategy_types("volatility,reversal,other"),
+    )
+
+    assert [row["strategy_candidate"]["candidate_id"] for row in selected] == [
+        "sc_v0_3_other",
+        "sc_v0_3_reversal",
+        "sc_v0_3_volatility",
+    ]
+
+
 def test_momentum_cohort_runner_writes_actual_evidence_packets(tmp_path: Path) -> None:
     registry_path = tmp_path / "registry.jsonl"
     registry_path.write_text(
@@ -479,13 +542,28 @@ def test_momentum_cohort_runner_writes_actual_evidence_packets(tmp_path: Path) -
     )
 
     assert result["candidate_count"] == 1
+    assert result["strategy_types"] == ["momentum"]
+    assert result["strategy_type_counts"] == {"momentum": 1}
     assert result["status_counts"] == {"evidence_recorded": 1}
     manifest = json.loads((tmp_path / output_dir / "manifest.json").read_text(encoding="utf-8"))
     assert manifest["status"] == "evidence_recorded"
+    assert manifest["strategy_types"] == ["momentum"]
+    assert manifest["strategy_type_counts"] == {"momentum": 1}
     assert manifest["price_row_count"] == 45
     packet_text = next((tmp_path / output_dir).glob("ee_v0_3_*.md")).read_text(encoding="utf-8")
     assert '"status": "evidence_recorded"' in packet_text
     assert '"metric_summary"' in packet_text
+    payload = read_evidence_payload(next((tmp_path / output_dir).glob("ee_v0_3_*.md")))
+    assert payload["metric_summary"]["oos_stability_status"] in {
+        "recorded_walk_forward_pass",
+        "recorded_walk_forward_fail",
+    }
+    assert payload["required_evaluation_checks"]["oos_walk_forward_stability"]["status"] == (
+        payload["metric_summary"]["oos_stability_status"]
+    )
+    assert payload["walk_forward_stability_summary"]["label_role"] == (
+        "candidate_level_oos_walk_forward_stability_check"
+    )
 
 
 def test_momentum_cohort_runner_dry_run_reports_actual_evidence_without_writing(tmp_path: Path) -> None:
@@ -509,6 +587,8 @@ def test_momentum_cohort_runner_dry_run_reports_actual_evidence_without_writing(
 
     assert result["mode"] == "dry_run"
     assert result["output_written"] is False
+    assert result["strategy_types"] == ["momentum"]
+    assert result["strategy_type_counts"] == {"momentum": 1}
     assert "does_not_auto_adjust" in result["adjustment_boundary"]
     assert "approved owner-lane execution" in result["next_evaluation_condition"]
     assert result["advisory"] == "dry_run_only_no_evidence_file_written"
@@ -734,7 +814,7 @@ def test_momentum_cohort_runner_caps_actual_run_to_candidate_test_period(tmp_pat
     assert manifest["price_row_count"] > 0
 
 
-def test_momentum_cohort_runner_marks_shared_rule_proxy_not_supervised(tmp_path: Path) -> None:
+def test_momentum_cohort_runner_keeps_shared_rule_candidate_level_not_generic_proxy_label(tmp_path: Path) -> None:
     registry_path = tmp_path / "registry.jsonl"
     records = [
         {"strategy_candidate": candidate(candidate_id="sc_v0_3_shared_a", hypothesis_id="sh_v0_3_shared_a")},
@@ -761,10 +841,15 @@ def test_momentum_cohort_runner_marks_shared_rule_proxy_not_supervised(tmp_path:
 
     assert result["candidate_count"] == 2
     payloads = [read_evidence_payload(path) for path in sorted((tmp_path / output_dir).glob("ee_v0_3_*.md"))]
-    assert {payload["label_use_status"] for payload in payloads} == {"generic_momentum_proxy_not_supervised"}
-    assert all(payload["metric_summary"]["label_role"] == "generic_momentum_proxy" for payload in payloads)
+    assert {payload["label_use_status"] for payload in payloads} == {
+        "candidate_level_supervised_label_candidate"
+    }
+    assert all(payload["metric_subject_type"] == "strategy_candidate" for payload in payloads)
+    assert all(payload["metric_subject_id"] == payload["candidate_id"] for payload in payloads)
+    assert all(payload["candidate_metric_match"] is True for payload in payloads)
+    assert all(payload["metric_summary"]["label_role"] == "candidate_specific" for payload in payloads)
     manifest = json.loads((tmp_path / output_dir / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["label_use_status_counts"] == {"generic_momentum_proxy_not_supervised": 2}
+    assert manifest["label_use_status_counts"] == {"candidate_level_supervised_label_candidate": 2}
 
 
 def test_momentum_cohort_runner_rejects_invalidated_actual_label_packets(tmp_path: Path) -> None:

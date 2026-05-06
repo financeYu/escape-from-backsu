@@ -1,44 +1,44 @@
 {
   "activation_boundary": "production_activation_requires_later_root_approved_gate",
-  "actual_label_count": 27,
+  "actual_label_count": 62,
   "adoption_review_eligible_count": 0,
   "approval_required_next_steps": [
-    "run_walk_forward_or_oos_stability_check_before_adoption_review"
+    "train_momentum_only_surrogate_after_metric_summary_exists"
   ],
-  "binary_supervised_ml_status": "blocked_no_positive_negative_classes",
+  "binary_supervised_ml_status": "candidate_level_supervised_labels_available_for_later_approval",
   "blocked_generic_proxy_not_candidate_level": 0,
   "blocked_not_candidate_level": 0,
-  "candidate_level_metric_count": 27,
+  "candidate_level_metric_count": 62,
   "candidate_status_counts": {
     "blocked": 106,
     "draft": 530,
     "evaluable": 62
   },
   "evaluation_status_counts": {
-    "evidence_recorded": 27,
-    "missing_evaluation_evidence": 671
+    "evidence_recorded": 62,
+    "missing_evaluation_evidence": 636
   },
   "excluded_failure": 0,
   "excluded_untradable": 0,
-  "generated_at_utc": "2026-05-06T13:08:04+00:00",
+  "generated_at_utc": "2026-05-06T14:04:50+00:00",
   "generic_proxy_metric_count": 0,
   "generic_proxy_policy": "generic_proxy_metrics_are_benchmark_reference_feature_candidates_not_labels",
-  "label_negative": 27,
-  "label_positive": 0,
-  "metric_available_count": 27,
+  "label_negative": 37,
+  "label_positive": 25,
+  "metric_available_count": 62,
   "ml_training_status_counts": {
-    "blocked_missing_evaluation_evidence": 671,
-    "eligible_candidate_level_label": 27
+    "blocked_missing_evaluation_evidence": 636,
+    "eligible_candidate_level_label": 62
   },
-  "model_training_status": "blocked_no_positive_negative_classes",
+  "model_training_status": "labels_available_for_later_approval",
   "no_feedback_check": "ml_ready_inputs_must_not_feed_scores_rankings_reports_backtests_trading_or_auto_adoption",
   "null_missing_candidate_level_metric": 0,
-  "null_missing_evidence": 671,
+  "null_missing_evidence": 636,
   "prediction_policy": "predictions_are_for_prioritization_active_learning_uncertainty_ranking_review_triage_only",
   "prediction_value_row_count": 0,
   "record_count": 698,
   "rule_inconclusive": 0,
-  "run_id": "class_balance_readiness_fix_20260506",
+  "run_id": "relabel_current_evidence_20260506",
   "schema_version": "v0_3_candidate_ml_input_manifest_0_2",
   "strategy_type_counts": {
     "event_driven": 2,
@@ -52,7 +52,7 @@
     "value": 153,
     "volatility": 174
   },
-  "supervised_label_eligible_count": 27,
-  "time_aware_split_ready_count": 27,
+  "supervised_label_eligible_count": 62,
+  "time_aware_split_ready_count": 62,
   "total_rows": 698
 }

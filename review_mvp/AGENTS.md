@@ -229,8 +229,8 @@ Final reports must use the Korean format named by root for the current packet.
 Use this project as the final review checkpoint when the specialist invocation policy requires it:
 
 ```powershell
-python review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --exclude-dir samples --format markdown
-python -m unittest discover -s review_mvp/tests -v
+.venv\Scripts\python.exe review_mvp/review.py . --exclude-dir data --exclude-dir outputs --exclude-dir __pycache__ --exclude-dir samples --format markdown
+.venv\Scripts\python.exe -m unittest discover -s review_mvp/tests -v
 ```
 
 When the active task is local to `review_mvp`, run review commands from inside
@@ -238,8 +238,8 @@ When the active task is local to `review_mvp`, run review commands from inside
 
 ```powershell
 cd review_mvp
-python review.py . --format markdown
-python -m unittest discover -s tests -v
+..\.venv\Scripts\python.exe review.py . --format markdown
+..\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
 Do not use the root-wide command from a subproject-local review task. Root-wide

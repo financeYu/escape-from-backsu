@@ -244,6 +244,45 @@ def test_evidence_recorded_without_oos_check_is_not_adoption_review_eligible() -
     assert row["adoption_review_eligible"] is False
 
 
+def test_oos_pass_can_create_training_positive_without_adoption_metric_gate() -> None:
+    evidence = evidence_packet(
+        status="evidence_recorded",
+        failure_flags=[],
+        metric_summary={
+            "benchmark_relative_return": 0.12,
+            "oos_stability_status": "recorded_walk_forward_pass",
+        },
+        performance_metric_summary={"total_return": 0.20},
+        risk_metric_summary={
+            "max_drawdown": -0.50,
+            "annualized_volatility": 0.60,
+            "turnover_proxy": 0.42,
+            "sharpe_ratio": 0.59,
+        },
+        required_evaluation_checks={
+            "oos_walk_forward_stability": {"status": "recorded_walk_forward_pass"},
+            "no_feedback": {"status": "active_boundary_check"},
+            "no_lookahead": {"status": "recorded_boundary_check"},
+        },
+    )
+
+    row = builder.build_ml_ready_row(
+        registry_record(),
+        selector_record(),
+        evidence,
+        registry_ref=Path("registry.jsonl"),
+        selector_ref=Path("selector.jsonl"),
+        row_generated_at="2026-05-06T00:00:00+00:00",
+    )
+
+    assert row["label_pass_minimum_gate"] == 0
+    assert row["label_review_preferred"] == 1
+    assert row["label_decision"] == "positive"
+    assert row["supervised_label_eligible"] is True
+    assert row["adoption_required_checks_ready"] is True
+    assert row["adoption_review_eligible"] is False
+
+
 def test_candidate_matched_reference_metric_is_not_supervised_label() -> None:
     evidence = evidence_packet(
         status="evidence_recorded",

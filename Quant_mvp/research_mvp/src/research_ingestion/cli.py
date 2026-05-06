@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .classify import classify_paper
+from .api_keys import load_api_keys_for_project
 from .config import ProjectPaths, find_project_root, load_research_config, validate_pdf_policy, validate_policy
 from .evidence import generate_evidence_cards
 from .persistence import validate_storage_segment
@@ -77,6 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     root = find_project_root(Path.cwd())
+    load_api_keys_for_project(root)
     config = load_research_config(root)
     validate_policy(config)
     validate_pdf_policy(config, allow_pdf=args.allow_pdf, confirmed=args.confirm_pdf_policy)

@@ -154,6 +154,7 @@ def build_evaluation_evidence_record(
     )
     created = created_at or date.today().isoformat()
     metric_summary = _metric_summary(backtest_result)
+    metric_summary["label_role"] = "candidate_specific"
     limitation_flags = tuple(str(flag) for flag in backtest_result.limitation_flags)
     default_source_refs = (
         "docs/extension/v0_3_evaluation_evidence_contract.md",
@@ -168,6 +169,11 @@ def build_evaluation_evidence_record(
         "candidate_version": candidate_version,
         "hypothesis_id": hypothesis_id,
         "status": "evidence_recorded",
+        "metric_subject_type": "strategy_candidate",
+        "metric_subject_id": candidate_id,
+        "candidate_metric_match": True,
+        "candidate_metric_match_reason": "candidate_id_matches_candidate_level_evaluation_evidence",
+        "label_use_status": "candidate_level_supervised_label_candidate",
         "owner": "backtest_evaluation",
         "created_at": created,
         "updated_at": created,

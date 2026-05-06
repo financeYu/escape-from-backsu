@@ -29,6 +29,11 @@ This directory is the single source of truth for runtime parameters that would o
   produced by `research_mvp`; its paths resolve from the `Quant_mvp` project
   root and prefer canonical `research_mvp/data/research/evidence` files before
   using temporary legacy `data/research/evidence` fallback files
+- `v0_4_selector_model.toml`: v0.4 evidence-only ML/rule selector application
+  config. It consumes the v0.3 feature matrix and label manifest, runs
+  trainability checks first, and allows a logistic-regression baseline only for
+  `AdoptionCandidate` review prioritization. It does not authorize trading,
+  order generation, production activation, or new market-data ingestion.
 
 Research-ingestion source, query, policy, classification, Scholar discovery,
 and v0.2 ML reference query configs live under `research_mvp/config`.

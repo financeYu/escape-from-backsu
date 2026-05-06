@@ -8,9 +8,10 @@ compatibility, hard-stop, or release-evidence checks.
 
 ## Current Route State
 
-Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE. The product goal
-is now the end-to-end strategy discovery and evidence loop, not the standalone
-v0.2 probability route.
+Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE as the evidence
+and input-preparation lane. Post-MVP `v0.4 ML selector application route` is
+ACTIVE as the evidence-only application lane that consumes v0.3 selector
+feature matrix and label manifest artifacts.
 
 Product goal:
 
@@ -24,7 +25,10 @@ Product goal:
 
 Direction lock:
 
-- v0.3 product_goal is the current route memory.
+- v0.3 product_goal is the current evidence route memory.
+- v0.4 consumes v0.3 feature matrix and label manifest artifacts as read-only
+  inputs for trainability checks, optional baseline selector fitting, optional
+  selector score manifests, and `AdoptionCandidate` review prioritization.
 - Do not route routine v0.3 work back through archived v0.1/v0.2 standards.
 - If a task is blocked, choose the next concrete v0.3 artifact:
   `ResearchHypothesis`, `StrategyHypothesis`, `StrategyCandidate`,
@@ -39,6 +43,9 @@ Current baseline facts:
 - v0.3 is the active route for research intake, strategy candidate structure,
   evidence-only backtest/simulation, selector/evaluator review, and adoption
   evidence.
+- v0.4 is the active route for ML/rule selector application. It does not
+  authorize live trading, order generation, buy/sell recommendation language,
+  production activation, new market-data ingestion, or universe expansion.
 
 Current active route skill:
 
@@ -82,8 +89,10 @@ Archived/supporting probability compatibility route:
 | --- | --- | --- |
 | Research intake | collect papers, research notes, EvidenceCards, and strategy ideas | `ResearchHypothesis` |
 | Strategy structure | convert ideas into testable strategy hypotheses and candidate records | `StrategyHypothesis`, `StrategyCandidate` |
+| Chart runtime/data support | maintain Quant-owned chart runtime and approved local daily price handoff support | validated Quant-local price inputs or runtime support packet |
 | Backtest/simulation | evaluate candidates historically with no-lookahead and no-feedback checks | `EvaluationEvidence` |
 | ML/evaluator selector | compare allowlisted evidence summaries and select review-preferred candidates | `AdoptionCandidate` |
+| v0.4 selector application | consume v0.3 feature matrix and label manifest for trainability, optional baseline fit, and optional review-prioritization score manifests | trainability manifest, optional model manifest, optional selector score manifest |
 | Adoption evidence | summarize historical return/risk/performance characteristics for review | adoption review packet |
 
 ## Active Route Artifacts
@@ -96,6 +105,9 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v0_3_adoption_candidate_selector_gate.md`
 - `docs/extension/v0_3_production_activation_decision_gate.md`
 - `docs/extension/v0_3_review_packet.md`
+- `docs/extension/v0_4_ml_selector_application_route.md`
+- `docs/extension/v0_4_selector_model_training_contract.md`
+- `docs/extension/v0_4_selector_model_manifest_contract.md`
 - `docs/context/EXTENSION_REGISTRY.toml`
 
 ## Archived v0.1/v0.2 References
@@ -126,6 +138,9 @@ Allowed now:
 - EvaluationEvidence output and evidence-only comparison summaries
 - ML or rule-based selector/evaluator artifacts that consume allowlisted
   evidence summaries and emit AdoptionCandidate review packets
+- v0.4 baseline selector trainability checks, model manifests when training
+  succeeds, and selector score manifests limited to AdoptionCandidate review
+  prioritization
 - historical return/risk/performance summaries when framed as evidence only
 
 Still blocked without later explicit approval:
@@ -141,6 +156,10 @@ and master integration work remain separated by role branch/worktree.
 
 `C:\Users\jjaew\Project\master_mvp` remains the integration, verification, and
 status-control workspace unless a task explicitly selects a role worktree.
+`chart_mvp` and `Quant_mvp/research_mvp` are Quant_mvp subfunction lanes for
+route ownership, even when their physical directories are separated for runtime
+or ingestion isolation. Handing data or packets among these Quant lanes is a
+Quant-local owner-lane handoff, not a cross-project handoff.
 
 ## Overall Step State
 
@@ -169,6 +188,7 @@ status-control workspace unless a task explicitly selects a role worktree.
 | post-MVP v0.1 KOSPI200 technical MVP | ARCHIVED / frozen baseline reference |
 | post-MVP v0.2 predictive probability score route | ARCHIVED / supporting compatibility reference |
 | post-MVP v0.3 research-to-strategy adoption route | ACTIVE |
+| post-MVP v0.4 ML selector application route | ACTIVE / consumes v0.3 inputs read-only |
 
 ## Baseline Contracts
 
@@ -179,6 +199,8 @@ status-control workspace unless a task explicitly selects a role worktree.
 - Generated evidence reports, runtime outputs, chart images, local caches, raw
   market data, `.env`, and secrets are not default context.
 - v0.3 evidence must not become automatic production activation.
+- v0.4 selector outputs must not become trade signals, order instructions,
+  runtime ranking activation, or production activation.
 
 ## Research Ingestion State
 

@@ -2,7 +2,7 @@
 # The active route state is governed by docs/root_hard_stops.md and
 # docs/roadmap_status.md.
 
-status = "active_v0_3_strategy_adoption_route"
+status = "active_v0_4_ml_selector_application_route"
 baseline = "docs/context/MVP_V0_1_BASELINE.md"
 archive_index = "docs/context/ARCHIVE_INDEX.md"
 archived_v0_1_v0_2 = "docs/roadmap_archive/v0_1_v0_2_archive.md"
@@ -109,6 +109,7 @@ strategy_hypothesis_intake_contract = "docs/extension/v0_3_strategy_hypothesis_i
 strategy_candidate_registry_contract = "docs/extension/v0_3_strategy_candidate_registry_contract.md"
 evaluation_evidence_contract = "docs/extension/v0_3_evaluation_evidence_contract.md"
 kospi200_historical_universe_tracking_contract = "docs/extension/v0_3_kospi200_historical_universe_tracking_contract.md"
+kospi200_price_ml_feature_table_contract = "docs/extension/v0_3_kospi200_price_ml_feature_table_contract.md"
 adoption_candidate_selector_gate = "docs/extension/v0_3_adoption_candidate_selector_gate.md"
 production_activation_decision_gate = "docs/extension/v0_3_production_activation_decision_gate.md"
 review_packet = "docs/extension/v0_3_review_packet.md"
@@ -156,6 +157,7 @@ allowed = [
   "candidate-only backtest/simulation evidence in approved owner lanes",
   "EvaluationEvidence and evidence-only candidate comparison summaries",
   "ML or rule-based selector/evaluator outputs limited to AdoptionCandidate review packets",
+  "ML-useful KOSPI200 processed price feature tables marked for master_mvp review only",
   "historical return/risk/performance summaries framed as evidence only",
 ]
 blocked = [
@@ -164,6 +166,46 @@ blocked = [
   "universe expansion without later approval",
   "valuation/fundamental scoring activation",
   "backtest metrics as automatic production activation triggers",
+]
+
+[extension.ml_selector_application_v0_4]
+state = "active_evidence_only_selector_application_route"
+permission = "post-MVP v0.4 consumes v0.3 selector feature matrix and label manifest artifacts as read-only inputs for trainability checks, optional baseline selector fitting, and optional AdoptionCandidate review-prioritization scores; it does not authorize live trading, order generation, buy/sell recommendations, production activation, new market-data ingestion, universe expansion, or valuation/fundamental scoring activation"
+context = "docs/extension/v0_4_ml_selector_application_route.md"
+training_contract = "docs/extension/v0_4_selector_model_training_contract.md"
+manifest_contract = "docs/extension/v0_4_selector_model_manifest_contract.md"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+selector_model_config = "Quant_mvp/config/v0_4_selector_model.toml"
+trainer = "Quant_mvp/scripts/ml/train_v0_4_selector_baseline.py"
+scorer = "Quant_mvp/scripts/ml/score_v0_4_selector_candidates.py"
+input_route = "extension.strategy_adoption_v0_3"
+input_feature_matrix_manifest = "Quant_mvp/data/v0_3/selector_feature_matrix/v0_3_selector_feature_matrix_manifest.json"
+input_feature_matrix_jsonl = "Quant_mvp/data/v0_3/selector_feature_matrix/v0_3_selector_feature_matrix.jsonl"
+selector_model_version = "v0_4_selector_baseline_v0_1"
+default_mode = "trainability_check_first"
+baseline_model = "logistic_regression"
+fallback_selector = "rule_only"
+allowed_use = "AdoptionCandidate review prioritization only"
+prediction_claim = "none"
+trade_signal_claim = "none"
+allowed_outputs = [
+  "trainability_manifest",
+  "model_manifest_only_if_trained",
+  "selector_score_manifest_only_if_score_generated",
+  "readiness_report",
+]
+blocked = [
+  "v0.3 input artifact mutation",
+  "synthetic positive or negative label generation",
+  "generic proxy as supervised label",
+  "live trading or brokerage integration",
+  "order generation",
+  "buy/sell recommendation language",
+  "production activation",
+  "new market-data ingestion",
+  "universe expansion",
+  "valuation/fundamental scoring activation",
 ]
 
 [extension.v0_1n_candidate_ml]

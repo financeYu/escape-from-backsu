@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import shutil
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -39,10 +41,12 @@ ACTIVATION_BOUNDARY = "production_activation_requires_later_root_approved_gate"
 class QuantLocalPriceInputConfig:
     """Configuration for building Quant-local price input tables."""
 
-    input_dir: Path = PROJECT_ROOT.parent / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    input_dir: Path = PROJECT_ROOT / "data" / "historical_kospi200" / "prices"
     output_dir: Path = PROJECT_ROOT.parent / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
     min_history_length: int = 20
     workers: int = 2
+    sync_price_files: bool = True
+    reuse_existing: bool = True
 
 
 def discover_price_files(input_dir: str | Path) -> list[Path]:
@@ -132,14 +136,60 @@ def _write_frame(frame: pd.DataFrame, path: Path) -> Path:
     return path
 
 
+def _file_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _sync_price_file(source_path: Path, output_dir: Path, *, reuse_existing: bool) -> dict[str, str | int]:
+    target_path = output_dir / source_path.name
+    if source_path.resolve() == target_path.resolve():
+        return {"source_path": str(source_path), "target_path": str(target_path), "sync_status": "same_path"}
+
+    status = "copied"
+    if target_path.exists():
+        if reuse_existing and source_path.stat().st_size == target_path.stat().st_size:
+            if _file_digest(source_path) == _file_digest(target_path):
+                status = "skipped_existing"
+            else:
+                shutil.copy2(source_path, target_path)
+                status = "overwritten_changed"
+        else:
+            shutil.copy2(source_path, target_path)
+            status = "overwritten"
+    else:
+        shutil.copy2(source_path, target_path)
+    return {"source_path": str(source_path), "target_path": str(target_path), "sync_status": status}
+
+
+def _sync_price_files(
+    paths: list[Path],
+    output_dir: Path,
+    *,
+    reuse_existing: bool,
+) -> tuple[list[Path], list[dict[str, str | int]]]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    rows = [_sync_price_file(path, output_dir, reuse_existing=reuse_existing) for path in paths]
+    return [Path(row["target_path"]) for row in rows], rows
+
+
 def _build_shard(
     shard_name: str,
     paths: list[Path],
     output_dir: Path,
     min_history_length: int,
     generated_at_utc: str,
+    sync_price_files: bool,
+    reuse_existing: bool,
 ) -> dict[str, str | int]:
-    source_rows = _standardize_source_rows(paths, generated_at_utc=generated_at_utc)
+    if sync_price_files:
+        working_paths, sync_rows = _sync_price_files(paths, output_dir, reuse_existing=reuse_existing)
+    else:
+        working_paths, sync_rows = paths, []
+    source_rows = _standardize_source_rows(working_paths, generated_at_utc=generated_at_utc)
     duplicate_count = int(source_rows.attrs.get("duplicate_ticker_date_rows_removed", 0))
     source_path = output_dir / f"quant_local_price_source_rows_{shard_name}.csv"
     feature_path = output_dir / f"kospi200_price_ml_feature_table_{shard_name}.csv"
@@ -163,6 +213,9 @@ def _build_shard(
         "source_rows": int(len(source_rows)),
         "feature_rows": int(len(feature_rows)),
         "duplicate_ticker_date_rows_removed": duplicate_count,
+        "price_files_copied": sum(1 for row in sync_rows if row["sync_status"] == "copied"),
+        "price_files_reused": sum(1 for row in sync_rows if row["sync_status"] in {"same_path", "skipped_existing"}),
+        "price_files_overwritten": sum(1 for row in sync_rows if str(row["sync_status"]).startswith("overwritten")),
         "source_path": str(source_path),
         "feature_path": str(feature_path),
     }
@@ -204,12 +257,29 @@ def build_quant_local_price_input_tables(
         for shard_name, shard_paths in shards.items():
             if shard_paths:
                 shard_results.append(
-                    _build_shard(shard_name, shard_paths, output_dir, config.min_history_length, generated_at)
+                    _build_shard(
+                        shard_name,
+                        shard_paths,
+                        output_dir,
+                        config.min_history_length,
+                        generated_at,
+                        config.sync_price_files,
+                        config.reuse_existing,
+                    )
                 )
     else:
         with ProcessPoolExecutor(max_workers=worker_count) as executor:
             futures = [
-                executor.submit(_build_shard, shard_name, shard_paths, output_dir, config.min_history_length, generated_at)
+                executor.submit(
+                    _build_shard,
+                    shard_name,
+                    shard_paths,
+                    output_dir,
+                    config.min_history_length,
+                    generated_at,
+                    config.sync_price_files,
+                    config.reuse_existing,
+                )
                 for shard_name, shard_paths in shards.items()
                 if shard_paths
             ]
@@ -235,6 +305,7 @@ def build_quant_local_price_input_tables(
                 "- `quant_local_price_source_rows.csv`: normalized source OHLCV rows from every `*_daily_prices.csv` file.",
                 "- `kospi200_price_ml_feature_table.csv`: ML-useful processed price feature table with Master MVP context marker.",
                 "- `local_price_input_inventory.csv`: source file inventory.",
+                "- Raw `*_daily_prices.csv` files are synchronized from chart_mvp collected prices when this builder is run from that source.",
                 "- Shard files ending in `_forward.csv` and `_reverse.csv` were produced by parallel forward/reverse processing.",
                 "",
                 "Boundary: candidate/evidence use only; no runtime ranking, trading, valuation, or production activation.",
@@ -255,6 +326,9 @@ def build_quant_local_price_input_tables(
         "duplicate_ticker_date_rows_removed": int(
             sum(int(result.get("duplicate_ticker_date_rows_removed", 0)) for result in shard_results)
         ),
+        "price_files_copied": int(sum(int(result.get("price_files_copied", 0)) for result in shard_results)),
+        "price_files_reused": int(sum(int(result.get("price_files_reused", 0)) for result in shard_results)),
+        "price_files_overwritten": int(sum(int(result.get("price_files_overwritten", 0)) for result in shard_results)),
         "source_table": str(source_path),
         "feature_table": str(feature_path),
         "inventory": str(inventory_path),
@@ -280,6 +354,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--output-dir", type=Path, default=QuantLocalPriceInputConfig.output_dir)
     parser.add_argument("--min-history-length", type=int, default=20)
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument("--no-sync-price-files", action="store_true")
+    parser.add_argument("--no-reuse-existing", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -291,6 +367,8 @@ def main(argv: list[str] | None = None) -> int:
             output_dir=args.output_dir,
             min_history_length=args.min_history_length,
             workers=args.workers,
+            sync_price_files=not args.no_sync_price_files,
+            reuse_existing=not args.no_reuse_existing,
         )
     )
     print(json.dumps(manifest, ensure_ascii=False, sort_keys=True))

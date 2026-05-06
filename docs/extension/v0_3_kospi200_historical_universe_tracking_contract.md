@@ -85,6 +85,11 @@ data-ingestion or runtime task:
 - `chart_mvp/data/kospi200_membership_history.csv`
 - `chart_mvp/data/security_master.csv`
 - `chart_mvp/data/corporate_action_events.csv`
+- `chart_mvp/data/historical_kospi200/membership_history_scoped.csv`
+- `chart_mvp/data/historical_kospi200/collection_plan.csv`
+- `chart_mvp/data/historical_kospi200/delisted_or_inactive_securities.csv`
+- `chart_mvp/data/historical_kospi200/collection_status.csv`
+- `chart_mvp/data/historical_kospi200/collection_manifest.json`
 
 Generated or local data files remain non-default context and must not be
 source-controlled unless explicitly promoted as small review fixtures.
@@ -258,6 +263,25 @@ must state whether it is:
 The first three may be narrow implementation tasks if separately approved. The
 fourth is a production behavior change and requires a separate root-approved
 runtime decision.
+
+## Approved chart_mvp Collection Handoff
+
+When root/master explicitly asks to collect Naver Finance data for historical
+KOSPI200 constituents, `chart_mvp` may use the local CLI wrapper:
+
+```powershell
+python scripts\collect_historical_kospi200_naver_data.py --membership-csv data\kospi200_membership_history.csv --output-dir data\historical_kospi200 --lookback-years 10 --pages 260
+```
+
+The membership CSV remains the authority for the historical KOSPI200
+constituent set. The collector does not discover historical index membership
+from Naver price pages. It only collects available Naver Finance price and
+financial-statement data for the scoped securities, then records delisted,
+merged, removed, suspended, failed, or unavailable securities in separate
+status files.
+
+The generated collection artifacts are local data/cache artifacts and are not
+source-controlled by default.
 
 ## Review Checklist
 

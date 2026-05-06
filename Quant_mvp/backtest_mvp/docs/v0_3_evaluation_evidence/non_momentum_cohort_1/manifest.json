@@ -1,0 +1,357 @@
+{
+  "candidate_count": 35,
+  "candidate_ids": [
+    "sc:ecard:036ba7277bc6db18ab53",
+    "sc:ecard:0910c98f460841de26c5",
+    "sc:ecard:126fb6084d72e85e82a0",
+    "sc:ecard:222478c272a5cd16615d",
+    "sc:ecard:2ec5dd54f5df4127e5c8",
+    "sc:ecard:326c44730d772640843a",
+    "sc:ecard:329df57345dc672d046a",
+    "sc:ecard:33f1eb352ff88f335f81",
+    "sc:ecard:36a011912cf96b0831e4",
+    "sc:ecard:379ba2ce1b6052860ba3",
+    "sc:ecard:57b2375d7ab900c1da1b",
+    "sc:ecard:6078f60bd827785683bf",
+    "sc:ecard:6662290e29da98ab5c15",
+    "sc:ecard:6828a0047564da84fe43",
+    "sc:ecard:687ac3f1e09c49b3e725",
+    "sc:ecard:6a9cffea47a4d33bd9eb",
+    "sc:ecard:72b25e793091bd43a3da",
+    "sc:ecard:76bfe05098ce3dd93cf8",
+    "sc:ecard:7eacf8a35ca049075bda",
+    "sc:ecard:86d7f94c4c6c142ee973",
+    "sc:ecard:879f0712deaf4f995c36",
+    "sc:ecard:8c300bfdd648e5e7c17b",
+    "sc:ecard:9e8efa218a7f4eac8285",
+    "sc:ecard:a0b572e687cc09c2c0c8",
+    "sc:ecard:b350f65971f95a6ba521",
+    "sc:ecard:b4fdf26a68069984b392",
+    "sc:ecard:c8c49c28a8603b21dbfa",
+    "sc:ecard:ca3dd000c8df00babbce",
+    "sc:ecard:cfd996db80d683b6924e",
+    "sc:ecard:daf4d160e04a65278278",
+    "sc:ecard:e17eedd2d4b34ad36afc",
+    "sc:ecard:e389d85092f8a47f51ab",
+    "sc:ecard:e5282acba434eaf3e08e",
+    "sc:ecard:e5dbdb28a625b1099ad6",
+    "sc:ecard:ed310a3bccbd93ccd645"
+  ],
+  "cohort_id": "non_momentum_evaluable_cohort_1",
+  "duplicate_ticker_date_exception_summary": {
+    "affected_ticker_count": 52,
+    "conflicting_duplicate_pair_count": 0,
+    "duplicate_pair_count": 292,
+    "duplicate_row_count": 33591,
+    "input_row_count": 799399,
+    "policy": "identical duplicate ticker/date price rows are collapsed before candidate-only EvaluationEvidence inputs; conflicting duplicate rows remain blockers and source CSV files are not modified",
+    "redundant_row_count": 33299,
+    "retained_row_count": 766100,
+    "sample": [
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      },
+      {
+        "close": "13100.0",
+        "date": "2014-11-19",
+        "high": "15400.0",
+        "low": "13100.0",
+        "open": "15400.0",
+        "ticker": "000030",
+        "volume": "372064.0"
+      }
+    ]
+  },
+  "evaluation_ids": [
+    "ee_v0_3_20260506_sc_ecard_036ba7277bc6db18ab53",
+    "ee_v0_3_20260506_sc_ecard_0910c98f460841de26c5",
+    "ee_v0_3_20260506_sc_ecard_126fb6084d72e85e82a0",
+    "ee_v0_3_20260506_sc_ecard_222478c272a5cd16615d",
+    "ee_v0_3_20260506_sc_ecard_2ec5dd54f5df4127e5c8",
+    "ee_v0_3_20260506_sc_ecard_326c44730d772640843a",
+    "ee_v0_3_20260506_sc_ecard_329df57345dc672d046a",
+    "ee_v0_3_20260506_sc_ecard_33f1eb352ff88f335f81",
+    "ee_v0_3_20260506_sc_ecard_36a011912cf96b0831e4",
+    "ee_v0_3_20260506_sc_ecard_379ba2ce1b6052860ba3",
+    "ee_v0_3_20260506_sc_ecard_57b2375d7ab900c1da1b",
+    "ee_v0_3_20260506_sc_ecard_6078f60bd827785683bf",
+    "ee_v0_3_20260506_sc_ecard_6662290e29da98ab5c15",
+    "ee_v0_3_20260506_sc_ecard_6828a0047564da84fe43",
+    "ee_v0_3_20260506_sc_ecard_687ac3f1e09c49b3e725",
+    "ee_v0_3_20260506_sc_ecard_6a9cffea47a4d33bd9eb",
+    "ee_v0_3_20260506_sc_ecard_72b25e793091bd43a3da",
+    "ee_v0_3_20260506_sc_ecard_76bfe05098ce3dd93cf8",
+    "ee_v0_3_20260506_sc_ecard_7eacf8a35ca049075bda",
+    "ee_v0_3_20260506_sc_ecard_86d7f94c4c6c142ee973",
+    "ee_v0_3_20260506_sc_ecard_879f0712deaf4f995c36",
+    "ee_v0_3_20260506_sc_ecard_8c300bfdd648e5e7c17b",
+    "ee_v0_3_20260506_sc_ecard_9e8efa218a7f4eac8285",
+    "ee_v0_3_20260506_sc_ecard_a0b572e687cc09c2c0c8",
+    "ee_v0_3_20260506_sc_ecard_b350f65971f95a6ba521",
+    "ee_v0_3_20260506_sc_ecard_b4fdf26a68069984b392",
+    "ee_v0_3_20260506_sc_ecard_c8c49c28a8603b21dbfa",
+    "ee_v0_3_20260506_sc_ecard_ca3dd000c8df00babbce",
+    "ee_v0_3_20260506_sc_ecard_cfd996db80d683b6924e",
+    "ee_v0_3_20260506_sc_ecard_daf4d160e04a65278278",
+    "ee_v0_3_20260506_sc_ecard_e17eedd2d4b34ad36afc",
+    "ee_v0_3_20260506_sc_ecard_e389d85092f8a47f51ab",
+    "ee_v0_3_20260506_sc_ecard_e5282acba434eaf3e08e",
+    "ee_v0_3_20260506_sc_ecard_e5dbdb28a625b1099ad6",
+    "ee_v0_3_20260506_sc_ecard_ed310a3bccbd93ccd645"
+  ],
+  "evidence_status_counts": {
+    "evidence_recorded": 35
+  },
+  "failure_flag_counts": {},
+  "generated_output_boundary": "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/",
+  "known_limitation_counts": {
+    "corporate_action_adjustment_unknown": 35,
+    "identical_duplicate_ticker_date_rows_collapsed": 35,
+    "insufficient_price_history": 29,
+    "missing_exit_price": 29,
+    "non_point_in_time_constituent_warning": 35,
+    "suspended_or_delisted_like_price_rows_excluded": 35,
+    "universe_survivorship_bias_warning": 35,
+    "upstream_row_blocked": 35
+  },
+  "label_use_status_counts": {
+    "candidate_level_supervised_label_candidate": 35
+  },
+  "model_training_status": "not_run_metric_summary_generation_only",
+  "no_feedback_check": "evaluation_metrics_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
+  "packet_paths": [
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_036ba7277bc6db18ab53.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_0910c98f460841de26c5.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_126fb6084d72e85e82a0.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_222478c272a5cd16615d.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_2ec5dd54f5df4127e5c8.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_326c44730d772640843a.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_329df57345dc672d046a.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_33f1eb352ff88f335f81.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_36a011912cf96b0831e4.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_379ba2ce1b6052860ba3.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_57b2375d7ab900c1da1b.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_6078f60bd827785683bf.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_6662290e29da98ab5c15.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_6828a0047564da84fe43.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_687ac3f1e09c49b3e725.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_6a9cffea47a4d33bd9eb.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_72b25e793091bd43a3da.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_76bfe05098ce3dd93cf8.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_7eacf8a35ca049075bda.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_86d7f94c4c6c142ee973.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_879f0712deaf4f995c36.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_8c300bfdd648e5e7c17b.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_9e8efa218a7f4eac8285.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_a0b572e687cc09c2c0c8.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_b350f65971f95a6ba521.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_b4fdf26a68069984b392.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_c8c49c28a8603b21dbfa.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_ca3dd000c8df00babbce.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_cfd996db80d683b6924e.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_daf4d160e04a65278278.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_e17eedd2d4b34ad36afc.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_e389d85092f8a47f51ab.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_e5282acba434eaf3e08e.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_e5dbdb28a625b1099ad6.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/non_momentum_cohort_1/ee_v0_3_20260506_sc_ecard_ed310a3bccbd93ccd645.md"
+  ],
+  "price_input_ref": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs",
+  "price_row_count": 766100,
+  "production_boundary_check": "no_automatic_production_activation_claim",
+  "required_evaluation_check_ids": [
+    "benchmark_reference_comparison",
+    "cost",
+    "drawdown",
+    "no_feedback",
+    "no_lookahead",
+    "oos_walk_forward_stability",
+    "turnover",
+    "volatility"
+  ],
+  "schema_version": "v0_3_evaluation_evidence_cohort_manifest_0_2",
+  "status": "evidence_recorded",
+  "strategy_type_counts": {
+    "other": 10,
+    "reversal": 6,
+    "volatility": 19
+  },
+  "strategy_types": [
+    "volatility",
+    "reversal",
+    "other"
+  ],
+  "zero_ohlcv_exception_summary": {
+    "affected_ticker_count": 120,
+    "excluded_row_count": 3745,
+    "field_counts": {
+      "high": 3427,
+      "low": 3427,
+      "open": 3438,
+      "volume": 3732
+    },
+    "input_row_count": 803144,
+    "policy": "rows with non-positive open/high/low/volume are treated as suspended_or_delisted_like_price_rows and excluded from candidate-only EvaluationEvidence inputs; source CSV files are not modified",
+    "retained_row_count": 799399,
+    "sample": [
+      {
+        "date": "2019-01-09",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-10",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-11",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-14",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-15",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-16",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-17",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-18",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-21",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      },
+      {
+        "date": "2019-01-22",
+        "high": "0.0",
+        "low": "0.0",
+        "open": "0.0",
+        "ticker": "000030",
+        "volume": "0.0"
+      }
+    ]
+  }
+}

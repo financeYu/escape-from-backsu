@@ -4,11 +4,12 @@
 
 If this project is used inside the parent `master_mvp` workspace, read the parent `../AGENTS.md` first. The parent master agent owns cross-project routing, Git policy, and handoff coordination. This `Quant_mvp` agent remains responsible for quant evidence governance, technical review, valuation boundaries, and quant-specific config policy.
 
-`Quant_mvp` is the product-line umbrella for quant evidence governance and the
-canonical research-ingestion lane. Research ingestion lives inside
-`research_mvp/`; valuation review is routed to
-`../.agents/skills/valuation_review/SKILL.md`; scanner runtime remains owned by
-`../chart_mvp`.
+`Quant_mvp` is the product-line umbrella for quant evidence governance,
+research ingestion, chart runtime/data support, and the active evidence route.
+Research ingestion lives inside `research_mvp/`. Chart runtime and local
+daily-price collection support live in `../chart_mvp` as a Quant_mvp
+subfunction lane, not as a separate cross-project domain. Valuation review is
+routed to `../.agents/skills/valuation_review/SKILL.md`.
 
 Active work follows the parent v0.3 research-to-strategy adoption route. The
 v0.1 technical scanner and v0.2 probability route are archived or supporting
@@ -29,14 +30,14 @@ Root/master approval is required before:
 - editing root-owned files such as `../AGENTS.md`, root `README.md`, root
   `.gitignore`, root CI, release notes, project registry, roadmap status, or
   repository-wide policy
-- editing another subproject such as `../chart_mvp` or `../review_mvp`
+- editing another separate project such as `../review_mvp`
 - changing cross-project routing, handoff ownership, integration policy, branch
   policy, or Step verdicts
-- consuming or modifying another subproject's runtime outputs, generated
+- consuming or modifying another separate project's runtime outputs, generated
   artifacts, cache paths, or implementation files beyond a read-only targeted
   boundary check
-- implementing behavior that belongs to another project role, including chart
-  runtime, specialist review tooling, or root/master integration
+- implementing behavior that belongs to another separate project or root-owned
+  role, including specialist review tooling or root/master integration
 
 If a Quant task appears to require crossing this boundary, stop before editing
 or running side-effecting commands outside the Quant scope. Report:
@@ -48,6 +49,13 @@ or running side-effecting commands outside the Quant scope. Report:
 
 Without approval, record the need as a handoff, TODO, or unresolved risk instead
 of making the cross-boundary change.
+
+`../chart_mvp` is a Quant_mvp chart/runtime/data-support subfunction lane. Work
+that crosses from Quant governance into chart runtime still needs a
+supervisor-approved scope lock, chart-lane validation, and generated-output
+boundary checks, but it is treated as a Quant-local owner-lane handoff rather
+than a cross-project handoff. `research_mvp/` is likewise a Quant-local
+research-ingestion lane.
 
 ---
 
@@ -222,11 +230,11 @@ Prefer explicit downgrades, deferrals, or narrower implementations.
 
 ## Multi-agent operating model
 
-This repository owns one internal research-ingestion subproject and uses the
-active root architecture chain for task intake, planning, review, supervision,
-worker execution, tracking, validation, and reporting. Existing Quant gates and
-technical roles remain domain compatibility targets selected and bounded by
-that chain.
+This repository owns internal research-ingestion and chart/runtime/data-support
+subfunction lanes and uses the active root architecture chain for task intake,
+planning, review, supervision, worker execution, tracking, validation, and
+reporting. Existing Quant gates and technical roles remain domain compatibility
+targets selected and bounded by that chain.
 
 The historical technical-score workflow has **three distinct technical
 compatibility roles** with different responsibilities; use those roles for
@@ -240,6 +248,20 @@ Upstream evidence agent:
    - owns approved paper metadata collection, local discovery seeds, metadata-source adapters, research query config, and conservative EvidenceCards
    - routes candidates without making adoption decisions, running backtests, or performing valuation review
    - hands the Quant evidence-governance lane only explicit intake material governed by `config/research_intake.toml`
+
+Runtime/data-support lane:
+
+0b. **Chart Runtime/Data Support Lane**
+   - lives in `../chart_mvp/AGENTS.md` while remaining under the Quant_mvp
+     product umbrella
+   - owns scanner runtime, chart rendering, local KOSPI200 daily price
+     collection/cache mechanics, and runtime output boundaries
+   - may hand approved daily price inputs to Quant evidence lanes only through
+     explicit owner-lane scope locks, validation, and generated-output boundary
+     checks
+   - must not make StrategyCandidate adoption decisions, run valuation review,
+     activate production trading, or let runtime outputs become Quant evidence
+     without an approved v0.3 handoff
 
 Scope check process:
 
@@ -281,6 +303,12 @@ Research ingestion is intentionally housed in `research_mvp` inside `Quant_mvp`.
 The quant evidence lane may consume EvidenceCards and handoff files through
 `config/research_intake.toml`, but it must not turn them into adoption
 decisions, run paper-derived backtests, or perform valuation review.
+
+Chart runtime and local price collection are intentionally housed in
+`../chart_mvp` as a Quant_mvp subfunction lane. The quant evidence lane may
+consume chart-collected price data only after an explicit Quant-local handoff
+defines the allowed tickers, date range, CSV schema, no-lookahead checks, and
+generated-output boundary.
 
 EvidenceCards are upstream evidence objects, not adoption decisions,
 EvaluationEvidence, or valuation verdicts. A chart runtime implementation must

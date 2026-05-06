@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import os
 from pathlib import Path
 
 
@@ -10,6 +11,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from scripts.run_local_validation import (  # noqa: E402
     LOCAL_TEMP_ROOT,
+    REPO_ROOT,
+    WORKSPACE_PYTHON,
+    WORKSPACE_VENV,
     build_validation_command,
     build_validation_env,
 )
@@ -64,7 +68,19 @@ def test_backtest_suite_covers_core_gui_and_pipeline_guardrails() -> None:
 def test_validation_env_routes_global_temp_to_workspace() -> None:
     env = build_validation_env(suite="context", base_env={"PATH": "example"})
 
-    assert env["PATH"] == "example"
+    assert env["PATH"].split(os.pathsep)[0] == str(WORKSPACE_VENV / "Scripts")
+    assert "example" in env["PATH"]
+    assert env["PYTHON"] == str(WORKSPACE_PYTHON)
+    assert env["VIRTUAL_ENV"] == str(WORKSPACE_VENV)
+    assert env["PYTHONUTF8"] == "1"
+    assert env["PYTHONIOENCODING"] == "utf-8"
+    assert str(REPO_ROOT) in env["PYTHONPATH"]
     assert env["TMP"].startswith(str(LOCAL_TEMP_ROOT))
     assert env["TEMP"] == env["TMP"]
     assert env["PYTEST_DEBUG_TEMPROOT"] == env["TMP"]
+
+
+def test_validation_command_defaults_to_workspace_python() -> None:
+    command = build_validation_command("context")
+
+    assert command[0] == str(WORKSPACE_PYTHON)

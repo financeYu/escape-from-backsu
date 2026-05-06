@@ -9,3 +9,21 @@ no_lookahead = true
 no_future_data = true
 config_first = true
 
+[shell_environment_policy]
+inherit = "all"
+exclude = ["PATH", "Path"]
+
+[shell_environment_policy.set]
+Path = "C:\\Users\\jjaew\\Project\\master_mvp\\.venv\\Scripts;C:\\Users\\jjaew\\Project\\master_mvp\\tools\\rg;C:\\Program Files\\Git\\bin;C:\\Program Files\\Git\\cmd;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\nodejs\\;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\jjaew\\AppData\\Local\\Programs\\Python\\Launcher\\;C:\\Users\\jjaew\\AppData\\Local\\Microsoft\\WinGet\\Packages\\GitHub.cli_Microsoft.Winget.Source_8wekyb3d8bbwe\\bin;C:\\Users\\jjaew\\AppData\\Local\\OpenAI\\Codex\\bin"
+PYTHON = "C:\\Users\\jjaew\\Project\\master_mvp\\.venv\\Scripts\\python.exe"
+VIRTUAL_ENV = "C:\\Users\\jjaew\\Project\\master_mvp\\.venv"
+PYTHONPATH = "C:\\Users\\jjaew\\Project\\master_mvp;C:\\Users\\jjaew\\Project\\master_mvp\\chart_mvp\\src;C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\research_mvp\\src"
+PYTHONUTF8 = "1"
+PYTHONIOENCODING = "utf-8"
+TMP = "C:\\Users\\jjaew\\Project\\master_mvp\\.pytest_tmp\\codex_shell"
+TEMP = "C:\\Users\\jjaew\\Project\\master_mvp\\.pytest_tmp\\codex_shell"
+PYTEST_DEBUG_TEMPROOT = "C:\\Users\\jjaew\\Project\\master_mvp\\.pytest_tmp\\codex_shell"
+
+[[skills.config]]
+path = ".agents/skills/workspace-python-env"
+enabled = true

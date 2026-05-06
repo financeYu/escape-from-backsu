@@ -1,0 +1,49 @@
+{
+  "activation_gate_ref": "docs/extension/v0_3_production_activation_decision_gate.md",
+  "blocked_or_excluded_reason_counts": {
+    "missing_candidate_level_evidence": 636
+  },
+  "blocked_or_excluded_selector_row_count": 636,
+  "generated_at_utc": "2026-05-06T14:05:03+00:00",
+  "generic_proxy_policy": "generic_momentum_proxy_is_benchmark_reference_context_only",
+  "no_feedback_check": "adoption_candidate_review_packets_must_not_feed_runtime_ranking_trading_or_auto_activation",
+  "required_packet_fields": [
+    "schema_version",
+    "adoption_candidate_id",
+    "candidate_id",
+    "candidate_version",
+    "source_evidence_id",
+    "selector_version",
+    "selector_run_id",
+    "selector_input_refs",
+    "selector_score_source",
+    "selector_score",
+    "selector_score_candidate",
+    "selector_rank",
+    "relative_review_rank",
+    "review_priority",
+    "confidence",
+    "reason_codes",
+    "evidence_summary",
+    "benchmark_or_proxy_reference_summary",
+    "risk_summary",
+    "limitation_summary",
+    "limitations",
+    "blocked_or_excluded_reason",
+    "required_review",
+    "status",
+    "no_feedback_check",
+    "activation_gate_ref",
+    "production_boundary_check"
+  ],
+  "review_packet_count": 62,
+  "run_id": "relabel_current_adoption_packets_20260506",
+  "schema_version": "v0_3_adoption_candidate_review_packet_manifest_0_1",
+  "selection_status": "adoption_candidate_review_packets_available",
+  "selector_input_ref": "Quant_mvp\\data\\v0_3\\rule_first_selector\\v0_3_rule_first_selector.jsonl",
+  "selector_row_count": 698,
+  "selector_score_source_counts": {
+    "rule_only": 62
+  },
+  "supervised_ml_limitation_policy": "rule_only_packets_record_ml_blocked_or_absent_in_limitation_summary"
+}

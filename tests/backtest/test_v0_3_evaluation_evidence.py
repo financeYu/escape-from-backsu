@@ -107,6 +107,34 @@ def write_daily_price_csv(path: Path, dates: pd.DatetimeIndex) -> None:
     )
 
 
+def write_daily_price_csv_with_zero_ohlcv_row(path: Path) -> None:
+    dates = pd.bdate_range("2026-01-02", periods=46)
+    rows = ["2026-01-02,100,0,0,0,0,0"]
+    rows.extend(
+        f"{date.date().isoformat()},{100 + index * 2},0,{99 + index * 2},"
+        f"{101 + index * 2},{98 + index * 2},1000"
+        for index, date in enumerate(dates[1:])
+    )
+    path.write_text(
+        "date,close,change,open,high,low,volume\n" + "\n".join(rows) + "\n",
+        encoding="utf-8-sig",
+    )
+
+
+def write_daily_price_csv_with_duplicate_row(path: Path) -> None:
+    dates = pd.bdate_range("2026-01-02", periods=45)
+    rows = [
+        f"{date.date().isoformat()},{100 + index * 2},0,{99 + index * 2},"
+        f"{101 + index * 2},{98 + index * 2},1000"
+        for index, date in enumerate(dates)
+    ]
+    rows.insert(1, rows[0])
+    path.write_text(
+        "date,close,change,open,high,low,volume\n" + "\n".join(rows) + "\n",
+        encoding="utf-8-sig",
+    )
+
+
 def read_evidence_payload(path: Path) -> dict[str, object]:
     text = path.read_text(encoding="utf-8")
     payload = text.split("```json", 1)[1].split("```", 1)[0]
@@ -425,8 +453,8 @@ def test_momentum_cohort_runner_writes_actual_evidence_packets(tmp_path: Path) -
         json.dumps({"strategy_candidate": candidate(candidate_id="sc_v0_3_a")}, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    prices_dir = tmp_path / "prices"
-    prices_dir.mkdir()
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
     price_path = prices_dir / "005930_daily_prices.csv"
     price_path.write_text(
         "날짜,종가,전일비,시가,고가,저가,거래량\n"
@@ -460,6 +488,215 @@ def test_momentum_cohort_runner_writes_actual_evidence_packets(tmp_path: Path) -
     assert '"metric_summary"' in packet_text
 
 
+def test_momentum_cohort_runner_dry_run_reports_actual_evidence_without_writing(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps({"strategy_candidate": candidate(candidate_id="sc_v0_3_dry_run")}, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
+    write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2026-01-02", periods=45))
+
+    result = run_cohort.dry_run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=1,
+        project_root=tmp_path,
+    )
+
+    assert result["mode"] == "dry_run"
+    assert result["output_written"] is False
+    assert "does_not_auto_adjust" in result["adjustment_boundary"]
+    assert "approved owner-lane execution" in result["next_evaluation_condition"]
+    assert result["advisory"] == "dry_run_only_no_evidence_file_written"
+    assert result["candidate_count"] == 1
+    assert result["recorded_count"] == 1
+    assert result["blocked_count"] == 0
+    assert result["evidence_status_counts"] == {"evidence_recorded": 1}
+    assert result["candidate_summaries"][0]["valid_security_count"] > 0
+    preflight = result["candidate_summaries"][0]["preflight"]
+    assert preflight["effective_max_date_inputs"]["test_period_end"] is None
+    assert preflight["effective_max_date_inputs"]["auto_adjustment"] == "not_performed_requires_explicit_approval"
+    assert preflight["next_evaluation_condition"] == "ready_for_approved_actual_run_with_existing_candidate_period"
+    assert preflight["advisory"] == "dry_run_only_no_evidence_file_written"
+    assert preflight["coverage_status"] == "candidate_price_coverage_ready_for_actual_run"
+    assert preflight["required_rows_per_ticker"] == 42
+    assert preflight["tickers_meeting_required_rows"] == 1
+    assert result["price_coverage"]["ticker_count"] == 1
+    assert not (tmp_path / "Quant_mvp" / "backtest_mvp").exists()
+
+
+def test_momentum_cohort_runner_dry_run_excludes_zero_ohlcv_rows_without_writing(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps({"strategy_candidate": candidate(candidate_id="sc_v0_3_zero_ohlcv")}, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
+    write_daily_price_csv_with_zero_ohlcv_row(prices_dir / "005930_daily_prices.csv")
+
+    result = run_cohort.dry_run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=1,
+        project_root=tmp_path,
+    )
+
+    assert result["recorded_count"] == 1
+    assert result["blocked_count"] == 0
+    assert result["raw_price_row_count"] == 46
+    assert result["price_row_count"] == 45
+    exception_summary = result["zero_ohlcv_exception_summary"]
+    assert exception_summary["excluded_row_count"] == 1
+    assert exception_summary["retained_row_count"] == 45
+    assert exception_summary["affected_ticker_count"] == 1
+    assert exception_summary["field_counts"] == {
+        "open": 1,
+        "high": 1,
+        "low": 1,
+        "volume": 1,
+    }
+    assert "suspended_or_delisted_like_price_rows" in exception_summary["policy"]
+    assert (
+        result["candidate_summaries"][0]["preflight"]["zero_ohlcv_exception_summary"]["excluded_row_count"]
+        == 1
+    )
+    assert not (tmp_path / "Quant_mvp" / "backtest_mvp").exists()
+
+
+def test_momentum_cohort_runner_dry_run_collapses_identical_duplicate_rows(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps({"strategy_candidate": candidate(candidate_id="sc_v0_3_duplicate_price")}, ensure_ascii=False)
+        + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
+    write_daily_price_csv_with_duplicate_row(prices_dir / "005930_daily_prices.csv")
+
+    result = run_cohort.dry_run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=1,
+        project_root=tmp_path,
+    )
+
+    assert result["recorded_count"] == 1
+    assert result["blocked_count"] == 0
+    assert result["zero_ohlcv_retained_row_count"] == 46
+    assert result["price_row_count"] == 45
+    duplicate_summary = result["duplicate_ticker_date_exception_summary"]
+    assert duplicate_summary["duplicate_row_count"] == 2
+    assert duplicate_summary["duplicate_pair_count"] == 1
+    assert duplicate_summary["redundant_row_count"] == 1
+    assert duplicate_summary["conflicting_duplicate_pair_count"] == 0
+    assert (
+        result["candidate_summaries"][0]["preflight"]["duplicate_ticker_date_exception_summary"][
+            "redundant_row_count"
+        ]
+        == 1
+    )
+    assert not (tmp_path / "Quant_mvp" / "backtest_mvp").exists()
+
+
+def test_momentum_cohort_runner_writes_zero_ohlcv_exception_summary(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps({"strategy_candidate": candidate(candidate_id="sc_v0_3_zero_ohlcv_actual")}, ensure_ascii=False)
+        + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
+    write_daily_price_csv_with_zero_ohlcv_row(prices_dir / "005930_daily_prices.csv")
+    output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_zero_ohlcv")
+
+    result = run_cohort.run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        output_dir=output_dir,
+        project_root=tmp_path,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=1,
+    )
+
+    assert result["candidate_count"] == 1
+    assert result["raw_price_row_count"] == 46
+    assert result["price_row_count"] == 45
+    manifest = json.loads((tmp_path / output_dir / "manifest.json").read_text(encoding="utf-8"))
+    assert manifest["zero_ohlcv_exception_summary"]["excluded_row_count"] == 1
+    payload = read_evidence_payload(next((tmp_path / output_dir).glob("ee_v0_3_*.md")))
+    assert payload["zero_ohlcv_exception_summary"]["excluded_row_count"] == 1
+    assert "suspended_or_delisted_like_price_rows_excluded" in payload["known_limitations"]
+
+
+def test_momentum_cohort_runner_dry_run_reports_missing_price_inputs_without_writing(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps({"strategy_candidate": candidate(candidate_id="sc_v0_3_missing_prices")}, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+
+    result = run_cohort.dry_run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=1,
+        project_root=tmp_path,
+    )
+
+    assert result["mode"] == "dry_run"
+    assert result["output_written"] is False
+    assert result["candidate_count"] == 1
+    assert result["recorded_count"] == 0
+    assert result["blocked_count"] == 1
+    assert result["price_input_status"] == "blocked_no_local_price_rows"
+    assert "no daily price rows found" in result["price_input_blocker"]
+    assert result["price_coverage"] == {
+        "row_count": 0,
+        "ticker_count": 0,
+        "date_start": None,
+        "date_end": None,
+    }
+    assert result["blocked_candidates"][0]["candidate_id"] == "sc_v0_3_missing_prices"
+    assert result["blocked_candidates"][0]["status"] == "blocked_for_actual_label"
+    assert result["blocked_candidates"][0]["preflight"]["coverage_status"] == "blocked_no_candidate_price_rows"
+    assert not (tmp_path / "Quant_mvp" / "backtest_mvp").exists()
+
+
+def test_momentum_cohort_runner_rejects_non_quant_price_dir(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps({"strategy_candidate": candidate(candidate_id="sc_v0_3_external_prices")}, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "chart_mvp" / "data"
+    prices_dir.mkdir(parents=True)
+    write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2026-01-02", periods=45))
+
+    with pytest.raises(ValueError, match="price inputs must stay under Quant_mvp"):
+        run_cohort.dry_run_momentum_evaluation_evidence_cohort(
+            registry=registry_path,
+            prices_dir=prices_dir,
+            cohort_id="test_momentum",
+            created_at="2026-05-06",
+            expected_count=1,
+            project_root=tmp_path,
+        )
+
+
 def test_momentum_cohort_runner_caps_actual_run_to_candidate_test_period(tmp_path: Path) -> None:
     registry_path = tmp_path / "registry.jsonl"
     registry_path.write_text(
@@ -475,8 +712,8 @@ def test_momentum_cohort_runner_caps_actual_run_to_candidate_test_period(tmp_pat
         + "\n",
         encoding="utf-8",
     )
-    prices_dir = tmp_path / "prices"
-    prices_dir.mkdir()
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
     write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2025-09-01", periods=130))
     output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_window_capped")
 
@@ -507,8 +744,8 @@ def test_momentum_cohort_runner_marks_shared_rule_proxy_not_supervised(tmp_path:
         "\n".join(json.dumps(record, ensure_ascii=False) for record in records) + "\n",
         encoding="utf-8",
     )
-    prices_dir = tmp_path / "prices"
-    prices_dir.mkdir()
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
     write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2026-01-02", periods=60))
     output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_shared_proxy")
 
@@ -545,8 +782,8 @@ def test_momentum_cohort_runner_rejects_invalidated_actual_label_packets(tmp_pat
         + "\n",
         encoding="utf-8",
     )
-    prices_dir = tmp_path / "prices"
-    prices_dir.mkdir()
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
     write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2025-11-27", periods=24))
     output_dir = Path("Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/test_invalidated_guard")
 
@@ -562,3 +799,56 @@ def test_momentum_cohort_runner_rejects_invalidated_actual_label_packets(tmp_pat
         )
 
     assert not (tmp_path / output_dir).exists()
+
+
+def test_momentum_cohort_runner_dry_run_reports_invalidated_without_writing(tmp_path: Path) -> None:
+    registry_path = tmp_path / "registry.jsonl"
+    registry_path.write_text(
+        json.dumps(
+            {
+                "strategy_candidate": candidate(
+                    candidate_id="sc_v0_3_dry_run_invalidated",
+                    test_period="2015-01-01 through 2025-12-31",
+                )
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    prices_dir = tmp_path / "Quant_mvp" / "data" / "v0_3" / "local_price_inputs"
+    prices_dir.mkdir(parents=True)
+    write_daily_price_csv(prices_dir / "005930_daily_prices.csv", pd.bdate_range("2025-11-27", periods=24))
+
+    result = run_cohort.dry_run_momentum_evaluation_evidence_cohort(
+        registry=registry_path,
+        prices_dir=prices_dir,
+        cohort_id="test_momentum",
+        created_at="2026-05-06",
+        expected_count=1,
+        project_root=tmp_path,
+    )
+
+    assert result["mode"] == "dry_run"
+    assert result["output_written"] is False
+    assert "does_not_auto_adjust" in result["adjustment_boundary"]
+    assert "existing StrategyCandidate test_period/effective_max_date" in result["next_evaluation_condition"]
+    assert "Keep blocked candidates contract_only" in result["advisory"]
+    assert result["candidate_count"] == 1
+    assert result["recorded_count"] == 0
+    assert result["blocked_count"] == 1
+    assert result["blocked_candidates"][0]["candidate_id"] == "sc_v0_3_dry_run_invalidated"
+    assert "Keep this candidate contract_only" in result["blocked_candidates"][0]["blocked_reason"]
+    preflight = result["blocked_candidates"][0]["preflight"]
+    assert preflight["effective_max_date"] == "2025-12-31"
+    assert preflight["effective_max_date_inputs"]["test_period_end"] == "2025-12-31"
+    assert preflight["effective_max_date_inputs"]["auto_adjustment"] == "not_performed_requires_explicit_approval"
+    assert preflight["next_evaluation_condition"] == (
+        "existing local prices must provide required rows per ticker before effective_max_date"
+    )
+    assert "Keep blocked candidates contract_only" in preflight["advisory"]
+    assert preflight["coverage_status"] == "blocked_insufficient_rows_per_ticker_for_signal_and_holding_period"
+    assert preflight["required_rows_per_ticker"] == 42
+    assert preflight["max_rows_per_ticker"] == 24
+    assert preflight["tickers_meeting_required_rows"] == 0
+    assert not (tmp_path / "Quant_mvp" / "backtest_mvp").exists()

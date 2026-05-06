@@ -11,7 +11,7 @@ Generated only after an explicit user request with a non-empty request string.
 
 ## Current Request
 
-- Task: GPT context refresh and Codex skill update for current v0.3 route.
+- Task: Refresh GPT context after v0.3 ML selector evidence run: 27 EvaluationEvidence packets are evidence_recorded with metric_summary available; selector label dry-run has 27 label_possible, 27 label_review_preferred=0, 671 null from missing evidence; next decision is whether to add OOS/walk-forward and benchmark comparison evidence.
 - Decision needed: focus on the current request, not old roadmap narration.
 
 ## Do Not Repeat

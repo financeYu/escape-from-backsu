@@ -1,0 +1,110 @@
+schema_version = "v0_3_selector_label_rules_0_1"
+rule_version = "selector_label_rules_2026_05_06_initial"
+rule_owner = "ml_evaluator_selector"
+status = "draft_candidate_only"
+
+[sources]
+strategy_candidate_registry = "Quant_mvp/data/v0_3/strategy_candidates/v0_3_strategy_candidate_registry.jsonl"
+evaluation_evidence_dir = "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence"
+
+[label_schema]
+label_pass_minimum_gate = "nullable integer: 1 pass, 0 clear fail, null insufficient evidence"
+label_review_preferred = "nullable integer: 1 review-preferred, 0 clear fail, null insufficient evidence"
+label_source = "approved_evaluation_evidence_metric_summary or null"
+label_null_reason = "controlled reason when either label remains null"
+
+[eligibility]
+required_evidence_status = "evidence_recorded"
+null_evidence_statuses = ["contract_only", "ready_for_approved_run", "retired"]
+required_metric_summary = true
+null_failure_flags = ["not_yet_run"]
+label_source = "approved_evaluation_evidence_metric_summary"
+
+[metric_rules.total_return_vs_benchmark]
+total_return_path = "metric_summary.total_return"
+benchmark_return_paths = [
+  "metric_summary.benchmark_return",
+  "metric_summary.benchmark_total_return",
+  "performance_metric_summary.benchmark_return",
+  "performance_metric_summary.benchmark_total_return",
+]
+benchmark_relative_return_paths = [
+  "metric_summary.benchmark_relative_return",
+  "performance_metric_summary.benchmark_relative_return",
+]
+operator = ">"
+minimum_relative_return = 0.0
+missing_is_null = true
+
+[metric_rules.sharpe]
+paths = ["metric_summary.sharpe_ratio", "risk_metric_summary.sharpe_ratio"]
+minimum = 0.8
+missing_is_null = true
+
+[metric_rules.max_drawdown]
+paths = ["metric_summary.max_drawdown", "risk_metric_summary.max_drawdown"]
+minimum = -0.15
+missing_is_null = true
+
+[oos_rule]
+paths = [
+  "metric_summary.oos_stability_status",
+  "performance_metric_summary.oos_stability_status",
+  "required_evaluation_checks.oos_walk_forward_stability.status",
+]
+passing_statuses = [
+  "walk_forward_pass",
+  "oos_pass",
+  "recorded_oos_pass",
+  "recorded_walk_forward_pass",
+  "pass",
+  "passed",
+  "stable",
+]
+failing_statuses = [
+  "walk_forward_fail",
+  "oos_fail",
+  "recorded_oos_fail",
+  "recorded_walk_forward_fail",
+  "fail",
+  "failed",
+  "unstable",
+]
+null_statuses = [
+  "not_available",
+  "not_available_single_pass_snapshot",
+  "required_before_adoption_review",
+  "required_before_approved_run",
+  "missing",
+  "",
+]
+missing_is_null = true
+
+[safety_rules]
+blocking_failure_flags = [
+  "lookahead_risk_detected",
+  "point_in_time_unverified",
+  "generated_output_boundary_violation",
+  "no_feedback_boundary_violation",
+  "universe_boundary_violation",
+  "candidate_contract_mismatch",
+  "unsupported_production_activation_claim",
+  "production_connection_detected",
+]
+no_lookahead_paths = [
+  "required_evaluation_checks.no_lookahead.status",
+  "no_lookahead_check",
+  "point_in_time_check",
+]
+no_lookahead_failure_statuses = [
+  "fail",
+  "failed",
+  "failure",
+  "lookahead_risk_detected",
+  "point_in_time_unverified",
+]
+missing_no_lookahead_check_is_null = true
+
+[boundaries]
+no_feedback_check = "selector labels are evidence-only and must not feed runtime scores, rankings, reports, backtests, trading, or auto adoption"
+activation_boundary = "production activation requires a later root-approved gate"

@@ -1,0 +1,36 @@
+{
+  "activation_boundary": "production_activation_requires_later_root_approved_gate",
+  "all_tickers_need_adjusted_close_for_supervised_labels": true,
+  "baseline_required_count": 63,
+  "boundary": "candidate/evidence adjusted-close need triage only; not a trading signal, valuation input, runtime ranking input, or production activation",
+  "candidate_table_kind": "adjusted_close_need_triage",
+  "event_matched_ticker_count": 23,
+  "event_table": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\corporate_action_events.csv",
+  "feature_table": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\kospi200_price_ml_feature_table.csv",
+  "generated_at_utc": "2026-05-06T09:22:00+00:00",
+  "high_priority_count": 141,
+  "high_without_event_count": 118,
+  "medium_priority_count": 115,
+  "medium_without_event_count": 115,
+  "no_feedback_check": "local_price_inputs_must_not_feed_runtime_scores_rankings_reports_trading_or_auto_adoption",
+  "no_lookahead_check": "source_rows_are_historical_daily_bars_keyed_by_observed_trade_date",
+  "official_terms_required_ticker_count": 9,
+  "output_csv": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\adjusted_close_need_candidates.csv",
+  "review_buckets": {
+    "baseline_adjusted_close_needed_for_supervised_labels": 63,
+    "corporate_action_or_source_quality_investigation": 118,
+    "medium_jump_source_quality_review": 115,
+    "official_terms_required_before_adjustment": 9,
+    "simple_factor_adjustment_candidate": 14
+  },
+  "schema_version": "v0_3_adjusted_close_need_candidates_0_2",
+  "simple_factor_candidate_ticker_count": 17,
+  "source_table": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\quant_local_price_source_rows.csv",
+  "supervised_label_ready_tickers": 0,
+  "target_quant_path": "Quant_mvp/data/v0_3/local_price_inputs",
+  "thresholds": {
+    "high": "abs(close_return) >= 30% or abs(open_gap) >= 30%",
+    "medium": "abs(close_return) >= 20% or abs(open_gap) >= 20%"
+  },
+  "unique_tickers": 319
+}

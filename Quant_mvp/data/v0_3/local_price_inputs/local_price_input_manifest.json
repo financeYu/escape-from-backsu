@@ -1,0 +1,61 @@
+{
+  "activation_boundary": "production_activation_requires_later_root_approved_gate",
+  "adjusted_close_need_candidates": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\adjusted_close_need_candidates.csv",
+  "adjusted_close_need_generated_at_utc": "2026-05-06T09:22:00+00:00",
+  "adjusted_close_need_review_buckets": {
+    "baseline_adjusted_close_needed_for_supervised_labels": 63,
+    "corporate_action_or_source_quality_investigation": 118,
+    "medium_jump_source_quality_review": 115,
+    "official_terms_required_before_adjustment": 9,
+    "simple_factor_adjustment_candidate": 14
+  },
+  "adjusted_close_need_summary": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\adjusted_close_need_summary.json",
+  "adjusted_close_need_unique_tickers": 319,
+  "duplicate_ticker_date_rows_removed": 33299,
+  "feature_row_count": 769845,
+  "feature_table": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\kospi200_price_ml_feature_table.csv",
+  "file_count": 319,
+  "generated_at_utc": "2026-05-06T09:13:00+00:00",
+  "input_dir": "data\\historical_kospi200\\prices",
+  "inventory": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\local_price_input_inventory.csv",
+  "master_mvp_context_marker": "master_mvp_ml_useful_processed_price_table",
+  "no_feedback_check": "local_price_inputs_must_not_feed_runtime_scores_rankings_reports_trading_or_auto_adoption",
+  "no_lookahead_check": "source_rows_are_historical_daily_bars_keyed_by_observed_trade_date",
+  "output_dir": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs",
+  "parallel_policy": "forward_shard_and_reverse_shard",
+  "price_files_copied": 119,
+  "price_files_overwritten": 66,
+  "price_files_reused": 134,
+  "readme": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\README.generated.md",
+  "row_boundary": "Quant-local daily price input row for v0.3 candidate/evidence work only; not a production scanner universe, ranking input, trading signal, valuation input, or automatic production activation.",
+  "schema_version": "v0_3_quant_local_price_input_source_rows_0_1",
+  "shards": [
+    {
+      "duplicate_ticker_date_rows_removed": 4088,
+      "feature_path": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\kospi200_price_ml_feature_table_forward.csv",
+      "feature_rows": 410054,
+      "file_count": 160,
+      "price_files_copied": 72,
+      "price_files_overwritten": 47,
+      "price_files_reused": 41,
+      "shard": "forward",
+      "source_path": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\quant_local_price_source_rows_forward.csv",
+      "source_rows": 410054
+    },
+    {
+      "duplicate_ticker_date_rows_removed": 29211,
+      "feature_path": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\kospi200_price_ml_feature_table_reverse.csv",
+      "feature_rows": 359791,
+      "file_count": 159,
+      "price_files_copied": 47,
+      "price_files_overwritten": 19,
+      "price_files_reused": 93,
+      "shard": "reverse",
+      "source_path": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\quant_local_price_source_rows_reverse.csv",
+      "source_rows": 359791
+    }
+  ],
+  "source_row_count": 769845,
+  "source_table": "C:\\Users\\jjaew\\Project\\master_mvp\\Quant_mvp\\data\\v0_3\\local_price_inputs\\quant_local_price_source_rows.csv",
+  "target_quant_path": "Quant_mvp/data/v0_3/local_price_inputs"
+}

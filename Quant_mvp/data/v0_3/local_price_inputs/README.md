@@ -6,6 +6,29 @@ price CSV files used by `Quant_mvp/scripts/run_v0_3_momentum_evaluation_evidence
 These files are local evidence inputs, not source-controlled market data. Keep
 actual `*_daily_prices.csv` files untracked.
 
+The active local build source for this directory is
+`chart_mvp/data/historical_kospi200/prices`. Run
+`chart_mvp/scripts/build_quant_local_price_inputs.py` to synchronize all
+available `*_daily_prices.csv` files into this directory and regenerate the
+aggregate source/feature tables. The builder processes forward and reverse
+shards in parallel, and reuses unchanged existing target files when that is
+faster than copying them again.
+
+Generated aggregate tables in this directory:
+
+- `quant_local_price_source_rows.csv`: normalized OHLCV source rows for every
+  synchronized daily-price file.
+- `kospi200_price_ml_feature_table.csv`: ML-useful processed price features for
+  candidate/evidence review only.
+- `local_price_input_inventory.csv`: synchronized file inventory.
+- `local_price_input_manifest.json`: build counts, boundaries, shard results,
+  and reuse/copy status.
+- `adjusted_close_need_candidates.csv`: ticker-level adjusted-close triage
+  including raw jump/gap priority, corporate-action event match status, and
+  the next review bucket.
+- `adjusted_close_need_summary.json`: compact counts for adjusted-close
+  readiness and remaining investigation buckets.
+
 ## Required File Shape
 
 - File name: `<ticker>_daily_prices.csv`

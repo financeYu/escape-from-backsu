@@ -19,6 +19,9 @@ dev = [
     "matplotlib>=3.7.0",
     "lxml>=4.9.0",
 ]
+ml = [
+    "scikit-learn>=1.8.0",
+]
 
 [tool.setuptools.packages.find]
 include = ["src*", "Quant_mvp*"]

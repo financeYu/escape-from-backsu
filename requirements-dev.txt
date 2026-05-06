@@ -1,3 +1,3 @@
--e .[dev]
+-e .[dev,ml]
 -e ./Quant_mvp/research_mvp
 -r chart_mvp/requirements.txt

@@ -1,12 +1,12 @@
 {
   "allowed_use": "AdoptionCandidate review prioritization only",
-  "blocked_reason": "blocked_missing_ml_dependency",
-  "generated_at_utc": "2026-05-06T15:51:27+00:00",
+  "blocked_reason": null,
+  "generated_at_utc": "2026-05-06T16:15:34+00:00",
   "model_stage": "v0_4_ml_selector_application",
-  "prediction_value_row_count": 0,
+  "prediction_value_row_count": 62,
   "schema_version": "v0_4_selector_score_manifest_v1_0",
-  "scored_candidate_count": 0,
+  "scored_candidate_count": 62,
   "selector_model_version": "v0_4_selector_baseline_v0_1",
-  "selector_score_source": "blocked_train_status",
+  "selector_score_source": "ml_model",
   "trade_signal_claim": "none"
 }

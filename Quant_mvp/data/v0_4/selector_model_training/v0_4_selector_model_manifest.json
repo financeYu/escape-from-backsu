@@ -1,0 +1,24 @@
+{
+  "allowed_use": "AdoptionCandidate review prioritization only",
+  "baseline_model": "logistic_regression",
+  "class_weight": "balanced",
+  "generated_at_utc": "2026-05-06T16:15:30+00:00",
+  "max_iter": 1000,
+  "model_artifact_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_baseline_model.pkl",
+  "model_stage": "v0_4_ml_selector_application",
+  "negative_rows": 37,
+  "positive_rows": 25,
+  "prediction_claim": "none",
+  "schema_version": "v0_4_selector_model_manifest_v1_0",
+  "selector_model_version": "v0_4_selector_baseline_v0_1",
+  "trade_signal_claim": "none",
+  "training_eligible_rows": 62,
+  "training_feature_columns": [
+    "total_return",
+    "excess_return_vs_proxy",
+    "max_drawdown_abs",
+    "sharpe",
+    "turnover",
+    "volatility"
+  ]
+}

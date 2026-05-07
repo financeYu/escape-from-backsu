@@ -28,6 +28,8 @@ DEFAULT_CONFIG = Path("Quant_mvp/config/v0_4_selector_model.toml")
 DEFAULT_TRAINABILITY_MANIFEST = "v0_4_selector_trainability_manifest.json"
 DEFAULT_MODEL_MANIFEST = "v0_4_selector_model_manifest.json"
 DEFAULT_MODEL_ARTIFACT = "v0_4_selector_baseline_model.pkl"
+DEFAULT_RANDOM_FOREST_MODEL_MANIFEST = "v0_4_selector_random_forest_model_manifest.json"
+DEFAULT_RANDOM_FOREST_MODEL_ARTIFACT = "v0_4_selector_random_forest_challenger_model.pkl"
 DEFAULT_LEAKAGE_MANIFEST = "v0_4_selector_leakage_check_manifest.json"
 DEFAULT_COEFFICIENTS_ARTIFACT = "v0_4_selector_logistic_coefficients.json"
 
@@ -98,6 +100,11 @@ BASELINE_WARNINGS = [
 INTERPRETATION_LIMITS = [
     "coefficients are baseline diagnostics only",
     "correlated features may make individual coefficients unstable",
+    "limited training rows prevent strong predictive claims",
+]
+CHALLENGER_INTERPRETATION_LIMITS = [
+    "RandomForest is a nonlinear challenger only",
+    "comparison output is diagnostic-only and does not replace the frozen baseline",
     "limited training rows prevent strong predictive claims",
 ]
 
@@ -469,6 +476,19 @@ def _default_model(config: dict[str, Any]) -> Any:
     )
 
 
+def _default_random_forest_model(config: dict[str, Any]) -> Any:
+    from sklearn.ensemble import RandomForestClassifier
+
+    defaults = config.get("random_forest_defaults", {})
+    return RandomForestClassifier(
+        class_weight=defaults.get("class_weight", "balanced"),
+        max_depth=defaults.get("max_depth", 3),
+        min_samples_leaf=int(defaults.get("min_samples_leaf", 1)),
+        n_estimators=int(defaults.get("n_estimators", 100)),
+        random_state=defaults.get("random_state", 0),
+    )
+
+
 def _coefficient_diagnostics(model: Any, feature_columns: list[str], warnings: list[str]) -> dict[str, Any]:
     coef = getattr(model, "coef_", None)
     intercept = getattr(model, "intercept_", None)
@@ -503,11 +523,73 @@ def _coefficient_diagnostics(model: Any, feature_columns: list[str], warnings: l
     }
 
 
+def _random_forest_model_manifest(
+    *,
+    config: dict[str, Any],
+    train_manifest: dict[str, Any],
+    feature_columns: list[str],
+    training_input_digest: str,
+    output_dir: Path,
+    has_dependency: bool,
+    write_outputs: bool,
+) -> dict[str, Any]:
+    defaults = config.get("random_forest_defaults", {})
+    artifact_ref = project_ref(output_dir / DEFAULT_RANDOM_FOREST_MODEL_ARTIFACT)
+    return {
+        "schema_version": "v0_4_selector_random_forest_model_manifest_v1_0",
+        "selector_model_version": config["selector_model_version"],
+        "model_stage": config["model_stage"],
+        "baseline_model": config["baseline_model"],
+        "frozen_baseline_model": "logistic_regression",
+        "model_role": "nonlinear_challenger",
+        "challenger_only": True,
+        "baseline_replacement": False,
+        "selector_score_source_default_changed": False,
+        "model_type": "random_forest_classifier",
+        "model_family": "random_forest",
+        "model_library": "scikit-learn",
+        "model_library_version": sklearn_version() if has_dependency else None,
+        "generated_at_utc": utc_now(),
+        "created_at": utc_now(),
+        "training_feature_columns": feature_columns,
+        "feature_columns": feature_columns,
+        "feature_column_count": len(feature_columns),
+        "training_row_count": train_manifest["training_eligible_rows"],
+        "training_eligible_rows": train_manifest["training_eligible_rows"],
+        "positive_rows": train_manifest["positive_rows"],
+        "negative_rows": train_manifest["negative_rows"],
+        "label_column": "label_review_preferred",
+        "label_source": "v0_3_selector_feature_matrix.label_review_preferred",
+        "class_weight": defaults.get("class_weight", "balanced"),
+        "max_depth": defaults.get("max_depth", 3),
+        "min_samples_leaf": int(defaults.get("min_samples_leaf", 1)),
+        "n_estimators": int(defaults.get("n_estimators", 100)),
+        "random_state": defaults.get("random_state", 0),
+        "deterministic_training": True,
+        "model_artifact_path": artifact_ref,
+        "artifact_path": artifact_ref,
+        "trainability_manifest_path": str(project_ref(output_dir / DEFAULT_TRAINABILITY_MANIFEST)),
+        "leakage_check_manifest_path": train_manifest["leakage_check_manifest_path"],
+        "has_ml_dependencies": has_dependency,
+        "model_artifact_created": bool(write_outputs),
+        "warnings": list(train_manifest["warnings"]),
+        "performance_claim_allowed": False,
+        "evaluation_mode": "diagnostic_comparison_only",
+        "training_input_digest_sha256": training_input_digest,
+        "feature_matrix_input_digest_sha256": training_input_digest,
+        "allowed_use": train_manifest["allowed_use"],
+        "prediction_claim": train_manifest["prediction_claim"],
+        "trade_signal_claim": train_manifest["trade_signal_claim"],
+        "interpretation_limits": list(CHALLENGER_INTERPRETATION_LIMITS),
+    }
+
+
 def train_selector_baseline(
     *,
     config_path: Path,
     dependency_available: bool | None = None,
     model_factory: Any | None = None,
+    random_forest_model_factory: Any | None = None,
     write_outputs: bool = True,
 ) -> dict[str, Any]:
     config = load_config(config_path)
@@ -546,6 +628,12 @@ def train_selector_baseline(
         train_manifest["model_artifact_created"] = bool(write_outputs)
         train_manifest["coefficient_diagnostics_path"] = str(
             project_ref(output_dir / DEFAULT_COEFFICIENTS_ARTIFACT)
+        )
+        train_manifest["random_forest_challenger_artifact_path"] = str(
+            project_ref(output_dir / DEFAULT_RANDOM_FOREST_MODEL_ARTIFACT)
+        )
+        train_manifest["random_forest_challenger_manifest_path"] = str(
+            project_ref(output_dir / DEFAULT_RANDOM_FOREST_MODEL_MANIFEST)
         )
         training_input_digest = _features_digest(training_rows, feature_columns)
         model_defaults = config.get("model_defaults", {})
@@ -600,6 +688,27 @@ def train_selector_baseline(
                 _coefficient_diagnostics(model, feature_columns, train_manifest["warnings"]),
             )
             write_json(output_dir / DEFAULT_MODEL_MANIFEST, model_manifest)
+        random_forest_model = (
+            random_forest_model_factory(config)
+            if random_forest_model_factory is not None
+            else _default_random_forest_model(config)
+        )
+        random_forest_model.fit(x_values, y_values)
+        if write_outputs:
+            with (output_dir / DEFAULT_RANDOM_FOREST_MODEL_ARTIFACT).open("wb") as handle:
+                pickle.dump(random_forest_model, handle)
+            write_json(
+                output_dir / DEFAULT_RANDOM_FOREST_MODEL_MANIFEST,
+                _random_forest_model_manifest(
+                    config=config,
+                    train_manifest=train_manifest,
+                    feature_columns=feature_columns,
+                    training_input_digest=training_input_digest,
+                    output_dir=output_dir,
+                    has_dependency=has_dependency,
+                    write_outputs=write_outputs,
+                ),
+            )
 
     if write_outputs:
         leakage_manifest = build_leakage_check_manifest(

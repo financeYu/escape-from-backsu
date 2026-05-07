@@ -75,10 +75,48 @@ when correlated features are present.
 - Limited training rows prevent strong predictive claims.
 - High feature correlation limits coefficient interpretation to diagnostics.
 
+## RandomForest Challenger
+
+LogisticRegression remains the frozen v0.4 baseline. RandomForest is added
+only as a nonlinear challenger for diagnostic comparison against the same
+candidate set.
+
+This stage is not model replacement. The default `selector_score_source`
+remains the frozen LogisticRegression baseline path, and any switch in selector
+policy is deferred to a separate approval.
+
+The LR/RF score comparison is a research aid for review prioritization. It is
+diagnostic-only and does not claim RandomForest performance superiority.
+
+## v0.4.1 ML Score Ranking
+
+v0.4.1 adds an extensible ML score ranking/comparison layer. The initial model
+registry compares only:
+
+- `logistic_regression` as the frozen baseline and baseline-relative reference
+- `random_forest` as `nonlinear_challenger`
+
+The ranking artifact is diagnostic-only:
+
+- ranking rows:
+  `Quant_mvp/data/v0_4/selector_scores/v0_4_1_selector_ml_score_ranking.jsonl`
+- ranking manifest:
+  `Quant_mvp/data/v0_4/selector_scores/v0_4_1_selector_ml_score_ranking_manifest.json`
+- evaluation mode: `diagnostic_ranking_only`
+- selector score source unchanged: `true`
+- performance claim allowed: `false`
+- trading signal allowed: `false`
+
+Ranking fields may include model-specific score, rank, availability, and
+baseline-relative delta values. Baseline-relative deltas are anchored to the
+frozen LogisticRegression baseline. They must not change `selector_score`,
+`selector_rank`, runtime ranking, trading behavior, or AdoptionCandidate
+selection/ordering logic.
+
 ## Next Steps
 
-AdoptionCandidate review packet connection is intentionally deferred to a
-separate change. Candidate follow-up work:
+AdoptionCandidate review packets may link the v0.4.1 ranking manifest only as a
+diagnostic reference. Candidate follow-up work:
 
 - connect selector scores to the AdoptionCandidate review packet builder
 - record `selector_score_source=ml_model` at packet level

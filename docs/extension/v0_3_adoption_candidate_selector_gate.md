@@ -71,6 +71,15 @@ The selector may consume only compact, candidate-only evidence summaries:
   - assumptions and transaction-cost assumption
   - historical performance metric summaries
   - risk metric summaries
+  - defensive alternative comparison summary when present:
+    - defensive alternative label, initially `cash_hold`
+    - sustained-decline regime definition summary
+    - decline-regime point-in-time check
+    - defensive comparison metrics
+    - defensive comparison status, limited to `cash_preferred`,
+      `candidate_preferred`, `inconclusive`, `not_applicable`, or
+      `needs_more_evidence`
+    - defensive no-action check
   - failure flags
   - no-lookahead, point-in-time, generated-output, and no-feedback checks
   - limitations and invalidation notes
@@ -166,9 +175,17 @@ Suggested `reason_codes`:
 - `blocked_by_data_availability`
 - `blocked_by_scope_boundary`
 - `invalidated_by_failure_flags`
+- `cash_defensive_alternative_preferred_in_decline_evidence`
+- `candidate_preferred_over_cash_in_decline_evidence`
+- `defensive_alternative_evidence_inconclusive`
 
 Reason codes must describe review status only. They must not encode a future
 performance promise, trading attractiveness, or production readiness.
+
+Defensive-alternative reason codes may summarize whether `cash_hold` was a
+better historical review baseline during predeclared sustained-decline
+windows. They must not recommend selling, moving to cash, allocation changes,
+or runtime de-risking.
 
 ## Adoption Gate vs Activation Gate
 

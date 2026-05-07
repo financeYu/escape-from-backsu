@@ -22,6 +22,10 @@ label_source = "approved_evaluation_evidence_metric_summary"
 
 [metric_rules.total_return_vs_benchmark]
 total_return_path = "metric_summary.total_return"
+total_return_paths = [
+  "metric_summary.total_return",
+  "performance_metric_summary.total_return",
+]
 benchmark_return_paths = [
   "metric_summary.benchmark_return",
   "metric_summary.benchmark_total_return",
@@ -35,6 +39,22 @@ benchmark_relative_return_paths = [
 operator = ">"
 minimum_relative_return = 0.0
 missing_is_null = true
+
+[metric_rules.total_return_vs_benchmark.benchmark_cost_profile]
+enabled = true
+profile_id = "kospi_product_purchase_cost_v1"
+market = "KOSPI"
+instrument_type = "kospi_product"
+cost_application = "subtract_from_benchmark_return"
+relative_return_cost_adjustment_policy = "adjust_only_when_benchmark_return_available"
+note = "Configurable benchmark cost profile for evidence-only ML scoring inside the approved KOSPI boundary. Future market expansion requires separate approval."
+
+[[metric_rules.total_return_vs_benchmark.benchmark_cost_profile.cost_items]]
+name = "transfer_tax"
+rate = 0.002
+basis = "purchase_notional"
+timing = "purchase"
+included_in_benchmark_scoring = true
 
 [metric_rules.sharpe]
 paths = ["metric_summary.sharpe_ratio", "risk_metric_summary.sharpe_ratio"]

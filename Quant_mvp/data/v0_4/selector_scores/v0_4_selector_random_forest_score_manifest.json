@@ -1,0 +1,30 @@
+{
+  "allowed_use": "AdoptionCandidate review prioritization only",
+  "baseline_replacement": false,
+  "blocked_reason": null,
+  "challenger_only": true,
+  "evaluation_mode": "diagnostic_comparison_only",
+  "fallback_reason": null,
+  "fallback_used": false,
+  "generated_at": "2026-05-07T02:55:51+00:00",
+  "generated_at_utc": "2026-05-07T02:55:51+00:00",
+  "model_artifact_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_random_forest_challenger_model.pkl",
+  "model_manifest_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_random_forest_model_manifest.json",
+  "model_role": "nonlinear_challenger",
+  "model_stage": "v0_4_ml_selector_application",
+  "performance_claim_allowed": false,
+  "prediction_value_row_count": 62,
+  "schema_version": "v0_4_selector_random_forest_score_manifest_v1_0",
+  "score_rows_path": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_selector_random_forest_scores.jsonl",
+  "scored_candidate_count": 62,
+  "scorer_version": "v0_4_selector_scorer_v1_0",
+  "selector_model_version": "v0_4_selector_baseline_v0_1",
+  "selector_score_source": "random_forest_challenger",
+  "selector_score_source_default_changed": false,
+  "trade_signal_claim": "none",
+  "trainability_manifest_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_trainability_manifest.json",
+  "warnings": [
+    "limited_insufficient_training_rows",
+    "high_feature_correlation_warning"
+  ]
+}

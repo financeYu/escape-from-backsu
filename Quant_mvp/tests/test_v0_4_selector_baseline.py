@@ -51,6 +51,37 @@ class FakeLogisticRegression:
         return [[0.4, 0.6] for _ in x_values]
 
 
+class FakeLogisticRanker(FakeLogisticRegression):
+    def predict_proba(self, x_values: list[list[float]]) -> list[list[float]]:
+        assert self.fitted
+        values: list[list[float]] = []
+        for features in x_values:
+            probability = 0.8 if features[0] < 0.1 else 0.2
+            values.append([1.0 - probability, probability])
+        return values
+
+
+class FakeRandomForestClassifier:
+    classes_ = [0, 1]
+
+    def __init__(self) -> None:
+        self.fitted = False
+
+    def fit(self, x_values: list[list[float]], y_values: list[int]) -> "FakeRandomForestClassifier":
+        assert len(x_values) == len(y_values)
+        assert {0, 1} <= set(y_values)
+        self.fitted = True
+        return self
+
+    def predict_proba(self, x_values: list[list[float]]) -> list[list[float]]:
+        assert self.fitted
+        values: list[list[float]] = []
+        for features in x_values:
+            probability = 0.8 if features[0] >= 0.1 else 0.3
+            values.append([1.0 - probability, probability])
+        return values
+
+
 def make_row(
     candidate_id: str,
     label: int | None,
@@ -167,6 +198,13 @@ solver = "lbfgs"
 limited_training_rows_threshold = 100
 high_feature_correlation_threshold = 0.95
 
+[random_forest_defaults]
+class_weight = "balanced"
+max_depth = 3
+min_samples_leaf = 1
+n_estimators = 100
+random_state = 0
+
 [boundaries]
 allowed_use = "AdoptionCandidate review prioritization only"
 prediction_claim = "none"
@@ -179,6 +217,14 @@ trade_signal_claim = "none"
 
 def fake_model_factory(_config: dict[str, object]) -> FakeLogisticRegression:
     return FakeLogisticRegression()
+
+
+def fake_logistic_ranker_factory(_config: dict[str, object]) -> FakeLogisticRanker:
+    return FakeLogisticRanker()
+
+
+def fake_random_forest_factory(_config: dict[str, object]) -> FakeRandomForestClassifier:
+    return FakeRandomForestClassifier()
 
 
 def test_positive_zero_blocks_training(tmp_path: Path) -> None:
@@ -674,3 +720,315 @@ def test_v0_4_selector_logistic_coefficients_artifact_records_diagnostics(tmp_pa
     assert len(coefficients["coefficients"]) == len(FEATURES)
     assert "high_feature_correlation_warning" in coefficients["warnings"]
     assert "limited training rows prevent strong predictive claims" in coefficients["interpretation_limits"]
+
+
+def test_v0_4_random_forest_manifest_records_challenger_metadata(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+
+    model_manifest = json.loads(
+        (train_dir / trainer.DEFAULT_RANDOM_FOREST_MODEL_MANIFEST).read_text(encoding="utf-8")
+    )
+    assert model_manifest["model_type"] == "random_forest_classifier"
+    assert model_manifest["model_family"] == "random_forest"
+    assert model_manifest["model_role"] == "nonlinear_challenger"
+    assert model_manifest["challenger_only"] is True
+    assert model_manifest["baseline_replacement"] is False
+    assert model_manifest["frozen_baseline_model"] == "logistic_regression"
+    assert model_manifest["n_estimators"] == 100
+    assert model_manifest["max_depth"] == 3
+    assert model_manifest["random_state"] == 0
+    assert "limited_insufficient_training_rows" in model_manifest["warnings"]
+    assert model_manifest["evaluation_mode"] == "diagnostic_comparison_only"
+
+
+def test_v0_4_random_forest_score_rows_link_to_candidates(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+
+    score_manifest = scorer.score_random_forest_candidates(config_path=config_path)
+    score_rows_path = trainer.resolve_path(score_manifest["score_rows_path"])
+    score_rows = [json.loads(line) for line in score_rows_path.read_text(encoding="utf-8").splitlines()]
+
+    assert score_manifest["selector_score_source"] == "random_forest_challenger"
+    assert score_manifest["scored_candidate_count"] == 2
+    assert score_manifest["prediction_value_row_count"] == 2
+    assert {row["candidate_id"] for row in score_rows} == {"p1", "n1"}
+    assert {row["selector_score_source"] for row in score_rows} == {"random_forest_challenger"}
+    assert all(row["random_forest_prediction_value"] == row["prediction_value"] for row in score_rows)
+
+
+def test_v0_4_lr_rf_comparison_aligns_rows_and_calculates_deltas(tmp_path: Path) -> None:
+    rows = [
+        make_row("high_candidate", 1, total_return=0.2),
+        make_row("low_candidate", 0, total_return=0.05),
+    ]
+    config_path, _ = config_payload(tmp_path, rows)
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_logistic_ranker_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+    scorer.score_candidates(config_path=config_path)
+    scorer.score_random_forest_candidates(config_path=config_path)
+
+    comparison_manifest = scorer.compare_logistic_regression_random_forest_scores(config_path=config_path)
+    comparison_rows_path = trainer.resolve_path(comparison_manifest["comparison_rows_path"])
+    comparison_rows = [json.loads(line) for line in comparison_rows_path.read_text(encoding="utf-8").splitlines()]
+    by_candidate = {row["candidate_id"]: row for row in comparison_rows}
+
+    assert comparison_manifest["summary"]["compared_candidate_count"] == 2
+    assert set(by_candidate) == {"high_candidate", "low_candidate"}
+    assert by_candidate["high_candidate"]["logistic_regression_prediction_value"] == 0.2
+    assert by_candidate["high_candidate"]["random_forest_prediction_value"] == 0.8
+    assert by_candidate["high_candidate"]["score_delta"] == 0.6000000000000001
+    assert by_candidate["high_candidate"]["score_rank_lr"] == 2
+    assert by_candidate["high_candidate"]["score_rank_rf"] == 1
+    assert by_candidate["high_candidate"]["rank_delta"] == -1
+    assert round(comparison_manifest["summary"]["mean_abs_score_delta"], 2) == 0.55
+    assert comparison_manifest["summary"]["max_abs_score_delta"] == 0.6000000000000001
+    assert comparison_manifest["summary"]["top_n_overlap"] == 2
+    assert comparison_manifest["ranking_manifest_path"].endswith(scorer.DEFAULT_RANKING_MANIFEST)
+    assert comparison_manifest["summary"]["ranking_top_k_overlap"]["5"]["random_forest"]["overlap_count"] == 2
+
+
+def test_v0_4_comparison_summary_is_diagnostic_only_and_policy_unchanged(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+    lr_manifest = scorer.score_candidates(config_path=config_path)
+    rf_manifest = scorer.score_random_forest_candidates(config_path=config_path)
+    comparison_manifest = scorer.compare_logistic_regression_random_forest_scores(config_path=config_path)
+
+    assert lr_manifest["selector_score_source"] == "ml_model"
+    assert rf_manifest["selector_score_source"] == "random_forest_challenger"
+    assert comparison_manifest["baseline_replacement"] is False
+    assert comparison_manifest["selector_score_source_default_changed"] is False
+    assert comparison_manifest["performance_claim_allowed"] is False
+    assert comparison_manifest["trading_signal_allowed"] is False
+    assert comparison_manifest["adoption_auto_decision_allowed"] is False
+    assert comparison_manifest["diagnostic_reference_only"] is True
+    assert comparison_manifest["evaluation_mode"] == "diagnostic_comparison_only"
+    assert "limited_insufficient_training_rows" in comparison_manifest["warnings"]
+
+
+def test_v0_4_1_ml_score_ranking_manifest_is_diagnostic_only(tmp_path: Path) -> None:
+    rows = [
+        make_row("high_candidate", 1, total_return=0.2),
+        make_row("low_candidate", 0, total_return=0.05),
+    ]
+    config_path, _ = config_payload(tmp_path, rows)
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_logistic_ranker_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+    scorer.score_candidates(config_path=config_path)
+    scorer.score_random_forest_candidates(config_path=config_path)
+
+    ranking_manifest = scorer.build_ml_score_ranking(config_path=config_path)
+
+    assert ranking_manifest["evaluation_mode"] == "diagnostic_ranking_only"
+    assert ranking_manifest["baseline_model_id"] == "logistic_regression"
+    assert ranking_manifest["compared_model_ids"] == ["logistic_regression", "random_forest"]
+    assert ranking_manifest["candidate_count"] == 2
+    assert ranking_manifest["per_model_score_available_count"] == {
+        "logistic_regression": 2,
+        "random_forest": 2,
+    }
+    assert ranking_manifest["ranking_schema_version"] == scorer.RANKING_SCHEMA_VERSION
+    assert ranking_manifest["selector_score_source_unchanged"] is True
+    assert ranking_manifest["performance_claim_allowed"] is False
+    assert ranking_manifest["trading_signal_allowed"] is False
+    assert ranking_manifest["adoption_auto_decision_allowed"] is False
+
+
+def test_v0_4_1_ml_score_ranking_rows_keep_baseline_relative_fields(tmp_path: Path) -> None:
+    rows = [
+        make_row("high_candidate", 1, total_return=0.2),
+        make_row("low_candidate", 0, total_return=0.05),
+    ]
+    config_path, _ = config_payload(tmp_path, rows)
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_logistic_ranker_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+    scorer.score_candidates(config_path=config_path)
+    scorer.score_random_forest_candidates(config_path=config_path)
+
+    ranking_manifest = scorer.build_ml_score_ranking(config_path=config_path)
+    ranking_rows_path = trainer.resolve_path(ranking_manifest["ranking_rows_path"])
+    ranking_rows = [json.loads(line) for line in ranking_rows_path.read_text(encoding="utf-8").splitlines()]
+    by_candidate = {row["candidate_id"]: row for row in ranking_rows}
+
+    high = by_candidate["high_candidate"]
+    assert high["logistic_regression_score"] == 0.2
+    assert high["random_forest_score"] == 0.8
+    assert high["logistic_regression_rank"] == 2
+    assert high["random_forest_rank"] == 1
+    assert high["random_forest_score_delta_vs_logistic_regression"] == 0.6000000000000001
+    assert high["random_forest_rank_delta_vs_logistic_regression"] == -1
+    assert high["baseline_model_id"] == "logistic_regression"
+    assert high["selector_score_source_unchanged"] is True
+    assert high["evaluation_mode"] == "diagnostic_ranking_only"
+
+
+def test_v0_4_1_ml_score_ranking_uses_same_candidate_set(tmp_path: Path) -> None:
+    rows = [
+        make_row("high_candidate", 1, total_return=0.2),
+        make_row("low_candidate", 0, total_return=0.05),
+    ]
+    config_path, _ = config_payload(tmp_path, rows)
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_logistic_ranker_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+    scorer.score_candidates(config_path=config_path)
+    rf_manifest = scorer.score_random_forest_candidates(config_path=config_path)
+    rf_rows_path = trainer.resolve_path(rf_manifest["score_rows_path"])
+    rf_rows = [
+        json.loads(line)
+        for line in rf_rows_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    write_jsonl(
+        rf_rows_path,
+        [row for row in rf_rows if row["candidate_id"] == "high_candidate"],
+    )
+
+    ranking_manifest = scorer.build_ml_score_ranking(config_path=config_path)
+    ranking_rows_path = trainer.resolve_path(ranking_manifest["ranking_rows_path"])
+    ranking_rows = [json.loads(line) for line in ranking_rows_path.read_text(encoding="utf-8").splitlines()]
+
+    assert ranking_manifest["candidate_set_policy"] == "same_candidate_set_intersection_of_compared_model_scores"
+    assert ranking_manifest["all_scored_candidate_count"] == 2
+    assert ranking_manifest["candidate_count"] == 1
+    assert ranking_manifest["per_model_score_available_count"] == {
+        "logistic_regression": 2,
+        "random_forest": 1,
+    }
+    assert ranking_manifest["per_model_score_missing_from_same_set_count"] == {
+        "logistic_regression": 0,
+        "random_forest": 1,
+    }
+    assert ranking_manifest["per_model_score_excluded_from_ranking_count"] == {
+        "logistic_regression": 1,
+        "random_forest": 0,
+    }
+    assert [row["candidate_id"] for row in ranking_rows] == ["high_candidate"]
+    assert ranking_rows[0]["logistic_regression_available"] is True
+    assert ranking_rows[0]["random_forest_available"] is True
+
+
+def test_v0_4_lr_rf_comparison_top_n_uses_same_candidate_set(tmp_path: Path) -> None:
+    rows = [
+        make_row("high_candidate", 1, total_return=0.2),
+        make_row("low_candidate", 0, total_return=0.05),
+    ]
+    config_path, _ = config_payload(tmp_path, rows)
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_logistic_ranker_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+    scorer.score_candidates(config_path=config_path)
+    rf_manifest = scorer.score_random_forest_candidates(config_path=config_path)
+    rf_rows_path = trainer.resolve_path(rf_manifest["score_rows_path"])
+    rf_rows = [
+        json.loads(line)
+        for line in rf_rows_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    write_jsonl(
+        rf_rows_path,
+        [row for row in rf_rows if row["candidate_id"] == "high_candidate"],
+    )
+
+    comparison_manifest = scorer.compare_logistic_regression_random_forest_scores(config_path=config_path)
+
+    assert comparison_manifest["summary"]["compared_candidate_count"] == 1
+    assert comparison_manifest["summary"]["lr_score_available_count"] == 2
+    assert comparison_manifest["summary"]["rf_score_available_count"] == 1
+    assert comparison_manifest["summary"]["top_n_overlap"] == 1
+    assert comparison_manifest["summary"]["top_n_overlap_ratio"] == 1.0
+
+
+def test_v0_4_random_forest_reuses_leakage_guard(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(
+        tmp_path,
+        [
+            make_row("p1", 1, extra_feature_values={"selector_score": 0.9}),
+            make_row("n1", 0),
+        ],
+    )
+
+    manifest = trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+
+    assert manifest["train_status"] == "blocked_label_leakage_columns_found"
+    assert not (train_dir / trainer.DEFAULT_RANDOM_FOREST_MODEL_MANIFEST).exists()
+    assert not (train_dir / trainer.DEFAULT_RANDOM_FOREST_MODEL_ARTIFACT).exists()
+
+
+def test_v0_4_random_forest_scorer_blocks_when_artifact_missing(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+    (train_dir / trainer.DEFAULT_RANDOM_FOREST_MODEL_ARTIFACT).unlink()
+
+    score_manifest = scorer.score_random_forest_candidates(config_path=config_path)
+
+    assert score_manifest["selector_score_source"] == "random_forest_challenger_blocked"
+    assert score_manifest["blocked_reason"] == "random_forest_model_artifact_missing"
+    assert score_manifest["fallback_used"] is False
+    assert score_manifest["prediction_value_row_count"] == 0
+
+
+def test_v0_4_random_forest_scorer_blocks_on_manifest_mismatch(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+        random_forest_model_factory=fake_random_forest_factory,
+    )
+    model_manifest_path = train_dir / trainer.DEFAULT_RANDOM_FOREST_MODEL_MANIFEST
+    model_manifest = json.loads(model_manifest_path.read_text(encoding="utf-8"))
+    model_manifest["model_family"] = "logistic_regression"
+    write_json(model_manifest_path, model_manifest)
+
+    score_manifest = scorer.score_random_forest_candidates(config_path=config_path)
+
+    assert score_manifest["selector_score_source"] == "random_forest_challenger_blocked"
+    assert score_manifest["blocked_reason"] == "random_forest_model_manifest_mismatch"
+    assert "model_family_mismatch" in score_manifest["model_manifest_mismatch_reasons"]

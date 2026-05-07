@@ -101,6 +101,35 @@ Required evaluation design fields:
 - `evaluation_method_ref`: path to later approved runner/schema contract.
 - `generated_output_boundary`: generated output path and retention rule.
 
+Required defensive-alternative fields when the evaluation asks whether a
+defensive alternative is preferable during sustained price declines:
+
+- `defensive_alternative`: first supported value is `cash_hold`; later
+  alternatives require a separate scope lock and approval.
+- `defensive_alternative_assumption`: how cash holding is represented. The
+  default is `cash_hold_zero_nominal_return` unless a separately approved,
+  documented cash-return proxy is available without new data-ingestion
+  assumptions.
+- `decline_regime_definition`: predeclared sustained-decline rule, window
+  construction, and benchmark or candidate price series used for regime
+  labeling.
+- `decline_regime_point_in_time_check`: confirms decline windows are labeled
+  for evaluation evidence only and do not use future information to trigger
+  runtime action.
+- `defensive_comparison_question`: evidence-only question, for example whether
+  `cash_hold` preserved capital better than the evaluated candidate during
+  predeclared sustained-decline windows.
+- `defensive_comparison_metrics`: predeclared metrics such as decline-window
+  return difference versus cash, max drawdown difference, volatility
+  difference, downside capture, recovery time, exposure stability, and
+  opportunity-cost notes.
+- `defensive_comparison_status`: one of `cash_preferred`,
+  `candidate_preferred`, `inconclusive`, `not_applicable`, or
+  `needs_more_evidence`.
+- `defensive_no_action_check`: confirms that a cash-preferred result is a
+  review finding only, not a sell instruction, allocation instruction, runtime
+  signal, or production activation trigger.
+
 Required safety check fields:
 
 - `no_lookahead_check`: how the evidence avoids future data.
@@ -122,9 +151,64 @@ Optional evidence fields after a separately approved run:
 - `risk_metric_summary_path`
 - `performance_metric_summary_path`
 - `comparison_report_path`
+- `defensive_alternative_summary_path`
 - `known_limitations`
 - `review_notes`
 - `invalidation_reason`
+
+## Defensive Alternative Evaluation Frame
+
+The first defensive alternative for sustained-decline review is `cash_hold`.
+It exists only as an evaluation baseline for deciding whether a strategy
+candidate's historical evidence was preferable to staying uninvested during
+predeclared decline regimes.
+
+This frame may answer one of three review questions:
+
+- `cash_preferred`: the evidence says cash holding was historically better
+  than the candidate during the defined decline windows.
+- `candidate_preferred`: the evidence says the candidate was historically
+  better than cash holding during the defined decline windows.
+- `inconclusive`: the evidence does not support either conclusion because the
+  decline regime, metric coverage, no-lookahead checks, or sample size is
+  insufficient.
+
+The frame must not answer operational questions such as whether to sell,
+de-risk, rebalance, or move to cash in production. Any result remains
+EvaluationEvidence-only and may only feed allowlisted `AdoptionCandidate` review
+summaries.
+
+Predeclared decline regime rules should document:
+
+- the measured series, for example candidate equity curve or KOSPI200
+  benchmark within the approved universe boundary
+- the sustained-decline threshold and minimum duration
+- whether overlapping decline windows are merged or separated
+- how window start and end dates are identified without runtime feedback
+- how incomplete or data-gap windows are flagged
+
+Suggested defensive comparison metrics:
+
+- `decline_window_return_minus_cash`: candidate return minus cash return in
+  each decline window
+- `decline_window_hit_rate_vs_cash`: share of decline windows where the
+  candidate outperformed cash
+- `max_drawdown_difference_vs_cash`: candidate max drawdown minus cash
+  drawdown in the same windows
+- `volatility_difference_vs_cash`: candidate volatility minus cash volatility
+- `downside_capture_vs_benchmark`: candidate downside capture relative to the
+  approved benchmark during decline windows
+- `recovery_time_after_decline`: days or periods needed to recover after each
+  decline window
+- `exposure_stability`: whether candidate exposure was stable, reduced, or
+  unstable during decline windows
+- `cash_opportunity_cost_note`: evidence-only note on gains forgone outside
+  decline windows when cash holding is used as the comparison baseline
+
+Any `cash_preferred` result must carry `defensive_no_action_check =
+"review_finding_only_no_runtime_signal"` or an equivalent explicit boundary.
+It cannot become a trade signal, ranking activation input, or production
+activation trigger without a later separate approval route.
 
 ## Failure Flags
 
@@ -207,6 +291,18 @@ no_feedback_check = "must_not_trigger_auto_activation"
 v0_2_boundary_check = "no_prob_up_1d_training_or_reinterpretation_from_evaluation_metrics"
 failure_flags = ["not_yet_run"]
 production_boundary_check = "no_automatic_production_activation_claim"
+defensive_alternative = "cash_hold"
+defensive_alternative_assumption = "cash_hold_zero_nominal_return"
+decline_regime_definition = "not_applicable_for_contract_only"
+decline_regime_point_in_time_check = "required_before_approved_run"
+defensive_comparison_question = "not_applicable_for_contract_only"
+defensive_comparison_metrics = [
+  "decline_window_return_minus_cash",
+  "max_drawdown_difference_vs_cash",
+  "volatility_difference_vs_cash",
+]
+defensive_comparison_status = "not_applicable"
+defensive_no_action_check = "review_finding_only_no_runtime_signal"
 ```
 
 ## Acceptance Conditions
@@ -224,4 +320,7 @@ An EvaluationEvidence packet may be accepted as evidence-only only when:
 - failure flags are absent or explicitly route the packet to `invalidated` or
   `needs_more_evidence`
 - comparison report, if present, is separated as an evidence-only artifact
+- defensive-alternative comparison, if present, uses an approved
+  `cash_hold` baseline, predeclared decline windows, point-in-time checks, and
+  no-action wording
 - no automatic production activation or live-trading connection is present

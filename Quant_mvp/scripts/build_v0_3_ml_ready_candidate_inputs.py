@@ -245,7 +245,66 @@ def _as_float(value: Any) -> float | None:
         return None
 
 
-def _approved_actual_labels(evidence: dict[str, Any] | None) -> dict[str, Any]:
+def _benchmark_rule(label_rules: dict[str, Any]) -> dict[str, Any]:
+    rule = _get(label_rules, "metric_rules.total_return_vs_benchmark", {})
+    return rule if isinstance(rule, dict) else {}
+
+
+def _benchmark_cost_profile(label_rules: dict[str, Any]) -> dict[str, Any]:
+    profile = _get(label_rules, "metric_rules.total_return_vs_benchmark.benchmark_cost_profile", {})
+    return profile if isinstance(profile, dict) else {}
+
+
+def _benchmark_cost_items(label_rules: dict[str, Any]) -> list[dict[str, Any]]:
+    profile = _benchmark_cost_profile(label_rules)
+    if profile.get("enabled") is not True:
+        return []
+    items: list[dict[str, Any]] = []
+    for item in _as_list(profile.get("cost_items")):
+        if not isinstance(item, dict):
+            continue
+        if item.get("included_in_benchmark_scoring") is False:
+            continue
+        rate = _as_float(item.get("rate"))
+        if rate is None:
+            continue
+        if rate < 0:
+            raise ValueError("benchmark cost item rate may not be negative")
+        normalized = dict(item)
+        normalized["rate"] = rate
+        items.append(normalized)
+    return items
+
+
+def _benchmark_cost_total_adjustment(label_rules: dict[str, Any]) -> float:
+    return sum(float(item["rate"]) for item in _benchmark_cost_items(label_rules))
+
+
+def _benchmark_cost_metadata(
+    *,
+    benchmark_return: float | None,
+    label_rules: dict[str, Any],
+) -> dict[str, Any]:
+    profile = _benchmark_cost_profile(label_rules)
+    cost_items = _benchmark_cost_items(label_rules)
+    total_adjustment = _benchmark_cost_total_adjustment(label_rules)
+    application = str(profile.get("cost_application") or "none")
+    adjusted_benchmark_return = benchmark_return
+    if benchmark_return is not None and application == "subtract_from_benchmark_return":
+        adjusted_benchmark_return = benchmark_return - total_adjustment
+    return {
+        "benchmark_cost_profile_id": profile.get("profile_id"),
+        "benchmark_cost_market": profile.get("market"),
+        "benchmark_cost_instrument_type": profile.get("instrument_type"),
+        "benchmark_cost_application": application,
+        "benchmark_cost_items": cost_items,
+        "benchmark_cost_total_adjustment": total_adjustment,
+        "benchmark_return_before_cost": benchmark_return,
+        "benchmark_return_after_cost": adjusted_benchmark_return,
+    }
+
+
+def _approved_actual_labels(evidence: dict[str, Any] | None, label_rules: dict[str, Any]) -> dict[str, Any]:
     labels = {column: None for column in ACTUAL_LABEL_COLUMNS}
     if not evidence:
         return labels
@@ -282,6 +341,9 @@ def _approved_actual_labels(evidence: dict[str, Any] | None) -> dict[str, Any]:
             "metric_summary.excess_return_vs_proxy",
         ],
     )
+    adjusted_relative_return = _benchmark_relative_return(evidence, label_rules)
+    if adjusted_relative_return is not None:
+        labels["actual_excess_return_vs_proxy"] = adjusted_relative_return
     labels["actual_max_drawdown"] = _path_value(
         evidence,
         ["risk_metric_summary.max_drawdown", "metric_summary.max_drawdown"],
@@ -318,13 +380,13 @@ def _generic_proxy_evidence(evidence: dict[str, Any]) -> bool:
     return False
 
 
-def _actual_label_role(evidence: dict[str, Any] | None) -> str | None:
+def _actual_label_role(evidence: dict[str, Any] | None, label_rules: dict[str, Any]) -> str | None:
     if not evidence:
         return None
     role = _get(evidence, "metric_summary.label_role")
     if role is not None:
         return str(role)
-    if any(_approved_actual_labels(evidence).values()):
+    if any(_approved_actual_labels(evidence, label_rules).values()):
         return "candidate_specific"
     return None
 
@@ -442,16 +504,22 @@ def _metric_rule_value(evidence: dict[str, Any] | None, paths: list[str]) -> flo
 def _benchmark_relative_return(evidence: dict[str, Any] | None, label_rules: dict[str, Any]) -> float | None:
     if evidence is None:
         return None
-    rule = _get(label_rules, "metric_rules.total_return_vs_benchmark", {})
+    rule = _benchmark_rule(label_rules)
     relative_paths = _as_list(_get(rule, "benchmark_relative_return_paths"))
     relative_value = _metric_rule_value(evidence, [str(path) for path in relative_paths])
+
+    total_paths = [str(path) for path in _as_list(_get(rule, "total_return_paths"))]
+    if not total_paths:
+        total_paths = [str(_get(rule, "total_return_path") or "metric_summary.total_return")]
+    benchmark_paths = [str(path) for path in _as_list(_get(rule, "benchmark_return_paths"))]
+    total_return = _metric_rule_value(evidence, total_paths)
+    benchmark_return = _metric_rule_value(evidence, benchmark_paths)
+    cost_metadata = _benchmark_cost_metadata(benchmark_return=benchmark_return, label_rules=label_rules)
+    adjusted_benchmark_return = cost_metadata["benchmark_return_after_cost"]
+    if total_return is not None and adjusted_benchmark_return is not None:
+        return total_return - float(adjusted_benchmark_return)
     if relative_value is not None:
         return relative_value
-
-    total_path = str(_get(rule, "total_return_path") or "metric_summary.total_return")
-    benchmark_paths = [str(path) for path in _as_list(_get(rule, "benchmark_return_paths"))]
-    total_return = _metric_rule_value(evidence, [total_path])
-    benchmark_return = _metric_rule_value(evidence, benchmark_paths)
     if total_return is None or benchmark_return is None:
         return None
     return total_return - benchmark_return
@@ -606,11 +674,15 @@ def build_ml_ready_row(
     evidence_status = evidence.get("status") if evidence else "missing_evaluation_evidence"
     metric_summary_available = isinstance(_get(evidence, "metric_summary"), dict) if evidence else False
     adoption_checks_ready = _adoption_checks_ready(evidence)
-    actual_labels = _approved_actual_labels(evidence)
+    actual_labels = _approved_actual_labels(evidence, label_rules)
+    benchmark_cost_metadata = _benchmark_cost_metadata(
+        benchmark_return=_as_float(actual_labels.get("actual_benchmark_return")),
+        label_rules=label_rules,
+    )
     actual_present = any(value is not None for value in actual_labels.values())
     generic_proxy_label = bool(evidence and _generic_proxy_evidence(evidence))
     metric_source = APPROVED_METRIC_SOURCE if actual_present else None
-    metric_role = _actual_label_role(evidence) if actual_present else None
+    metric_role = _actual_label_role(evidence, label_rules) if actual_present else None
     explicit_metric_use_status = (
         str(evidence.get("label_use_status"))
         if actual_present and evidence and evidence.get("label_use_status") is not None
@@ -715,6 +787,7 @@ def build_ml_ready_row(
         "required_evaluation_check_count": len(required_checks),
         "adoption_required_checks_ready": adoption_checks_ready,
         "actual_metric_summary_available": metric_summary_available,
+        **benchmark_cost_metadata,
         "metric_source": metric_source,
         "metric_role": metric_role,
         "metric_use_status": metric_use_status,
@@ -959,6 +1032,22 @@ def build_manifest(records: list[dict[str, Any]], *, run_id: str) -> dict[str, A
     has_positive_negative_classes = label_positive_count > 0 and label_negative_count > 0
     adoption_review_eligible_count = sum(record.get("adoption_review_eligible") is True for record in records)
     prediction_count = sum(any(record.get(column) is not None for column in PREDICTION_VALUE_COLUMNS) for record in records)
+    benchmark_cost_adjusted_count = sum(
+        record.get("benchmark_return_before_cost") is not None
+        and record.get("benchmark_return_after_cost") is not None
+        and record.get("benchmark_return_before_cost") != record.get("benchmark_return_after_cost")
+        for record in records
+    )
+    benchmark_cost_profile_ids = sorted(
+        str(record.get("benchmark_cost_profile_id"))
+        for record in records
+        if record.get("benchmark_cost_profile_id")
+    )
+    benchmark_cost_markets = sorted(
+        str(record.get("benchmark_cost_market"))
+        for record in records
+        if record.get("benchmark_cost_market")
+    )
     training_status_counts = Counter(str(record.get("ml_training_status")) for record in records)
     evaluation_status_counts = Counter(str(record.get("evaluation_status")) for record in records)
     approval_required_next_steps = []
@@ -1012,6 +1101,10 @@ def build_manifest(records: list[dict[str, Any]], *, run_id: str) -> dict[str, A
         "label_negative": label_negative_count,
         "actual_label_count": actual_label_count,
         "prediction_value_row_count": prediction_count,
+        "benchmark_cost_adjusted_row_count": benchmark_cost_adjusted_count,
+        "benchmark_cost_profile_ids": sorted(set(benchmark_cost_profile_ids)),
+        "benchmark_cost_markets": sorted(set(benchmark_cost_markets)),
+        "benchmark_cost_policy": "config_driven_benchmark_cost_items_adjust_benchmark_return_when_benchmark_return_available",
         "supervised_label_eligible_count": supervised_label_count,
         "adoption_review_eligible_count": adoption_review_eligible_count,
         "time_aware_split_ready_count": sum(record.get("time_aware_split_ready") is True for record in records),

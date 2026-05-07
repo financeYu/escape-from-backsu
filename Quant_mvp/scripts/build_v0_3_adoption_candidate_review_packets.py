@@ -25,6 +25,9 @@ DEFAULT_OUTPUT_DIR = Path("Quant_mvp/data/v0_3/adoption_candidate_review_packets
 DEFAULT_JSONL_NAME = "v0_3_adoption_candidate_review_packets.jsonl"
 DEFAULT_CSV_NAME = "v0_3_adoption_candidate_review_packets.csv"
 DEFAULT_MANIFEST_NAME = "v0_3_adoption_candidate_review_packets_manifest.json"
+DEFAULT_DIAGNOSTIC_RANKING_MANIFEST = Path(
+    "Quant_mvp/data/v0_4/selector_scores/v0_4_1_selector_ml_score_ranking_manifest.json"
+)
 
 SCHEMA_VERSION = "v0_3_adoption_candidate_review_packet_0_1"
 MANIFEST_SCHEMA_VERSION = "v0_3_adoption_candidate_review_packet_manifest_0_1"
@@ -61,6 +64,7 @@ REQUIRED_PACKET_FIELDS = [
     "no_feedback_check",
     "activation_gate_ref",
     "production_boundary_check",
+    "diagnostic_references",
 ]
 
 
@@ -183,7 +187,39 @@ def _limitation_summary(row: dict[str, Any]) -> list[str]:
     return limitations
 
 
-def selector_row_to_packet(row: dict[str, Any], *, selector_input_ref: Path, run_id: str) -> dict[str, Any] | None:
+def _diagnostic_references(ranking_manifest_ref: Path | None) -> dict[str, Any]:
+    if ranking_manifest_ref is None:
+        return {
+            "ml_score_ranking_manifest_path": None,
+            "evaluation_mode": "diagnostic_ranking_only",
+            "reference_only": True,
+            "selector_score_source_unchanged": True,
+            "ranking_result_changes_selector_score": False,
+            "ranking_result_changes_selector_rank": False,
+            "performance_claim_allowed": False,
+            "trading_signal_allowed": False,
+            "adoption_auto_decision_allowed": False,
+        }
+    return {
+        "ml_score_ranking_manifest_path": str(ranking_manifest_ref),
+        "evaluation_mode": "diagnostic_ranking_only",
+        "reference_only": True,
+        "selector_score_source_unchanged": True,
+        "ranking_result_changes_selector_score": False,
+        "ranking_result_changes_selector_rank": False,
+        "performance_claim_allowed": False,
+        "trading_signal_allowed": False,
+        "adoption_auto_decision_allowed": False,
+    }
+
+
+def selector_row_to_packet(
+    row: dict[str, Any],
+    *,
+    selector_input_ref: Path,
+    run_id: str,
+    diagnostic_ranking_manifest_ref: Path | None = DEFAULT_DIAGNOSTIC_RANKING_MANIFEST,
+) -> dict[str, Any] | None:
     if not _is_reviewable_selector_row(row):
         return None
     candidate_id = row.get("candidate_id")
@@ -200,6 +236,7 @@ def selector_row_to_packet(row: dict[str, Any], *, selector_input_ref: Path, run
         "selector_version": row.get("selector_version"),
         "selector_run_id": row.get("selector_run_id") or run_id,
         "selector_input_refs": [str(selector_input_ref), str(source_evidence_id)],
+        "diagnostic_references": _diagnostic_references(diagnostic_ranking_manifest_ref),
         "selector_score_source": score_source,
         "selector_score": selector_score,
         "selector_score_candidate": selector_score,
@@ -261,11 +298,25 @@ def selector_row_to_packet(row: dict[str, Any], *, selector_input_ref: Path, run
     return packet
 
 
-def build_packets(selector_rows: list[dict[str, Any]], *, selector_input_ref: Path, run_id: str) -> list[dict[str, Any]]:
+def build_packets(
+    selector_rows: list[dict[str, Any]],
+    *,
+    selector_input_ref: Path,
+    run_id: str,
+    diagnostic_ranking_manifest_ref: Path | None = DEFAULT_DIAGNOSTIC_RANKING_MANIFEST,
+) -> list[dict[str, Any]]:
     packets = [
         packet
         for row in selector_rows
-        if (packet := selector_row_to_packet(row, selector_input_ref=selector_input_ref, run_id=run_id)) is not None
+        if (
+            packet := selector_row_to_packet(
+                row,
+                selector_input_ref=selector_input_ref,
+                run_id=run_id,
+                diagnostic_ranking_manifest_ref=diagnostic_ranking_manifest_ref,
+            )
+        )
+        is not None
     ]
     validate_packets(packets)
     return packets
@@ -292,6 +343,23 @@ def validate_packet(packet: dict[str, Any]) -> None:
         raise ValueError("benchmark_or_proxy_reference_summary must be an object")
     if reference_summary.get("generic_proxy_not_used_as_label_or_selector_score") is not True:
         raise ValueError("generic proxy must remain reference context only")
+    diagnostic_references = packet.get("diagnostic_references")
+    if not isinstance(diagnostic_references, dict):
+        raise ValueError("diagnostic_references must be an object")
+    if diagnostic_references.get("reference_only") is not True:
+        raise ValueError("diagnostic references must remain reference-only")
+    if diagnostic_references.get("evaluation_mode") != "diagnostic_ranking_only":
+        raise ValueError("diagnostic ranking reference must use diagnostic_ranking_only")
+    if diagnostic_references.get("selector_score_source_unchanged") is not True:
+        raise ValueError("diagnostic ranking must not change selector_score_source")
+    if diagnostic_references.get("ranking_result_changes_selector_score") is not False:
+        raise ValueError("diagnostic ranking must not change selector_score")
+    if diagnostic_references.get("ranking_result_changes_selector_rank") is not False:
+        raise ValueError("diagnostic ranking must not change selector_rank")
+    if diagnostic_references.get("performance_claim_allowed") is not False:
+        raise ValueError("diagnostic ranking must not allow performance claims")
+    if diagnostic_references.get("trading_signal_allowed") is not False:
+        raise ValueError("diagnostic ranking must not allow trading signal claims")
 
 
 def validate_packets(packets: list[dict[str, Any]]) -> None:
@@ -309,6 +377,7 @@ def build_manifest(
     *,
     run_id: str,
     selector_input_ref: Path,
+    diagnostic_ranking_manifest_ref: Path | None = DEFAULT_DIAGNOSTIC_RANKING_MANIFEST,
 ) -> dict[str, Any]:
     blocked_reasons = Counter(
         reason for row in selector_rows if (reason := _blocked_or_excluded_reason(row)) is not None
@@ -332,6 +401,12 @@ def build_manifest(
             else "selection_unavailable_evidence_insufficient"
         ),
         "required_packet_fields": list(REQUIRED_PACKET_FIELDS),
+        "diagnostic_ranking_manifest_ref": (
+            str(diagnostic_ranking_manifest_ref) if diagnostic_ranking_manifest_ref is not None else None
+        ),
+        "diagnostic_reference_policy": (
+            "ml_score_ranking_manifest_reference_only_not_selector_input_or_adoption_decision"
+        ),
         "activation_gate_ref": ACTIVATION_GATE_REF,
         "no_feedback_check": "adoption_candidate_review_packets_must_not_feed_runtime_ranking_trading_or_auto_activation",
     }
@@ -342,15 +417,27 @@ def build_adoption_candidate_review_packets(
     output_dir: Path,
     *,
     run_id: str,
+    diagnostic_ranking_manifest_ref: Path | None = DEFAULT_DIAGNOSTIC_RANKING_MANIFEST,
     write_csv_output: bool = True,
 ) -> dict[str, Path]:
     selector_rows = read_jsonl(selector_input)
-    packets = build_packets(selector_rows, selector_input_ref=selector_input, run_id=run_id)
+    packets = build_packets(
+        selector_rows,
+        selector_input_ref=selector_input,
+        run_id=run_id,
+        diagnostic_ranking_manifest_ref=diagnostic_ranking_manifest_ref,
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     jsonl_path = output_dir / DEFAULT_JSONL_NAME
     manifest_path = output_dir / DEFAULT_MANIFEST_NAME
     write_jsonl(jsonl_path, packets)
-    manifest = build_manifest(selector_rows, packets, run_id=run_id, selector_input_ref=selector_input)
+    manifest = build_manifest(
+        selector_rows,
+        packets,
+        run_id=run_id,
+        selector_input_ref=selector_input,
+        diagnostic_ranking_manifest_ref=diagnostic_ranking_manifest_ref,
+    )
     manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -364,14 +451,30 @@ def build_adoption_candidate_review_packets(
     return paths
 
 
-def dry_run_adoption_candidate_review_packets(selector_input: Path, *, run_id: str) -> dict[str, Any]:
+def dry_run_adoption_candidate_review_packets(
+    selector_input: Path,
+    *,
+    run_id: str,
+    diagnostic_ranking_manifest_ref: Path | None = DEFAULT_DIAGNOSTIC_RANKING_MANIFEST,
+) -> dict[str, Any]:
     selector_rows = read_jsonl(selector_input)
-    packets = build_packets(selector_rows, selector_input_ref=selector_input, run_id=run_id)
+    packets = build_packets(
+        selector_rows,
+        selector_input_ref=selector_input,
+        run_id=run_id,
+        diagnostic_ranking_manifest_ref=diagnostic_ranking_manifest_ref,
+    )
     return {
         "mode": "dry_run",
         "output_written": False,
         "packet_count": len(packets),
-        "manifest": build_manifest(selector_rows, packets, run_id=run_id, selector_input_ref=selector_input),
+        "manifest": build_manifest(
+            selector_rows,
+            packets,
+            run_id=run_id,
+            selector_input_ref=selector_input,
+            diagnostic_ranking_manifest_ref=diagnostic_ranking_manifest_ref,
+        ),
     }
 
 
@@ -388,6 +491,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="store_true",
         help="Build and validate review packets, then print the manifest without writing outputs.",
     )
+    parser.add_argument(
+        "--diagnostic-ranking-manifest",
+        type=Path,
+        default=DEFAULT_DIAGNOSTIC_RANKING_MANIFEST,
+        help="Reference-only v0.4.1 ML score ranking manifest path to link in packets.",
+    )
     parser.add_argument("--no-csv", action="store_true", help="Do not write the CSV mirror.")
     return parser.parse_args(argv)
 
@@ -395,13 +504,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.dry_run:
-        result = dry_run_adoption_candidate_review_packets(args.selector_input, run_id=args.run_id)
+        result = dry_run_adoption_candidate_review_packets(
+            args.selector_input,
+            run_id=args.run_id,
+            diagnostic_ranking_manifest_ref=args.diagnostic_ranking_manifest,
+        )
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
     paths = build_adoption_candidate_review_packets(
         args.selector_input,
         args.output_dir,
         run_id=args.run_id,
+        diagnostic_ranking_manifest_ref=args.diagnostic_ranking_manifest,
         write_csv_output=not args.no_csv,
     )
     print(json.dumps({key: str(path) for key, path in paths.items()}, ensure_ascii=False, sort_keys=True))

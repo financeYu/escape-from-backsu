@@ -4,7 +4,9 @@
     "missing_candidate_level_evidence": 636
   },
   "blocked_or_excluded_selector_row_count": 636,
-  "generated_at_utc": "2026-05-06T14:05:03+00:00",
+  "diagnostic_ranking_manifest_ref": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_1_selector_ml_score_ranking_manifest.json",
+  "diagnostic_reference_policy": "ml_score_ranking_manifest_reference_only_not_selector_input_or_adoption_decision",
+  "generated_at_utc": "2026-05-07T02:53:16+00:00",
   "generic_proxy_policy": "generic_momentum_proxy_is_benchmark_reference_context_only",
   "no_feedback_check": "adoption_candidate_review_packets_must_not_feed_runtime_ranking_trading_or_auto_activation",
   "required_packet_fields": [
@@ -34,10 +36,11 @@
     "status",
     "no_feedback_check",
     "activation_gate_ref",
-    "production_boundary_check"
+    "production_boundary_check",
+    "diagnostic_references"
   ],
   "review_packet_count": 62,
-  "run_id": "relabel_current_adoption_packets_20260506",
+  "run_id": "adoption_candidate_review_packets_20260507_025316",
   "schema_version": "v0_3_adoption_candidate_review_packet_manifest_0_1",
   "selection_status": "adoption_candidate_review_packets_available",
   "selector_input_ref": "Quant_mvp\\data\\v0_3\\rule_first_selector\\v0_3_rule_first_selector.jsonl",

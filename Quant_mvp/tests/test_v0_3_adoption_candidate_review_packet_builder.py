@@ -75,6 +75,13 @@ def test_rule_only_selector_row_becomes_adoption_candidate_review_packet() -> No
     assert "supervised_ml_blocked_or_not_available_rule_only_selector_used" in packet["limitation_summary"]
     assert packet["benchmark_or_proxy_reference_summary"]["generic_proxy_not_used_as_label_or_selector_score"] is True
     assert packet["benchmark_or_proxy_reference_summary"]["proxy_return"] == 0.13
+    assert packet["diagnostic_references"]["ml_score_ranking_manifest_path"].endswith(
+        "v0_4_1_selector_ml_score_ranking_manifest.json"
+    )
+    assert packet["diagnostic_references"]["reference_only"] is True
+    assert packet["diagnostic_references"]["selector_score_source_unchanged"] is True
+    assert packet["diagnostic_references"]["ranking_result_changes_selector_score"] is False
+    assert packet["diagnostic_references"]["ranking_result_changes_selector_rank"] is False
 
 
 def test_hybrid_selector_source_is_preserved() -> None:
@@ -161,3 +168,29 @@ def test_dry_run_cli_outputs_manifest_without_writing(tmp_path: Path, capsys) ->
     assert result["mode"] == "dry_run"
     assert result["packet_count"] == 1
     assert result["manifest"]["selector_score_source_counts"]["rule_only"] == 1
+    assert (
+        result["manifest"]["diagnostic_reference_policy"]
+        == "ml_score_ranking_manifest_reference_only_not_selector_input_or_adoption_decision"
+    )
+
+
+def test_diagnostic_ranking_reference_does_not_change_selector_fields() -> None:
+    row = selector_row(
+        selector_score_source="ml_model",
+        ml_selector_score=0.61,
+        final_selector_score=0.61,
+        selector_rank=7,
+    )
+
+    packet = builder.build_packets(
+        [row],
+        selector_input_ref=Path("selector.jsonl"),
+        run_id="packet_test",
+        diagnostic_ranking_manifest_ref=Path("ranking_manifest.json"),
+    )[0]
+
+    assert packet["selector_score_source"] == "ml_model"
+    assert packet["selector_score"] == 0.61
+    assert packet["selector_rank"] == 7
+    assert packet["diagnostic_references"]["ml_score_ranking_manifest_path"] == "ranking_manifest.json"
+    assert packet["diagnostic_references"]["adoption_auto_decision_allowed"] is False

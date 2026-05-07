@@ -102,3 +102,29 @@ These warnings are not failures, but they must not disappear silently.
 `limited_insufficient_training_rows` requires
 `performance_claim_allowed = false`. `high_feature_correlation_warning` limits
 coefficient interpretation to diagnostics.
+
+## v0.4.1 Diagnostic Ranking Manifest
+
+The v0.4.1 ranking manifest compares model scores across the same candidate
+set for diagnostics only. It must include:
+
+- `evaluation_mode = diagnostic_ranking_only`
+- `baseline_model_id`
+- `compared_model_ids`
+- `candidate_count`
+- `per_model_score_available_count`
+- `ranking_schema_version`
+- `selector_score_source_unchanged = true`
+- `performance_claim_allowed = false`
+- `trading_signal_allowed = false`
+
+Ranking rows may expose model-specific score, rank, availability, and
+baseline-relative delta fields. The baseline-relative reference remains the
+frozen LogisticRegression baseline. RandomForest remains
+`nonlinear_challenger` only and must not replace the baseline selector score
+source.
+
+The ranking manifest may be linked from AdoptionCandidate review packets only
+as a diagnostic reference. It must not change selector scores, selector ranks,
+review packet ordering, adoption decisions, trading behavior, or production
+activation state.

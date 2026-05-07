@@ -43,6 +43,21 @@ solver = "lbfgs"
 limited_training_rows_threshold = 100
 high_feature_correlation_threshold = 0.95
 
+[random_forest_defaults]
+class_weight = "balanced"
+max_depth = 3
+min_samples_leaf = 1
+n_estimators = 100
+random_state = 0
+
+[ranking]
+baseline_model_id = "logistic_regression"
+compared_model_ids = [
+  "logistic_regression",
+  "random_forest",
+]
+top_k_values = [5]
+
 [boundaries]
 allowed_use = "AdoptionCandidate review prioritization only"
 prediction_claim = "none"

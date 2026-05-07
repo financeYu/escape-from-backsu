@@ -1,0 +1,53 @@
+{
+  "adoption_auto_decision_allowed": false,
+  "all_scored_candidate_count": 62,
+  "baseline_model_id": "logistic_regression",
+  "baseline_relative_score_model_id": "logistic_regression",
+  "blocked_reason": null,
+  "candidate_count": 62,
+  "candidate_set_policy": "same_candidate_set_intersection_of_compared_model_scores",
+  "compared_model_ids": [
+    "logistic_regression",
+    "random_forest"
+  ],
+  "diagnostic_reference_only": true,
+  "evaluation_mode": "diagnostic_ranking_only",
+  "generated_at_utc": "2026-05-07T02:55:51+00:00",
+  "model_stage": "v0_4_ml_selector_application",
+  "per_model_score_available_count": {
+    "logistic_regression": 62,
+    "random_forest": 62
+  },
+  "per_model_score_excluded_from_ranking_count": {
+    "logistic_regression": 0,
+    "random_forest": 0
+  },
+  "per_model_score_missing_from_same_set_count": {
+    "logistic_regression": 0,
+    "random_forest": 0
+  },
+  "performance_claim_allowed": false,
+  "ranking_rows_path": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_1_selector_ml_score_ranking.jsonl",
+  "ranking_schema_version": "v0_4_1_selector_ml_score_ranking_row_v1_0",
+  "schema_version": "v0_4_1_selector_ml_score_ranking_manifest_v1_0",
+  "selector_model_version": "v0_4_selector_baseline_v0_1",
+  "selector_score_source_unchanged": true,
+  "source_score_manifest_paths": {
+    "logistic_regression": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_selector_score_manifest.json",
+    "random_forest": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_selector_random_forest_score_manifest.json"
+  },
+  "top_k_overlap": {
+    "5": {
+      "random_forest": {
+        "overlap_count": 5,
+        "overlap_ratio": 1.0,
+        "top_k": 5
+      }
+    }
+  },
+  "top_k_values": [
+    5
+  ],
+  "trading_signal_allowed": false,
+  "warnings": []
+}

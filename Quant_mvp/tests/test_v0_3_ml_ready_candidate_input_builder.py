@@ -207,6 +207,130 @@ def test_evidence_recorded_metric_summary_populates_actual_labels() -> None:
     assert row["adoption_review_eligible"] is True
 
 
+def test_benchmark_scoring_applies_configured_kospi_purchase_tax() -> None:
+    label_rules = builder.read_label_rules(PROJECT_ROOT / "Quant_mvp/config/v0_3_selector_label_rules.toml")
+    evidence = evidence_packet(
+        status="evidence_recorded",
+        failure_flags=[],
+        metric_summary={
+            "benchmark_return": 0.10,
+            "oos_stability_status": "walk_forward_pass",
+        },
+        performance_metric_summary={"total_return": 0.12},
+        risk_metric_summary={
+            "max_drawdown": -0.08,
+            "annualized_volatility": 0.18,
+            "turnover_proxy": 0.42,
+            "sharpe_ratio": 1.1,
+        },
+        required_evaluation_checks={
+            "cost": {"status": "recorded"},
+            "drawdown": {"status": "recorded"},
+            "volatility": {"status": "recorded"},
+            "turnover": {"status": "recorded"},
+            "oos_walk_forward_stability": {"status": "walk_forward_pass"},
+            "no_lookahead": {"status": "recorded_boundary_check"},
+            "no_feedback": {"status": "active_boundary_check"},
+        },
+    )
+
+    row = builder.build_ml_ready_row(
+        registry_record(),
+        selector_record(),
+        evidence,
+        registry_ref=Path("registry.jsonl"),
+        selector_ref=Path("selector.jsonl"),
+        label_rules=label_rules,
+        row_generated_at="2026-05-06T00:00:00+00:00",
+    )
+
+    assert row["benchmark_cost_profile_id"] == "kospi_product_purchase_cost_v1"
+    assert row["benchmark_cost_market"] == "KOSPI"
+    assert row["benchmark_cost_total_adjustment"] == 0.002
+    assert row["benchmark_return_before_cost"] == 0.10
+    assert row["benchmark_return_after_cost"] == 0.098
+    assert row["actual_excess_return_vs_proxy"] == 0.021999999999999992
+    assert row["label_review_preferred"] == 1
+
+
+def test_benchmark_cost_profile_is_configurable_inside_approved_kospi_boundary() -> None:
+    label_rules = builder.read_label_rules(PROJECT_ROOT / "Quant_mvp/config/v0_3_selector_label_rules.toml")
+    profile = label_rules["metric_rules"]["total_return_vs_benchmark"]["benchmark_cost_profile"]
+    profile["profile_id"] = "kospi_alternate_product_cost_test"
+    profile["market"] = "KOSPI"
+    profile["instrument_type"] = "kospi_alternate_product"
+    profile["cost_items"] = [
+        {
+            "name": "custom_fee",
+            "rate": 0.001,
+            "basis": "purchase_notional",
+            "timing": "purchase",
+            "included_in_benchmark_scoring": True,
+        }
+    ]
+    evidence = evidence_packet(
+        status="evidence_recorded",
+        failure_flags=[],
+        metric_summary={
+            "benchmark_return": 0.10,
+            "oos_stability_status": "walk_forward_pass",
+        },
+        performance_metric_summary={"total_return": 0.12},
+        risk_metric_summary={
+            "max_drawdown": -0.08,
+            "annualized_volatility": 0.18,
+            "turnover_proxy": 0.42,
+            "sharpe_ratio": 1.1,
+        },
+    )
+
+    row = builder.build_ml_ready_row(
+        registry_record(),
+        selector_record(),
+        evidence,
+        registry_ref=Path("registry.jsonl"),
+        selector_ref=Path("selector.jsonl"),
+        label_rules=label_rules,
+        row_generated_at="2026-05-06T00:00:00+00:00",
+    )
+
+    assert row["benchmark_cost_profile_id"] == "kospi_alternate_product_cost_test"
+    assert row["benchmark_cost_market"] == "KOSPI"
+    assert row["benchmark_cost_total_adjustment"] == 0.001
+    assert row["benchmark_return_after_cost"] == 0.099
+    assert row["actual_excess_return_vs_proxy"] == 0.02099999999999999
+
+
+def test_manifest_records_benchmark_cost_policy() -> None:
+    record = {
+        "candidate_id": "sc:cost",
+        "metric_source": "approved_evaluation_evidence",
+        "metric_subject_type": "strategy_candidate",
+        "metric_subject_id": "sc:cost",
+        "candidate_metric_match": True,
+        "label_decision": "positive",
+        "label_review_preferred": 1,
+        "actual_label_source": "candidate_level_evaluation_evidence",
+        "supervised_label_eligible": True,
+        "adoption_required_checks_ready": True,
+        "evaluation_status": "evidence_recorded",
+        "candidate_status": "evaluable",
+        "strategy_type": "momentum",
+        "ml_training_status": "eligible_candidate_level_label",
+        "benchmark_cost_profile_id": "kospi_product_purchase_cost_v1",
+        "benchmark_cost_market": "KOSPI",
+        "benchmark_return_before_cost": 0.10,
+        "benchmark_return_after_cost": 0.098,
+    }
+
+    manifest = builder.build_manifest([record], run_id="cost_policy_test")
+
+    assert manifest["benchmark_cost_adjusted_row_count"] == 1
+    assert manifest["benchmark_cost_profile_ids"] == ["kospi_product_purchase_cost_v1"]
+    assert manifest["benchmark_cost_markets"] == ["KOSPI"]
+    assert "config_driven" in manifest["benchmark_cost_policy"]
+
+
 def test_evidence_recorded_without_oos_check_is_not_adoption_review_eligible() -> None:
     evidence = evidence_packet(
         status="evidence_recorded",

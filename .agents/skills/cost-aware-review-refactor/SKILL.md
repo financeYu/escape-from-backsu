@@ -79,8 +79,11 @@ Common blocked cheap checks:
 - Git Bash `Win32 error 5`, including `couldn't create signal pipe` or
   `CreateFileMapping` failures
 - denied `rg`
+- denied WindowsApps `rg` execution or missing project-local `rg`
 - inaccessible temp/cache directories
 - Git `safe.directory` ownership errors
+- Git `.git/index.lock` or `.git` ACL permission errors during index-writing
+  commands such as `git add`
 
 Required handling:
 

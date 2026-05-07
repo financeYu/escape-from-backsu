@@ -20,6 +20,9 @@ LOCAL_TEMP_ROOT = REPO_ROOT / ".pytest_tmp" / "local_validation"
 WORKSPACE_VENV = REPO_ROOT / ".venv"
 WORKSPACE_PYTHON = WORKSPACE_VENV / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
 WORKSPACE_RG = REPO_ROOT / "tools" / "rg"
+WORKSPACE_BIN = REPO_ROOT / "tools" / "codex-bin"
+DEFAULT_GIT_BASH = Path("C:/Program Files/Git/bin/bash.exe")
+DEFAULT_GIT = Path("C:/Program Files/Git/cmd/git.exe")
 
 PYTEST_SUITES: dict[str, tuple[str, ...]] = {
     "smoke": (
@@ -105,6 +108,18 @@ def build_validation_env(
     env["VIRTUAL_ENV"] = str(WORKSPACE_VENV)
     env["PYTHONUTF8"] = "1"
     env["PYTHONIOENCODING"] = "utf-8"
+    if DEFAULT_GIT.exists():
+        env["PROJECT_GIT"] = str(DEFAULT_GIT)
+    project_rg = WORKSPACE_RG / "rg.exe"
+    if project_rg.exists():
+        env["PROJECT_RG"] = str(project_rg)
+    env["PROJECT_RG_FALLBACK"] = "1"
+    if DEFAULT_GIT_BASH.exists():
+        env["PROJECT_BASH"] = str(DEFAULT_GIT_BASH)
+    env["PROJECT_ALLOW_WSL_BASH"] = "0"
+    env["GIT_OPTIONAL_LOCKS"] = "0"
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    env["PROJECT_ALLOW_GIT_INDEX_WRITE"] = "0"
     env["TMP"] = str(temp_dir)
     env["TEMP"] = str(temp_dir)
     env["PYTEST_DEBUG_TEMPROOT"] = str(temp_dir)
@@ -148,7 +163,7 @@ def _normalize_path_env(env: dict[str, str]) -> None:
     for duplicate_key in ("PATH", "Path"):
         if duplicate_key != path_key:
             env.pop(duplicate_key, None)
-    preferred_entries = [WORKSPACE_VENV / "Scripts", WORKSPACE_RG]
+    preferred_entries = [WORKSPACE_VENV / "Scripts", WORKSPACE_BIN]
     existing_entries = [entry for entry in existing_path.split(os.pathsep) if entry]
     normalized_entries = [str(entry) for entry in preferred_entries if entry.exists()]
     normalized_entries.extend(

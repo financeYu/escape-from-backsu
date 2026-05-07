@@ -40,11 +40,22 @@ if ($env:PROJECT_BASH -and (Test-Path -LiteralPath $env:PROJECT_BASH -PathType L
 }
 $bashCandidates += "C:\Program Files\Git\bin\bash.exe"
 $bashCandidates += "C:\Program Files\Git\usr\bin\bash.exe"
-$bashCandidates += "C:\Windows\System32\bash.exe"
 
-$availableBashCandidates = $bashCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+$allowWslBash = $env:PROJECT_ALLOW_WSL_BASH -in @("1", "true", "TRUE", "yes", "YES")
+if ($allowWslBash) {
+    $bashCandidates += "C:\Windows\System32\bash.exe"
+}
+
+$availableBashCandidates = $bashCandidates |
+    Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
+    Select-Object -Unique
 if (-not $availableBashCandidates) {
-    Write-Output "BLOCKED_BASH_VALIDATOR: no bash executable found for $relative"
+    if ($allowWslBash) {
+        Write-Output "BLOCKED_BASH_VALIDATOR: no bash executable found for $relative"
+    } else {
+        Write-Output "BLOCKED_BASH_VALIDATOR: no non-WSL bash executable found for $relative"
+        Write-Output "Set PROJECT_BASH to a project-approved Git Bash path, or set PROJECT_ALLOW_WSL_BASH=1 only when WSL is intentionally available."
+    }
     Write-Output "Record this via .agents/skills/cost-aware-review-refactor/SKILL.md, then route the exact validator through .agents/skills/quant-validator-approval/SKILL.md when required."
     exit 125
 }

@@ -62,6 +62,12 @@ manifest warning, not a blocker. It must remain visible for audit because the
 matrix is used for selector-rule replication and review-prioritization checks,
 not for a future-performance prediction claim.
 
+The frozen v0.4 baseline treats `limited_insufficient_training_rows` and
+`high_feature_correlation_warning` as intentional diagnostic warnings. They
+must be written to the relevant manifests when applicable. Limited training
+rows require `performance_claim_allowed = false`; high feature correlation
+limits coefficient interpretation to diagnostic-only review.
+
 ## Required Manifest Fields
 
 The trainability manifest must include:
@@ -81,6 +87,11 @@ The trainability manifest must include:
 - `generic_proxy_bad_rows`
 - `total_return_excess_return_correlation`
 - `warnings`
+- `performance_claim_allowed`
+- `evaluation_mode`
+- `leakage_check_manifest_path`
+- `leakage_check_result`
+- `feature_value_forbidden_columns_found`
 - `has_ml_dependencies`
 - `train_status`
 - `train_blocked_reason`

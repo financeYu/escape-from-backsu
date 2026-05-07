@@ -10,13 +10,31 @@ When a model is trained, the model manifest must record:
 - `selector_model_version`
 - `model_stage`
 - `baseline_model`
+- `model_type` or `model_family` as `logistic_regression`
+- `model_library`
+- `model_library_version`
 - `training_feature_columns`
+- `feature_columns`
+- `feature_column_count`
+- `training_row_count`
 - `training_eligible_rows`
 - `positive_rows`
 - `negative_rows`
+- `label_column` or `label_source`
 - `class_weight`
 - `max_iter`
+- `random_state` or deterministic training metadata
 - `model_artifact_path`
+- `artifact_path`
+- `trainability_manifest_path`
+- `leakage_check_manifest_path`
+- `coefficient_diagnostics_path`
+- `has_ml_dependencies`
+- `model_artifact_created`
+- `warnings`
+- `performance_claim_allowed`
+- `evaluation_mode`
+- `training_input_digest_sha256` or equivalent input digest
 - `allowed_use`
 - `prediction_claim`
 - `trade_signal_claim`
@@ -33,9 +51,18 @@ The scorer manifest must include:
 
 - `selector_model_version`
 - `selector_score_source`
+- `scorer_version`
 - `scored_candidate_count`
 - `prediction_value_row_count`
+- `model_artifact_path`
+- `model_manifest_path`
+- `trainability_manifest_path`
+- `score_rows_path`
+- `warnings`
+- `fallback_used`
+- `fallback_reason`
 - `blocked_reason`
+- `generated_at` or `generated_at_utc`
 - `allowed_use`
 - `trade_signal_claim`
 
@@ -52,9 +79,26 @@ signals.
 
 ## Blocked States
 
-When no model artifact exists, the scorer must not fail the route. It should
-report `blocked_no_model_artifact` or `rule_only_available` and keep
-`prediction_value_row_count = 0` unless a valid ML model is loaded.
+When no model artifact exists, the scorer must not silently report `ml_model`.
+It should report a rule baseline fallback, record `fallback_used = true`, and
+keep `prediction_value_row_count = 0` unless a valid ML model is loaded.
 
 When the training manifest has a blocked train status, the scorer must keep
 `prediction_value_row_count = 0`.
+
+When the model manifest and model artifact disagree on model version, model
+family/type, feature columns, training row count, dependency status, or artifact
+path, the scorer must fail closed or record a warning plus fallback. It must
+not emit `selector_score_source = ml_model` for mismatched artifacts.
+
+## Warning Policy
+
+The frozen v0.4 LogisticRegression baseline has two known diagnostic warnings:
+
+- `limited_insufficient_training_rows`
+- `high_feature_correlation_warning`
+
+These warnings are not failures, but they must not disappear silently.
+`limited_insufficient_training_rows` requires
+`performance_claim_allowed = false`. `high_feature_correlation_warning` limits
+coefficient interpretation to diagnostics.

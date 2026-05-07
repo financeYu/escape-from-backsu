@@ -34,6 +34,8 @@ FEATURES = [
 
 class FakeLogisticRegression:
     classes_ = [0, 1]
+    coef_ = [[0.1, -0.2, 0.3, 0.4, -0.5, 0.6]]
+    intercept_ = [0.0]
 
     def __init__(self) -> None:
         self.fitted = False
@@ -160,6 +162,8 @@ score_output_dir = "{score_dir.as_posix()}"
 [model_defaults]
 class_weight = "balanced"
 max_iter = 1000
+random_state = 0
+solver = "lbfgs"
 limited_training_rows_threshold = 100
 high_feature_correlation_threshold = 0.95
 
@@ -224,6 +228,63 @@ def test_positive_negative_guard_trains_with_fake_model(tmp_path: Path) -> None:
     assert "high_feature_correlation_warning" in manifest["warnings"]
 
 
+def test_v0_4_selector_model_manifest_records_logistic_regression_baseline(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    model_manifest = json.loads((train_dir / trainer.DEFAULT_MODEL_MANIFEST).read_text(encoding="utf-8"))
+    assert model_manifest["model_type"] == "logistic_regression"
+    assert model_manifest["model_family"] == "logistic_regression"
+    assert model_manifest["baseline_model"] == "logistic_regression"
+    assert model_manifest["model_library"] == "scikit-learn"
+    assert model_manifest["model_library_version"]
+    assert model_manifest["label_column"] == "label_review_preferred"
+    assert model_manifest["deterministic_training"] is True
+    assert model_manifest["random_state"] == 0
+
+
+def test_v0_4_selector_model_manifest_records_training_rows_features_and_warnings(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    model_manifest = json.loads((train_dir / trainer.DEFAULT_MODEL_MANIFEST).read_text(encoding="utf-8"))
+    assert model_manifest["training_row_count"] == 2
+    assert model_manifest["feature_column_count"] == len(FEATURES)
+    assert model_manifest["feature_columns"] == FEATURES
+    assert "limited_insufficient_training_rows" in model_manifest["warnings"]
+    assert "high_feature_correlation_warning" in model_manifest["warnings"]
+    assert model_manifest["performance_claim_allowed"] is False
+    assert model_manifest["evaluation_mode"] == "baseline_diagnostic_only"
+
+
+def test_v0_4_selector_model_manifest_records_artifact_and_dependency_metadata(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    model_manifest = json.loads((train_dir / trainer.DEFAULT_MODEL_MANIFEST).read_text(encoding="utf-8"))
+    assert model_manifest["artifact_path"].endswith(trainer.DEFAULT_MODEL_ARTIFACT)
+    assert model_manifest["model_artifact_path"].endswith(trainer.DEFAULT_MODEL_ARTIFACT)
+    assert model_manifest["trainability_manifest_path"].endswith(trainer.DEFAULT_TRAINABILITY_MANIFEST)
+    assert model_manifest["has_ml_dependencies"] is True
+    assert model_manifest["model_artifact_created"] is True
+    assert len(model_manifest["training_input_digest_sha256"]) == 64
+
+
 def test_only_six_features_are_used_and_family_columns_are_audit_only(tmp_path: Path) -> None:
     config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
 
@@ -273,6 +334,45 @@ def test_leakage_columns_in_feature_values_block_training(tmp_path: Path) -> Non
     assert manifest["feature_value_leak_rows"] == 1
 
 
+def test_v0_4_selector_feature_matrix_excludes_label_columns(tmp_path: Path) -> None:
+    config_path, _ = config_payload(
+        tmp_path,
+        [
+            make_row("p1", 1, extra_feature_values={"label": 1}),
+            make_row("n1", 0),
+        ],
+    )
+
+    manifest = trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    assert manifest["train_status"] == "blocked_label_leakage_columns_found"
+    assert "label" in manifest["feature_value_forbidden_columns_found"]
+    assert manifest["leakage_check_result"] == "fail"
+
+
+def test_v0_4_selector_feature_matrix_excludes_review_decision_columns(tmp_path: Path) -> None:
+    config_path, _ = config_payload(
+        tmp_path,
+        [
+            make_row("p1", 1, extra_feature_values={"review_decision": "adopted"}),
+            make_row("n1", 0),
+        ],
+    )
+
+    manifest = trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    assert manifest["train_status"] == "blocked_label_leakage_columns_found"
+    assert "review_decision" in manifest["feature_value_forbidden_columns_found"]
+
+
 def test_leakage_columns_in_config_features_block_training(tmp_path: Path) -> None:
     config_path, _ = config_payload(
         tmp_path,
@@ -299,6 +399,47 @@ def test_leakage_columns_in_config_features_block_training(tmp_path: Path) -> No
     assert manifest["prediction_value_row_count"] == 0
     assert manifest["feature_config_leak_columns"] == ["label_review_preferred"]
     assert manifest["feature_config_matches_expected"] is False
+
+
+def test_v0_4_selector_training_rejects_forbidden_feature_columns(tmp_path: Path) -> None:
+    config_path, _ = config_payload(
+        tmp_path,
+        [make_row("p1", 1), make_row("n1", 0)],
+        training_features=[
+            "total_return",
+            "excess_return_vs_proxy",
+            "max_drawdown_abs",
+            "sharpe",
+            "turnover",
+            "prediction_value",
+        ],
+    )
+
+    manifest = trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    assert manifest["train_status"] == "blocked_label_leakage_columns_found"
+    assert manifest["feature_config_leak_columns"] == ["prediction_value"]
+
+
+def test_v0_4_selector_training_records_leakage_guard_result(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+
+    manifest = trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    leakage_manifest = json.loads((train_dir / trainer.DEFAULT_LEAKAGE_MANIFEST).read_text(encoding="utf-8"))
+    assert manifest["leakage_check_result"] == "pass"
+    assert leakage_manifest["checked"] is True
+    assert leakage_manifest["result"] == "pass"
+    assert leakage_manifest["forbidden_columns_found"] == []
+    assert leakage_manifest["allowed_feature_column_count"] == len(FEATURES)
 
 
 def test_feature_values_are_the_only_training_feature_source(tmp_path: Path) -> None:
@@ -345,6 +486,51 @@ def test_high_correlation_warning_is_not_a_blocker(tmp_path: Path) -> None:
     assert manifest["train_status"] == "trained_logistic_regression_baseline"
 
 
+def test_v0_4_selector_baseline_records_limited_training_rows_warning(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+
+    manifest = trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    assert "limited_insufficient_training_rows" in manifest["warnings"]
+    assert manifest["warning_policy"]["limited_insufficient_training_rows"] == "performance_claim_allowed_false"
+
+
+def test_v0_4_selector_baseline_records_high_feature_correlation_warning(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)], correlation=0.999)
+
+    manifest = trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    assert "high_feature_correlation_warning" in manifest["warnings"]
+    assert (
+        manifest["warning_policy"]["high_feature_correlation_warning"]
+        == "coefficient_interpretation_diagnostic_only"
+    )
+    assert "correlated features may make individual coefficients unstable" in manifest["interpretation_limits"]
+
+
+def test_v0_4_selector_baseline_does_not_claim_performance_with_limited_rows(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    model_manifest = json.loads((train_dir / trainer.DEFAULT_MODEL_MANIFEST).read_text(encoding="utf-8"))
+    assert "limited_insufficient_training_rows" in model_manifest["warnings"]
+    assert model_manifest["performance_claim_allowed"] is False
+    assert model_manifest["prediction_claim"] == "none"
+
+
 def test_blocked_scorer_keeps_prediction_count_zero(tmp_path: Path) -> None:
     config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
     trainer.train_selector_baseline(
@@ -358,3 +544,133 @@ def test_blocked_scorer_keeps_prediction_count_zero(tmp_path: Path) -> None:
     assert score_manifest["selector_score_source"] == "blocked_train_status"
     assert score_manifest["blocked_reason"] == "blocked_missing_ml_dependency"
     assert score_manifest["prediction_value_row_count"] == 0
+
+
+def test_v0_4_scorer_uses_ml_model_when_artifact_exists(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    score_manifest = scorer.score_candidates(config_path=config_path)
+
+    assert score_manifest["selector_score_source"] == "ml_model"
+    assert score_manifest["fallback_used"] is False
+
+
+def test_v0_4_selector_score_manifest_records_ml_model_source(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    score_manifest = scorer.score_candidates(config_path=config_path)
+
+    assert score_manifest["selector_score_source"] == "ml_model"
+    assert score_manifest["warnings"] == [
+        "limited_insufficient_training_rows",
+        "high_feature_correlation_warning",
+    ]
+
+
+def test_v0_4_selector_score_manifest_records_scored_and_prediction_row_counts(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    score_manifest = scorer.score_candidates(config_path=config_path)
+
+    assert score_manifest["scored_candidate_count"] == 2
+    assert score_manifest["prediction_value_row_count"] == 2
+
+
+def test_v0_4_selector_score_manifest_links_model_artifact_and_score_rows(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    score_manifest = scorer.score_candidates(config_path=config_path)
+
+    assert score_manifest["model_artifact_path"].endswith(trainer.DEFAULT_MODEL_ARTIFACT)
+    assert score_manifest["model_manifest_path"].endswith(trainer.DEFAULT_MODEL_MANIFEST)
+    assert score_manifest["score_rows_path"].endswith(scorer.DEFAULT_SCORE_JSONL)
+
+
+def test_v0_4_scorer_falls_back_when_model_artifact_missing(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+    (train_dir / trainer.DEFAULT_MODEL_ARTIFACT).unlink()
+
+    score_manifest = scorer.score_candidates(config_path=config_path)
+
+    assert score_manifest["selector_score_source"] == "rule_only"
+    assert score_manifest["fallback_used"] is True
+    assert score_manifest["fallback_reason"] == "rule_only_available_no_model_artifact"
+    assert score_manifest["prediction_value_row_count"] == 0
+
+
+def test_v0_4_scorer_fails_or_warns_on_model_manifest_mismatch(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+    model_manifest_path = train_dir / trainer.DEFAULT_MODEL_MANIFEST
+    model_manifest = json.loads(model_manifest_path.read_text(encoding="utf-8"))
+    model_manifest["selector_model_version"] = "wrong_version"
+    write_json(model_manifest_path, model_manifest)
+
+    score_manifest = scorer.score_candidates(config_path=config_path)
+
+    assert score_manifest["selector_score_source"] == "rule_only"
+    assert score_manifest["fallback_used"] is True
+    assert score_manifest["blocked_reason"] == "model_manifest_mismatch"
+    assert "selector_model_version_mismatch" in score_manifest["model_manifest_mismatch_reasons"]
+    assert "model_manifest_mismatch_fallback" in score_manifest["warnings"]
+
+
+def test_v0_4_scorer_records_score_source_for_every_row(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+    scorer.score_candidates(config_path=config_path)
+    score_manifest = scorer.score_candidates(config_path=config_path)
+    score_rows_path = trainer.resolve_path(score_manifest["score_rows_path"])
+    score_rows = [json.loads(line) for line in score_rows_path.read_text(encoding="utf-8").splitlines()]
+
+    assert score_rows
+    assert {row["selector_score_source"] for row in score_rows} == {"ml_model"}
+
+
+def test_v0_4_selector_logistic_coefficients_artifact_records_diagnostics(tmp_path: Path) -> None:
+    config_path, train_dir = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    coefficients = json.loads((train_dir / trainer.DEFAULT_COEFFICIENTS_ARTIFACT).read_text(encoding="utf-8"))
+    assert coefficients["model_type"] == "logistic_regression"
+    assert len(coefficients["coefficients"]) == len(FEATURES)
+    assert "high_feature_correlation_warning" in coefficients["warnings"]
+    assert "limited training rows prevent strong predictive claims" in coefficients["interpretation_limits"]

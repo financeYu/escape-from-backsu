@@ -1,0 +1,46 @@
+{
+  "coefficients": [
+    {
+      "abs_coefficient_rank": 3,
+      "coefficient": 0.938218812610403,
+      "feature": "total_return"
+    },
+    {
+      "abs_coefficient_rank": 6,
+      "coefficient": 0.03359264879430822,
+      "feature": "excess_return_vs_proxy"
+    },
+    {
+      "abs_coefficient_rank": 1,
+      "coefficient": -1.2689004537873818,
+      "feature": "max_drawdown_abs"
+    },
+    {
+      "abs_coefficient_rank": 2,
+      "coefficient": -1.2596977936946252,
+      "feature": "sharpe"
+    },
+    {
+      "abs_coefficient_rank": 5,
+      "coefficient": -0.24966927585052376,
+      "feature": "turnover"
+    },
+    {
+      "abs_coefficient_rank": 4,
+      "coefficient": 0.4101927559016702,
+      "feature": "volatility"
+    }
+  ],
+  "intercept": -0.6714546098172767,
+  "interpretation_limits": [
+    "coefficients are baseline diagnostics only",
+    "correlated features may make individual coefficients unstable",
+    "limited training rows prevent strong predictive claims"
+  ],
+  "model_type": "logistic_regression",
+  "schema_version": "v0_4_selector_logistic_coefficients_v1_0",
+  "warnings": [
+    "limited_insufficient_training_rows",
+    "high_feature_correlation_warning"
+  ]
+}

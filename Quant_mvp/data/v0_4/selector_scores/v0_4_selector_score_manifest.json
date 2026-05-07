@@ -1,12 +1,24 @@
 {
   "allowed_use": "AdoptionCandidate review prioritization only",
   "blocked_reason": null,
-  "generated_at_utc": "2026-05-06T16:15:34+00:00",
+  "fallback_reason": null,
+  "fallback_used": false,
+  "generated_at": "2026-05-07T01:48:13+00:00",
+  "generated_at_utc": "2026-05-07T01:48:13+00:00",
+  "model_artifact_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_baseline_model.pkl",
+  "model_manifest_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_model_manifest.json",
   "model_stage": "v0_4_ml_selector_application",
   "prediction_value_row_count": 62,
   "schema_version": "v0_4_selector_score_manifest_v1_0",
+  "score_rows_path": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_selector_scores.jsonl",
   "scored_candidate_count": 62,
+  "scorer_version": "v0_4_selector_scorer_v1_0",
   "selector_model_version": "v0_4_selector_baseline_v0_1",
   "selector_score_source": "ml_model",
-  "trade_signal_claim": "none"
+  "trade_signal_claim": "none",
+  "trainability_manifest_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_trainability_manifest.json",
+  "warnings": [
+    "limited_insufficient_training_rows",
+    "high_feature_correlation_warning"
+  ]
 }

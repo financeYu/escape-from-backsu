@@ -1,17 +1,50 @@
 {
   "allowed_use": "AdoptionCandidate review prioritization only",
+  "artifact_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_baseline_model.pkl",
   "baseline_model": "logistic_regression",
   "class_weight": "balanced",
-  "generated_at_utc": "2026-05-06T16:15:30+00:00",
+  "coefficient_diagnostics_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_logistic_coefficients.json",
+  "created_at": "2026-05-07T01:48:09+00:00",
+  "deterministic_training": true,
+  "evaluation_mode": "baseline_diagnostic_only",
+  "feature_column_count": 6,
+  "feature_columns": [
+    "total_return",
+    "excess_return_vs_proxy",
+    "max_drawdown_abs",
+    "sharpe",
+    "turnover",
+    "volatility"
+  ],
+  "feature_matrix_input_digest_sha256": "76795c633978c8b4db85f469c00790993d083fd81fafb360735e0020429e1460",
+  "generated_at_utc": "2026-05-07T01:48:09+00:00",
+  "has_ml_dependencies": true,
+  "interpretation_limits": [
+    "coefficients are baseline diagnostics only",
+    "correlated features may make individual coefficients unstable",
+    "limited training rows prevent strong predictive claims"
+  ],
+  "label_column": "label_review_preferred",
+  "label_source": "v0_3_selector_feature_matrix.label_review_preferred",
+  "leakage_check_manifest_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_leakage_check_manifest.json",
   "max_iter": 1000,
+  "model_artifact_created": true,
   "model_artifact_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_baseline_model.pkl",
+  "model_family": "logistic_regression",
+  "model_library": "scikit-learn",
+  "model_library_version": "1.8.0",
   "model_stage": "v0_4_ml_selector_application",
+  "model_type": "logistic_regression",
   "negative_rows": 37,
+  "performance_claim_allowed": false,
   "positive_rows": 25,
   "prediction_claim": "none",
+  "random_state": 0,
   "schema_version": "v0_4_selector_model_manifest_v1_0",
   "selector_model_version": "v0_4_selector_baseline_v0_1",
+  "solver": "lbfgs",
   "trade_signal_claim": "none",
+  "trainability_manifest_path": "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_trainability_manifest.json",
   "training_eligible_rows": 62,
   "training_feature_columns": [
     "total_return",
@@ -20,5 +53,11 @@
     "sharpe",
     "turnover",
     "volatility"
+  ],
+  "training_input_digest_sha256": "76795c633978c8b4db85f469c00790993d083fd81fafb360735e0020429e1460",
+  "training_row_count": 62,
+  "warnings": [
+    "limited_insufficient_training_rows",
+    "high_feature_correlation_warning"
   ]
 }

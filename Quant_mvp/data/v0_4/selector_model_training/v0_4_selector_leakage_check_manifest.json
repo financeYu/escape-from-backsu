@@ -1,0 +1,23 @@
+{
+  "allowed_feature_column_count": 6,
+  "allowed_feature_columns": [
+    "total_return",
+    "excess_return_vs_proxy",
+    "max_drawdown_abs",
+    "sharpe",
+    "turnover",
+    "volatility"
+  ],
+  "checked": true,
+  "feature_config_leak_columns": [],
+  "feature_value_forbidden_columns_found": [],
+  "feature_value_leak_rows": 0,
+  "forbidden_columns_found": [],
+  "generated_at_utc": "2026-05-07T01:48:08+00:00",
+  "result": "pass",
+  "schema_version": "v0_4_selector_leakage_check_manifest_v1_0",
+  "warnings": [
+    "limited_insufficient_training_rows",
+    "high_feature_correlation_warning"
+  ]
+}

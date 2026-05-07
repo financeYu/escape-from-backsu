@@ -1,0 +1,141 @@
+{
+  "baseline_counts_before_v0_4_2": {
+    "ml_ready": {
+      "candidate_level_metric_count": 62,
+      "missing_evaluation_evidence": 636,
+      "negative_rows": 37,
+      "null_label_rows": 636,
+      "positive_rows": 25,
+      "strategy_family_distribution": {
+        "event_driven": 2,
+        "hybrid": 1,
+        "machine_learning": 9,
+        "momentum": 77,
+        "other": 240,
+        "reversal": 20,
+        "seasonality": 9,
+        "statistical_arbitrage": 13,
+        "value": 153,
+        "volatility": 174
+      },
+      "total_rows": 698,
+      "training_eligible_rows": 62
+    },
+    "v0_4_trainability_status": "trained_logistic_regression_baseline",
+    "v0_4_trainability_warnings": [
+      "limited_insufficient_training_rows",
+      "high_feature_correlation_warning"
+    ]
+  },
+  "candidate_level_metric_status": "unchanged_until_approved_evidence_recorded_run",
+  "cohort_id": "v0_4_2_manual_review_gap_cohort_1",
+  "coverage_packet_status_counts": {
+    "needs_more_evidence": 20
+  },
+  "defensive_alternative_policy": {
+    "defensive_alternative": "cash_hold",
+    "defensive_alternative_assumption": "cash_hold_zero_nominal_return",
+    "defensive_no_action_check": "review_finding_only_no_runtime_signal"
+  },
+  "exclusion_reason_counts": {
+    "excluded_candidate_status_blocked": 106,
+    "excluded_existing_evaluation_evidence": 62,
+    "excluded_requires_nontrivial_candidate_refinement": 229,
+    "excluded_unsupported_strategy_type_event_driven": 2,
+    "excluded_unsupported_strategy_type_hybrid": 1,
+    "excluded_unsupported_strategy_type_machine_learning": 8,
+    "excluded_unsupported_strategy_type_seasonality": 8,
+    "excluded_unsupported_strategy_type_statistical_arbitrage": 13,
+    "excluded_unsupported_strategy_type_value": 145
+  },
+  "expected_manifest_delta_after_regeneration": {
+    "candidate_level_metric_count": 0,
+    "missing_evaluation_evidence": -20,
+    "needs_more_evidence_rows": 20,
+    "negative_rows": 0,
+    "null_label_rows": 0,
+    "positive_rows": 0,
+    "training_eligible_rows": 0
+  },
+  "generated_at_utc": "2026-05-07T09:29:23+00:00",
+  "guardrails": {
+    "adoption_auto_decision_allowed": false,
+    "historical_evidence_only": true,
+    "new_market_data_ingestion_allowed": false,
+    "performance_claim_allowed": false,
+    "trading_signal_allowed": false,
+    "universe_expansion_allowed": false
+  },
+  "label_generation_status": "not_generated_no_synthetic_label",
+  "mode": "write",
+  "no_feedback_check": "coverage_packets_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
+  "packet_paths": [
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_010d0f9aa476fb1a2238.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_02d116258bfc1e36028a.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_06aea1bbb74c3e22b38d.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_07e715a18ca303a035e9.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_08da6a7622f361dae6e2.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_0d697687f5142e31a28c.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_0da45534c2e2d78afee8.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_10798fed15c217f31b98.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_11b1351c43e8100fa6b4.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_122d62c1e7a158e952c2.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_1365b735b7a9a20a8c34.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_19bbe901b54451918ef7.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_1a88b2819628df50c29c.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_1c790392ad906eec98e9.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_1f74ca00f843b7138be8.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_226ca886794af791cf00.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_22fa09cdadb26beca521.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_234b7d2806a42fdaf0ea.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_24f913b6e5b3f25493bf.md",
+    "Quant_mvp/backtest_mvp/docs/v0_3_evaluation_evidence/v0_4_2_coverage_cohort_1/ee_v0_3_20260507_sc_ecard_2588f670d131f7992933.md"
+  ],
+  "production_boundary_check": "no_automatic_production_activation_claim",
+  "schema_version": "v0_4_2_evaluation_evidence_coverage_manifest_v1_0",
+  "selected_candidate_count": 20,
+  "selected_candidate_ids": [
+    "sc:ecard:010d0f9aa476fb1a2238",
+    "sc:ecard:02d116258bfc1e36028a",
+    "sc:ecard:06aea1bbb74c3e22b38d",
+    "sc:ecard:07e715a18ca303a035e9",
+    "sc:ecard:08da6a7622f361dae6e2",
+    "sc:ecard:0d697687f5142e31a28c",
+    "sc:ecard:0da45534c2e2d78afee8",
+    "sc:ecard:10798fed15c217f31b98",
+    "sc:ecard:11b1351c43e8100fa6b4",
+    "sc:ecard:122d62c1e7a158e952c2",
+    "sc:ecard:1365b735b7a9a20a8c34",
+    "sc:ecard:19bbe901b54451918ef7",
+    "sc:ecard:1a88b2819628df50c29c",
+    "sc:ecard:1c790392ad906eec98e9",
+    "sc:ecard:1f74ca00f843b7138be8",
+    "sc:ecard:226ca886794af791cf00",
+    "sc:ecard:22fa09cdadb26beca521",
+    "sc:ecard:234b7d2806a42fdaf0ea",
+    "sc:ecard:24f913b6e5b3f25493bf",
+    "sc:ecard:2588f670d131f7992933"
+  ],
+  "selected_candidate_status_counts": {
+    "draft": 20
+  },
+  "selected_strategy_type_counts": {
+    "momentum": 1,
+    "other": 3,
+    "reversal": 1,
+    "volatility": 15
+  },
+  "selection_criteria": {
+    "allowed_blocker_sets": [
+      [
+        "manual_review_required"
+      ]
+    ],
+    "candidate_status": "draft",
+    "new_market_data_ingestion_required": false,
+    "required_data_requirement": "daily_ohlcv",
+    "strategy_type_policy": "supported_by_existing_KOSPI_OHLCV_candidate_adapter",
+    "universe_boundary": "KOSPI_or_KOSPI200_text_boundary_required",
+    "universe_expansion_required": false
+  }
+}

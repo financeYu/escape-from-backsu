@@ -78,7 +78,8 @@ Required identity and lineage fields:
 - `candidate_version`: evaluated StrategyCandidate version.
 - `hypothesis_id`: upstream `StrategyHypothesis` ID.
 - `status`: one of `contract_only`, `ready_for_approved_run`,
-  `evidence_recorded`, `invalidated`, or `retired`.
+  `evidence_recorded`, `needs_more_evidence`, `blocked`, `invalidated`, or
+  `retired`.
 - `owner`: owning lane or responsible subproject, for example
   `backtest_evaluation`.
 - `created_at`: local date or timestamp.
@@ -317,8 +318,8 @@ An EvaluationEvidence packet may be accepted as evidence-only only when:
 - no-lookahead and point-in-time checks are present
 - generated-output boundary is present
 - no-feedback check is present and passes
-- failure flags are absent or explicitly route the packet to `invalidated` or
-  `needs_more_evidence`
+- failure flags are absent for `evidence_recorded`, or explicitly route the
+  packet to `invalidated`, `blocked`, or `needs_more_evidence`
 - comparison report, if present, is separated as an evidence-only artifact
 - defensive-alternative comparison, if present, uses an approved
   `cash_hold` baseline, predeclared decline windows, point-in-time checks, and

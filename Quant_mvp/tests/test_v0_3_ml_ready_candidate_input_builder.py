@@ -148,6 +148,42 @@ def test_contract_only_row_keeps_actual_and_prediction_labels_null() -> None:
     assert row["prediction_allowed_uses"] == builder.ALLOWED_PREDICTION_USES
 
 
+def test_needs_more_evidence_row_does_not_create_synthetic_supervised_label() -> None:
+    row = builder.build_ml_ready_row(
+        registry_record(status="draft", blocking_issues=["manual_review_required"]),
+        selector_record(),
+        evidence_packet(
+            status="needs_more_evidence",
+            failure_flags=["candidate_level_metric_missing"],
+            metric_summary={
+                "metric_status": "not_recorded",
+                "candidate_level_metric": False,
+                "label_role": "not_supervised_label",
+            },
+            performance_metric_summary={
+                "total_return": None,
+                "benchmark_relative_return": None,
+            },
+            risk_metric_summary={
+                "max_drawdown": None,
+                "annualized_volatility": None,
+                "turnover_proxy": None,
+                "sharpe_ratio": None,
+            },
+        ),
+        registry_ref=Path("registry.jsonl"),
+        selector_ref=Path("selector.jsonl"),
+        row_generated_at="2026-05-07T00:00:00+00:00",
+    )
+
+    assert row["evaluation_status"] == "needs_more_evidence"
+    assert row["label_source"] == "unlabeled"
+    assert row["label_review_preferred"] is None
+    assert row["supervised_label_eligible"] is False
+    assert row["actual_label_source"] is None
+    assert row["ml_training_status"] == "blocked_no_candidate_level_metric"
+
+
 def test_evidence_recorded_metric_summary_populates_actual_labels() -> None:
     evidence = evidence_packet(
         status="evidence_recorded",

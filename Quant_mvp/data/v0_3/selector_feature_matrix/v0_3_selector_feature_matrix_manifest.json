@@ -80,7 +80,7 @@
   ],
   "feature_columns_count": 6,
   "feature_matrix_version": "v0_3_selector_feature_matrix_v1_0",
-  "generated_at_utc": "2026-05-07T02:53:02+00:00",
+  "generated_at_utc": "2026-05-07T09:30:07+00:00",
   "generic_proxy_policy": "generic_momentum_proxy_is_benchmark_reference_context_only_not_label_or_candidate_level_metric",
   "input_ref": "Quant_mvp\\data\\v0_3\\ml_ready_candidate_inputs\\v0_3_ml_ready_candidate_input.jsonl",
   "label_distribution": {
@@ -159,7 +159,7 @@
   "null_label_rows": 636,
   "positive_rows": 25,
   "prediction_claim": "none",
-  "run_id": "selector_feature_matrix_20260507_025302",
+  "run_id": "v0_4_2_selector_feature_matrix_20260507",
   "schema_version": "v0_3_selector_feature_matrix_manifest_v1_0",
   "total_candidates": 698,
   "total_feature_rows": 698,

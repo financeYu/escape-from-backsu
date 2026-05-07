@@ -346,6 +346,163 @@ def build_contract_only_evaluation_evidence_packet(
     return evidence
 
 
+def build_needs_more_evidence_packet(
+    candidate_record: Mapping[str, Any],
+    *,
+    evaluation_id: str | None = None,
+    created_at: str | None = None,
+    source_refs: Sequence[str] | None = None,
+    cohort_id: str = "v0_4_2_evaluation_evidence_coverage_cohort",
+    generated_output_boundary: str = DEFAULT_GENERATED_OUTPUT_BOUNDARY,
+    evaluation_method_ref: str = DEFAULT_EVALUATION_METHOD_REF,
+    selection_reason: str = "candidate_missing_recorded_evaluation_evidence",
+    exclusion_reason: str = "candidate_not_evaluable_without_additional_review",
+    status: str = "needs_more_evidence",
+) -> dict[str, Any]:
+    """Build a non-recorded EvaluationEvidence coverage packet.
+
+    This packet expands candidate-level evidence coverage without fabricating
+    metrics or supervised labels. It is intentionally blocked from
+    ``evidence_recorded`` until the upstream StrategyCandidate becomes
+    evaluable and an approved owner-lane run records metrics.
+    """
+
+    if status not in {"needs_more_evidence", "blocked", "invalidated"}:
+        raise ValueError("coverage packet status must be needs_more_evidence, blocked, or invalidated")
+
+    candidate = strategy_candidate_payload(candidate_record)
+    candidate_id = str(candidate.get("candidate_id") or "")
+    candidate_version = str(candidate.get("candidate_version") or candidate.get("version") or "")
+    hypothesis_id = str(
+        candidate.get("linked_strategy_hypothesis_id")
+        or candidate.get("hypothesis_id")
+        or ""
+    )
+    if not candidate_id or not hypothesis_id:
+        raise ValueError("coverage EvaluationEvidence requires candidate and hypothesis identity")
+    created = created_at or date.today().isoformat()
+    default_source_refs = (
+        "docs/extension/v0_3_evaluation_evidence_contract.md",
+        "docs/extension/v0_3_strategy_candidate_registry_contract.md",
+        "Quant_mvp/data/v0_3/strategy_candidates/v0_3_strategy_candidate_registry.jsonl",
+        evaluation_method_ref,
+    )
+    unavailable_metric_summary = {
+        "metric_status": "not_recorded",
+        "candidate_level_metric": False,
+        "label_role": "not_supervised_label",
+        "total_return": None,
+        "benchmark_relative_return": None,
+        "max_drawdown": None,
+        "annualized_volatility": None,
+        "turnover_proxy": None,
+        "sharpe_ratio": None,
+        "oos_stability_status": "not_available_needs_more_evidence",
+    }
+    evidence = {
+        "schema_version": "v0_3_evaluation_evidence_0_1",
+        "evaluation_boundary": EVALUATION_EVIDENCE_DISCLAIMER,
+        "evaluation_id": evaluation_id or _evaluation_id(candidate_id, created),
+        "candidate_id": candidate_id,
+        "candidate_version": candidate_version,
+        "hypothesis_id": hypothesis_id,
+        "status": status,
+        "owner": "backtest_evaluation",
+        "created_at": created,
+        "updated_at": created,
+        "source_refs": list(source_refs or default_source_refs),
+        "evaluation_window": _contract_only_evaluation_window(candidate),
+        "universe": str(
+            candidate.get("target_universe")
+            or candidate.get("universe")
+            or "KOSPI200_candidate_only"
+        ),
+        "assumptions": _contract_only_assumptions(candidate)
+        + [
+            "v0_4_2_coverage_packet_records_missing_candidate_level_evidence_only",
+            "no_metric_or_label_fabrication",
+        ],
+        "transaction_cost_assumption": "not_recorded_needs_approved_evaluation_run",
+        "risk_metrics": [
+            "max_drawdown",
+            "annualized_volatility",
+            "turnover_proxy",
+            "coverage_ratio",
+        ],
+        "performance_metrics": [
+            "total_return",
+            "annualized_return",
+            "hit_rate",
+            "benchmark_relative_return",
+        ],
+        "comparison_group": _contract_only_comparison_group(cohort_id, None),
+        "evaluation_method_ref": evaluation_method_ref,
+        "generated_output_boundary": generated_output_boundary,
+        "no_lookahead_check": "not_run_no_metric_recorded; required_before_evidence_recorded",
+        "point_in_time_check": "not_run_no_metric_recorded; required_before_evidence_recorded",
+        "generated_output_check": "outputs_are_generated_evidence_only_not_runtime_inputs",
+        "no_feedback_check": "coverage_packet_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
+        "v0_2_boundary_check": "no_prob_up_1d_training_or_reinterpretation_from_evaluation_metrics",
+        "failure_flags": [
+            "candidate_level_metric_missing",
+            "upstream_candidate_not_evaluable",
+        ],
+        "production_boundary_check": "no_automatic_production_activation_claim",
+        "required_evaluation_checks": _contract_only_required_evaluation_checks(),
+        "metric_summary": unavailable_metric_summary,
+        "performance_metric_summary": {
+            key: unavailable_metric_summary[key]
+            for key in ("total_return", "benchmark_relative_return")
+        },
+        "risk_metric_summary": {
+            key: unavailable_metric_summary[key]
+            for key in (
+                "max_drawdown",
+                "annualized_volatility",
+                "turnover_proxy",
+                "sharpe_ratio",
+            )
+        },
+        "defensive_alternative": "cash_hold",
+        "defensive_alternative_assumption": "cash_hold_zero_nominal_return",
+        "decline_regime_definition": "not_recorded_needs_approved_evaluation_run",
+        "decline_regime_point_in_time_check": "required_before_evidence_recorded",
+        "defensive_comparison_question": "not_recorded_needs_approved_evaluation_run",
+        "defensive_comparison_metrics": [
+            "decline_window_return_minus_cash",
+            "max_drawdown_difference_vs_cash",
+            "volatility_difference_vs_cash",
+        ],
+        "defensive_comparison_status": "needs_more_evidence",
+        "defensive_no_action_check": "review_finding_only_no_runtime_signal",
+        "coverage_selection": {
+            "cohort_id": cohort_id,
+            "selection_reason": selection_reason,
+            "exclusion_reason": exclusion_reason,
+            "candidate_status": candidate.get("status"),
+            "strategy_type": (
+                candidate.get("experiment_scope", {}).get("strategy_type")
+                if isinstance(candidate.get("experiment_scope"), Mapping)
+                else candidate.get("strategy_type")
+            ),
+            "blocking_issues": list(str(item) for item in _as_list(candidate.get("blocking_issues"))),
+            "blocked_by": list(str(item) for item in _as_list(candidate.get("blocked_by"))),
+            "label_generation_status": "not_generated_no_synthetic_label",
+        },
+        "known_limitations": [
+            "candidate_level_metric_missing",
+            "approved_evaluation_run_required_before_evidence_recorded_status",
+            "supervised_label_not_generated",
+        ],
+        "review_notes": [
+            "v0.4.2 coverage packet records the missing evidence state only",
+            "no adoption decision, selector ordering change, or production action is implied",
+        ],
+    }
+    validate_evaluation_evidence_record(evidence)
+    return evidence
+
+
 def validate_evaluable_candidate(candidate: Mapping[str, Any]) -> None:
     """Validate that the candidate may request EvaluationEvidence."""
 
@@ -373,6 +530,8 @@ def validate_evaluation_evidence_record(record: Mapping[str, Any]) -> None:
         "contract_only",
         "ready_for_approved_run",
         "evidence_recorded",
+        "needs_more_evidence",
+        "blocked",
         "invalidated",
         "retired",
     }:

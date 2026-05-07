@@ -26,6 +26,11 @@ evidence_runner = importlib.util.module_from_spec(RUN_SPEC)
 assert RUN_SPEC.loader is not None
 RUN_SPEC.loader.exec_module(evidence_runner)
 
+from Quant_mvp.backtest_mvp.evaluation_evidence import (
+    build_needs_more_evidence_packet,
+    validate_evaluation_evidence_record,
+)
+
 
 def candidate(**overrides: object) -> dict[str, object]:
     payload: dict[str, object] = {
@@ -131,6 +136,28 @@ def test_readiness_review_packet_reports_ready_dry_run_without_writing(tmp_path:
     assert packet["candidate_examples"][0]["coverage_status"] == "candidate_price_coverage_ready_for_actual_run"
     assert "approved actual EvaluationEvidence run" in packet["recommended_next_action"]
     assert not (tmp_path / "Quant_mvp" / "backtest_mvp").exists()
+
+
+def test_needs_more_evidence_packet_keeps_no_feedback_and_cash_no_action_guard() -> None:
+    packet = build_needs_more_evidence_packet(
+        candidate(
+            status="draft",
+            blocking_issues=["manual_review_required"],
+        ),
+        created_at="2026-05-07",
+        cohort_id="v0_4_2_manual_review_gap_cohort_1",
+    )
+
+    validate_evaluation_evidence_record(packet)
+    assert packet["status"] == "needs_more_evidence"
+    assert packet["metric_summary"]["candidate_level_metric"] is False
+    assert packet["coverage_selection"]["label_generation_status"] == "not_generated_no_synthetic_label"
+    assert packet["defensive_alternative"] == "cash_hold"
+    assert packet["defensive_alternative_assumption"] == "cash_hold_zero_nominal_return"
+    assert packet["defensive_no_action_check"] == "review_finding_only_no_runtime_signal"
+    forbidden_runtime_words = ("sell", "rebalance", "move-to-cash", "trading signal")
+    packet_text = json.dumps(packet, ensure_ascii=False).lower()
+    assert all(word not in packet_text for word in forbidden_runtime_words)
 
 
 def test_candidate_level_evaluation_evidence_dry_run_rows_are_candidate_matched(tmp_path: Path) -> None:

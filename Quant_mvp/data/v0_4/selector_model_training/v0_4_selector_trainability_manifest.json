@@ -29,7 +29,7 @@
   "feature_config_unexpected_columns": [],
   "feature_value_forbidden_columns_found": [],
   "feature_value_leak_rows": 0,
-  "generated_at_utc": "2026-05-07T02:53:06+00:00",
+  "generated_at_utc": "2026-05-07T09:30:19+00:00",
   "generic_proxy_bad_rows": 0,
   "has_existing_model_artifact": true,
   "has_ml_dependencies": true,

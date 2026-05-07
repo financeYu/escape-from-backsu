@@ -180,6 +180,7 @@ def _route_reference_sections() -> list[str]:
         "- Strategy candidate registry: `docs/extension/v0_3_strategy_candidate_registry_contract.md`.",
         "- Evaluation evidence contract: `docs/extension/v0_3_evaluation_evidence_contract.md`.",
         "- Adoption selector gate: `docs/extension/v0_3_adoption_candidate_selector_gate.md`.",
+        "- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).",
         "- Active route skill: `.agents/skills/quant-strategy-adoption-gate/SKILL.md`.",
         "- Active architecture skills: `.agents/skills/agent-coordinator/SKILL.md` through `.agents/skills/agent-reporter/SKILL.md`.",
         "- Completion review gate: `.agents/skills/quant-review-gate/SKILL.md`.",

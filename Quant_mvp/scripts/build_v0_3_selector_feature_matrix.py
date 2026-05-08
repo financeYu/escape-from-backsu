@@ -7,7 +7,6 @@ models, score candidates, rank outputs, or activate any production behavior.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from collections import Counter
@@ -19,7 +18,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from Quant_mvp.scripts.artifact_io import read_jsonl, write_jsonl
+from Quant_mvp.scripts.artifact_io import read_jsonl, write_csv, write_jsonl
 
 DEFAULT_INPUT = Path("Quant_mvp/data/v0_3/ml_ready_candidate_inputs/v0_3_ml_ready_candidate_input.jsonl")
 DEFAULT_OUTPUT_DIR = Path("Quant_mvp/data/v0_3/selector_feature_matrix")
@@ -164,28 +163,6 @@ def _pearson_correlation(pairs: list[tuple[float, float]]) -> float | None:
     if denominator == 0:
         return None
     return numerator / denominator
-
-
-def _csv_value(value: Any) -> Any:
-    if isinstance(value, list):
-        return "|".join(str(item) for item in value)
-    if isinstance(value, dict):
-        return json.dumps(value, ensure_ascii=False, sort_keys=True)
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    return value
-
-
-def write_csv(path: Path, records: list[dict[str, Any]]) -> None:
-    if not records:
-        path.write_text("", encoding="utf-8")
-        return
-    fieldnames = list(records[0].keys())
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        for record in records:
-            writer.writerow({key: _csv_value(value) for key, value in record.items()})
 
 
 def _has_oos_evidence(row: dict[str, Any]) -> bool:

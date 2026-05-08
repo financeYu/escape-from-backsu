@@ -7,7 +7,6 @@ activate production behavior, train a model, or create trading instructions.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import re
 import sys
@@ -20,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from Quant_mvp.scripts.artifact_io import read_jsonl, write_jsonl
+from Quant_mvp.scripts.artifact_io import read_jsonl, write_csv, write_jsonl
 
 DEFAULT_SELECTOR_INPUT = Path("Quant_mvp/data/v0_3/rule_first_selector/v0_3_rule_first_selector.jsonl")
 DEFAULT_OUTPUT_DIR = Path("Quant_mvp/data/v0_3/adoption_candidate_review_packets")
@@ -85,25 +84,6 @@ def _as_float(value: Any) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
-
-
-def _csv_value(value: Any) -> Any:
-    if isinstance(value, (list, dict)):
-        return json.dumps(value, ensure_ascii=False, sort_keys=True)
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    return value
-
-
-def write_csv(path: Path, records: list[dict[str, Any]]) -> None:
-    if not records:
-        path.write_text("", encoding="utf-8")
-        return
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(records[0].keys()))
-        writer.writeheader()
-        for record in records:
-            writer.writerow({key: _csv_value(value) for key, value in record.items()})
 
 
 def _slug(value: Any) -> str:
@@ -428,7 +408,7 @@ def build_adoption_candidate_review_packets(
     paths = {"jsonl": jsonl_path, "manifest": manifest_path}
     if write_csv_output:
         csv_path = output_dir / DEFAULT_CSV_NAME
-        write_csv(csv_path, packets)
+        write_csv(csv_path, packets, list_style="json")
         paths["csv"] = csv_path
     return paths
 

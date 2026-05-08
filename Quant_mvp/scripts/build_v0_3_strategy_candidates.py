@@ -8,12 +8,18 @@ production ranking or scoring, and does not make trading recommendations.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
+import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from Quant_mvp.scripts.artifact_io import write_csv as write_csv_records
 
 
 DEFAULT_INPUT = Path("Quant_mvp/data/v0_3/strategy_hypotheses/v0_3_strategy_hypotheses.jsonl")
@@ -415,16 +421,6 @@ def validate_candidate_record(record: dict[str, Any]) -> None:
         raise ValueError("candidate boundary disclaimer is missing")
 
 
-def _csv_value(value: Any) -> Any:
-    if isinstance(value, list):
-        return "|".join(str(item) for item in value)
-    if isinstance(value, dict):
-        return json.dumps(value, ensure_ascii=False, sort_keys=True)
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    return value
-
-
 def _flatten_record(record: dict[str, Any]) -> dict[str, Any]:
     candidate = record["strategy_candidate"]
     return {
@@ -443,16 +439,8 @@ def _flatten_record(record: dict[str, Any]) -> dict[str, Any]:
 
 
 def _write_csv(path: Path, records: list[dict[str, Any]]) -> None:
-    if not records:
-        path.write_text("", encoding="utf-8")
-        return
     flattened = [_flatten_record(record) for record in records]
-    fieldnames = list(flattened[0].keys())
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        for record in flattened:
-            writer.writerow({key: _csv_value(value) for key, value in record.items()})
+    write_csv_records(path, flattened)
 
 
 def build_candidate_groups(records: list[dict[str, Any]]) -> dict[str, Any]:

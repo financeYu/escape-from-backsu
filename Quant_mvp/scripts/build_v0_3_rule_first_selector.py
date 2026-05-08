@@ -8,7 +8,6 @@ labels, replace runtime ranking, or activate production behavior.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from collections import Counter
@@ -20,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from Quant_mvp.scripts.artifact_io import read_jsonl, write_jsonl
+from Quant_mvp.scripts.artifact_io import read_jsonl, write_csv, write_jsonl
 
 DEFAULT_INPUT = Path("Quant_mvp/data/v0_3/ml_ready_candidate_inputs/v0_3_ml_ready_candidate_input.jsonl")
 DEFAULT_OUTPUT_DIR = Path("Quant_mvp/data/v0_3/rule_first_selector")
@@ -112,29 +111,8 @@ def _as_float(value: Any) -> float | None:
         return None
 
 
-def _csv_value(value: Any) -> Any:
-    if isinstance(value, list):
-        return "|".join(str(item) for item in value)
-    if isinstance(value, dict):
-        return json.dumps(value, ensure_ascii=False, sort_keys=True)
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    return value
-
-
 def _clip(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
-
-
-def write_csv(path: Path, records: list[dict[str, Any]]) -> None:
-    if not records:
-        path.write_text("", encoding="utf-8")
-        return
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(records[0].keys()))
-        writer.writeheader()
-        for record in records:
-            writer.writerow({key: _csv_value(value) for key, value in record.items()})
 
 
 def _has_critical_failure(flags: list[Any]) -> bool:

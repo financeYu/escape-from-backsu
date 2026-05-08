@@ -8,7 +8,6 @@ ranking inputs, trading recommendations, or future-performance evidence.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from collections import Counter
@@ -20,7 +19,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from Quant_mvp.scripts.artifact_io import read_jsonl, write_jsonl
+from Quant_mvp.scripts.artifact_io import read_jsonl, write_csv as write_csv_records, write_jsonl
 
 
 DEFAULT_INPUT = Path("Quant_mvp/research_mvp/data/research/evidence/evidence_cards.jsonl")
@@ -464,16 +463,6 @@ def validate_research_hypothesis_record(record: dict[str, Any]) -> None:
         raise ValueError("research boundary disclaimer is missing")
 
 
-def _csv_value(value: Any) -> Any:
-    if isinstance(value, list):
-        return "|".join(str(item) for item in value)
-    if isinstance(value, dict):
-        return json.dumps(value, ensure_ascii=False, sort_keys=True)
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    return value
-
-
 def _flatten_record(record: dict[str, Any]) -> dict[str, Any]:
     hypothesis = record["research_hypothesis"]
     flattened = {
@@ -494,16 +483,8 @@ def _flatten_record(record: dict[str, Any]) -> dict[str, Any]:
 
 
 def write_csv(path: Path, records: list[dict[str, Any]]) -> None:
-    if not records:
-        path.write_text("", encoding="utf-8")
-        return
     flattened = [_flatten_record(record) for record in records]
-    fieldnames = list(flattened[0].keys())
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        for record in flattened:
-            writer.writerow({key: _csv_value(value) for key, value in record.items()})
+    write_csv_records(path, flattened)
 
 
 def build_manifest(records: list[dict[str, Any]], *, source_path: Path, run_id: str) -> dict[str, Any]:

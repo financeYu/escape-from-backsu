@@ -9,7 +9,6 @@ must not be used as supervised labels or adoption evidence.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 try:
@@ -34,6 +33,7 @@ from Quant_mvp.scripts.v0_3_ml_label_policy import (
 from Quant_mvp.scripts.artifact_io import (
     parse_json_fenced_markdown,
     read_jsonl,
+    write_csv,
     write_jsonl,
 )
 
@@ -135,28 +135,6 @@ def read_label_rules(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{path} is not a TOML object")
     return payload
-
-
-def _csv_value(value: Any) -> Any:
-    if isinstance(value, list):
-        return "|".join(str(item) for item in value)
-    if isinstance(value, dict):
-        return json.dumps(value, ensure_ascii=False, sort_keys=True)
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    return value
-
-
-def write_csv(path: Path, records: list[dict[str, Any]]) -> None:
-    if not records:
-        path.write_text("", encoding="utf-8")
-        return
-    fieldnames = list(records[0].keys())
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        for record in records:
-            writer.writerow({key: _csv_value(value) for key, value in record.items()})
 
 
 def evidence_card_id_from_candidate(candidate_id: str, registry_record: dict[str, Any]) -> str | None:

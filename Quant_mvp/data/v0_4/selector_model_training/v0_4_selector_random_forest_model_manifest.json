@@ -5,7 +5,7 @@
   "baseline_replacement": false,
   "challenger_only": true,
   "class_weight": "balanced",
-  "created_at": "2026-05-07T09:30:20+00:00",
+  "created_at": "2026-05-08T12:46:11+00:00",
   "deterministic_training": true,
   "evaluation_mode": "diagnostic_comparison_only",
   "feature_column_count": 6,
@@ -19,7 +19,7 @@
   ],
   "feature_matrix_input_digest_sha256": "de7b00e9455a8e2fde0759af748ef8d00b413c263e923d6171010494366dce54",
   "frozen_baseline_model": "logistic_regression",
-  "generated_at_utc": "2026-05-07T09:30:20+00:00",
+  "generated_at_utc": "2026-05-08T12:46:11+00:00",
   "has_ml_dependencies": true,
   "interpretation_limits": [
     "RandomForest is a nonlinear challenger only",

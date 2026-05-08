@@ -24,6 +24,11 @@ except ModuleNotFoundError:  # pragma: no cover - Python <3.11 fallback only.
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from Quant_mvp.scripts.artifact_io import read_jsonl
+
 DEFAULT_CONFIG = Path("Quant_mvp/config/v0_4_selector_model.toml")
 DEFAULT_TRAINABILITY_MANIFEST = "v0_4_selector_trainability_manifest.json"
 DEFAULT_MODEL_MANIFEST = "v0_4_selector_model_manifest.json"
@@ -133,20 +138,6 @@ def read_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{path} must contain a JSON object")
     return payload
-
-
-def read_jsonl(path: Path) -> list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            stripped = line.strip()
-            if not stripped:
-                continue
-            payload = json.loads(stripped)
-            if not isinstance(payload, dict):
-                raise ValueError(f"{path}:{line_number} is not a JSON object")
-            records.append(payload)
-    return records
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:

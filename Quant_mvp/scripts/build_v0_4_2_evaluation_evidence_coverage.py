@@ -25,6 +25,11 @@ from Quant_mvp.backtest_mvp.evaluation_evidence import (
     strategy_candidate_payload,
     write_evaluation_evidence_markdown,
 )
+from Quant_mvp.scripts.artifact_io import (
+    parse_json_fenced_markdown,
+    read_json,
+    read_jsonl,
+)
 
 
 DEFAULT_REGISTRY = Path("Quant_mvp/data/v0_3/strategy_candidates/v0_3_strategy_candidate_registry.jsonl")
@@ -53,6 +58,19 @@ FORBIDDEN_BLOCKERS = {
     "language_guardrail_violation",
 }
 KOSPI_BOUNDARY_MARKERS = ("KOSPI", "KOSPI200", "Korean equity")
+FORBIDDEN_UNIVERSE_SOURCE_MARKERS = (
+    "source target noted as options",
+    "source target noted as futures",
+    "source target noted as crypto",
+    "source target noted as nasdaq",
+    "source target noted as overseas",
+    "source target noted as multi",
+)
+ALLOWED_UNIVERSE_SOURCE_MARKERS = (
+    "source target noted as equity",
+    "source target noted as korea; equity",
+    "source target noted as korean equity",
+)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -72,40 +90,23 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def read_json(path: Path) -> dict[str, Any]:
-    if not path.exists():
-        return {}
-    return json.loads(path.read_text(encoding="utf-8"))
+def _is_within(path: Path, parent: Path) -> bool:
+    try:
+        path.resolve().relative_to(parent.resolve())
+    except ValueError:
+        return False
+    return True
 
 
-def read_jsonl(path: Path) -> list[dict[str, Any]]:
-    return [
-        json.loads(line)
-        for line in path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-
-
-def _parse_json_from_markdown(path: Path) -> dict[str, Any] | None:
-    text = path.read_text(encoding="utf-8")
-    marker = "```json"
-    start = text.find(marker)
-    if start < 0:
-        return None
-    start = text.find("\n", start)
-    end = text.find("```", start + 1)
-    if start < 0 or end < 0:
-        return None
-    payload = json.loads(text[start:end].strip())
-    return payload if isinstance(payload, dict) else None
-
-
-def existing_evidence_candidate_ids(evidence_dir: Path) -> set[str]:
+def existing_evidence_candidate_ids(evidence_dir: Path, ignored_dirs: tuple[Path, ...] = ()) -> set[str]:
     if not evidence_dir.exists():
         return set()
     ids: set[str] = set()
+    ignored = tuple(path.resolve() for path in ignored_dirs)
     for path in evidence_dir.rglob("ee_v0_3_*.md"):
-        payload = _parse_json_from_markdown(path)
+        if any(_is_within(path, ignored_dir) for ignored_dir in ignored):
+            continue
+        payload = parse_json_fenced_markdown(path, required=False)
         if payload and payload.get("candidate_id"):
             ids.add(str(payload["candidate_id"]))
     return ids
@@ -133,6 +134,19 @@ def _universe_text(candidate: dict[str, Any]) -> str:
     return str(candidate.get("target_universe") or candidate.get("universe") or "")
 
 
+def _kospi_boundary_status(universe: str) -> tuple[bool, str]:
+    normalized = universe.lower()
+    if any(marker in normalized for marker in FORBIDDEN_UNIVERSE_SOURCE_MARKERS):
+        return (False, "excluded_forbidden_universe_source_target")
+    if not any(marker.lower() in normalized for marker in KOSPI_BOUNDARY_MARKERS):
+        return (False, "excluded_non_kospi_boundary")
+    if "source target noted as" in normalized and not any(
+        marker in normalized for marker in ALLOWED_UNIVERSE_SOURCE_MARKERS
+    ):
+        return (False, "excluded_non_equity_source_target")
+    return (True, "selected_kospi_equity_boundary")
+
+
 def _selection_status(candidate: dict[str, Any], existing_ids: set[str]) -> tuple[bool, str]:
     candidate_id = str(candidate.get("candidate_id") or "")
     blockers = _candidate_blockers(candidate)
@@ -147,8 +161,9 @@ def _selection_status(candidate: dict[str, Any], existing_ids: set[str]) -> tupl
         return (False, f"excluded_unsupported_strategy_type_{strategy_type}")
     if "daily_ohlcv" not in data_requirements and "daily_ohlcv_candidate_review_only" not in data_requirements:
         return (False, "excluded_missing_daily_ohlcv_requirement")
-    if not any(marker in universe for marker in KOSPI_BOUNDARY_MARKERS):
-        return (False, "excluded_non_kospi_boundary")
+    boundary_ok, boundary_reason = _kospi_boundary_status(universe)
+    if not boundary_ok:
+        return (False, boundary_reason)
     if blockers & FORBIDDEN_BLOCKERS:
         return (False, "excluded_forbidden_blocker_" + "_".join(sorted(blockers & FORBIDDEN_BLOCKERS)))
     if blockers not in ALLOWED_BLOCKER_SETS:
@@ -195,7 +210,7 @@ def build_coverage(
     dry_run: bool,
 ) -> dict[str, Any]:
     registry_rows = read_jsonl(registry)
-    existing_ids = existing_evidence_candidate_ids(evidence_dir)
+    existing_ids = existing_evidence_candidate_ids(evidence_dir, ignored_dirs=(output_dir,))
     ml_ready_manifest = read_json(ml_ready_manifest_path)
     feature_manifest = read_json(feature_manifest_path)
     trainability_manifest = read_json(trainability_manifest_path)
@@ -247,7 +262,7 @@ def build_coverage(
             "allowed_blocker_sets": [sorted(items) for items in ALLOWED_BLOCKER_SETS],
             "required_data_requirement": "daily_ohlcv",
             "strategy_type_policy": "supported_by_existing_KOSPI_OHLCV_candidate_adapter",
-            "universe_boundary": "KOSPI_or_KOSPI200_text_boundary_required",
+            "universe_boundary": "KOSPI_or_KOSPI200_equity_source_target_required",
             "new_market_data_ingestion_required": False,
             "universe_expansion_required": False,
         },
@@ -292,6 +307,11 @@ def build_coverage(
     if not dry_run:
         coverage_manifest_dir.mkdir(parents=True, exist_ok=True)
         manifest_path = coverage_manifest_dir / coverage_manifest_name
+        selected_paths = {Path(path) for path in packet_paths}
+        for stale_path in output_dir.glob("ee_v0_3_*.md"):
+            relative_path = Path(str(stale_path.resolve().relative_to(PROJECT_ROOT)).replace("\\", "/"))
+            if relative_path not in selected_paths:
+                stale_path.unlink()
         manifest_path.write_text(
             json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",

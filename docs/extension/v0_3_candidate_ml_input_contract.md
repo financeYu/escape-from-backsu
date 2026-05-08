@@ -128,8 +128,10 @@ Split and leakage-control fields:
 
 1. `actual_*` columns may be populated only when the source
    EvaluationEvidence is `evidence_recorded`, has `metric_summary`, has no
-   active failure flags, and is marked through `actual_label_source` as
-   `approved_evaluation_evidence`.
+   active failure flags, has candidate-level metric-subject matching, and is
+   marked through `actual_label_source` as
+   `candidate_level_evaluation_evidence`. The separate `metric_source` field
+   records `approved_evaluation_evidence`.
 2. `pred_*` columns must never be copied into `actual_*` columns. If actual
    labels are present without an approved evidence source, validation fails.
 3. Rows with `label_source=pseudo_model` are not eligible supervised training

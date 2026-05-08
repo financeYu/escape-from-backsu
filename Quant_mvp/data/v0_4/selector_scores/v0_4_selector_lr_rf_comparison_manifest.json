@@ -7,7 +7,7 @@
   "comparison_rows_path": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_selector_lr_rf_comparison.jsonl",
   "diagnostic_reference_only": true,
   "evaluation_mode": "diagnostic_comparison_only",
-  "generated_at_utc": "2026-05-07T09:30:25+00:00",
+  "generated_at_utc": "2026-05-08T12:46:16+00:00",
   "logistic_regression_score_manifest_path": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_selector_score_manifest.json",
   "model_stage": "v0_4_ml_selector_application",
   "performance_claim_allowed": false,

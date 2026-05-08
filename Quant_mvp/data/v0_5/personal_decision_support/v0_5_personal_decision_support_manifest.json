@@ -1,0 +1,34 @@
+{
+  "current_condition_status": "blocked_missing_current_condition",
+  "evidence_status_counts": {
+    "evidence_recorded": 62,
+    "needs_more_evidence": 20
+  },
+  "generated_at_utc": "2026-05-08T12:56:26+00:00",
+  "guardrails": {
+    "future_return_prediction_allowed": false,
+    "new_market_data_ingestion_allowed": false,
+    "order_generation_allowed": false,
+    "position_sizing_allowed": false,
+    "private_personal_decision_support_only": true,
+    "production_activation_allowed": false,
+    "universe_expansion_allowed": false
+  },
+  "input_refs": {
+    "adoption_packets": "Quant_mvp/data/v0_3/adoption_candidate_review_packets/v0_3_adoption_candidate_review_packets.jsonl",
+    "ml_ready_input": "Quant_mvp/data/v0_3/ml_ready_candidate_inputs/v0_3_ml_ready_candidate_input.jsonl",
+    "ranking_rows": "Quant_mvp/data/v0_4/selector_scores/v0_4_1_selector_ml_score_ranking.jsonl"
+  },
+  "mode": "write",
+  "output_refs": {
+    "csv": "Quant_mvp/data/v0_5/personal_decision_support/v0_5_personal_decision_support_packets.csv",
+    "jsonl": "Quant_mvp/data/v0_5/personal_decision_support/v0_5_personal_decision_support_packets.jsonl",
+    "manifest": "Quant_mvp/data/v0_5/personal_decision_support/v0_5_personal_decision_support_manifest.json"
+  },
+  "packet_count": 82,
+  "packet_status_counts": {
+    "blocked_missing_current_condition": 82
+  },
+  "route_ref": "docs/extension/v0_5_personal_decision_support_route.md",
+  "schema_version": "v0_5_personal_decision_support_manifest_v1_0"
+}

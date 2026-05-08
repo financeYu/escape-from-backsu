@@ -11,7 +11,9 @@ compatibility, hard-stop, or release-evidence checks.
 Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE as the evidence
 and input-preparation lane. Post-MVP `v0.4 ML selector application route` is
 ACTIVE as the evidence-only application lane that consumes v0.3 selector
-feature matrix and label manifest artifacts.
+feature matrix and label manifest artifacts. Post-MVP `v0.5 personal decision
+support route` is ACTIVE as a contract-only private review route that consumes
+v0.3/v0.4 artifacts read-only and emits manual-check support packets only.
 
 Product goal:
 
@@ -29,6 +31,11 @@ Direction lock:
 - v0.4 consumes v0.3 feature matrix and label manifest artifacts as read-only
   inputs for trainability checks, optional baseline selector fitting, optional
   selector score manifests, and `AdoptionCandidate` review prioritization.
+- v0.5 consumes v0.3 evidence and v0.4 diagnostics as read-only inputs for
+  `PersonalDecisionSupportPacket` preparation. It may organize evidence,
+  coverage gaps, risk flags, cost-sensitivity flags, and manual review
+  checklists, but it must not generate order instructions, position sizing, or
+  future-return claims.
 - Do not route routine v0.3 work back through archived v0.1/v0.2 standards.
 - If a task is blocked, choose the next concrete v0.3 artifact:
   `ResearchHypothesis`, `StrategyHypothesis`, `StrategyCandidate`,
@@ -46,6 +53,11 @@ Current baseline facts:
 - v0.4 is the active route for ML/rule selector application. It does not
   authorize live trading, order generation, buy/sell recommendation language,
   production activation, new market-data ingestion, or universe expansion.
+- v0.5 is the active contract-only route for private personal decision support.
+  It does not authorize live trading, brokerage integration, order generation,
+  buy/sell/hold imperative language, automatic rebalance, move-to-cash
+  instructions, production activation, new market-data ingestion, universe
+  expansion, or valuation/fundamental scoring activation.
 
 Current active route skill:
 
@@ -93,6 +105,7 @@ Archived/supporting probability compatibility route:
 | Backtest/simulation | evaluate candidates historically with no-lookahead and no-feedback checks | `EvaluationEvidence` |
 | ML/evaluator selector | compare allowlisted evidence summaries and select review-preferred candidates | `AdoptionCandidate` |
 | v0.4 selector application | consume v0.3 feature matrix and label manifest for trainability, optional baseline fit, and optional review-prioritization score manifests | trainability manifest, optional model manifest, optional selector score manifest |
+| v0.5 personal decision support | consume v0.3/v0.4 artifacts read-only and organize private manual-check support packets | `PersonalDecisionSupportPacket` |
 | Adoption evidence | summarize historical return/risk/performance characteristics for review | adoption review packet |
 
 ## Active Route Artifacts
@@ -108,6 +121,8 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v0_4_ml_selector_application_route.md`
 - `docs/extension/v0_4_selector_model_training_contract.md`
 - `docs/extension/v0_4_selector_model_manifest_contract.md`
+- `docs/extension/v0_5_pre_entry_gap_assessment.md`
+- `docs/extension/v0_5_personal_decision_support_route.md`
 - `docs/context/EXTENSION_REGISTRY.toml`
 
 ## Archived v0.1/v0.2 References
@@ -141,6 +156,9 @@ Allowed now:
 - v0.4 baseline selector trainability checks, model manifests when training
   succeeds, and selector score manifests limited to AdoptionCandidate review
   prioritization
+- v0.5 personal decision support contracts and packets limited to evidence
+  summary, risk flags, coverage gaps, current-condition status, diagnostic
+  references, and manual review checklists
 - historical return/risk/performance summaries when framed as evidence only
 
 Still blocked without later explicit approval:
@@ -189,6 +207,7 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | post-MVP v0.2 predictive probability score route | ARCHIVED / supporting compatibility reference |
 | post-MVP v0.3 research-to-strategy adoption route | ACTIVE |
 | post-MVP v0.4 ML selector application route | ACTIVE / consumes v0.3 inputs read-only |
+| post-MVP v0.5 personal decision support route | ACTIVE / contract-only private review packets |
 
 ## Baseline Contracts
 
@@ -200,6 +219,9 @@ Quant-local owner-lane handoff, not a cross-project handoff.
   market data, `.env`, and secrets are not default context.
 - v0.3 evidence must not become automatic production activation.
 - v0.4 selector outputs must not become trade signals, order instructions,
+  runtime ranking activation, or production activation.
+- v0.5 personal decision support outputs must not become order instructions,
+  automatic position sizing, buy/sell/hold imperatives, move-to-cash commands,
   runtime ranking activation, or production activation.
 
 ## Research Ingestion State

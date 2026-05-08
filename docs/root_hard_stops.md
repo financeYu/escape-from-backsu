@@ -28,6 +28,12 @@ belong in docs or project-local skills.
   v0.4 consumes v0.3 feature matrix and label manifest artifacts as read-only
   inputs for trainability checks, optional baseline model fitting, optional
   selector scoring, and `AdoptionCandidate` review prioritization.
+- The active personal decision support route is `v0.5 personal decision
+  support`. v0.5 consumes v0.3 evidence and v0.4 diagnostics as read-only
+  inputs and may emit private manual-check support packets only. It does not
+  authorize order generation, position sizing, live trading, production
+  activation, new market-data ingestion, universe expansion, or
+  valuation/fundamental scoring activation.
 - v0.1 and v0.2 are archived reference states. They are not current progress
   and must not be loaded into active context unless a named
   provenance/regression/compatibility check requires them.
@@ -91,6 +97,12 @@ check trainability, fit a baseline selector only when positive and negative
 classes and candidate-level evidence exist, and emit review-prioritization
 manifests. It is not a future-return prediction claim, trade signal, runtime
 ranking activation, or production activation path.
+
+v0.5 starts after v0.4 diagnostics and v0.4.2 evidence coverage checks as a
+private decision support route. It may organize evidence, current-condition
+status from approved KOSPI/KOSPI200 local lanes, risk flags, cost-sensitivity
+flags, coverage gaps, and manual review checklists. It must not answer with an
+instruction to transact.
 
 ## Direction Lock
 
@@ -157,6 +169,8 @@ The active v0.3 route authorizes candidate/evidence work only:
 - v0.4 trainability manifests, model manifests when training succeeds, and
   selector score manifests framed only as `AdoptionCandidate` review
   prioritization inputs
+- v0.5 `PersonalDecisionSupportPacket` contracts and packets framed only as
+  private evidence/risk/manual-check support
 - validation tests, route validators, no-lookahead checks, point-in-time checks,
   no-feedback checks, and review packets
 - work in the approved separate role branch/worktree for the owning lane
@@ -169,6 +183,9 @@ The active v0.3 route authorizes candidate/evidence work only:
   execution.
 - Buy/sell recommendation language or trade-signal framing for selector
   outputs.
+- Order instructions, automatic position sizing, automatic rebalance,
+  move-to-cash commands, or future-return prediction claims from v0.5 decision
+  support packets.
 - Valuation/fundamental scoring activation.
 
 ## Route Ownership

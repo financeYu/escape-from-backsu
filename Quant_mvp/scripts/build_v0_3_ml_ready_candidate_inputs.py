@@ -11,7 +11,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import re
 import sys
 try:
     import tomllib
@@ -31,6 +30,11 @@ from Quant_mvp.scripts.v0_3_ml_label_policy import (
     GENERIC_PROXY_LABEL_ROLE,
     GENERIC_PROXY_LABEL_STATUS,
     GENERIC_PROXY_LIMITATION,
+)
+from Quant_mvp.scripts.artifact_io import (
+    parse_json_fenced_markdown,
+    read_jsonl,
+    write_jsonl,
 )
 
 
@@ -123,20 +127,6 @@ def _compact_list(value: Any) -> list[str]:
     return sorted(str(item) for item in _as_list(value) if item is not None and str(item) != "")
 
 
-def read_jsonl(path: Path) -> list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            stripped = line.strip()
-            if not stripped:
-                continue
-            payload = json.loads(stripped)
-            if not isinstance(payload, dict):
-                raise ValueError(f"{path}:{line_number} is not a JSON object")
-            records.append(payload)
-    return records
-
-
 def read_label_rules(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
@@ -145,12 +135,6 @@ def read_label_rules(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"{path} is not a TOML object")
     return payload
-
-
-def write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
-    with path.open("w", encoding="utf-8", newline="\n") as handle:
-        for record in records:
-            handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 def _csv_value(value: Any) -> Any:
@@ -187,24 +171,14 @@ def evidence_card_id_from_candidate(candidate_id: str, registry_record: dict[str
     return None
 
 
-def _parse_json_from_markdown(path: Path) -> dict[str, Any]:
-    text = path.read_text(encoding="utf-8")
-    match = re.search(r"```json\s*(.*?)\s*```", text, flags=re.DOTALL)
-    if not match:
-        raise ValueError(f"{path} does not contain a json fenced block")
-    payload = json.loads(match.group(1))
-    if not isinstance(payload, dict):
-        raise ValueError(f"{path} json fenced block is not an object")
-    payload["_source_path"] = str(path)
-    return payload
-
-
 def read_evaluation_evidence_dir(path: Path) -> list[dict[str, Any]]:
     if not path.exists():
         return []
     records: list[dict[str, Any]] = []
     for evidence_path in sorted(path.rglob("ee_v0_3_*.md")):
-        records.append(_parse_json_from_markdown(evidence_path))
+        payload = parse_json_fenced_markdown(evidence_path)
+        if payload is not None:
+            records.append(payload)
     return records
 
 
@@ -672,7 +646,12 @@ def build_ml_ready_row(
     evidence_card_id = evidence_card_id_from_candidate(candidate_id, registry_record)
     evaluation_window_start, evaluation_window_end = _evaluation_window(evidence, candidate)
     evidence_status = evidence.get("status") if evidence else "missing_evaluation_evidence"
-    metric_summary_available = isinstance(_get(evidence, "metric_summary"), dict) if evidence else False
+    metric_summary_available = (
+        evidence_status == "evidence_recorded"
+        and isinstance(_get(evidence, "metric_summary"), dict)
+        if evidence
+        else False
+    )
     adoption_checks_ready = _adoption_checks_ready(evidence)
     actual_labels = _approved_actual_labels(evidence, label_rules)
     benchmark_cost_metadata = _benchmark_cost_metadata(

@@ -20,6 +20,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from Quant_mvp.scripts.artifact_io import read_jsonl, write_jsonl
+
 DEFAULT_INPUT = Path("Quant_mvp/data/v0_3/ml_ready_candidate_inputs/v0_3_ml_ready_candidate_input.jsonl")
 DEFAULT_OUTPUT_DIR = Path("Quant_mvp/data/v0_3/rule_first_selector")
 DEFAULT_JSONL_NAME = "v0_3_rule_first_selector.jsonl"
@@ -122,26 +124,6 @@ def _csv_value(value: Any) -> Any:
 
 def _clip(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
-
-
-def read_jsonl(path: Path) -> list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    with path.open("r", encoding="utf-8") as handle:
-        for line_number, line in enumerate(handle, start=1):
-            stripped = line.strip()
-            if not stripped:
-                continue
-            payload = json.loads(stripped)
-            if not isinstance(payload, dict):
-                raise ValueError(f"{path}:{line_number} is not a JSON object")
-            records.append(payload)
-    return records
-
-
-def write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
-    with path.open("w", encoding="utf-8", newline="\n") as handle:
-        for record in records:
-            handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
 
 
 def write_csv(path: Path, records: list[dict[str, Any]]) -> None:

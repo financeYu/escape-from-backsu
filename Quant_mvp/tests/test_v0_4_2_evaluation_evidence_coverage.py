@@ -102,3 +102,87 @@ def test_v0_4_2_coverage_selects_manual_review_gap_without_labels(tmp_path: Path
     assert manifest["label_generation_status"] == "not_generated_no_synthetic_label"
     assert manifest["guardrails"]["trading_signal_allowed"] is False
     assert "excluded_forbidden_blocker_point_in_time_fundamentals_required" in manifest["exclusion_reason_counts"]
+
+
+def test_v0_4_2_coverage_rerun_ignores_own_output_dir(tmp_path: Path) -> None:
+    registry = tmp_path / "registry.jsonl"
+    write_jsonl(
+        registry,
+        [
+            candidate("sc:manual_review_gap"),
+            candidate("sc:next_manual_review_gap"),
+        ],
+    )
+    evidence_dir = tmp_path / "evidence"
+    output_dir = evidence_dir / "v0_4_2_coverage_cohort_1"
+    output_dir.mkdir(parents=True)
+    (output_dir / "ee_v0_3_self_managed.md").write_text(
+        "# self managed\n\n```json\n"
+        + json.dumps({"candidate_id": "sc:manual_review_gap", "status": "needs_more_evidence"})
+        + "\n```\n",
+        encoding="utf-8",
+    )
+    ml_manifest = tmp_path / "ml_manifest.json"
+    feature_manifest = tmp_path / "feature_manifest.json"
+    trainability_manifest = tmp_path / "trainability_manifest.json"
+    write_json(ml_manifest, {"evaluation_status_counts": {"missing_evaluation_evidence": 2}})
+    write_json(feature_manifest, {})
+    write_json(trainability_manifest, {})
+
+    manifest = builder.build_coverage(
+        registry=registry,
+        evidence_dir=evidence_dir,
+        output_dir=output_dir,
+        coverage_manifest_dir=tmp_path / "coverage",
+        coverage_manifest_name="manifest.json",
+        ml_ready_manifest_path=ml_manifest,
+        feature_manifest_path=feature_manifest,
+        trainability_manifest_path=trainability_manifest,
+        cohort_id="test_v0_4_2",
+        created_at="2026-05-07",
+        max_candidates=1,
+        dry_run=True,
+    )
+
+    assert manifest["selected_candidate_ids"] == ["sc:manual_review_gap"]
+
+
+def test_v0_4_2_coverage_excludes_options_source_target(tmp_path: Path) -> None:
+    registry = tmp_path / "registry.jsonl"
+    write_jsonl(
+        registry,
+        [
+            candidate(
+                "sc:options_source",
+                target_universe=(
+                    "Candidate-only test universe: approved KOSPI200 daily OHLCV universe by default; "
+                    "source target noted as options; daily_or_unspecified."
+                ),
+            ),
+            candidate("sc:equity_source"),
+        ],
+    )
+    ml_manifest = tmp_path / "ml_manifest.json"
+    feature_manifest = tmp_path / "feature_manifest.json"
+    trainability_manifest = tmp_path / "trainability_manifest.json"
+    write_json(ml_manifest, {"evaluation_status_counts": {"missing_evaluation_evidence": 2}})
+    write_json(feature_manifest, {})
+    write_json(trainability_manifest, {})
+
+    manifest = builder.build_coverage(
+        registry=registry,
+        evidence_dir=tmp_path / "evidence",
+        output_dir=tmp_path / "evidence" / "v0_4_2_coverage_cohort_1",
+        coverage_manifest_dir=tmp_path / "coverage",
+        coverage_manifest_name="manifest.json",
+        ml_ready_manifest_path=ml_manifest,
+        feature_manifest_path=feature_manifest,
+        trainability_manifest_path=trainability_manifest,
+        cohort_id="test_v0_4_2",
+        created_at="2026-05-07",
+        max_candidates=10,
+        dry_run=True,
+    )
+
+    assert manifest["selected_candidate_ids"] == ["sc:equity_source"]
+    assert manifest["exclusion_reason_counts"]["excluded_forbidden_universe_source_target"] == 1

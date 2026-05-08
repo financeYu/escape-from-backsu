@@ -1,6 +1,6 @@
 {
   "activation_boundary": "production_activation_requires_later_root_approved_gate",
-  "generated_at_utc": "2026-05-07T09:30:11+00:00",
+  "generated_at_utc": "2026-05-08T12:45:55+00:00",
   "generic_proxy_policy": "generic_momentum_proxy_rows_are_reference_features_only_not_selector_scores",
   "hard_excluded_count": 636,
   "hard_gate_reason_counts": {
@@ -57,7 +57,7 @@
   ],
   "ranked_candidate_count": 62,
   "rule_scored_candidate_count": 62,
-  "run_id": "v0_4_2_rule_first_selector_20260507",
+  "run_id": "rule_first_selector_20260508_124555",
   "schema_version": "v0_3_rule_first_selector_manifest_0_1",
   "selection_status": "review_candidates_available",
   "selector_score_source_counts": {

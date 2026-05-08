@@ -29,7 +29,7 @@
   },
   "excluded_failure": 0,
   "excluded_untradable": 0,
-  "generated_at_utc": "2026-05-07T09:30:03+00:00",
+  "generated_at_utc": "2026-05-08T12:45:48+00:00",
   "generic_proxy_metric_count": 0,
   "generic_proxy_policy": "generic_proxy_metrics_are_benchmark_reference_feature_candidates_not_labels",
   "label_negative": 37,
@@ -48,7 +48,7 @@
   "prediction_value_row_count": 0,
   "record_count": 698,
   "rule_inconclusive": 0,
-  "run_id": "v0_4_2_ml_ready_candidate_input_20260507",
+  "run_id": "ml_ready_candidate_input_20260508_124548",
   "schema_version": "v0_3_candidate_ml_input_manifest_0_2",
   "strategy_type_counts": {
     "event_driven": 2,

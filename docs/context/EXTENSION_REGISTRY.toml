@@ -2,7 +2,7 @@
 # The active route state is governed by docs/root_hard_stops.md and
 # docs/roadmap_status.md.
 
-status = "active_v0_4_ml_selector_application_route"
+status = "active_v0_5_personal_decision_support_contract_route"
 baseline = "docs/context/MVP_V0_1_BASELINE.md"
 archive_index = "docs/context/ARCHIVE_INDEX.md"
 archived_v0_1_v0_2 = "docs/roadmap_archive/v0_1_v0_2_archive.md"
@@ -202,6 +202,43 @@ blocked = [
   "live trading or brokerage integration",
   "order generation",
   "buy/sell recommendation language",
+  "production activation",
+  "new market-data ingestion",
+  "universe expansion",
+  "valuation/fundamental scoring activation",
+]
+
+[extension.personal_decision_support_v0_5]
+state = "active_contract_only_personal_decision_support_route"
+permission = "user-authorized private personal decision support route; consumes v0.3 evidence and v0.4 diagnostics as read-only inputs and may emit evidence, risk, coverage, and manual-check packets only; live trading, order generation, buy/sell/hold imperative recommendations, position sizing commands, production activation, new market-data ingestion, universe expansion, and valuation/fundamental scoring activation remain blocked"
+context = "docs/extension/v0_5_personal_decision_support_route.md"
+pre_entry_gap_assessment = "docs/extension/v0_5_pre_entry_gap_assessment.md"
+input_routes = [
+  "extension.strategy_adoption_v0_3",
+  "extension.ml_selector_application_v0_4",
+]
+default_domain_gate = ".agents/skills/score-runtime-semantics-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+output_entity = "PersonalDecisionSupportPacket"
+builder = "Quant_mvp/scripts/build_v0_5_personal_decision_support_packets.py"
+output_dir = "Quant_mvp/data/v0_5/personal_decision_support"
+packet_manifest = "Quant_mvp/data/v0_5/personal_decision_support/v0_5_personal_decision_support_manifest.json"
+allowed_outputs = [
+  "evidence summary",
+  "risk flags",
+  "cost sensitivity flags",
+  "coverage gaps",
+  "current-condition status from approved KOSPI/KOSPI200 local lanes",
+  "manual review checklist",
+  "diagnostic manifest references",
+]
+blocked = [
+  "live trading or brokerage integration",
+  "order generation",
+  "buy/sell/hold imperative recommendation language",
+  "automatic rebalance or move-to-cash instruction",
+  "position sizing commands",
+  "future return prediction claim",
   "production activation",
   "new market-data ingestion",
   "universe expansion",

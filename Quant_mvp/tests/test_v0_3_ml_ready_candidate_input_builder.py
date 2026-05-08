@@ -181,6 +181,7 @@ def test_needs_more_evidence_row_does_not_create_synthetic_supervised_label() ->
     assert row["label_review_preferred"] is None
     assert row["supervised_label_eligible"] is False
     assert row["actual_label_source"] is None
+    assert row["actual_metric_summary_available"] is False
     assert row["ml_training_status"] == "blocked_no_candidate_level_metric"
 
 

@@ -2,7 +2,7 @@
 # The active route state is governed by docs/root_hard_stops.md and
 # docs/roadmap_status.md.
 
-status = "active_v0_5_personal_decision_support_contract_route"
+status = "active_v1_0_rc_phase_3_readiness_route"
 baseline = "docs/context/MVP_V0_1_BASELINE.md"
 archive_index = "docs/context/ARCHIVE_INDEX.md"
 archived_v0_1_v0_2 = "docs/roadmap_archive/v0_1_v0_2_archive.md"
@@ -246,6 +246,53 @@ blocked = [
   "new market-data ingestion",
   "universe expansion",
   "valuation/fundamental scoring activation",
+]
+
+[extension.v1_0_rc_readiness]
+state = "active_phase_3_readiness_contract_route"
+permission = "v1.0-rc evidence-only readiness route is active for Phase 0 through Phase 3 only; it prepares scope, audit, HorizonPolicy, and SimulationRunManifest contracts and does not authorize final release, tag, push, production activation, live trading, valuation/fundamental scoring activation, futures activation, or Phase 4+ modules"
+freeze_plan = "docs/extension/v1_0_freeze_plan.md"
+scope_boundary = "docs/extension/v1_0_scope_boundary.md"
+hardcoding_audit = "docs/extension/v1_0_next_day_hardcoding_audit.md"
+horizon_policy_contract = "docs/extension/v1_0_horizon_policy_contract.md"
+horizon_policy_config = "config/horizon_policy.toml"
+simulation_run_manifest_contract = "docs/extension/v1_0_simulation_run_manifest_contract.md"
+horizon_policy_loader = "src/validation/horizon_policy.py"
+simulation_run_manifest_helper = "Quant_mvp/backtest_mvp/simulation_run_manifest.py"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+current_completed_phases = [
+  "Phase 0 preflight and scope boundary",
+  "Phase 1 next-day / 1D hardcoding audit",
+  "Phase 2 HorizonPolicy",
+  "Phase 3 SimulationRunManifest",
+]
+supported_horizon_ids = [
+  "1d",
+  "1w",
+  "1m",
+]
+allowed = [
+  "evidence-only candidate strategy evaluation planning",
+  "candidate-only backtest/simulation planning",
+  "horizon generalization readiness contracts",
+  "SimulationRunManifest readiness contracts",
+  "historical/simulated rebalance disclosure in manifests",
+  "manual review support",
+]
+blocked = [
+  "final v1.0 release, tag, push, or freeze declaration",
+  "live trading or brokerage integration",
+  "order generation",
+  "buy/sell/hold recommendation language",
+  "trade-signal framing",
+  "automatic live rebalance instruction",
+  "move-to-cash command",
+  "future-return prediction claim",
+  "valuation/fundamental scoring activation",
+  "futures/options/index trading activation",
+  "new market-data ingestion",
+  "Phase 4+ modules without later explicit task approval",
 ]
 
 [extension.v0_1n_candidate_ml]

@@ -34,6 +34,13 @@ belong in docs or project-local skills.
   authorize order generation, position sizing, live trading, production
   activation, new market-data ingestion, universe expansion, or
   valuation/fundamental scoring activation.
+- The active `v1.0-rc evidence-only readiness route` is open through Phase 3
+  only: Phase 0 scope/freeze planning, Phase 1 next-day / 1D hardcoding audit,
+  Phase 2 `HorizonPolicy`, and Phase 3 `SimulationRunManifest`. It is a
+  pre-freeze readiness route only and does not authorize final v1.0 freeze,
+  tag, release, push, production activation, live trading,
+  valuation/fundamental scoring activation, futures activation, or Phase 4+
+  modules without later explicit approval.
 - v0.1 and v0.2 are archived reference states. They are not current progress
   and must not be loaded into active context unless a named
   provenance/regression/compatibility check requires them.
@@ -42,9 +49,9 @@ belong in docs or project-local skills.
 - v0.2 `prob_up_1d_candidate` remains an archived/supporting compatibility
   artifact only. It is not the product goal and is not an active route.
 - Use `.agents/skills/quant-strategy-adoption-gate/SKILL.md` for v0.3
-  strategy-selection/adoption work and v0.4 evidence-only selector
-  application work. Use `.agents/skills/quant-review-gate/SKILL.md` before
-  accepting completion.
+  strategy-selection/adoption work, v0.4 evidence-only selector application
+  work, and v1.0-rc evidence-only readiness contracts. Use
+  `.agents/skills/quant-review-gate/SKILL.md` before accepting completion.
 - Use `.agents/skills/quant-candidate-ml-gate/SKILL.md` only when a task
   explicitly requests archived/supporting `prob_up_1d_candidate` compatibility,
   candidate probability sidecars, feature tables, label-separated
@@ -171,6 +178,9 @@ The active v0.3 route authorizes candidate/evidence work only:
   prioritization inputs
 - v0.5 `PersonalDecisionSupportPacket` contracts and packets framed only as
   private evidence/risk/manual-check support
+- v1.0-rc readiness contracts and helpers through Phase 3 only:
+  `HorizonPolicy`, `SimulationRunManifest`, compatibility metadata, validation
+  tests, and manual-review support
 - validation tests, route validators, no-lookahead checks, point-in-time checks,
   no-feedback checks, and review packets
 - work in the approved separate role branch/worktree for the owning lane
@@ -196,6 +206,12 @@ active contract.
   move-to-cash commands, or future-return prediction claims from v0.5 decision
   support packets.
 - Valuation/fundamental scoring activation.
+- Final v1.0 freeze, tag, release, push, or production-readiness declaration
+  from v1.0-rc readiness artifacts.
+- v1.0-rc Phase 4+ modules without a later explicit task approval, including
+  `WeightConfig` loop, `LayerRegistry`, `EvaluationEvidenceV1` full
+  implementation, ML selector/evaluator implementation, and
+  `ManualReviewPacket`.
 
 ## Route Ownership
 

@@ -14,6 +14,9 @@ ACTIVE as the evidence-only application lane that consumes v0.3 selector
 feature matrix and label manifest artifacts. Post-MVP `v0.5 personal decision
 support route` is ACTIVE as a contract-only private review route that consumes
 v0.3/v0.4 artifacts read-only and emits manual-check support packets only.
+`v1.0-rc evidence-only readiness route` is ACTIVE through Phase 3 only as a
+pre-freeze readiness lane for scope/freeze planning, next-day / 1D audit,
+`HorizonPolicy`, and `SimulationRunManifest`.
 
 Product goal:
 
@@ -36,6 +39,10 @@ Direction lock:
   coverage gaps, risk flags, cost-sensitivity flags, and manual review
   checklists, but it must not generate order instructions, position sizing, or
   future-return claims.
+- v1.0-rc Phase 0 through Phase 3 prepare evidence-only readiness contracts.
+  They do not authorize final v1.0 freeze, tags, pushes, production
+  activation, live execution, valuation/fundamental activation, futures
+  activation, or Phase 4+ implementation.
 - Do not route routine v0.3 work back through archived v0.1/v0.2 standards.
 - If a task is blocked, choose the next concrete v0.3 artifact:
   `ResearchHypothesis`, `StrategyHypothesis`, `StrategyCandidate`,
@@ -58,10 +65,14 @@ Current baseline facts:
   buy/sell/hold imperative language, automatic rebalance, move-to-cash
   instructions, production activation, new market-data ingestion, universe
   expansion, or valuation/fundamental scoring activation.
+- v1.0-rc Phase 0 and Phase 1 are complete as readiness planning and audit
+  documents. Phase 2 and Phase 3 are complete as `HorizonPolicy` and
+  `SimulationRunManifest` readiness contracts. Phase 4+ remains unopened.
 
 Current active route skill:
 
 - `.agents/skills/quant-strategy-adoption-gate/SKILL.md`
+  - applies to v0.3/v0.4 evidence work and v1.0-rc readiness contracts
 
 Current active root orchestration:
 
@@ -124,6 +135,12 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v0_5_pre_entry_gap_assessment.md`
 - `docs/extension/v0_5_personal_decision_support_route.md`
 - `docs/extension/v0_5_current_condition_snapshot_contract.md`
+- `docs/extension/v1_0_freeze_plan.md`
+- `docs/extension/v1_0_scope_boundary.md`
+- `docs/extension/v1_0_next_day_hardcoding_audit.md`
+- `docs/extension/v1_0_horizon_policy_contract.md`
+- `docs/extension/v1_0_simulation_run_manifest_contract.md`
+- `config/horizon_policy.toml`
 - `docs/context/EXTENSION_REGISTRY.toml`
 
 ## Archived v0.1/v0.2 References
@@ -160,6 +177,9 @@ Allowed now:
 - v0.5 personal decision support contracts and packets limited to evidence
   summary, risk flags, coverage gaps, current-condition status, diagnostic
   references, and manual review checklists
+- v1.0-rc Phase 0 through Phase 3 readiness artifacts limited to scope/freeze
+  planning, next-day / 1D hardcoding audit, `HorizonPolicy`, and
+  `SimulationRunManifest`
 - historical return/risk/performance summaries when framed as evidence only
 
 Still blocked without later explicit approval:
@@ -167,6 +187,8 @@ Still blocked without later explicit approval:
 - live trading, brokerage integration, order generation, or real-money execution
 - valuation/fundamental scoring activation
 - new market-data ingestion or universe expansion
+- final v1.0 freeze, tag, release, push, or production-readiness declaration
+- v1.0-rc Phase 4+ implementation without a later explicit task approval
 
 ## Parallel Workspace Policy
 
@@ -209,6 +231,11 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | post-MVP v0.3 research-to-strategy adoption route | ACTIVE |
 | post-MVP v0.4 ML selector application route | ACTIVE / consumes v0.3 inputs read-only |
 | post-MVP v0.5 personal decision support route | ACTIVE / contract-only private review packets |
+| v1.0-rc Phase 0 preflight / scope boundary | COMPLETE / readiness planning only |
+| v1.0-rc Phase 1 next-day / 1D hardcoding audit | COMPLETE / readiness audit only |
+| v1.0-rc Phase 2 HorizonPolicy | COMPLETE / readiness contract |
+| v1.0-rc Phase 3 SimulationRunManifest | COMPLETE / readiness contract |
+| v1.0-rc Phase 4+ modules | NOT OPEN / requires later explicit task approval |
 
 ## Baseline Contracts
 
@@ -224,6 +251,9 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 - v0.5 personal decision support outputs must not become order instructions,
   automatic position sizing, buy/sell/hold imperatives, move-to-cash commands,
   runtime ranking activation, or production activation.
+- v1.0-rc readiness outputs must not become final release evidence, production
+  activation, live execution, valuation/fundamental activation, futures/index
+  activation, or Phase 4+ implementation without later explicit approval.
 
 ## Research Ingestion State
 

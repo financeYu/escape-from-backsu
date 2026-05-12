@@ -1,0 +1,42 @@
+# v1.0-rc HorizonPolicy config.
+# This is a pre-freeze readiness contract, not production activation.
+
+[defaults]
+default_horizon_id = "1d"
+default_reason = "backward_compatible_1d_default_when_no_explicit_horizon_is_provided"
+
+[[horizon_policy]]
+horizon_id = "1d"
+signal_frequency = "daily"
+entry_lag_trading_days = 1
+holding_period_trading_days = 1
+rebalance_frequency = "daily"
+label_horizon = "1d"
+simulation_horizon = "1d"
+calendar_policy = "trading_days"
+rebalance_disclosure_required = true
+compatibility_note = "Default compatibility horizon; must be selected explicitly or through the documented default resolver."
+
+[[horizon_policy]]
+horizon_id = "1w"
+signal_frequency = "weekly"
+entry_lag_trading_days = 1
+holding_period_trading_days = 5
+rebalance_frequency = "weekly"
+label_horizon = "1w"
+simulation_horizon = "1w"
+calendar_policy = "trading_days"
+rebalance_disclosure_required = true
+compatibility_note = "Five trading-day weekly review horizon."
+
+[[horizon_policy]]
+horizon_id = "1m"
+signal_frequency = "monthly"
+entry_lag_trading_days = 1
+holding_period_trading_days = 21
+rebalance_frequency = "monthly"
+label_horizon = "1m"
+simulation_horizon = "1m"
+calendar_policy = "trading_days"
+rebalance_disclosure_required = true
+compatibility_note = "Twenty-one trading-day monthly review horizon."

@@ -48,6 +48,14 @@ Identity and boundary columns:
 - `owner_route`
 - `ticker`
 - `feature_as_of_date`
+- `horizon_policy_id`
+- `signal_frequency`
+- `entry_lag_trading_days`
+- `holding_period_trading_days`
+- `rebalance_frequency`
+- `label_horizon`
+- `simulation_horizon`
+- `calendar_policy`
 
 Price and feature columns:
 
@@ -90,6 +98,12 @@ Safety columns:
 - `table_generated_at_utc`
 
 ## Label Policy
+
+The default label path resolves `horizon_policy_id = "1d"` through
+`config/horizon_policy.toml` for backward compatibility. The existing
+`label_forward_return_1d` and `label_up_1d` column names are compatibility
+columns until a later approved phase defines generalized per-horizon label
+columns.
 
 Supervised labels are eligible only when `adjusted_close` is present in the
 source input.

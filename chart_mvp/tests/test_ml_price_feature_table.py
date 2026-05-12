@@ -53,6 +53,13 @@ class MlPriceFeatureTableTests(unittest.TestCase):
         self.assertEqual(latest["master_mvp_context_marker"], MASTER_MVP_CONTEXT_MARKER)
         self.assertEqual(latest["source_project"], "chart_mvp")
         self.assertEqual(latest["source_universe"], "KOSPI200_candidate_only")
+        self.assertEqual(latest["horizon_policy_id"], "1d")
+        self.assertEqual(latest["label_horizon"], "1d")
+        self.assertEqual(latest["simulation_horizon"], "1d")
+        self.assertEqual(int(latest["entry_lag_trading_days"]), 1)
+        self.assertEqual(int(latest["holding_period_trading_days"]), 1)
+        self.assertEqual(latest["rebalance_frequency"], "daily")
+        self.assertEqual(latest["calendar_policy"], "trading_days")
         self.assertEqual(latest["label_source"], "adjusted_close")
         self.assertTrue(bool(latest["supervised_label_eligible"]))
         self.assertIn("not a runtime ranking input", latest["row_boundary"])
@@ -72,10 +79,17 @@ class MlPriceFeatureTableTests(unittest.TestCase):
         self.assertTrue(pd.isna(latest["label_forward_return_1d"]))
 
     def test_rejects_non_1d_label_horizon_until_contract_columns_change(self) -> None:
-        with self.assertRaisesRegex(ValueError, "label_horizon_days must be 1"):
+        with self.assertRaisesRegex(ValueError, "must match the resolved HorizonPolicy"):
             build_ml_price_feature_table(
                 self._fixture_frame(),
                 config=MlPriceFeatureConfig(label_horizon_days=5, min_history_length=20),
+            )
+
+    def test_rejects_non_1d_horizon_policy_until_contract_columns_change(self) -> None:
+        with self.assertRaisesRegex(ValueError, "1d compatibility columns"):
+            build_ml_price_feature_table(
+                self._fixture_frame(),
+                config=MlPriceFeatureConfig(horizon_policy_id="1w", label_horizon_days=5, min_history_length=20),
             )
 
     def test_rejects_duplicate_ticker_dates(self) -> None:

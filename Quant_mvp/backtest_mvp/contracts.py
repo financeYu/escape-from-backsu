@@ -21,6 +21,7 @@ import pandas as pd
 
 from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 from src.scores.schema import find_missing_columns, find_valuation_fundamental_columns
+from src.validation.horizon_policy import HorizonPolicy, resolve_horizon_policy
 
 
 STEP17_BACKTEST_NOTICE = "Step 17 conservative backtest evaluation only"
@@ -214,6 +215,32 @@ class BacktestConfig:
         with Path(path).open("rb") as handle:
             payload = tomllib.load(handle)
         return cls.from_mapping(payload)
+
+    @classmethod
+    def from_horizon_policy(
+        cls,
+        horizon_policy: HorizonPolicy | Mapping[str, Any] | str | None = None,
+        **overrides: Any,
+    ) -> "BacktestConfig":
+        """Create config from explicit HorizonPolicy values.
+
+        This preserves existing constructor defaults unless the caller chooses
+        the v1.0-rc policy path.
+        """
+
+        if isinstance(horizon_policy, HorizonPolicy):
+            policy = horizon_policy
+        elif isinstance(horizon_policy, Mapping):
+            policy = HorizonPolicy.from_mapping(horizon_policy)
+        else:
+            policy = resolve_horizon_policy(horizon_policy)
+        values = {
+            "rebalance_frequency": policy.rebalance_frequency,
+            "holding_period_days": policy.holding_period_trading_days,
+            "execution_lag_days": policy.entry_lag_trading_days,
+        }
+        values.update(overrides)
+        return cls(**values)
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON/DataFrame-friendly config dictionary."""

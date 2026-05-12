@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,8 +12,13 @@ from typing import Iterable
 
 import pandas as pd
 
+ROOT_SRC = Path(__file__).resolve().parents[4] / "src"
+if ROOT_SRC.exists() and str(ROOT_SRC) not in sys.path:
+    sys.path.append(str(ROOT_SRC))
+
 from preprocess.price_data_validator import PriceValidationConfig, validate_price_frame
 from preprocess.schema_validator import infer_ticker_from_price_path
+from validation.horizon_policy import HorizonPolicy, resolve_horizon_policy
 
 
 ML_PRICE_FEATURE_TABLE_SCHEMA_VERSION = "v0_3_kospi200_price_ml_feature_table_0_1"
@@ -40,6 +46,7 @@ CACHE_PRICE_COLUMN_ALIASES = {
 class MlPriceFeatureConfig:
     """Configuration for ML price feature table construction."""
 
+    horizon_policy_id: str | None = None
     label_horizon_days: int = 1
     min_history_length: int = 20
     source_universe: str = "KOSPI200_candidate_only"
@@ -48,9 +55,13 @@ class MlPriceFeatureConfig:
     generated_output_boundary: str = "chart_mvp/outputs/ml_ready_price_features/"
 
 
-def _require_supported_label_horizon(label_horizon_days: int) -> None:
-    if label_horizon_days != 1:
-        raise ValueError("label_horizon_days must be 1 while label columns use the 1d contract")
+def _resolve_label_horizon_policy(config: MlPriceFeatureConfig) -> HorizonPolicy:
+    policy = resolve_horizon_policy(config.horizon_policy_id)
+    if policy.label_horizon != "1d":
+        raise ValueError("ML price feature table label columns remain 1d compatibility columns")
+    if config.label_horizon_days != policy.holding_period_trading_days:
+        raise ValueError("label_horizon_days must match the resolved HorizonPolicy holding period")
+    return policy
 
 
 def _validate_source_frame(frame: pd.DataFrame, config: MlPriceFeatureConfig) -> pd.DataFrame:
@@ -136,7 +147,7 @@ def build_ml_price_feature_table(
     """Return one ML feature row per ticker-date from standardized OHLCV data."""
 
     config = config or MlPriceFeatureConfig()
-    _require_supported_label_horizon(config.label_horizon_days)
+    horizon_policy = _resolve_label_horizon_policy(config)
     normalized = _validate_source_frame(frame, config)
     normalized = normalized.copy()
     normalized["date"] = pd.to_datetime(normalized["date"], errors="coerce")
@@ -162,6 +173,14 @@ def build_ml_price_feature_table(
     result["source_universe"] = config.source_universe
     result["owner_route"] = config.owner_route
     result["feature_as_of_date"] = _string_date(result["date"])
+    result["horizon_policy_id"] = horizon_policy.horizon_id
+    result["signal_frequency"] = horizon_policy.signal_frequency
+    result["entry_lag_trading_days"] = horizon_policy.entry_lag_trading_days
+    result["holding_period_trading_days"] = horizon_policy.holding_period_trading_days
+    result["rebalance_frequency"] = horizon_policy.rebalance_frequency
+    result["label_horizon"] = horizon_policy.label_horizon
+    result["simulation_horizon"] = horizon_policy.simulation_horizon
+    result["calendar_policy"] = horizon_policy.calendar_policy
     result["label_horizon_days"] = config.label_horizon_days
     result["split_policy"] = SPLIT_POLICY
     result["split_name"] = None
@@ -182,6 +201,14 @@ def build_ml_price_feature_table(
         "owner_route",
         "ticker",
         "feature_as_of_date",
+        "horizon_policy_id",
+        "signal_frequency",
+        "entry_lag_trading_days",
+        "holding_period_trading_days",
+        "rebalance_frequency",
+        "label_horizon",
+        "simulation_horizon",
+        "calendar_policy",
         "open",
         "high",
         "low",
@@ -253,6 +280,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, action="append", required=True, help="Input price CSV path.")
     parser.add_argument("--output", type=Path, required=True, help="Output ML feature table CSV path.")
+    parser.add_argument("--horizon-policy-id", default=None, help="HorizonPolicy ID; defaults visibly to 1d.")
     parser.add_argument("--label-horizon-days", type=int, default=1)
     parser.add_argument("--min-history-length", type=int, default=20)
     parser.add_argument("--dry-run", action="store_true")
@@ -263,6 +291,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     frame = _read_input_csvs(args.input)
     config = MlPriceFeatureConfig(
+        horizon_policy_id=args.horizon_policy_id,
         label_horizon_days=args.label_horizon_days,
         min_history_length=args.min_history_length,
     )
@@ -271,6 +300,7 @@ def main(argv: list[str] | None = None) -> int:
         "schema_version": ML_PRICE_FEATURE_TABLE_SCHEMA_VERSION,
         "feature_table_kind": ML_PRICE_FEATURE_TABLE_KIND,
         "master_mvp_context_marker": MASTER_MVP_CONTEXT_MARKER,
+        "horizon_policy_id": str(table["horizon_policy_id"].iloc[0]) if not table.empty else None,
         "row_count": int(len(table)),
         "output": str(args.output),
         "dry_run": bool(args.dry_run),

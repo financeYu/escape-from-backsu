@@ -84,6 +84,8 @@ already checked by the utility and do not recreate them inside this gate:
 - choosing the cheapest useful next checks
 - identifying narrow in-scope refactor opportunities
 - identifying duplicate process, validator, skill, or subproject owners
+- collecting the changed-file list or cheap-check history, when those fields
+  are fresh and scope-matched
 
 If the utility reported blocked cheap checks, do not repeat the same blocked
 command unless it is the required validator and a safer/approved execution path
@@ -128,6 +130,10 @@ they must be separated from task changed files and reported as remaining risk.
 When a same-scope cost-aware utility summary is present, skip commands used only
 to rediscover its utility findings. Run only the commands still needed for this
 gate's independent PASS rules.
+
+Fresh same-scope evidence may satisfy changed-file and cheap-check discovery
+for this gate, but it does not replace forbidden-boundary, validation-evidence,
+skill-isolation, or worktree-status authority checks.
 
 When `rg` is denied, targeted PowerShell `Select-String` over the same scoped
 file list is an acceptable substitute for wording/search triage. It is not a

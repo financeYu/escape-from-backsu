@@ -56,6 +56,7 @@ Inspect only:
 - current task summary
 - `git diff --name-only`
 - relevant changed file paths
+- same-scope `cost-aware-review-refactor` summary, if already available
 - validation or test result summary, if available
 - explicit user request
 - risky wording in changed docs or generated reports
@@ -80,7 +81,8 @@ release-evidence check requires the narrowest lookup.
 
 ## Procedure
 
-1. List changed paths with local Git.
+1. List changed paths with local Git, or consume a fresh same-scope
+   `cost-aware-review-refactor` changed-file summary.
 2. Read only the relevant changed files or summaries.
 3. Check explicit user request for technical, valuation, adoption, full,
    specialist, final, or `review_mvp` review.
@@ -88,6 +90,11 @@ release-evidence check requires the narrowest lookup.
 5. Check non-trigger conditions.
 6. Emit one compact machine-readable decision.
 7. Stop. Do not perform the downstream review.
+
+If the same-scope cost-aware summary already includes changed files, cheapest
+checks, and duplicate-owner findings, do not rerun local Git or `rg` solely to
+recreate those routing inputs. Rerun only when the summary is stale,
+scope-mismatched, missing a required field, or conflicts with a hard stop.
 
 ## Trigger Conditions
 

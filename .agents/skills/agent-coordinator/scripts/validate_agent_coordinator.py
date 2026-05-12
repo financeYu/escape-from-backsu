@@ -69,6 +69,13 @@ BEHAVIOR_CASES = [
         "open_questions": ["none"],
     },
     {
+        "name": "implementation with review wording routes to work cycle",
+        "goal": "modify the duplicate-check rules, review, fix, and commit",
+        "task_class": "narrow edit",
+        "selected_gate": ".agents/skills/quant-work-cycle/SKILL.md",
+        "open_questions": ["none"],
+    },
+    {
         "name": "Korean inspection routes as read-only replacement review",
         "goal": "코덱스 스킬 대체 점검",
         "task_class": "planning/read-only",

@@ -65,6 +65,12 @@ validation commands. If the task touches a narrower existing gate such as
 `score-runtime-semantics-gate`, or `quant-subproject-audit-gate`, route there
 inside this cycle instead of inventing a new review path.
 
+When the task is about reducing repeated review, validation, or refactor cost,
+run or consume `.agents/skills/cost-aware-review-refactor/SKILL.md` before
+formal routing. Treat its compact output as the same-scope evidence packet for
+changed files, cheapest checks, duplicate owners, and narrow refactor
+opportunities.
+
 ### 2. Implementation
 
 Implement only inside the scope lock. If a sub-agent is used, root must give it:
@@ -81,12 +87,18 @@ The implementer must not perform Git remote work, staging, or commits.
 
 ### 3. Diff Review
 
-After implementation, review the actual diff before validation:
+After implementation, review the actual diff before validation. Start from the
+same-scope evidence packet when it is fresh and scope-matched:
 
 - `git diff --name-only`
 - `git diff --check`
 - targeted `git diff -U0 -- <scoped files>`
 - targeted search only when needed for forbidden language or boundary checks
+
+Do not rerun commands solely to rediscover cost-aware-owned facts already in a
+fresh same-scope packet. Still run any independent authority check required by
+the selected gate, and rerun the narrowest check if the packet is stale,
+scope-mismatched, or missing required evidence.
 
 Review must check changed-file scope, forbidden-boundary safety, unintended
 behavior changes, missing tests/validators, and commit-readiness blockers.
@@ -109,6 +121,10 @@ Run required focused checks after diff review passes. Minimum default checks:
 - `git diff --check`
 - changed file list check
 - task-specific validator or focused test when applicable
+
+Reuse same-scope evidence for the changed file list and cheap-check history;
+the verify pass should add only missing required validation, freshness checks,
+or selected-gate authority checks.
 
 If a required validator is blocked by environment issues, route the blocker
 through `.agents/skills/cost-aware-review-refactor/SKILL.md` first. Keep

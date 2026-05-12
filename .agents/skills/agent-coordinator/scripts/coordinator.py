@@ -197,8 +197,6 @@ def normalize_goal(user_goal: str) -> str:
 def classify_task(goal: str) -> str:
     """Classify the request into the root task classes used by AGENTS.md."""
     text = goal.lower()
-    if is_review_request(text):
-        return "planning/read-only"
     step_gate_terms = [
         "step closure",
         "gate closure",
@@ -239,10 +237,34 @@ def classify_task(goal: str) -> str:
         "리팩터",
         "작성",
     ]
+    strong_edit_terms = [
+        "implement",
+        "add",
+        "modify",
+        "configure",
+        "fix",
+        "refactor",
+        "write code",
+        "skillize",
+        "codex skill",
+        "commit",
+        "stage",
+        "변경",
+        "수정",
+        "커밋",
+        "적용",
+        "구현",
+        "추가",
+        "작성",
+    ]
+    if is_review_request(text) and not any(term in text for term in strong_edit_terms):
+        return "planning/read-only"
     if any(term in text for term in step_gate_terms):
         return "Step/gate closure"
     if any(term in text for term in edit_terms):
         return "narrow edit"
+    if is_review_request(text):
+        return "planning/read-only"
     return "planning/read-only"
 
 
@@ -267,7 +289,7 @@ def select_gate(goal: str, task_class: str) -> str:
         return ".agents/skills/agent-coordinator/SKILL.md"
     if any(term in text for term in ["coordinator", "planner", "architecture", "아키텍쳐", "아키텍처"]):
         return ".agents/skills/agent-coordinator/SKILL.md"
-    if is_review_request(text):
+    if task_class == "planning/read-only" and is_review_request(text):
         return ".agents/skills/review_gate/SKILL.md"
     if any(term in text for term in ["prob_up_1d", "probability", "확률", "candidate ml"]):
         return ".agents/skills/quant-candidate-ml-gate/SKILL.md"

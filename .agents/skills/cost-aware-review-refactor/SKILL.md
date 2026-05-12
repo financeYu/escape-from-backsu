@@ -63,6 +63,26 @@ Apply these principles in order:
 Avoid repeating long Codex process rules already present in `AGENTS.md`,
 project docs, gate skills, validators, or subproject instructions.
 
+## Same-Scope Evidence Reuse
+
+When this utility is run for a scope, its compact output becomes the reusable
+same-scope evidence packet for downstream routing, completion review, and Git
+finalization. Downstream gates should consume it instead of rediscovering the
+same changed files, cheapest checks, duplicate owners, or local refactor
+opportunities.
+
+The packet is reusable only while all of these stay true:
+
+- the changed-file set is the same or a downstream gate explicitly narrows it
+- the evidence is from the current task turn or a named fresh validation pass
+- no blocked cheap check is being treated as validation evidence
+- no gate needs an independent authority check that this utility does not own
+
+If the packet is stale, scope-mismatched, or conflicts with a hard stop, discard
+it and rerun the narrowest applicable check. Otherwise, pass the compact fields
+forward and do not rerun `git status --short`, `git diff --name-only`,
+`git diff --check`, or targeted `rg` solely to rediscover utility-owned facts.
+
 ## Blocked Cheap Check Protocol
 
 When a cheap check is blocked by the environment, do not convert the blockage

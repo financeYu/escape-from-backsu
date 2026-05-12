@@ -32,6 +32,7 @@ Do not use this skill:
 - review gate output showing `PASS`
 - scoped changed files to include in the commit
 - required validation commands and latest results
+- same-scope cost-aware or review-gate evidence, when available
 - current branch and worktree status
 - commit message
 - explicit remote-finalization approval before any push
@@ -49,6 +50,11 @@ Do not use this skill:
 
 If remote sync is required before push, explain why, keep it minimal, and do not
 repeat fetch/pull/push cycles.
+
+When a fresh same-scope cost-aware or review-gate packet is available, use it
+for scoped changed-file and cheap-check history instead of repeating discovery
+triage. Git finalization still reruns required validation and performs its own
+scoped staging and commit checks.
 
 ## Push Block Conditions
 

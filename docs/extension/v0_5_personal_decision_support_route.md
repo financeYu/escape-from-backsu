@@ -2,6 +2,8 @@
 
 Status: active contract-only personal decision support route.
 Pre-entry assessment: `docs/extension/v0_5_pre_entry_gap_assessment.md`.
+Current-condition contract:
+`docs/extension/v0_5_current_condition_snapshot_contract.md`.
 Parent evidence route: `docs/extension/v0_3_research_to_strategy_adoption_route.md`.
 Parent selector route: `docs/extension/v0_4_ml_selector_application_route.md`.
 
@@ -128,6 +130,10 @@ Before a v0.5 packet can be accepted:
 The first packet builder is
 `Quant_mvp/scripts/build_v0_5_personal_decision_support_packets.py`. It emits
 fail-closed packets until an approved current-condition snapshot is available.
+The first current-condition builder is
+`Quant_mvp/scripts/build_v0_5_current_condition_snapshots.py`. It reads only
+v0.5 packet candidates and emits blocked snapshot rows until an approved local
+KOSPI/KOSPI200 current-condition artifact is supplied.
 Future work may add current-condition inputs only through an approved
 KOSPI/KOSPI200 local lane without new market-data ingestion or universe
 expansion.

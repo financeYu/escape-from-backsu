@@ -1,7 +1,7 @@
 # Research Ingestion Report
 
-- run_id: `refresh_20260505_risk_safe`
-- run timestamp: `2026-05-05T08:15:35Z`
+- run_id: `refresh_20260511`
+- run timestamp: `2026-05-11T00:03:05Z`
 - selected sources: openalex
 - selected query-set: `technical_momentum,technical_mean_reversion,technical_breakout,technical_volatility_liquidity,technical_trend_efficiency,technical_volume_price_confirmation`
 - raw records by source: openalex=300
@@ -11,9 +11,9 @@
 - enrichment records by source: 없음
 - normalized paper count: 691
 - deduped paper count: 691
-- EvidenceCard count: 691
-- rejected item count: 106
-- manual review required: 534
+- EvidenceCard count: 668
+- rejected item count: 105
+- manual review required: 526
 - retracted / blocked paper count: 0
 - unresolved Scholar seed count: 0
 - PDF fulltext used: no
@@ -27,18 +27,18 @@
 - EvidenceCard는 score 채택이 아니며, 논문 claim은 검증된 alpha가 아닙니다.
 
 ## branch별 분류 건수
-- diagnostic: 272
-- hybrid: 82
-- out_of_scope: 106
+- diagnostic: 253
+- hybrid: 81
+- out_of_scope: 105
 - technical: 168
-- valuation: 63
+- valuation: 61
 
 ## downstream_route별 건수
-- diagnostic_backlog: 272
-- hybrid_split_required: 82
-- reject_log: 106
+- diagnostic_backlog: 253
+- hybrid_split_required: 81
+- reject_log: 105
 - technical_score_architect: 168
-- valuation_agent_handoff: 63
+- valuation_agent_handoff: 61
 
 ## source 오류 / rate-limit 요약
 - 기록된 오류/rate-limit 요약이 없습니다. 자세한 내용은 source_health.md를 확인하세요.

@@ -1,6 +1,6 @@
 # Rejected Items
 
-- run_id: `refresh_20260505_risk_safe`
+- run_id: `refresh_20260511`
 
 - Size, Value, and Momentum in Developed Country Equity Returns: Macroeconomic and Liquidity Exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Size, Value, and Momentum in Developed Country Equity Returns: Macroeconomic and Liquidity Exposures / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
@@ -101,7 +101,6 @@
 - Dynamic relation of Chinese stock price-volume pre- and post- the Split Share Structure Reform / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Exploring Realized Volatility through High-Frequency Data: The Role of Liquidity, Transaction Costs, and Influencing Factors. / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - Stock Investment and Excess Returns: A Critical Review in the Light of the Efficient Market Hypothesis / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
-- Generalized Mean Absolute Directional Loss as a Solution to Overfitting and High Transaction Costs in Machine Learning Models Used in High-Frequency Algorithmic Investment Strategies / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.
 - Replicating Anomalies / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Interpretable Hypothesis-Driven Trading:A Rigorous Walk-Forward Validation Framework for Market Microstructure Signals / reason: price-only technical evidence에 valuation language가 감지되어 reject_log로 분리했습니다.
 - Analysis of Stock Market Prediction Models Using Deep Learning / reason: MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.

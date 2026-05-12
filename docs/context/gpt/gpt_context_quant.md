@@ -11,7 +11,7 @@ Generated only after an explicit user request with a non-empty request string.
 
 ## Current Request
 
-- Task: gpt용 컨텍스트 갱신해
+- Task: Refresh GPT/ChatGPT local reference for current master_mvp route.
 - Decision needed: focus on the current request, not old roadmap narration.
 
 ## Do Not Repeat

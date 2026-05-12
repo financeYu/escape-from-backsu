@@ -4,6 +4,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+import pytest
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT_PATH = PROJECT_ROOT / "Quant_mvp" / "scripts" / "build_v0_5_personal_decision_support_packets.py"
@@ -51,6 +53,7 @@ def test_v0_5_builder_emits_fail_closed_personal_support_packets(tmp_path: Path)
     ml_ready = tmp_path / "ml_ready.jsonl"
     adoption = tmp_path / "adoption.jsonl"
     ranking = tmp_path / "ranking.jsonl"
+    snapshots = tmp_path / "snapshots.jsonl"
     write_jsonl(
         ml_ready,
         [
@@ -80,11 +83,27 @@ def test_v0_5_builder_emits_fail_closed_personal_support_packets(tmp_path: Path)
         ranking,
         [{"candidate_id": "sc:recorded", "evaluation_mode": "diagnostic_ranking_only"}],
     )
+    write_jsonl(
+        snapshots,
+        [
+            {
+                "candidate_id": "sc:recorded",
+                "snapshot_id": "ccs_recorded",
+                "current_condition_status": "blocked_missing_current_condition",
+                "condition_check_status": "blocked_missing_approved_current_condition_snapshot",
+                "price_recency_status": "not_checked_missing_approved_snapshot",
+                "liquidity_check": "not_checked_missing_approved_snapshot",
+                "no_new_ingestion_check": "pass_no_new_market_data_ingestion_attempted",
+                "no_universe_expansion_check": "pass_no_universe_expansion",
+            }
+        ],
+    )
 
     manifest = builder.build_packets(
         ml_ready_input=ml_ready,
         adoption_packets=adoption,
         ranking_rows=ranking,
+        current_condition_snapshots=snapshots,
         output_dir=tmp_path / "out",
         jsonl_name="packets.jsonl",
         csv_name="packets.csv",
@@ -99,6 +118,7 @@ def test_v0_5_builder_emits_fail_closed_personal_support_packets(tmp_path: Path)
         if line.strip()
     ]
     assert manifest["packet_count"] == 2
+    assert manifest["current_condition_snapshot_rows"] == 1
     assert manifest["guardrails"]["order_generation_allowed"] is False
     assert manifest["guardrails"]["position_sizing_allowed"] is False
     assert {packet["packet_status"] for packet in packets} == {"blocked_missing_current_condition"}
@@ -106,6 +126,99 @@ def test_v0_5_builder_emits_fail_closed_personal_support_packets(tmp_path: Path)
     needs_more = next(packet for packet in packets if packet["candidate_id"] == "sc:needs_more")
     assert "candidate_level_metric_missing" in needs_more["coverage_gaps"]
     assert needs_more["no_order_generation_check"] == "pass_no_order_generation"
+    recorded = next(packet for packet in packets if packet["candidate_id"] == "sc:recorded")
+    assert recorded["current_condition_snapshot"]["snapshot_id"] == "ccs_recorded"
+
+
+def test_v0_5_builder_uses_available_snapshot_without_creating_action(tmp_path: Path) -> None:
+    ml_ready = tmp_path / "ml_ready.jsonl"
+    adoption = tmp_path / "adoption.jsonl"
+    ranking = tmp_path / "ranking.jsonl"
+    snapshots = tmp_path / "snapshots.jsonl"
+    write_jsonl(ml_ready, [ml_row("sc:recorded")])
+    write_jsonl(adoption, [])
+    write_jsonl(ranking, [])
+    write_jsonl(
+        snapshots,
+        [
+            {
+                "candidate_id": "sc:recorded",
+                "snapshot_id": "ccs_recorded",
+                "current_condition_status": "snapshot_available",
+                "universe_boundary": "KOSPI_or_KOSPI200_only",
+                "data_source_ref": "approved_local_kospi_snapshot",
+                "condition_check_status": "current_condition_passed",
+                "price_recency_status": "approved_snapshot_current",
+                "liquidity_check": "approved_snapshot_liquidity_reviewed",
+                "no_new_ingestion_check": "pass_no_new_market_data_ingestion",
+                "no_universe_expansion_check": "pass_no_universe_expansion",
+                "no_order_generation_check": "pass_no_order_generation",
+            }
+        ],
+    )
+
+    manifest = builder.build_packets(
+        ml_ready_input=ml_ready,
+        adoption_packets=adoption,
+        ranking_rows=ranking,
+        current_condition_snapshots=snapshots,
+        output_dir=tmp_path / "out",
+        jsonl_name="packets.jsonl",
+        csv_name="packets.csv",
+        manifest_name="manifest.json",
+        current_condition_status="blocked_missing_current_condition",
+        dry_run=False,
+    )
+
+    packets = [
+        json.loads(line)
+        for line in (tmp_path / "out" / "packets.jsonl").read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    assert manifest["packet_status_counts"] == {"evidence_supported_review": 1}
+    assert packets[0]["current_condition_status"] == "snapshot_available"
+    assert packets[0]["no_order_generation_check"] == "pass_no_order_generation"
+
+
+def test_v0_5_builder_rejects_snapshot_available_without_input_guardrails(tmp_path: Path) -> None:
+    ml_ready = tmp_path / "ml_ready.jsonl"
+    adoption = tmp_path / "adoption.jsonl"
+    ranking = tmp_path / "ranking.jsonl"
+    snapshots = tmp_path / "snapshots.jsonl"
+    write_jsonl(ml_ready, [ml_row("sc:recorded")])
+    write_jsonl(adoption, [])
+    write_jsonl(ranking, [])
+    write_jsonl(
+        snapshots,
+        [
+            {
+                "candidate_id": "sc:recorded",
+                "snapshot_id": "ccs_recorded",
+                "current_condition_status": "snapshot_available",
+                "universe_boundary": "KOSPI_or_KOSPI200_only",
+                "condition_check_status": "current_condition_passed",
+                "price_recency_status": "approved_snapshot_current",
+                "liquidity_check": "approved_snapshot_liquidity_reviewed",
+                "no_new_ingestion_check": "blocked_new_market_data_ingestion",
+                "no_universe_expansion_check": "pass_no_universe_expansion",
+                "no_order_generation_check": "pass_no_order_generation",
+            }
+        ],
+    )
+
+    with pytest.raises(ValueError, match="pass_no_new_market_data_ingestion"):
+        builder.build_packets(
+            ml_ready_input=ml_ready,
+            adoption_packets=adoption,
+            ranking_rows=ranking,
+            current_condition_snapshots=snapshots,
+            output_dir=tmp_path / "out",
+            jsonl_name="packets.jsonl",
+            csv_name="packets.csv",
+            manifest_name="manifest.json",
+            current_condition_status="blocked_missing_current_condition",
+            dry_run=False,
+        )
 
 
 def test_v0_5_packet_guardrail_rejects_action_instruction_text() -> None:

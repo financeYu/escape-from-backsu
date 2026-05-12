@@ -29,6 +29,9 @@ DEFAULT_ADOPTION_PACKETS = Path(
     "Quant_mvp/data/v0_3/adoption_candidate_review_packets/v0_3_adoption_candidate_review_packets.jsonl"
 )
 DEFAULT_RANKING_ROWS = Path("Quant_mvp/data/v0_4/selector_scores/v0_4_1_selector_ml_score_ranking.jsonl")
+DEFAULT_CURRENT_CONDITION_SNAPSHOTS = Path(
+    "Quant_mvp/data/v0_5/current_condition_snapshots/v0_5_current_condition_snapshots.jsonl"
+)
 DEFAULT_OUTPUT_DIR = Path("Quant_mvp/data/v0_5/personal_decision_support")
 DEFAULT_JSONL_NAME = "v0_5_personal_decision_support_packets.jsonl"
 DEFAULT_CSV_NAME = "v0_5_personal_decision_support_packets.csv"
@@ -56,6 +59,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--ml-ready-input", type=Path, default=DEFAULT_ML_READY_INPUT)
     parser.add_argument("--adoption-packets", type=Path, default=DEFAULT_ADOPTION_PACKETS)
     parser.add_argument("--ranking-rows", type=Path, default=DEFAULT_RANKING_ROWS)
+    parser.add_argument("--current-condition-snapshots", type=Path, default=DEFAULT_CURRENT_CONDITION_SNAPSHOTS)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--jsonl-name", default=DEFAULT_JSONL_NAME)
     parser.add_argument("--csv-name", default=DEFAULT_CSV_NAME)
@@ -96,6 +100,32 @@ def _packet_status(row: dict[str, Any], current_condition_status: str) -> str:
     if row.get("adoption_review_eligible") is True:
         return "evidence_supported_review"
     return "blocked_validation_incomplete"
+
+
+def _snapshot_status(snapshot: dict[str, Any] | None, fallback_status: str) -> str:
+    if not snapshot:
+        return fallback_status
+    return str(snapshot.get("current_condition_status") or fallback_status)
+
+
+def _assert_snapshot_input_guardrails(snapshot: dict[str, Any]) -> None:
+    status = str(snapshot.get("current_condition_status") or "")
+    if status != "snapshot_available":
+        return
+    required = {
+        "universe_boundary": "KOSPI_or_KOSPI200_only",
+        "condition_check_status": "current_condition_passed",
+        "no_new_ingestion_check": "pass_no_new_market_data_ingestion",
+        "no_universe_expansion_check": "pass_no_universe_expansion",
+        "no_order_generation_check": "pass_no_order_generation",
+    }
+    for key, expected in required.items():
+        if snapshot.get(key) != expected:
+            raise ValueError(f"snapshot_available requires {key}={expected}")
+    if not snapshot.get("data_source_ref"):
+        raise ValueError("snapshot_available requires approved data_source_ref")
+    if not snapshot.get("price_recency_status") or not snapshot.get("liquidity_check"):
+        raise ValueError("snapshot_available requires recency and liquidity checks")
 
 
 def _manual_checklist(row: dict[str, Any], adoption: dict[str, Any] | None) -> list[str]:
@@ -159,17 +189,19 @@ def build_packet(
     *,
     adoption: dict[str, Any] | None,
     ranking: dict[str, Any] | None,
+    current_condition_snapshot: dict[str, Any] | None,
     current_condition_status: str,
     generated_at: str,
 ) -> dict[str, Any]:
     candidate_id = str(row["candidate_id"])
+    resolved_current_condition_status = _snapshot_status(current_condition_snapshot, current_condition_status)
     packet = {
         "schema_version": SCHEMA_VERSION,
         "packet_id": "pds_v0_5_" + candidate_id.replace(":", "_"),
         "candidate_id": candidate_id,
         "candidate_version": row.get("candidate_version"),
         "support_scope": "private_personal_decision_support_only",
-        "packet_status": _packet_status(row, current_condition_status),
+        "packet_status": _packet_status(row, resolved_current_condition_status),
         "generated_at_utc": generated_at,
         "route_ref": ROUTE_REF,
         "input_artifact_refs": [
@@ -178,6 +210,7 @@ def build_packet(
             DEFAULT_ML_READY_INPUT.as_posix(),
             DEFAULT_ADOPTION_PACKETS.as_posix(),
             DEFAULT_RANKING_ROWS.as_posix(),
+            DEFAULT_CURRENT_CONDITION_SNAPSHOTS.as_posix(),
         ],
         "evidence_status": row.get("evaluation_status"),
         "evidence_summary": {
@@ -196,7 +229,23 @@ def build_packet(
             "ml_ranking_evaluation_mode": ranking.get("evaluation_mode") if ranking else None,
             "rf_reference_only": True,
         },
-        "current_condition_status": current_condition_status,
+        "current_condition_status": resolved_current_condition_status,
+        "current_condition_snapshot": {
+            "snapshot_id": current_condition_snapshot.get("snapshot_id") if current_condition_snapshot else None,
+            "condition_check_status": (
+                current_condition_snapshot.get("condition_check_status") if current_condition_snapshot else None
+            ),
+            "price_recency_status": (
+                current_condition_snapshot.get("price_recency_status") if current_condition_snapshot else None
+            ),
+            "liquidity_check": current_condition_snapshot.get("liquidity_check") if current_condition_snapshot else None,
+            "no_new_ingestion_check": (
+                current_condition_snapshot.get("no_new_ingestion_check") if current_condition_snapshot else None
+            ),
+            "no_universe_expansion_check": (
+                current_condition_snapshot.get("no_universe_expansion_check") if current_condition_snapshot else None
+            ),
+        },
         "risk_flags": _risk_flags(row, adoption),
         "cost_sensitivity_flags": _cost_flags(row),
         "coverage_gaps": _coverage_gaps(row),
@@ -229,6 +278,7 @@ def build_packets(
     ml_ready_input: Path,
     adoption_packets: Path,
     ranking_rows: Path,
+    current_condition_snapshots: Path,
     output_dir: Path,
     jsonl_name: str,
     csv_name: str,
@@ -239,6 +289,9 @@ def build_packets(
     ml_rows = read_jsonl(ml_ready_input)
     adoption_by_candidate = _by_candidate(read_jsonl(adoption_packets))
     ranking_by_candidate = _by_candidate(read_jsonl(ranking_rows))
+    snapshot_by_candidate = _by_candidate(read_jsonl(current_condition_snapshots))
+    for snapshot in snapshot_by_candidate.values():
+        _assert_snapshot_input_guardrails(snapshot)
     generated_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
     eligible_rows = [
@@ -249,6 +302,7 @@ def build_packets(
             row,
             adoption=adoption_by_candidate.get(str(row["candidate_id"])),
             ranking=ranking_by_candidate.get(str(row["candidate_id"])),
+            current_condition_snapshot=snapshot_by_candidate.get(str(row["candidate_id"])),
             current_condition_status=current_condition_status,
             generated_at=generated_at,
         )
@@ -269,10 +323,12 @@ def build_packets(
         "packet_status_counts": dict(sorted(Counter(packet["packet_status"] for packet in packets).items())),
         "evidence_status_counts": dict(sorted(Counter(packet["evidence_status"] for packet in packets).items())),
         "current_condition_status": current_condition_status,
+        "current_condition_snapshot_rows": len(snapshot_by_candidate),
         "input_refs": {
             "ml_ready_input": _relative(ml_ready_input),
             "adoption_packets": _relative(adoption_packets),
             "ranking_rows": _relative(ranking_rows),
+            "current_condition_snapshots": _relative(current_condition_snapshots),
         },
         "output_refs": {
             "jsonl": _relative(jsonl_path),
@@ -332,6 +388,7 @@ def main(argv: list[str] | None = None) -> int:
         ml_ready_input=args.ml_ready_input,
         adoption_packets=args.adoption_packets,
         ranking_rows=args.ranking_rows,
+        current_condition_snapshots=args.current_condition_snapshots,
         output_dir=args.output_dir,
         jsonl_name=args.jsonl_name,
         csv_name=args.csv_name,

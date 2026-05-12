@@ -1,10 +1,11 @@
 {
+  "current_condition_snapshot_rows": 82,
   "current_condition_status": "blocked_missing_current_condition",
   "evidence_status_counts": {
     "evidence_recorded": 62,
     "needs_more_evidence": 20
   },
-  "generated_at_utc": "2026-05-08T12:56:26+00:00",
+  "generated_at_utc": "2026-05-10T14:04:43+00:00",
   "guardrails": {
     "future_return_prediction_allowed": false,
     "new_market_data_ingestion_allowed": false,
@@ -16,6 +17,7 @@
   },
   "input_refs": {
     "adoption_packets": "Quant_mvp/data/v0_3/adoption_candidate_review_packets/v0_3_adoption_candidate_review_packets.jsonl",
+    "current_condition_snapshots": "Quant_mvp/data/v0_5/current_condition_snapshots/v0_5_current_condition_snapshots.jsonl",
     "ml_ready_input": "Quant_mvp/data/v0_3/ml_ready_candidate_inputs/v0_3_ml_ready_candidate_input.jsonl",
     "ranking_rows": "Quant_mvp/data/v0_4/selector_scores/v0_4_1_selector_ml_score_ranking.jsonl"
   },

@@ -1,6 +1,6 @@
 research_branch,downstream_route,count,manual_review_count
-diagnostic,diagnostic_backlog,272,178
-hybrid,hybrid_split_required,82,82
-out_of_scope,reject_log,106,106
+diagnostic,diagnostic_backlog,253,174
+hybrid,hybrid_split_required,81,81
+out_of_scope,reject_log,105,105
 technical,technical_score_architect,168,105
-valuation,valuation_agent_handoff,63,63
+valuation,valuation_agent_handoff,61,61

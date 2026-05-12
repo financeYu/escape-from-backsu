@@ -67,3 +67,10 @@ v0.5 must not convert selector scores or EvaluationEvidence into:
 Create a v0.5 `PersonalDecisionSupportPacket` contract that consumes v0.3 and
 v0.4 artifacts read-only, records evidence and risk flags, and blocks runtime
 action language.
+
+## Current v0.5 Follow-Up State
+
+The initial `PersonalDecisionSupportPacket` route is now active, and a
+fail-closed `CurrentConditionSnapshot` contract/builder has been added. Until an
+approved local KOSPI/KOSPI200 current-condition source is supplied, generated
+v0.5 packets remain `blocked_missing_current_condition`.

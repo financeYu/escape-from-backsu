@@ -1,6 +1,6 @@
 # Handoff Summary
 
-- run_id: `refresh_20260505_risk_safe`
+- run_id: `refresh_20260511`
 - EvidenceCard는 adopted score가 아닙니다.
 - 논문 claim은 검증된 alpha가 아닙니다.
 - valuation 후보는 main technical Score Architect와 분리해야 합니다.
@@ -8,11 +8,11 @@
 - source-health freshness는 handoff 참고 정보이며 MVP scoring/ranking 입력이 아닙니다.
 
 ## route counts
-- diagnostic_backlog: 272
-- hybrid_split_required: 82
-- reject_log: 106
+- diagnostic_backlog: 253
+- hybrid_split_required: 81
+- reject_log: 105
 - technical_score_architect: 168
-- valuation_agent_handoff: 63
+- valuation_agent_handoff: 61
 
 ## technical_score_architect
 - Turnover-Adjusted Momentum and Equity Returns (technical)
@@ -201,8 +201,6 @@
 - Technical trading and cryptocurrencies (valuation)
 - Model Comparison with Transaction Costs (valuation)
 - Quantum-Assisted Optimal Rebalancing with Uncorrelated Asset Selection for Algorithmic Trading Walk-Forward QUBO Scheduling via QAOA (valuation)
-- Generación y validación de estrategias de trading algorítmico (valuation)
-- Testing the Applicability of the Technical Trading Strategy in the Cryptocurrency Market (valuation)
 - Disentangling the Effects of Stock Returns, Equity Market Timing and Firm Specific Characteristics on Capital Structure (valuation)
 - Fundamental Data Anomalies (valuation)
 - Relations Between Stock Returns and Fundamental Variables: Evidence from a Segmented Market (valuation)
@@ -301,7 +299,6 @@
 - Impact of Transaction Costs and ESG Constraints on Optimal Portfolio Allocation: Indian Equity Market Evidence (hybrid)
 - Efficient scholars: academic attention and the disappearance of anomalies (hybrid)
 - On the Cross Section of Conditionally Expected Stock Returns (hybrid)
-- A machine learning approach to risk based asset allocation in portfolio optimization (hybrid)
 - Data Snooping and the Global Accrual Anomaly (hybrid)
 - The impact of Facebook-Cambridge Analytica data scandal on the USA tech stock market: An event study based on clustering method (hybrid)
 - Extreme returns in emerging stock markets: evidence of a MAX effect in South Korea (hybrid)
@@ -482,25 +479,6 @@
 - Value versus Glamour (diagnostic)
 - Are Monthly Seasonals Real? A Three Century Perspective (diagnostic)
 - Dangers of Data-Driven Inference: The Case of Calendar Effects in Stock Returns (diagnostic)
-- Evaluating Technical Trading Strategies in US Stocks: Insights From Data-Snooping Test (diagnostic)
-- The GT-Score: A Robust Objective Function for Reducing Overfitting in Data-Driven Trading Strategies (diagnostic)
-- Backtest – Signal or Overfitting (diagnostic)
-- Backtest – Signal or Overfitting? (diagnostic)
-- Avoiding Backtesting Overfitting by Covariance-Penalties: <i>An Empirical Investigation of the Ordinary and Total Least Squares Cases</i> (diagnostic)
-- Avoiding Backtesting Overfitting by Covariance-Penalties: An Empirical Investigation of the Ordinary and Total Least Squares Cases (diagnostic)
-- Pseudo-Mathematics and Financial Charlatanism: The Effects of Backtest Overfitting on Out-of-Sample Performance (diagnostic)
-- LSTM in Algorithmic Investment Strategies on BTC and S&amp;P500 Index (diagnostic)
-- Causal Factor Investing (diagnostic)
-- Enhancing stock market anomalies with machine learning (diagnostic)
-- Industry return prediction via interpretable deep learning (diagnostic)
-- Portfolio Optimization Efficiency Test Considering Data Snooping Bias (diagnostic)
-- Integrating Machine Learning Algorithms in Financial Modeling: Evaluating Accuracy and Market Impact (diagnostic)
-- A Bayesian Approach to Backtest Overfitting (diagnostic)
-- Implementation Risk in Portfolio Backtesting: A Previously Unquantified Source of Error (diagnostic)
-- Machine Learning Techniques for Quantitative Stock Trading Strategies (diagnostic)
-- (Non-Parametric) Bootstrap Robust Optimization for Portfolios and Trading Strategies (diagnostic)
-- Systematic Asset Allocation using Flexible Views for South African Markets (diagnostic)
-- Determining Optimal Trading Rules without Backtesting (diagnostic)
 - Stepwise Multiple Testing as Formalized Data Snooping (diagnostic)
 - ‘Data snooping’ and the significance level in multiple testing (diagnostic)
 - Stepwise Multiple Testing as Formalized Data Snooping (diagnostic)
@@ -707,7 +685,6 @@
 - Dynamic relation of Chinese stock price-volume pre- and post- the Split Share Structure Reform (out_of_scope)
 - Exploring Realized Volatility through High-Frequency Data: The Role of Liquidity, Transaction Costs, and Influencing Factors. (out_of_scope)
 - Stock Investment and Excess Returns: A Critical Review in the Light of the Efficient Market Hypothesis (out_of_scope)
-- Generalized Mean Absolute Directional Loss as a Solution to Overfitting and High Transaction Costs in Machine Learning Models Used in High-Frequency Algorithmic Investment Strategies (out_of_scope)
 - Replicating Anomalies (out_of_scope)
 - Interpretable Hypothesis-Driven Trading:A Rigorous Walk-Forward Validation Framework for Market Microstructure Signals (out_of_scope)
 - Analysis of Stock Market Prediction Models Using Deep Learning (out_of_scope)

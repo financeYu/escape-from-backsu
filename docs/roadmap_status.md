@@ -105,7 +105,7 @@ Archived/supporting probability compatibility route:
 | Backtest/simulation | evaluate candidates historically with no-lookahead and no-feedback checks | `EvaluationEvidence` |
 | ML/evaluator selector | compare allowlisted evidence summaries and select review-preferred candidates | `AdoptionCandidate` |
 | v0.4 selector application | consume v0.3 feature matrix and label manifest for trainability, optional baseline fit, and optional review-prioritization score manifests | trainability manifest, optional model manifest, optional selector score manifest |
-| v0.5 personal decision support | consume v0.3/v0.4 artifacts read-only and organize private manual-check support packets | `PersonalDecisionSupportPacket` |
+| v0.5 personal decision support | consume v0.3/v0.4 artifacts read-only and organize private manual-check support packets with fail-closed current-condition checks | `PersonalDecisionSupportPacket`, `CurrentConditionSnapshot` |
 | Adoption evidence | summarize historical return/risk/performance characteristics for review | adoption review packet |
 
 ## Active Route Artifacts
@@ -123,6 +123,7 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v0_4_selector_model_manifest_contract.md`
 - `docs/extension/v0_5_pre_entry_gap_assessment.md`
 - `docs/extension/v0_5_personal_decision_support_route.md`
+- `docs/extension/v0_5_current_condition_snapshot_contract.md`
 - `docs/context/EXTENSION_REGISTRY.toml`
 
 ## Archived v0.1/v0.2 References

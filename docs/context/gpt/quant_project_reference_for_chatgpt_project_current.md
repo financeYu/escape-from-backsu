@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-05-07T00:11:19+09:00
+Generated at: 2026-05-12T18:52:57+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -25,9 +25,12 @@ No paid API upload is performed by this local-only workflow.
 
 ## Current Roadmap Position
 
-Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE. The product goal
-is now the end-to-end strategy discovery and evidence loop, not the standalone
-v0.2 probability route.
+Post-MVP `v0.3 research-to-strategy adoption route` is ACTIVE as the evidence
+and input-preparation lane. Post-MVP `v0.4 ML selector application route` is
+ACTIVE as the evidence-only application lane that consumes v0.3 selector
+feature matrix and label manifest artifacts. Post-MVP `v0.5 personal decision
+support route` is ACTIVE as a contract-only private review route that consumes
+v0.3/v0.4 artifacts read-only and emits manual-check support packets only.
 Product goal:
 - collect research, papers, and strategy ideas
 - structure those ideas as quant strategy candidates
@@ -37,13 +40,10 @@ Product goal:
 - check what historical return, risk, and performance characteristics may be
   supported by the adopted-candidate evidence
 Direction lock:
-- v0.3 product_goal is the current route memory.
-- Do not route routine v0.3 work back through archived v0.1/v0.2 standards.
-- If a task is blocked, choose the next concrete v0.3 artifact:
-  `ResearchHypothesis`, `StrategyHypothesis`, `StrategyCandidate`,
-  `EvaluationEvidence`, or `AdoptionCandidate`.
-Current baseline facts:
-- omitted 33 additional lines for compact context
+- v0.3 product_goal is the current evidence route memory.
+- v0.4 consumes v0.3 feature matrix and label manifest artifacts as read-only
+  inputs for trainability checks, optional baseline selector fitting, optional
+- omitted 52 additional lines for compact context
 
 ## Current Authorization
 
@@ -55,11 +55,13 @@ Allowed now:
 - EvaluationEvidence output and evidence-only comparison summaries
 - ML or rule-based selector/evaluator artifacts that consume allowlisted
   evidence summaries and emit AdoptionCandidate review packets
-- historical return/risk/performance summaries when framed as evidence only
-Still blocked without later explicit approval:
-- live trading, brokerage integration, order generation, or real-money execution
-- valuation/fundamental scoring activation
-- new market-data ingestion or universe expansion
+- v0.4 baseline selector trainability checks, model manifests when training
+  succeeds, and selector score manifests limited to AdoptionCandidate review
+  prioritization
+- v0.5 personal decision support contracts and packets limited to evidence
+  summary, risk flags, coverage gaps, current-condition status, diagnostic
+  references, and manual review checklists
+- omitted 5 additional lines for compact context
 
 ## Cross-Step Conflict Checkpoint
 
@@ -72,6 +74,11 @@ Still blocked without later explicit approval:
 - New market-data ingestion or live vendor assumptions.
 - Live trading, brokerage integration, order generation, or real-money
   execution.
+- Buy/sell recommendation language or trade-signal framing for selector
+  outputs.
+- Order instructions, automatic position sizing, automatic rebalance,
+  move-to-cash commands, or future-return prediction claims from v0.5 decision
+  support packets.
 - Valuation/fundamental scoring activation.
 
 ## Route-Only References
@@ -84,6 +91,7 @@ Still blocked without later explicit approval:
 - Strategy candidate registry: `docs/extension/v0_3_strategy_candidate_registry_contract.md`.
 - Evaluation evidence contract: `docs/extension/v0_3_evaluation_evidence_contract.md`.
 - Adoption selector gate: `docs/extension/v0_3_adoption_candidate_selector_gate.md`.
+- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).
 - Active route skill: `.agents/skills/quant-strategy-adoption-gate/SKILL.md`.
 - Active architecture skills: `.agents/skills/agent-coordinator/SKILL.md` through `.agents/skills/agent-reporter/SKILL.md`.
 - Completion review gate: `.agents/skills/quant-review-gate/SKILL.md`.

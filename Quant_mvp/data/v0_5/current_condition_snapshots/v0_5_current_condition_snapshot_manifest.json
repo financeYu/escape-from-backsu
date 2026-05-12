@@ -1,0 +1,30 @@
+{
+  "as_of_date": "2026-05-10",
+  "condition_check_status_counts": {
+    "blocked_missing_approved_current_condition_snapshot": 82
+  },
+  "contract_ref": "docs/extension/v0_5_current_condition_snapshot_contract.md",
+  "current_condition_status_counts": {
+    "blocked_missing_current_condition": 82
+  },
+  "generated_at_utc": "2026-05-10T14:01:51+00:00",
+  "guardrails": {
+    "new_market_data_ingestion_allowed": false,
+    "order_generation_allowed": false,
+    "position_sizing_allowed": false,
+    "production_activation_allowed": false,
+    "raw_price_files_read": false,
+    "universe_expansion_allowed": false
+  },
+  "input_refs": {
+    "packet_input": "Quant_mvp/data/v0_5/personal_decision_support/v0_5_personal_decision_support_packets.jsonl"
+  },
+  "mode": "write",
+  "output_refs": {
+    "csv": "Quant_mvp/data/v0_5/current_condition_snapshots/v0_5_current_condition_snapshots.csv",
+    "jsonl": "Quant_mvp/data/v0_5/current_condition_snapshots/v0_5_current_condition_snapshots.jsonl",
+    "manifest": "Quant_mvp/data/v0_5/current_condition_snapshots/v0_5_current_condition_snapshot_manifest.json"
+  },
+  "schema_version": "v0_5_current_condition_snapshot_manifest_v1_0",
+  "snapshot_count": 82
+}

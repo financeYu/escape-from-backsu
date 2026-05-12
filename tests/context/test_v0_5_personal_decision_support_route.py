@@ -12,13 +12,18 @@ def _text(path: str) -> str:
 
 def test_v0_5_route_is_registered_as_contract_only_personal_support() -> None:
     registry = _text("docs/context/EXTENSION_REGISTRY.toml")
+    roadmap = _text("docs/roadmap_status.md")
 
     assert "[extension.personal_decision_support_v0_5]" in registry
     assert "active_contract_only_personal_decision_support_route" in registry
     assert "docs/extension/v0_5_personal_decision_support_route.md" in registry
+    assert "docs/extension/v0_5_current_condition_snapshot_contract.md" in registry
+    assert "Quant_mvp/scripts/build_v0_5_current_condition_snapshots.py" in registry
     assert "Quant_mvp/scripts/build_v0_5_personal_decision_support_packets.py" in registry
     assert "Quant_mvp/data/v0_5/personal_decision_support/v0_5_personal_decision_support_manifest.json" in registry
     assert "new market-data ingestion" in registry
+    assert "CurrentConditionSnapshot" in roadmap
+    assert "docs/extension/v0_5_current_condition_snapshot_contract.md" in roadmap
     assert "order generation" in registry
 
 
@@ -34,6 +39,22 @@ def test_v0_5_route_requires_packet_guardrails() -> None:
         "manual_review_checklist",
     ):
         assert required in route
+
+
+def test_v0_5_current_condition_contract_fails_closed() -> None:
+    contract = _text("docs/extension/v0_5_current_condition_snapshot_contract.md")
+
+    for expected in (
+        "CurrentConditionSnapshot",
+        "blocked_missing_current_condition",
+        "snapshot_available",
+        "no_new_ingestion_check",
+        "no_universe_expansion_check",
+        "no_order_generation_check",
+    ):
+        assert expected in contract
+    assert "new market-data ingestion" in contract
+    assert "order generation" in contract
 
 
 def test_v0_5_route_keeps_runtime_actions_forbidden() -> None:

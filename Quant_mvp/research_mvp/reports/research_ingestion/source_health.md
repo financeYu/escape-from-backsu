@@ -1,6 +1,6 @@
 # Source Health
 
-- run_id: `refresh_20260505_risk_safe`
+- run_id: `refresh_20260511`
 - freshness scope: 이 보고서는 해당 run_id 실행 시점의 source-health snapshot입니다.
 - currentness warning: 이 파일만으로 현재 vendor availability, API freshness, 또는 최신 연구 검증을 증명하지 않습니다.
 - MVP boundary: source-health, cache hit, stale cache 상태는 MVP scoring/ranking 입력이 아닙니다.
@@ -20,7 +20,7 @@
 - rate_limit_wait_count: 0
 - rate_limit_wait_seconds: 0.0
 - request_latency_ms: 0.0
-- parse_ms: 57.992
+- parse_ms: 60.303
 - dedupe_ms: 0.0
 - classification_ms: 0.0
 - success_count: 6
@@ -30,11 +30,11 @@
 - parse_error_count: 0
 - schema_error_count: 0
 - dedup_ratio: 0.0
-- new_item_count: 210
-- candidate_route_counts: {'valuation_agent_handoff': 41, 'hybrid_split_required': 44, 'technical_score_architect': 43, 'diagnostic_backlog': 56, 'reject_log': 26}
-- reject_reason_counts: {'language_guardrail_violation': 12, 'MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.': 14}
+- new_item_count: 192
+- candidate_route_counts: {'valuation_agent_handoff': 39, 'hybrid_split_required': 43, 'technical_score_architect': 43, 'diagnostic_backlog': 42, 'reject_log': 25}
+- reject_reason_counts: {'language_guardrail_violation': 12, 'MVP technical ranking scope와 맞지 않거나 근거가 부족하여 reject_log로 분류했습니다.': 13}
 - relevance_reject_reason_counts: {'collection_required_keyword_group_missing': 186, 'collection_exclude_keyword': 33, 'rejected': 5}
-- manual_review_required_count: 132
+- manual_review_required_count: 126
 - request_cache_hit_count: 6
 - request_cache_miss_count: 0
 - request_cache_stale_count: 0
@@ -43,7 +43,7 @@
 - rate_limit_observations: []
 - missing_api_key_note_ko: None
 - skipped_source_reason: None
-- child_runs: ['refresh_20260505_risk_safe_technical_breakout', 'refresh_20260505_risk_safe_technical_mean_reversion', 'refresh_20260505_risk_safe_technical_momentum', 'refresh_20260505_risk_safe_technical_trend_efficiency', 'refresh_20260505_risk_safe_technical_volatility_liquidity', 'refresh_20260505_risk_safe_technical_volume_price_confirmation']
+- child_runs: ['refresh_20260511_technical_breakout', 'refresh_20260511_technical_mean_reversion', 'refresh_20260511_technical_momentum', 'refresh_20260511_technical_trend_efficiency', 'refresh_20260511_technical_volatility_liquidity', 'refresh_20260511_technical_volume_price_confirmation']
 ## periodic_refresh_pipeline
 - source: periodic_refresh_pipeline
 - adapter_version: research_ingestion.v1
@@ -53,9 +53,9 @@
 - rate_limit_wait_count: 0
 - rate_limit_wait_seconds: 0.0
 - request_latency_ms: 0.0
-- parse_ms: 57.992
-- dedupe_ms: 14.507
-- classification_ms: 744.937
+- parse_ms: 60.303
+- dedupe_ms: 17.8
+- classification_ms: 0.0
 - success_count: 0
 - failure_count: 0
 - http_status_summary: {}

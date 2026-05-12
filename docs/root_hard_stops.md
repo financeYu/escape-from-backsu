@@ -175,6 +175,15 @@ The active v0.3 route authorizes candidate/evidence work only:
   no-feedback checks, and review packets
 - work in the approved separate role branch/worktree for the owning lane
 
+## Implementation Simplicity Rule
+
+All code changes must use the simplest implementation that satisfies the
+approved contract and validation. Prefer existing project patterns, plain data
+flow, small functions, and standard-library or project-local helpers. Avoid new
+abstractions, frameworks, clever indirection, broad refactors, or configurable
+machinery unless they clearly remove real complexity or are required by the
+active contract.
+
 ## Forbidden Scope Without Explicit Approval
 
 - KOSDAQ150, futures, options, Nasdaq/overseas, or multi-universe activation.

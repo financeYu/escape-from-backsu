@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import src.validation.v1_0_rc_freeze_readiness as readiness
 from src.validation.v1_0_rc_freeze_readiness import (
     FREEZE_READY,
     FREEZE_READY_WITH_MINOR_FOLLOW_UPS,
@@ -9,9 +10,11 @@ from src.validation.v1_0_rc_freeze_readiness import (
     audit_horizon_policy,
     audit_rebalance_disclosure,
     build_artifact_lineage_matrix,
+    build_contract_freeze_list,
     build_contract_manifest,
     build_core_boundary_lock,
     build_freeze_readiness_report,
+    build_ml_reproduction_report,
     build_phase_status_matrix,
     build_sample_readiness_artifacts,
     classify_horizon_reference,
@@ -22,10 +25,39 @@ from src.validation.v1_0_rc_freeze_readiness import (
 )
 
 
+def _passing_validation_results():
+    return [
+        {
+            "command": ".venv\\Scripts\\python.exe -m pytest -q tests/validation/test_v1_0_rc_freeze_readiness.py",
+            "result": "PASS: synthetic",
+            "run_in_this_session": True,
+            "reason_if_not_run": "",
+        },
+        {
+            "command": ".venv\\Scripts\\python.exe -m pytest -q tests/validation",
+            "result": "PASS: synthetic",
+            "run_in_this_session": True,
+            "reason_if_not_run": "",
+        },
+        {
+            "command": ".venv\\Scripts\\python.exe -m pytest -q tests/backtest/test_v1_0_horizon_policy.py tests/backtest/test_v1_0_simulation_run_manifest.py tests/backtest/test_v1_0_weight_config_loop.py tests/backtest/test_v1_0_layer_registry.py tests/backtest/test_v1_0_evaluation_evidence_v1.py tests/backtest/test_v1_0_selector_evaluator.py tests/backtest/test_v1_0_manual_review_packet.py",
+            "result": "PASS: synthetic",
+            "run_in_this_session": True,
+            "reason_if_not_run": "",
+        },
+        {
+            "command": ".venv\\Scripts\\python.exe -m pytest -q tests/backtest",
+            "result": "PASS: synthetic",
+            "run_in_this_session": True,
+            "reason_if_not_run": "",
+        },
+    ]
+
+
 def test_v1_0_rc_phase_status_matrix_detects_required_phases():
     matrix = build_phase_status_matrix()
 
-    assert [row["phase_id"] for row in matrix] == [f"Phase {index}" for index in range(9)]
+    assert [row["phase_id"] for row in matrix] == [f"Phase {index}" for index in range(10)]
     assert all(row["status"] == STATUS_COMPLETE for row in matrix)
 
 
@@ -75,7 +107,86 @@ def test_v1_0_rc_contract_manifest_requires_core_contracts():
         "SelectorScoreManifestV1",
         "AdoptionCandidateReviewPriorityV1",
         "ManualReviewPacket",
+        "FreezeReadinessPacket",
     }.issubset(names)
+
+
+def test_v1_0_rc_contract_freeze_list_locks_step2_items():
+    freeze_list = build_contract_freeze_list()
+
+    assert [row["freeze_item"] for row in freeze_list] == [
+        "HorizonPolicy",
+        "SimulationRunManifest",
+        "WeightConfigRunPlan / RunRecord boundary",
+        "LayerRegistry status/category model",
+        "EvaluationEvidenceV1",
+        "SelectorFeatureMatrix / SelectorScoreManifest",
+        "AdoptionCandidateReviewPriority",
+        "ManualReviewPacket",
+        "Phase 9 FreezeReadinessPacket",
+    ]
+    assert all(row["status"] == STATUS_COMPLETE for row in freeze_list)
+
+
+def test_v1_0_rc_contract_freeze_list_rejects_missing_covered_contract():
+    freeze_list = build_contract_freeze_list(contract_manifest=[])
+
+    assert all(row["status"] == "NEEDS FIX" for row in freeze_list)
+    assert any("missing contracts" in blocker for row in freeze_list for blocker in row["blockers"])
+
+
+def test_v1_0_rc_ml_reproduction_report_checks_freeze_trigger_sections():
+    report = build_ml_reproduction_report()
+
+    assert [row["section"] for row in report["sections"]] == [
+        "Dataset snapshot",
+        "Label manifest",
+        "Feature allowlist",
+        "Split policy",
+        "Leakage checks",
+        "Baseline",
+        "ML result",
+        "Profit reproduction",
+        "Stability",
+        "Failure cases",
+        "Guardrail result",
+        "Verdict",
+    ]
+    assert report["freeze_trigger_confirmed"] is True
+    assert report["freeze_trigger_verdict"] == "PASS"
+    assert report["blockers"] == []
+
+
+def test_v1_0_rc_ml_reproduction_report_passes_required_trigger_inputs():
+    report = build_ml_reproduction_report()
+    statuses = {row["section"]: row["status"] for row in report["sections"]}
+    contents = {row["section"]: row["content"] for row in report["sections"]}
+
+    assert statuses["Label manifest"] == "PASS"
+    assert statuses["Split policy"] == "PASS"
+    assert statuses["Leakage checks"] == "PASS"
+    assert statuses["ML result"] == "PASS"
+    assert statuses["Profit reproduction"] == "PASS"
+    assert statuses["Stability"] == "PASS"
+    assert statuses["Guardrail result"] == "PASS"
+    assert "approved_label_manifest_ref=reports/review/v1_0_rc_ml_reproduction_report.md#label-manifest" in contents["Label manifest"]
+    assert "model_training_performed=True" in contents["ML result"]
+    assert "label_feature_overlap_status=PASS" in contents["ML result"]
+
+
+def test_v1_0_rc_freeze_report_blocks_failed_ml_trigger(monkeypatch):
+    def failed_ml_report():
+        return {
+            "freeze_trigger_confirmed": False,
+            "freeze_trigger_verdict": "FAIL",
+            "blockers": ["synthetic_ml_failure"],
+        }
+
+    monkeypatch.setattr(readiness, "build_ml_reproduction_report", failed_ml_report)
+    report = readiness.build_freeze_readiness_report(validation_results=_passing_validation_results())
+
+    assert report["freeze_readiness_verdict"] == NOT_FREEZE_READY
+    assert any("ML reproduction freeze trigger did not pass" in blocker for blocker in report["blockers"])
 
 
 def test_v1_0_rc_contract_manifest_requires_prohibited_flags_false():

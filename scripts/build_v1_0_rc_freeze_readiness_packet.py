@@ -16,6 +16,8 @@ from src.validation.v1_0_rc_freeze_readiness import (
 OUTPUT_FILES = {
     "phase_status_matrix": "docs/extension/v1_0_rc_phase_status_matrix.md",
     "contract_manifest": "docs/extension/v1_0_rc_contract_manifest.md",
+    "contract_freeze_list": "docs/extension/v1_0_rc_contract_freeze_list.md",
+    "ml_reproduction_report": "reports/review/v1_0_rc_ml_reproduction_report.md",
     "artifact_lineage_matrix": "docs/extension/v1_0_rc_artifact_lineage_matrix.md",
     "guardrail_audit": "docs/extension/v1_0_rc_guardrail_audit.md",
     "rebalance_disclosure_audit": "docs/extension/v1_0_rc_rebalance_disclosure_audit.md",
@@ -67,6 +69,8 @@ def write_outputs(root: Path, report: Mapping[str, Any]) -> None:
     documents = {
         "phase_status_matrix": _render_phase_status_matrix(report),
         "contract_manifest": _render_contract_manifest(report),
+        "contract_freeze_list": _render_contract_freeze_list(report),
+        "ml_reproduction_report": _render_ml_reproduction_report(report),
         "artifact_lineage_matrix": _render_lineage_matrix(report),
         "guardrail_audit": _render_guardrail_audit(report),
         "rebalance_disclosure_audit": _render_rebalance_audit(report),
@@ -112,6 +116,19 @@ def _render_freeze_packet(report: Mapping[str, Any]) -> str:
     lines.append("")
     lines.append("## Phase Status")
     lines.append(_phase_table(report["phase_status_matrix"]))
+    lines.append("")
+    lines.append("## Contract Freeze List")
+    lines.append(_contract_freeze_list_table(report["contract_freeze_list"]))
+    lines.append("")
+    ml_report = report["ml_reproduction_report"]
+    lines.append("## ML Reproduction Freeze Trigger")
+    lines.append(f"- report_ref: {OUTPUT_FILES['ml_reproduction_report']}")
+    lines.append(f"- freeze_trigger_confirmed: {ml_report['freeze_trigger_confirmed']}")
+    lines.append(f"- freeze_trigger_verdict: {ml_report['freeze_trigger_verdict']}")
+    lines.append(
+        "- blockers: "
+        + ("; ".join(ml_report["blockers"]) if ml_report["blockers"] else "none")
+    )
     lines.append("")
     lines.append("## Boundary Summary")
     boundary = report["boundary_audit"]
@@ -190,6 +207,48 @@ def _render_contract_manifest(report: Mapping[str, Any]) -> str:
                 **row,
             )
         )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _render_contract_freeze_list(report: Mapping[str, Any]) -> str:
+    return "\n".join(
+        [
+            "# v1.0-rc Contract Freeze List",
+            "",
+            _contract_freeze_list_table(report["contract_freeze_list"]),
+            "",
+        ]
+    )
+
+
+def _render_ml_reproduction_report(report: Mapping[str, Any]) -> str:
+    ml_report = report["ml_reproduction_report"]
+    lines = [
+        "# v1.0-rc ML Reproduction Report",
+        "",
+        f"- report_version: {ml_report['report_version']}",
+        f"- created_at: {ml_report['created_at']}",
+        f"- route_scope: {ml_report['route_scope']}",
+        f"- dataset_snapshot_ref: {ml_report['dataset_snapshot_ref']}",
+        f"- selector_run_id: {ml_report['selector_run_id']}",
+        f"- freeze_trigger_confirmed: {ml_report['freeze_trigger_confirmed']}",
+        f"- freeze_trigger_verdict: {ml_report['freeze_trigger_verdict']}",
+        f"- evidence_only_notice: {ml_report['evidence_only_notice']}",
+        "",
+        "| section | content | status |",
+        "|---|---|---|",
+    ]
+    for row in ml_report["sections"]:
+        lines.append(
+            "| {section} | {content} | {status} |".format(
+                section=row["section"],
+                content=row["content"],
+                status=row["status"],
+            )
+        )
+    lines.extend(["", "## Blockers"])
+    lines.extend(_bullet_lines(ml_report["blockers"]))
     lines.append("")
     return "\n".join(lines)
 
@@ -307,6 +366,25 @@ def _phase_table(rows: Sequence[Mapping[str, Any]]) -> str:
         lines.append(
             "| {phase_id} | {phase_name} | {status} | {blocker_summary} | {follow_up_summary} |".format(
                 **row
+            )
+        )
+    return "\n".join(lines)
+
+
+def _contract_freeze_list_table(rows: Sequence[Mapping[str, Any]]) -> str:
+    lines = [
+        "| freeze_item | owner_phase | covered_contracts | frozen_boundary | status | blockers |",
+        "|---|---|---|---|---|---|",
+    ]
+    for row in rows:
+        lines.append(
+            "| {freeze_item} | {owner_phase} | {covered_contracts} | {frozen_boundary} | {status} | {blockers} |".format(
+                freeze_item=row["freeze_item"],
+                owner_phase=row["owner_phase"],
+                covered_contracts=", ".join(row["covered_contracts"]),
+                frozen_boundary=row["frozen_boundary"],
+                status=row["status"],
+                blockers=", ".join(row["blockers"]) if row["blockers"] else "none",
             )
         )
     return "\n".join(lines)

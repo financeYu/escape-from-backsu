@@ -42,6 +42,36 @@ production activation modules.
 - ML/rule-based AdoptionCandidate selector
 - ManualReviewPacket
 
+## Contract freeze list
+
+Step 2 freezes these v1.0-rc contract boundaries for Phase 9 readiness review.
+The freeze list is evidence-only and does not authorize final release,
+production ranking replacement, live trading, brokerage integration, order
+generation, valuation/fundamental active scoring, or futures/index/macro/regime
+active scoring.
+
+- HorizonPolicy
+- SimulationRunManifest
+- WeightConfigRunPlan / RunRecord boundary
+- LayerRegistry status/category model
+- EvaluationEvidenceV1
+- SelectorFeatureMatrix / SelectorScoreManifest
+- AdoptionCandidateReviewPriority
+- ManualReviewPacket
+- Phase 9 FreezeReadinessPacket
+
+## ML reproduction freeze trigger
+
+Step 3 records the ML reproduction trigger as a separate evidence-only report.
+The trigger must fail closed when approved labels, time split or walk-forward
+evidence, no-lookahead/leakage pass evidence, holdout metrics, post-cost
+historical/simulated result evidence, or stability checks are missing.
+
+The Step 3 report may confirm contract readiness context, but it must not
+authorize final v1.0 freeze, production ranking replacement, live trading,
+brokerage integration, order generation, or valuation/fundamental active
+scoring.
+
 ## Phase map
 
 | phase | scope |

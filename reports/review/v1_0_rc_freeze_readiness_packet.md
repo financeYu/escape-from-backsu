@@ -1,7 +1,7 @@
 # v1.0-rc Freeze Readiness Packet
 
 - packet_version: v1_0_rc_freeze_readiness_packet_v1_0
-- created_at: 2026-05-13T10:49:15+00:00
+- created_at: 2026-05-13T11:23:59+00:00
 - route_scope: v1_0_rc_phase_9_freeze_readiness_validation
 - freeze_readiness_verdict: FREEZE_READY_WITH_MINOR_FOLLOW_UPS
 - evidence_only_notice: Phase 9 packages evidence-only candidate-only manual-review readiness; it is not production release.
@@ -33,6 +33,26 @@
 | Phase 6 | EvaluationEvidenceV1 | COMPLETE |  | none |
 | Phase 7 | ML/rule-based selector / evaluator | COMPLETE |  | none |
 | Phase 8 | ManualReviewPacket | COMPLETE |  | none |
+| Phase 9 | FreezeReadinessPacket | COMPLETE |  | none |
+
+## Contract Freeze List
+| freeze_item | owner_phase | covered_contracts | frozen_boundary | status | blockers |
+|---|---|---|---|---|---|
+| HorizonPolicy | Phase 2 | HorizonPolicy | explicit multi-horizon policy config; no live execution or trading output | COMPLETE | none |
+| SimulationRunManifest | Phase 3 | SimulationRunManifest | candidate-only run metadata and HorizonPolicy snapshot; no production run activation | COMPLETE | none |
+| WeightConfigRunPlan / RunRecord boundary | Phase 4 | WeightConfigRunPlan | planned candidate runs and run records remain evidence context; no best-weight selection or feedback optimization | COMPLETE | none |
+| LayerRegistry status/category model | Phase 5 | LayerRegistry, LayerAdapter, LayerValidation | status/category semantics validate layer availability; valuation, futures, index, macro, and regime active scoring remain disabled | COMPLETE | none |
+| EvaluationEvidenceV1 | Phase 6 | EvaluationEvidenceV1 | allowlisted historical evidence summary only; no future labels, orders, or active ranking update | COMPLETE | none |
+| SelectorFeatureMatrix / SelectorScoreManifest | Phase 7 | SelectorFeatureMatrixV1, SelectorScoreManifestV1 | selector consumes allowlisted evidence and emits review-prioritization only | COMPLETE | none |
+| AdoptionCandidateReviewPriority | Phase 7 | AdoptionCandidateReviewPriorityV1 | review priority only; no buy/sell/hold framing or production ranking replacement | COMPLETE | none |
+| ManualReviewPacket | Phase 8 | ManualReviewPacket | private manual-review support only; no order generation, position sizing, or transaction instruction | COMPLETE | none |
+| Phase 9 FreezeReadinessPacket | Phase 9 | FreezeReadinessPacket | validation packet for pre-freeze review only; no final freeze, tag, release, push, or production readiness declaration | COMPLETE | none |
+
+## ML Reproduction Freeze Trigger
+- report_ref: reports/review/v1_0_rc_ml_reproduction_report.md
+- freeze_trigger_confirmed: True
+- freeze_trigger_verdict: PASS
+- blockers: none
 
 ## Boundary Summary
 - core_boundary_lock_status: COMPLETE
@@ -61,6 +81,8 @@
 ## Linked Artifacts
 - phase_status_matrix: docs/extension/v1_0_rc_phase_status_matrix.md
 - contract_manifest: docs/extension/v1_0_rc_contract_manifest.md
+- contract_freeze_list: docs/extension/v1_0_rc_contract_freeze_list.md
+- ml_reproduction_report: reports/review/v1_0_rc_ml_reproduction_report.md
 - artifact_lineage_matrix: docs/extension/v1_0_rc_artifact_lineage_matrix.md
 - guardrail_audit: docs/extension/v1_0_rc_guardrail_audit.md
 - rebalance_disclosure_audit: docs/extension/v1_0_rc_rebalance_disclosure_audit.md

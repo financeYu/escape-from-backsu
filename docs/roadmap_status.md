@@ -152,15 +152,23 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v1_0_manual_review_packet_contract.md`
 - `docs/extension/v1_0_rc_phase_status_matrix.md`
 - `docs/extension/v1_0_rc_contract_manifest.md`
+- `docs/extension/v1_0_rc_contract_freeze_list.md`
 - `docs/extension/v1_0_rc_artifact_lineage_matrix.md`
 - `docs/extension/v1_0_rc_guardrail_audit.md`
 - `docs/extension/v1_0_rc_rebalance_disclosure_audit.md`
 - `docs/extension/v1_0_rc_validation_test_manifest.md`
+- `reports/review/v1_0_rc_ml_reproduction_report.md`
 - `config/horizon_policy.toml`
 - `config/weight_config_loop.toml`
 - `config/layer_registry.toml`
 - `config/evaluation_evidence_v1.toml`
 - `docs/context/EXTENSION_REGISTRY.toml`
+
+## Local v1.0-rc Freeze-Trigger State
+
+| local step | status | route meaning |
+| --- | --- | --- |
+| Step 3 / ML reproduction report | COMPLETE | freeze trigger evidence review is complete; it does not activate production ranking, trading, valuation/fundamental scoring, ingestion, universe expansion, or broker integration |
 
 ## Archived v0.1/v0.2 References
 
@@ -208,6 +216,10 @@ Still blocked without later explicit approval:
 - live trading, brokerage integration, order generation, or real-money execution
 - valuation/fundamental scoring activation
 - new market-data ingestion or universe expansion
+- macro/regime/futures/index activation
+- production ranking semantics changes
+- real-time condition triggers or automated decision layers
+- live rebalance, automatic position sizing, or execution workflows
 - final v1.0 freeze, tag, release, push, or production-readiness declaration
 - new v1.0-rc post-Phase9 implementation without a later explicit task approval
 

@@ -113,9 +113,11 @@ def test_gpt_brief_mode_generates_route_only_context(tmp_path: Path) -> None:
     assert "Generated only after an explicit user request" in text
     assert "Draft a GPT prompt." in text
     assert "Post-MVP v0.3 research-to-strategy adoption is the active route." in text
+    assert "Post-v1.0 v1.x staged release development is active" in text
     assert "v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only" in text
     assert "Do not repeat completed Step history" in text
     assert "`docs/context/MVP_V0_1_BASELINE.md` - FOUND" in text
+    assert "`docs/extension/v1_x_staged_release_plan.md` - FOUND" in text
     assert "GPT_CONTEXT_GENERATION_RULES.md" not in text
     assert "| Step 1 |" not in text
 
@@ -193,6 +195,9 @@ def _write_minimal_context_project(tmp_path: Path, *, include_missing_route: boo
     (tmp_path / "docs/context/generated").mkdir(parents=True)
     (tmp_path / "docs/context/active_step20_packet.md").write_text("active", encoding="utf-8")
     (tmp_path / "docs/context/MVP_V0_1_BASELINE.md").write_text("baseline", encoding="utf-8")
+    (tmp_path / "docs/context/EXTENSION_REGISTRY.toml").write_text("status = \"test\"", encoding="utf-8")
+    (tmp_path / "docs/extension").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "docs/extension/v1_x_staged_release_plan.md").write_text("v1.x", encoding="utf-8")
     (tmp_path / "docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml").write_text("status = \"routing_only\"", encoding="utf-8")
     (tmp_path / "docs/context/ACTIVE_PREFREEZE_OPTIMIZATION_PACKET.md").write_text("active", encoding="utf-8")
     (tmp_path / "docs/context/current_context.md").write_text("current", encoding="utf-8")

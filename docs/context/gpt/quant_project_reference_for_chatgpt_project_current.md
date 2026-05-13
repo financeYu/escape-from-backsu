@@ -1,6 +1,6 @@
 # Quant Project Current Context
 
-Generated at: 2026-05-12T18:52:57+09:00
+Generated at: 2026-05-13T23:18:12+09:00
 Workspace: `repository root`
 Project target: `current_quant_project`
 Context key: `quant_project_current_context`
@@ -31,19 +31,19 @@ ACTIVE as the evidence-only application lane that consumes v0.3 selector
 feature matrix and label manifest artifacts. Post-MVP `v0.5 personal decision
 support route` is ACTIVE as a contract-only private review route that consumes
 v0.3/v0.4 artifacts read-only and emits manual-check support packets only.
+`v1.0-rc evidence-only readiness route` is ACTIVE through Phase 9 only as a
+pre-freeze readiness lane for scope/freeze planning, next-day / 1D audit,
+`HorizonPolicy`, `SimulationRunManifest`, `WeightConfig` loop,
+`LayerRegistry`, `EvaluationEvidenceV1`, ML/rule selector/evaluator,
+`ManualReviewPacket`, and freeze-readiness validation packets. Local v1.0
+freeze is COMPLETE. Post-v1.0 development is now staged as v1.x releases:
+v1.1 net profitability evidence runner, v1.2 baseline ML selector
+application, v1.3 cost/turnover/liquidity reliability layer, v1.4
+point-in-time revision layer, v1.5 point-in-time valuation plus
+quality/profitability layer, v1.6 confidence/robustness/review-priority
+integration, then a v2.0 readiness packet.
 Product goal:
-- collect research, papers, and strategy ideas
-- structure those ideas as quant strategy candidates
-- backtest or simulate each strategy candidate in an evidence-only lane
-- use machine learning or evaluation algorithms to select review-preferred
-  candidates
-- check what historical return, risk, and performance characteristics may be
-  supported by the adopted-candidate evidence
-Direction lock:
-- v0.3 product_goal is the current evidence route memory.
-- v0.4 consumes v0.3 feature matrix and label manifest artifacts as read-only
-  inputs for trainability checks, optional baseline selector fitting, optional
-- omitted 52 additional lines for compact context
+- omitted 83 additional lines for compact context
 
 ## Current Authorization
 
@@ -61,7 +61,7 @@ Allowed now:
 - v0.5 personal decision support contracts and packets limited to evidence
   summary, risk flags, coverage gaps, current-condition status, diagnostic
   references, and manual review checklists
-- omitted 5 additional lines for compact context
+- omitted 16 additional lines for compact context
 
 ## Cross-Step Conflict Checkpoint
 
@@ -80,6 +80,11 @@ Allowed now:
   move-to-cash commands, or future-return prediction claims from v0.5 decision
   support packets.
 - Valuation/fundamental scoring activation.
+- v1.0 tag, release, push, or production-readiness declaration from freeze
+  artifacts without explicit end-stage instruction.
+- Production ranking replacement, automatic rebalance instructions,
+  buy/sell/hold wording, future-return claims, or proven-alpha language from
+- omitted 1 additional lines for compact context
 
 ## Route-Only References
 
@@ -91,9 +96,6 @@ Allowed now:
 - Strategy candidate registry: `docs/extension/v0_3_strategy_candidate_registry_contract.md`.
 - Evaluation evidence contract: `docs/extension/v0_3_evaluation_evidence_contract.md`.
 - Adoption selector gate: `docs/extension/v0_3_adoption_candidate_selector_gate.md`.
-- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).
-- Active route skill: `.agents/skills/quant-strategy-adoption-gate/SKILL.md`.
-- Active architecture skills: `.agents/skills/agent-coordinator/SKILL.md` through `.agents/skills/agent-reporter/SKILL.md`.
-- Completion review gate: `.agents/skills/quant-review-gate/SKILL.md`.
-- GPT context refresh skill: `.agents/skills/gpt-context-refresh/SKILL.md`.
-- Archive lookup: `docs/context/ARCHIVE_INDEX.md`.
+- v1.x staged release plan: `docs/extension/v1_x_staged_release_plan.md`.
+
+[Context truncated by `max_chars`; consult repository docs for full detail.]

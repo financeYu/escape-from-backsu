@@ -344,7 +344,7 @@ architecture_chain = [
   "agent-reporter",
 ]
 git_policy = "fetch=false; pull=false; push=false; commit=false; stage=false unless explicitly instructed at the appropriate end stage"
-current_stage = "v1.1"
+current_stage = "v1.2"
 stage_sequence = [
   "v1.1 net profitability evidence runner",
   "v1.2 baseline ML selector application",
@@ -383,6 +383,40 @@ blocked = [
   "proven-alpha language",
   "production activation",
   "new market-data ingestion or universe expansion without separate approval",
+]
+
+[extension.v1_1_net_profitability]
+state = "complete_evidence_only_runner"
+permission = "v1.1 net profitability evidence runner is implemented for reproducible historical or simulated candidate-only evidence; it does not authorize live trading, brokerage, orders, buy/sell/hold wording, production ranking replacement, automatic rebalance instructions, future-return claims, proven-alpha language, or production activation"
+context = "docs/extension/v1_1_net_profitability_evidence_runner.md"
+input_route = "extension.v1_x_staged_release"
+owner_lane = "Quant_mvp backtest/simulation"
+runner = "Quant_mvp/backtest_mvp/net_profitability_runner_v1.py"
+tests = "tests/backtest/test_v1_1_net_profitability_runner.py"
+output_artifacts = [
+  "v1_1_net_profitability_evidence_runner",
+  "v1_1_top_k_profitability_report",
+  "v1_1_cost_turnover_summary",
+  "v1_1_manual_review_profitability_packet",
+  "v1_1_validation_manifest",
+  "v1_1_top_decile_profitability_report",
+  "evaluation_evidence_v1",
+  "selector_score_manifest",
+]
+lineage = "HorizonPolicy -> SimulationRunManifest -> EvaluationEvidenceV1 -> ManualReviewPacket"
+completion_statement = "current frozen structure can repeatedly generate candidate-level historical or simulated net profitability evidence from the same config, seed, and candidate manifest inputs"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+blocked = [
+  "live trading or brokerage integration",
+  "orders or order generation",
+  "buy/sell/hold wording",
+  "production ranking replacement",
+  "automatic rebalance instructions",
+  "move-to-cash commands",
+  "future-return claims",
+  "proven-alpha language",
+  "production activation",
 ]
 
 [extension.v0_1n_candidate_ml]

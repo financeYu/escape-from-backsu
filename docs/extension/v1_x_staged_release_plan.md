@@ -25,7 +25,7 @@ All outputs remain:
 
 | Version | Stage | Primary output | Owner lane | Status |
 | --- | --- | --- | --- | --- |
-| v1.1 | net profitability evidence runner | historical/simulated net profitability display packet | backtest/simulation | planned |
+| v1.1 | net profitability evidence runner | historical/simulated net profitability display packet | backtest/simulation | complete |
 | v1.2 | baseline ML selector application | baseline selector comparison packet | ML/evaluator | planned |
 | v1.3 | cost/turnover/liquidity reliability layer | reliability adjustment and sensitivity packet | backtest/simulation + quant governance | planned |
 | v1.4 | point-in-time revision layer | point-in-time revision evidence packet | quant governance + data-support lane | planned |
@@ -56,15 +56,15 @@ The completion verdict must be one of:
 Goal: produce the fastest useful historical or simulated net profitability
 display without implying a trade signal.
 
-- [ ] Confirm input artifacts are approved local historical or simulated
+- [x] Confirm input artifacts are approved local historical or simulated
   evidence inputs.
-- [ ] Add or reuse a minimal net profitability evidence runner.
-- [ ] Include gross result, cost/slippage assumptions, net result, turnover,
+- [x] Add or reuse a minimal net profitability evidence runner.
+- [x] Include gross result, cost/slippage assumptions, net result, turnover,
   drawdown, volatility, and benchmark-relative context when available.
-- [ ] Label all outputs as evidence-only and manual-review-support.
-- [ ] Block buy/sell/hold wording, order language, and future-return claims.
-- [ ] Run targeted tests and guardrail wording checks.
-- [ ] Produce the v1.1 completion packet.
+- [x] Label all outputs as evidence-only and manual-review-support.
+- [x] Block buy/sell/hold wording, order language, and future-return claims.
+- [x] Run targeted tests and guardrail wording checks.
+- [x] Produce the v1.1 completion packet.
 
 ## v1.2 Checklist
 

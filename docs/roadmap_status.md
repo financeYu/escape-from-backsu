@@ -86,7 +86,8 @@ Current baseline facts:
   selector/review support, freeze-readiness validation packet artifacts, and
   the local v1.0 freeze baseline.
 - v1.x staged release plan is active for post-v1.0 development sequencing.
-  The next stage is v1.1 net profitability evidence runner.
+  v1.1 net profitability evidence runner is implemented and v1.2 baseline ML
+  selector application is the next planned stage.
 
 Current active route skill:
 
@@ -173,6 +174,7 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v1_0_rc_validation_test_manifest.md`
 - `docs/extension/v1_0_rc_post_freeze_backlog_separation.md`
 - `docs/extension/v1_x_staged_release_plan.md`
+- `docs/extension/v1_1_net_profitability_evidence_runner.md`
 - `reports/review/v1_0_rc_ml_reproduction_report.md`
 - `config/horizon_policy.toml`
 - `config/weight_config_loop.toml`
@@ -292,7 +294,7 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | v1.0-rc Phase 8 ManualReviewPacket | COMPLETE / readiness contract |
 | v1.0-rc Phase 9 freeze-readiness validation packet | COMPLETE / readiness validation |
 | v1.0 freeze | COMPLETE / local freeze baseline; no tag, push, release, or production activation |
-| v1.1 net profitability evidence runner | ACTIVE / evidence-only staged release |
+| v1.1 net profitability evidence runner | COMPLETE / evidence-only runner implemented |
 | v1.2 baseline ML selector application | PLANNED / evidence-only staged release |
 | v1.3 cost/turnover/liquidity reliability layer | PLANNED / evidence-only staged release |
 | v1.4 point-in-time revision layer | PLANNED / evidence-only staged release |

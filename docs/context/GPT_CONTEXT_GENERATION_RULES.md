@@ -13,6 +13,8 @@ waste, clear baseline trust, and no repetitive reuse of old Step summaries.
 ## Current Route Rule
 
 - Post-MVP v0.3 research-to-strategy adoption is the active route.
+- Post-v1.0 v1.x staged release development is active, with v1.1 net
+  profitability evidence runner as the current stage.
 - KOSPI200 technical MVP v0.1 is frozen archive baseline.
 - v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only.
 - GPT-facing context must treat Step 1-20 as trusted archive baseline.
@@ -72,6 +74,8 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 Compress baseline context to the smallest useful set. Prefer:
 
 - v0.3 research-to-strategy adoption is the active route.
+- v1.x staged release development is active after the local v1.0 freeze, and
+  v1.1 is the net profitability evidence runner stage.
 - v0.1 is frozen KOSPI200 technical baseline; v0.2 `prob_up_1d_candidate` is
   archived/supporting compatibility only.
 - Valuation/fundamental activation, universe expansion, new data ingestion,
@@ -155,6 +159,7 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 - `docs/context/MVP_V0_1_BASELINE.md`
 - `docs/context/MVP_V0_1_CONTRACT_MANIFEST.toml`
 - `docs/context/EXTENSION_REGISTRY.toml`
+- `docs/extension/v1_x_staged_release_plan.md`
 - `docs/context/CHANGE_IMPACT_MATRIX.yml`
 - task-specific paths only
 ```
@@ -163,7 +168,8 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 
 - `docs/context/GPT_CONTEXT_GENERATION_RULES.md` exists.
 - `.agents/skills/gpt-context-refresh/SKILL.md` exists and preserves explicit
-  user-request, local-only, latest-only, and v0.3 route controls.
+  user-request, local-only, latest-only, v0.3 route controls, and v1.x current
+  stage controls.
 - Rules include max 3 confirmed context facts.
 - Rules include default GPT input = compact baseline + one active request packet.
 - GPT-facing output refresh commands require `--user-requested`; GPT submission

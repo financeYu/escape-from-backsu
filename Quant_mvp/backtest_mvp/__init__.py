@@ -33,6 +33,11 @@ from Quant_mvp.backtest_mvp.manual_review_packet_v1 import (
     build_manual_review_packet_v1,
     validate_manual_review_packet_v1,
 )
+from Quant_mvp.backtest_mvp.net_profitability_runner_v1 import (
+    NetProfitabilityRunnerConfig,
+    run_net_profitability_evidence_v1_1,
+    validate_net_profitability_artifacts_v1_1,
+)
 from Quant_mvp.backtest_mvp.selector_evaluator_v1 import (
     build_rule_based_selector_score_manifest_v1,
     build_selector_feature_matrix_v1,
@@ -61,6 +66,7 @@ __all__ = (
     "CandidateRankingSnapshotConfig",
     "ConservativeBacktestResult",
     "EvaluationEvidenceResult",
+    "NetProfitabilityRunnerConfig",
     "STEP17_BACKTEST_NOTICE",
     "WeightConfigCandidate",
     "build_contract_only_evaluation_evidence_packet",
@@ -77,12 +83,14 @@ __all__ = (
     "find_forbidden_backtest_input_columns",
     "load_weight_config_candidates",
     "run_conservative_backtest",
+    "run_net_profitability_evidence_v1_1",
     "run_v0_3_evaluation_evidence",
     "validate_evaluation_evidence_record",
     "validate_evaluation_evidence_v1",
     "validate_backtest_price_input",
     "validate_backtest_ranking_input",
     "validate_manual_review_packet_v1",
+    "validate_net_profitability_artifacts_v1_1",
     "validate_selector_score_manifest_v1",
     "validate_simulation_run_manifest",
     "validate_weight_config_candidate",

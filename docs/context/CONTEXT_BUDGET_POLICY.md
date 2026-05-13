@@ -97,8 +97,10 @@ Generate GPT submission context directly at `docs/context/gpt/gpt_context_quant.
 Do not refresh GPT-folder outputs unless the user explicitly requests a GPT or
 ChatGPT context update.
 Use `.agents/skills/gpt-context-refresh/SKILL.md` for that explicit refresh
-workflow. GPT-facing output must describe v0.3 research-to-strategy adoption as
-the active route, while keeping v0.1 frozen and v0.2 archived/supporting.
+workflow. GPT-facing output must describe v0.3 research-to-strategy adoption
+and post-v1.0 v1.x staged release development as active routes, with v1.1 as
+the current net profitability evidence runner stage, while keeping v0.1 frozen
+and v0.2 archived/supporting.
 
 Rules:
 

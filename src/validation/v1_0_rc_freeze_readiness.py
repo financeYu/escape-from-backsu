@@ -1746,8 +1746,7 @@ def audit_route_state_alignment(
             "Phase 6 through Phase 9 are complete",
         ),
         "docs/context/EXTENSION_REGISTRY.toml": (
-            'status = "active_v1_0_rc_phase_9_readiness_route"',
-            'state = "active_phase_9_readiness_contract_route"',
+            'state = "complete_local_v1_0_freeze_baseline"',
         ),
         "docs/extension/v1_0_freeze_plan.md": (
             "Phase 9: COMPLETE / freeze readiness validation packet",
@@ -1778,7 +1777,7 @@ def audit_route_state_alignment(
                 stale.append(f"{relative_path}: stale {marker}")
 
     return {
-        "expected_route_state": "active_v1_0_rc_phase_9_readiness_route",
+        "expected_route_state": "complete_local_v1_0_freeze_baseline",
         "status": STATUS_NEEDS_FIX if missing or stale else STATUS_COMPLETE,
         "missing_required_markers": missing,
         "stale_markers": stale,

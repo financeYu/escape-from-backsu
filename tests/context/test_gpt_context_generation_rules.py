@@ -26,6 +26,7 @@ def test_gpt_rules_define_required_budget_and_repetition_rules() -> None:
     assert "Do not paste this document into GPT" in text
     assert ".agents/skills/gpt-context-refresh/SKILL.md" in text
     assert "v0.3 research-to-strategy adoption is the active route" in text
+    assert "v1.x staged release development is active" in text
     assert (
         "Do not repeat completed Step history. Use the baseline as trusted context and focus on the current decision."
         in text
@@ -42,7 +43,8 @@ def test_context_budget_policy_has_gpt_specific_defaults() -> None:
     assert "docs/context/gpt/gpt_context_quant.md" in text
     assert "GPT receives the generated brief, not the internal rules files" in text
     assert ".agents/skills/gpt-context-refresh/SKILL.md" in text
-    assert "v0.3 research-to-strategy adoption as" in text
+    assert "v0.3 research-to-strategy adoption" in text
+    assert "v1.x staged release development" in text
     assert "No Step-by-Step roadmap table in GPT default context" in text
     assert "No repeated Step completion summaries" in text
     assert "No pasted old validation logs" in text
@@ -100,6 +102,7 @@ def test_gpt_brief_builder_stays_under_80_lines() -> None:
 
     assert len(text.splitlines()) <= 80
     assert text.count("v0.3 research-to-strategy adoption") == 1
+    assert text.count("v1.x staged release development") == 1
     assert "v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only" in text
     assert (
         "Do not repeat completed Step history. Use the baseline as trusted context and focus on the current decision."

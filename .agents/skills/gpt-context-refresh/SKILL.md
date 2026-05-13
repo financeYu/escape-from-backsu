@@ -13,9 +13,11 @@ logic, score semantics, ranking or report behavior, backtest behavior, data
 ingestion, universe expansion, live trading, production activation, valuation
 activation, Git remote work, staging, or commits.
 
-The current active route is post-MVP v0.3 research-to-strategy adoption. GPT
-context must treat v0.1 as a frozen KOSPI200 technical baseline and v0.2
-`prob_up_1d_candidate` as archived/supporting compatibility only.
+The current active route includes post-MVP v0.3 research-to-strategy adoption
+and post-v1.0 v1.x staged release development. GPT context must treat v1.1 as
+the current net profitability evidence runner stage, v0.1 as a frozen KOSPI200
+technical baseline, and v0.2 `prob_up_1d_candidate` as archived/supporting
+compatibility only.
 
 ## Required Root Packet
 
@@ -73,6 +75,8 @@ GPT-facing context must state:
 
 - it is a routing aid, not an authority document
 - v0.3 research-to-strategy adoption is the active route
+- v1.x staged release development is active, with v1.1 as the current net
+  profitability evidence runner stage
 - v0.1 is frozen baseline and v0.2 is archived/supporting compatibility only
 - the current request and decision needed now
 - hard stops and forbidden activation boundaries

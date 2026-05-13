@@ -65,6 +65,7 @@ def test_v1_0_rc_route_state_alignment_matches_phase9_authority_docs():
     audit = audit_route_state_alignment()
 
     assert audit["status"] == STATUS_COMPLETE
+    assert audit["expected_route_state"] == "complete_local_v1_0_freeze_baseline"
     assert audit["missing_required_markers"] == []
     assert audit["stale_markers"] == []
 

@@ -14,7 +14,11 @@ DEFAULT_ROUTING_PATH = Path("docs/context/context_routing.md")
 DEFAULT_OUTPUT_DIR = Path("docs/context/generated")
 DEFAULT_GPT_BRIEF_OUTPUT = Path("docs/context/gpt/gpt_context_quant.md")
 GPT_BRIEF_ROUTE_REFS = (
+    "docs/root_hard_stops.md",
+    "docs/roadmap_status.md",
     "docs/context/MVP_V0_1_BASELINE.md",
+    "docs/context/EXTENSION_REGISTRY.toml",
+    "docs/extension/v1_x_staged_release_plan.md",
 )
 ALWAYS_READ_REFS = (
     "docs/context/current_context.md",
@@ -224,8 +228,8 @@ def build_gpt_brief(config: GptBriefConfig) -> str:
         "## Confirmed Context",
         "",
         "- Post-MVP v0.3 research-to-strategy adoption is the active route.",
+        "- Post-v1.0 v1.x staged release development is active, and v1.1 is the net profitability evidence runner stage.",
         "- v0.1 is a frozen KOSPI200 technical MVP baseline; v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only.",
-        "- GPT-facing references refresh only after an explicit GPT or ChatGPT context update request.",
         "",
         "## Current Request",
         "",
@@ -238,8 +242,9 @@ def build_gpt_brief(config: GptBriefConfig) -> str:
         "",
         "## Boundaries",
         "",
-        "- Stay in the v0.3 candidate/evidence lane unless the current task explicitly opens another approved route.",
+        "- Stay in the v0.3/v1.x candidate/evidence lanes unless the current task explicitly opens another approved route.",
         "- No valuation/fundamental activation, universe expansion, new market-data ingestion, production activation, live trading, or trading recommendation language.",
+        "- No order generation, buy/sell/hold wording, production ranking replacement, automatic rebalance instructions, future-return claims, or proven-alpha language.",
         "- Completed Step 1-20 and v0.1/v0.2 material are archive-only except for named provenance, regression, compatibility, or release/freeze checks.",
         "- Internal generation rules, budget policy, and routing index are not GPT prompt inputs.",
         "",

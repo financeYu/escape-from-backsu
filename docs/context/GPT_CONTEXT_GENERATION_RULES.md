@@ -13,8 +13,8 @@ waste, clear baseline trust, and no repetitive reuse of old Step summaries.
 ## Current Route Rule
 
 - Post-MVP v0.3 research-to-strategy adoption is the active route.
-- Post-v1.0 v1.x staged release development is active, with v1.1 net
-  profitability evidence runner as the current stage.
+- Post-v1.0 v1.x staged release development is active; v1.1 through v1.3
+  are implemented, and v1.4 point-in-time revision is the next planned stage.
 - KOSPI200 technical MVP v0.1 is frozen archive baseline.
 - v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only.
 - GPT-facing context must treat Step 1-20 as trusted archive baseline.
@@ -74,8 +74,9 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 Compress baseline context to the smallest useful set. Prefer:
 
 - v0.3 research-to-strategy adoption is the active route.
-- v1.x staged release development is active after the local v1.0 freeze, and
-  v1.1 is the net profitability evidence runner stage.
+- v1.x staged release development is active after the local v1.0 freeze;
+  v1.1 net profitability, v1.2 ML selector comparison, and v1.3
+  cost/turnover/liquidity reliability are implemented, with v1.4 next.
 - v0.1 is frozen KOSPI200 technical baseline; v0.2 `prob_up_1d_candidate` is
   archived/supporting compatibility only.
 - Valuation/fundamental activation, universe expansion, new data ingestion,

@@ -4,9 +4,9 @@ Status: sample only / routing aid, not an authority document.
 
 ## Confirmed Context
 
-- Step 20 is complete; KOSPI200 technical MVP v0.1 is frozen.
-- MVP v0.1 is KOSPI200-only and technical-only.
-- Valuation/fundamental scoring, KOSDAQ150, futures/options, Nasdaq, and trading recommendation work remain outside the baseline unless a later routed task opens them.
+- Post-MVP v0.3 research-to-strategy adoption is the active route.
+- Post-v1.0 v1.x staged release development is active; v1.1-v1.3 are implemented and v1.4 point-in-time revision is next.
+- v0.1 is a frozen KOSPI200 technical baseline; v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only.
 
 ## Current Request
 
@@ -26,4 +26,6 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 ## Route-Only References
 
 - `docs/context/MVP_V0_1_BASELINE.md`
+- `docs/context/EXTENSION_REGISTRY.toml`
+- `docs/extension/v1_x_staged_release_plan.md`
 - task-specific files only

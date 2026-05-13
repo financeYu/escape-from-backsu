@@ -26,8 +26,8 @@ All outputs remain:
 | Version | Stage | Primary output | Owner lane | Status |
 | --- | --- | --- | --- | --- |
 | v1.1 | net profitability evidence runner | historical/simulated net profitability display packet | backtest/simulation | complete |
-| v1.2 | baseline ML selector application | baseline selector comparison packet | ML/evaluator | planned |
-| v1.3 | cost/turnover/liquidity reliability layer | reliability adjustment and sensitivity packet | backtest/simulation + quant governance | planned |
+| v1.2 | baseline ML selector application | baseline selector comparison packet | ML/evaluator | complete |
+| v1.3 | cost/turnover/liquidity reliability layer | reliability adjustment and sensitivity packet | backtest/simulation + quant governance | implemented with liquidity data gaps reported |
 | v1.4 | point-in-time revision layer | point-in-time revision evidence packet | quant governance + data-support lane | planned |
 | v1.5 | point-in-time valuation + quality/profitability layer | candidate-only valuation, quality, and profitability evidence packet | quant governance | planned |
 | v1.6 | confidence/robustness/review-priority integration | confidence and manual review priority packet | ML/evaluator + root governance | planned |
@@ -70,27 +70,28 @@ display without implying a trade signal.
 
 Goal: apply a baseline ML selector as a comparison layer only.
 
-- [ ] Consume allowlisted v1.1/v0.x evidence summaries read-only.
-- [ ] Keep labels, features, and evaluation windows separated.
-- [ ] Compare baseline ML selector output against rule or non-ML baseline
+- [x] Consume allowlisted v1.1/v0.x evidence summaries read-only.
+- [x] Keep labels, features, and evaluation windows separated.
+- [x] Compare baseline ML selector output against rule or non-ML baseline
   evidence.
-- [ ] Emit review-prioritization evidence only, not a runtime rank
+- [x] Emit review-prioritization evidence only, not a runtime rank
   replacement.
-- [ ] Preserve no-lookahead and no-feedback checks.
-- [ ] Run targeted ML/evaluator tests and guardrail wording checks.
-- [ ] Produce the v1.2 completion packet.
+- [x] Preserve no-lookahead and no-feedback checks.
+- [x] Run targeted ML/evaluator tests and guardrail wording checks.
+- [x] Produce the v1.2 completion packet.
 
 ## v1.3 Checklist
 
 Goal: improve reliability with cost, turnover, and liquidity sensitivity.
 
-- [ ] Add explicit cost, turnover, and liquidity assumptions to the evidence
+- [x] Add explicit cost, turnover, and liquidity assumptions to the evidence
   path.
-- [ ] Show sensitivity or degradation ranges where supported by local evidence.
-- [ ] Keep outputs descriptive and review-oriented.
-- [ ] Block automatic rebalance instructions and production execution language.
-- [ ] Run targeted reliability-layer tests and guardrail wording checks.
-- [ ] Produce the v1.3 completion packet.
+- [x] Add candidate-level liquidity handoff rows for every evidence candidate.
+- [x] Show sensitivity or degradation ranges where supported by local evidence.
+- [x] Keep outputs descriptive and review-oriented.
+- [x] Block automatic rebalance instructions and production execution language.
+- [x] Run targeted reliability-layer tests and guardrail wording checks.
+- [x] Produce the v1.3 completion packet.
 
 ## v1.4 Checklist
 

@@ -12,6 +12,13 @@ from Quant_mvp.backtest_mvp.contracts import (
     validate_backtest_price_input,
     validate_backtest_ranking_input,
 )
+from Quant_mvp.backtest_mvp.cost_liquidity_reliability_v1_3 import (
+    CostLiquidityReliabilityConfig,
+    build_v1_3_candidate_liquidity_handoff,
+    run_v1_3_cost_turnover_liquidity_reliability,
+    validate_v1_3_candidate_liquidity_handoff,
+    validate_v1_3_reliability_artifacts,
+)
 from Quant_mvp.backtest_mvp.candidate_rank_adapter import (
     CandidateRankingSnapshotConfig,
     build_candidate_ranking_snapshot,
@@ -32,6 +39,11 @@ from Quant_mvp.backtest_mvp.evaluation_evidence_v1 import (
 from Quant_mvp.backtest_mvp.manual_review_packet_v1 import (
     build_manual_review_packet_v1,
     validate_manual_review_packet_v1,
+)
+from Quant_mvp.backtest_mvp.ml_selector_v1_2 import (
+    BaselineMLSelectorConfig,
+    run_v1_2_baseline_ml_selector_application,
+    validate_v1_2_ml_selector_artifacts,
 )
 from Quant_mvp.backtest_mvp.net_profitability_runner_v1 import (
     NetProfitabilityRunnerConfig,
@@ -62,9 +74,11 @@ __all__ = (
     "BacktestLimitationFlag",
     "BacktestPeriodResult",
     "BacktestSecurityResult",
+    "BaselineMLSelectorConfig",
     "BacktestSummary",
     "CandidateRankingSnapshotConfig",
     "ConservativeBacktestResult",
+    "CostLiquidityReliabilityConfig",
     "EvaluationEvidenceResult",
     "NetProfitabilityRunnerConfig",
     "STEP17_BACKTEST_NOTICE",
@@ -79,11 +93,14 @@ __all__ = (
     "build_selector_input_manifest_v1",
     "build_selector_trainability_report_v1",
     "build_simulation_run_manifest",
+    "build_v1_3_candidate_liquidity_handoff",
     "build_weight_config_loop_plan",
     "find_forbidden_backtest_input_columns",
     "load_weight_config_candidates",
     "run_conservative_backtest",
     "run_net_profitability_evidence_v1_1",
+    "run_v1_3_cost_turnover_liquidity_reliability",
+    "run_v1_2_baseline_ml_selector_application",
     "run_v0_3_evaluation_evidence",
     "validate_evaluation_evidence_record",
     "validate_evaluation_evidence_v1",
@@ -91,8 +108,11 @@ __all__ = (
     "validate_backtest_ranking_input",
     "validate_manual_review_packet_v1",
     "validate_net_profitability_artifacts_v1_1",
+    "validate_v1_3_reliability_artifacts",
+    "validate_v1_3_candidate_liquidity_handoff",
     "validate_selector_score_manifest_v1",
     "validate_simulation_run_manifest",
+    "validate_v1_2_ml_selector_artifacts",
     "validate_weight_config_candidate",
     "validate_weight_config_loop_plan",
     "write_evaluation_evidence_markdown",

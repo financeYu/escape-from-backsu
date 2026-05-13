@@ -31,7 +31,20 @@ PROJECT_ALLOW_GIT_INDEX_WRITE = "0"
 TMP = "C:\\Users\\jjaew\\Project\\master_mvp\\.pytest_tmp\\codex_shell"
 TEMP = "C:\\Users\\jjaew\\Project\\master_mvp\\.pytest_tmp\\codex_shell"
 PYTEST_DEBUG_TEMPROOT = "C:\\Users\\jjaew\\Project\\master_mvp\\.pytest_tmp\\codex_shell"
+PROJECT_ML_PYTHON = "C:\\Users\\jjaew\\Project\\master_mvp\\.venv\\Scripts\\python.exe"
+PROJECT_ML_REQUIRED_PACKAGES = "numpy,pandas,sklearn"
+PROJECT_ML_OPTIONAL_PACKAGES = "lightgbm,xgboost,catboost"
+PROJECT_ML_THREAD_COUNT = "1"
+OMP_NUM_THREADS = "1"
+MKL_NUM_THREADS = "1"
+OPENBLAS_NUM_THREADS = "1"
+NUMEXPR_NUM_THREADS = "1"
+LOKY_MAX_CPU_COUNT = "1"
 
 [[skills.config]]
 path = ".agents/skills/workspace-python-env"
+enabled = true
+
+[[skills.config]]
+path = ".agents/skills/workspace-ml-env"
 enabled = true

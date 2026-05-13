@@ -181,6 +181,8 @@ def _route_reference_sections() -> list[str]:
         "- Evaluation evidence contract: `docs/extension/v0_3_evaluation_evidence_contract.md`.",
         "- Adoption selector gate: `docs/extension/v0_3_adoption_candidate_selector_gate.md`.",
         "- v1.x staged release plan: `docs/extension/v1_x_staged_release_plan.md`.",
+        "- v1.2 ML selector application: `docs/extension/v1_2_baseline_ml_selector_application.md`.",
+        "- v1.3 cost, turnover, and liquidity reliability layer: `docs/extension/v1_3_cost_turnover_liquidity_reliability_layer.md`.",
         "- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).",
         "- Active route skill: `.agents/skills/quant-strategy-adoption-gate/SKILL.md`.",
         "- Active architecture skills: `.agents/skills/agent-coordinator/SKILL.md` through `.agents/skills/agent-reporter/SKILL.md`.",

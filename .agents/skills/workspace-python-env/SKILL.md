@@ -42,6 +42,15 @@ PROJECT_ALLOW_GIT_INDEX_WRITE=0
 TMP=C:\Users\jjaew\Project\master_mvp\.pytest_tmp\codex_shell
 TEMP=C:\Users\jjaew\Project\master_mvp\.pytest_tmp\codex_shell
 PYTEST_DEBUG_TEMPROOT=C:\Users\jjaew\Project\master_mvp\.pytest_tmp\codex_shell
+PROJECT_ML_PYTHON=C:\Users\jjaew\Project\master_mvp\.venv\Scripts\python.exe
+PROJECT_ML_REQUIRED_PACKAGES=numpy,pandas,sklearn
+PROJECT_ML_OPTIONAL_PACKAGES=lightgbm,xgboost,catboost
+PROJECT_ML_THREAD_COUNT=1
+OMP_NUM_THREADS=1
+MKL_NUM_THREADS=1
+OPENBLAS_NUM_THREADS=1
+NUMEXPR_NUM_THREADS=1
+LOKY_MAX_CPU_COUNT=1
 ```
 
 The shell `Path` should put `.venv\Scripts` before system Python and
@@ -69,6 +78,13 @@ Project-local bash validators should use `PROJECT_BASH` through
 an unavailable WSL install is reported as a validator execution environment
 blocker, not as test or contract validation evidence. Set
 `PROJECT_ALLOW_WSL_BASH=1` only for an explicitly WSL-enabled local run.
+
+Project-local ML work should additionally use
+`.agents/skills/workspace-ml-env/SKILL.md`. That skill pins tabular ML work to
+the same root `.venv`, records required and optional ML package availability,
+and keeps deterministic local thread-count variables consistent across
+`master_mvp`, `Quant_mvp`, `Quant_mvp/research_mvp`, `chart_mvp`, and
+`review_mvp`.
 
 ## Validation Pattern
 

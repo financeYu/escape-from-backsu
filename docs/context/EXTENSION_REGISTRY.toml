@@ -344,7 +344,7 @@ architecture_chain = [
   "agent-reporter",
 ]
 git_policy = "fetch=false; pull=false; push=false; commit=false; stage=false unless explicitly instructed at the appropriate end stage"
-current_stage = "v1.2"
+current_stage = "v1.4"
 stage_sequence = [
   "v1.1 net profitability evidence runner",
   "v1.2 baseline ML selector application",
@@ -405,6 +405,74 @@ output_artifacts = [
 ]
 lineage = "HorizonPolicy -> SimulationRunManifest -> EvaluationEvidenceV1 -> ManualReviewPacket"
 completion_statement = "current frozen structure can repeatedly generate candidate-level historical or simulated net profitability evidence from the same config, seed, and candidate manifest inputs"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+blocked = [
+  "live trading or brokerage integration",
+  "orders or order generation",
+  "buy/sell/hold wording",
+  "production ranking replacement",
+  "automatic rebalance instructions",
+  "move-to-cash commands",
+  "future-return claims",
+  "proven-alpha language",
+  "production activation",
+]
+
+[extension.v1_2_baseline_ml_selector]
+state = "complete_evidence_only_selector_application"
+permission = "v1.2 baseline ML selector application is implemented for allowlisted historical or simulated evidence review-priority comparison only; it does not authorize live trading, brokerage, orders, buy/sell/hold wording, production ranking replacement, automatic rebalance instructions, future-return claims, proven-alpha language, or production activation"
+context = "docs/extension/v1_2_baseline_ml_selector_application.md"
+input_route = "extension.v1_1_net_profitability"
+owner_lane = "Quant_mvp ML/evaluator"
+runner = "Quant_mvp/backtest_mvp/ml_selector_v1_2.py"
+tests = "tests/backtest/test_v1_2_ml_selector.py"
+output_artifacts = [
+  "v1_2_ml_trainability_report",
+  "v1_2_selector_feature_matrix_manifest",
+  "v1_2_label_target_manifest",
+  "v1_2_leakage_audit",
+  "v1_2_linear_baseline_model_manifest",
+  "v1_2_tree_challenger_model_manifest",
+  "v1_2_walk_forward_validation_report",
+  "v1_2_selector_score_manifest",
+  "v1_2_rule_vs_ml_comparison_report",
+]
+lineage = "EvaluationEvidenceV1 -> v1_2 feature matrix + target manifest -> walk-forward validation -> SelectorScoreManifestV1"
+completion_statement = "ML selector application can use only allowlisted historical or simulated evidence to produce review-priority candidates and compare against the rule baseline on net-of-cost evidence"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+blocked = [
+  "live trading or brokerage integration",
+  "orders or order generation",
+  "buy/sell/hold wording",
+  "production ranking replacement",
+  "automatic rebalance instructions",
+  "move-to-cash commands",
+  "future-return claims",
+  "proven-alpha language",
+  "production activation",
+]
+
+[extension.v1_3_cost_turnover_liquidity_reliability]
+state = "implemented_evidence_only_reliability_layer_with_liquidity_data_gaps"
+permission = "v1.3 cost, turnover, and liquidity reliability layer is implemented for candidate-only manual-review evidence; missing liquidity proxies are reported as data gaps and the route does not authorize live trading, brokerage, orders, buy/sell/hold wording, production ranking replacement, automatic rebalance instructions, future-return claims, proven-alpha language, or production activation"
+context = "docs/extension/v1_3_cost_turnover_liquidity_reliability_layer.md"
+input_route = "extension.v1_2_baseline_ml_selector"
+owner_lane = "Quant_mvp backtest/simulation + quant governance"
+runner = "Quant_mvp/backtest_mvp/cost_liquidity_reliability_v1_3.py"
+tests = "tests/backtest/test_v1_3_cost_liquidity_reliability.py"
+output_artifacts = [
+  "v1_3_candidate_liquidity_handoff",
+  "v1_3_cost_profile_registry",
+  "v1_3_turnover_penalty_report",
+  "v1_3_liquidity_guard_report",
+  "v1_3_rebalance_sensitivity_report",
+  "v1_3_gross_vs_net_evidence_summary",
+  "v1_3_manual_review_cost_risk_section",
+]
+lineage = "EvaluationEvidenceV1 -> candidate liquidity handoff -> cost profile registry + turnover penalty + liquidity guard -> gross-vs-net and rebalance sensitivity -> manual review cost risk section"
+completion_statement = "Candidate profitability evidence can be reviewed with explicit cost profile, turnover, and liquidity reliability status, while missing liquidity data remains visible as a manual review limitation"
 default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
 completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
 blocked = [

@@ -19,6 +19,8 @@ GPT_BRIEF_ROUTE_REFS = (
     "docs/context/MVP_V0_1_BASELINE.md",
     "docs/context/EXTENSION_REGISTRY.toml",
     "docs/extension/v1_x_staged_release_plan.md",
+    "docs/extension/v1_2_baseline_ml_selector_application.md",
+    "docs/extension/v1_3_cost_turnover_liquidity_reliability_layer.md",
 )
 ALWAYS_READ_REFS = (
     "docs/context/current_context.md",
@@ -228,7 +230,7 @@ def build_gpt_brief(config: GptBriefConfig) -> str:
         "## Confirmed Context",
         "",
         "- Post-MVP v0.3 research-to-strategy adoption is the active route.",
-        "- Post-v1.0 v1.x staged release development is active, and v1.1 is the net profitability evidence runner stage.",
+        "- Post-v1.0 v1.x staged release development is active; v1.1-v1.3 are implemented and v1.4 point-in-time revision is next.",
         "- v0.1 is a frozen KOSPI200 technical MVP baseline; v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only.",
         "",
         "## Current Request",

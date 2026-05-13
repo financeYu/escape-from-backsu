@@ -1,0 +1,29 @@
+{
+  "approval_scope": "latest valid positive KRX date extension approved by user for v1.3 liquidity handoff support only",
+  "as_of_date": "2026-05-13",
+  "candidate_mapping_status": "pending_explicit_candidate_to_ticker_mapping",
+  "collection_boundary": "v1.3 candidate liquidity handoff support only; not scoring, ranking, trading, or production activation",
+  "created_at_utc": "2026-05-13T18:24:21+00:00",
+  "latest_output_csv": "data\\v1_3_liquidity\\v1_3_approved_local_market_cap_snapshot_latest.csv",
+  "local_liquidity_source_ref": "approved_local_liquidity_snapshot_20260513_20d",
+  "no_feedback_check": "snapshot_must_not_feed_scores_rankings_reports_backtests_trading_or_auto_adoption",
+  "output_csv": "data\\v1_3_liquidity\\v1_3_approved_local_market_cap_snapshot_20260513.csv",
+  "schema_version": "v1_3_approved_local_market_cap_snapshot_manifest_0_3",
+  "secret_values_redacted": true,
+  "skipped_newer_snapshots": [
+    {
+      "reason": "zero_close_market_cap_or_trading_value",
+      "snapshot_date": "20260514"
+    }
+  ],
+  "snapshot_date": "20260513",
+  "source_ref": "krx_pykrx_market_cap_snapshot_20260513",
+  "ticker_count": 5,
+  "tickers": [
+    "005930",
+    "000660",
+    "005380",
+    "373220",
+    "402340"
+  ]
+}

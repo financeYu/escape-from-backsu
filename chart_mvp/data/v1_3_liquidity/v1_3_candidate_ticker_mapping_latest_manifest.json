@@ -1,0 +1,4294 @@
+{
+  "schema_version": "v1_3_candidate_rank_slot_mapping_manifest.v4",
+  "generated_at_utc": "2026-05-13T18:45:28Z",
+  "task": "dynamic rank-slot candidate mapping expanded to full local KOSPI200 daily universe files",
+  "requested_period_start": "2025-03-31",
+  "requested_period_end": "2026-05-13",
+  "observed_coverage_start": "2025-03-31",
+  "observed_coverage_end": "2026-05-12",
+  "latest_as_of_date": "2026-05-12",
+  "mapping_policy": "rolling_rank_slot_desc_average_traded_value_20d",
+  "rank_scope": "full_local_kospi200_daily_universe_files",
+  "rank_scope_note": "all local *_daily_prices.csv files under data/ and data/historical_kospi200/prices with at least 20 merged observations; no new collection and no membership/date reconstitution beyond local files",
+  "candidate_slot_policy_ref": "data/v1_3_liquidity/v1_3_candidate_rank_slot_policy.csv",
+  "rank_timeseries_ref": "data/v1_3_liquidity/v1_3_liquidity_rank_timeseries_requested_period.csv",
+  "period_mapping_ref": "data/v1_3_liquidity/v1_3_candidate_ticker_mapping_requested_period.csv",
+  "latest_mapping_ref": "data/v1_3_liquidity/v1_3_candidate_ticker_mapping_latest.csv",
+  "snapshot_handoff_records_ref": "data/v1_3_liquidity/v1_3_candidate_liquidity_handoff_records_snapshot_dates.csv",
+  "latest_handoff_records_ref": "data/v1_3_liquidity/v1_3_candidate_liquidity_handoff_records_latest.csv",
+  "coverage_report_ref": "data/v1_3_liquidity/v1_3_candidate_ticker_mapping_coverage_report.csv",
+  "source_snapshot_refs": [
+    "data/v1_3_liquidity/v1_3_approved_local_market_cap_snapshot_20250331.csv",
+    "data/v1_3_liquidity/v1_3_approved_local_market_cap_snapshot_20260513.csv"
+  ],
+  "daily_source_inventory": [
+    {
+      "ticker": "000030",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000030_daily_prices.csv",
+      "rows_read": "2128",
+      "min_date": "2014-11-19",
+      "max_date": "2019-02-11"
+    },
+    {
+      "ticker": "000050",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000050_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "000060",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000060_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2012-07-30",
+      "max_date": "2023-02-17"
+    },
+    {
+      "ticker": "000070",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000070_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "000080",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000080_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000080",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000080_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000100",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000100_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000100",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000100_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000120",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000120_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000120",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000120_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000140",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000140_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "000150",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000150_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000150",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000150_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000210",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000210_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000210",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000210_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000230",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000230_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "000240",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000240_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000240",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000240_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000270",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000270_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000270",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000270_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000480",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000480_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "000640",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000640_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "000660",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000660_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000660",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000660_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000670",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000670_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000670",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000670_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000720",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000720_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000720",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000720_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000810",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000810_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000810",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000810_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000880",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000880_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "000880",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/000880_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "000990",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/000990_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "001040",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001040_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "001040",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/001040_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "001060",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001060_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "001120",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001120_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "001230",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001230_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "001430",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001430_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "001430",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/001430_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "001440",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001440_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "001440",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/001440_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "001450",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001450_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "001450",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/001450_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "001520",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001520_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "001570",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001570_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "001680",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001680_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "001680",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/001680_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "001740",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001740_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "001780",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001780_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "001800",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/001800_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "001800",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/001800_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "002030",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002030_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "002030",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/002030_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "002240",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002240_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "002270",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002270_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2011-12-27",
+      "max_date": "2022-07-18"
+    },
+    {
+      "ticker": "002350",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002350_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "002380",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002380_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-24",
+      "max_date": "2026-05-04"
+    },
+    {
+      "ticker": "002380",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/002380_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "002620",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002620_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "002710",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002710_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "002790",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002790_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "002790",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/002790_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "002840",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002840_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "002840",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/002840_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "002960",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/002960_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003000",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003000_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003030",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003030_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003030",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/003030_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "003090",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003090_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003090",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/003090_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "003200",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003200_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003230",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003230_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003230",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/003230_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "003240",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003240_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003240",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/003240_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "003300",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003300_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003410",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003410_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2013-12-10",
+      "max_date": "2024-07-05"
+    },
+    {
+      "ticker": "003450",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003450_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2006-05-03",
+      "max_date": "2016-10-28"
+    },
+    {
+      "ticker": "003490",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003490_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003490",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/003490_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "003520",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003520_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003550",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003550_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003550",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/003550_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "003570",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003570_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003620",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003620_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003670",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003670_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003670",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/003670_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "003850",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003850_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "003920",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/003920_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004000",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004000_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004000",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/004000_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "004020",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004020_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004020",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/004020_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "004150",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004150_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004170",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004170_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004170",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/004170_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "004370",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004370_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004370",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/004370_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "004490",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004490_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004490",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/004490_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "004700",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004700_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004710",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004710_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004800",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004800_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004990",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/004990_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "004990",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/004990_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005070",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005070_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005090",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005090_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005180",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005180_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005250",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005250_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005250",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005250_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005300",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005300_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005300",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005300_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005380",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005380_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005380",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005380_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005420",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005420_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005420",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005420_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005440",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005440_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005490",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005490_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005490",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005490_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005610",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005610_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005740",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005740_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005830",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005830_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005830",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005830_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005850",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005850_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005850",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005850_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005930",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005930_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005930",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005930_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "005940",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/005940_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "005940",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/005940_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "006040",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006040_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006040",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/006040_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "006110",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006110_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006120",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006120_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006260",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006260_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006260",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/006260_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "006280",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006280_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006280",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/006280_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "006360",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006360_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006360",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/006360_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "006390",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006390_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2015-04-20",
+      "max_date": "2025-11-19"
+    },
+    {
+      "ticker": "006400",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006400_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006400",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/006400_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "006650",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006650_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006650",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/006650_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "006800",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006800_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "006800",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/006800_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "006840",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/006840_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007070",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007070_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007070",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/007070_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "007210",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007210_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007310",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007310_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007310",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/007310_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "007340",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007340_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007340",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/007340_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "007570",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007570_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007660",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007660_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007660",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/007660_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "007690",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007690_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007700",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007700_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "007860",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/007860_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "008060",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/008060_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "008350",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/008350_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "008490",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/008490_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "008560",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/008560_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2012-10-02",
+      "max_date": "2023-04-21"
+    },
+    {
+      "ticker": "008730",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/008730_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "008730",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/008730_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "008770",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/008770_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "008770",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/008770_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "008930",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/008930_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "008930",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/008930_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "009150",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009150_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009150",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/009150_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "009240",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009240_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009240",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/009240_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "009290",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009290_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009410",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009410_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009420",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009420_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009420",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/009420_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "009540",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009540_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009540",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/009540_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "009580",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009580_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009680",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009680_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009830",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009830_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009830",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/009830_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "009900",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009900_daily_prices.csv",
+      "rows_read": "1960",
+      "min_date": "2020-12-07",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009970",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/009970_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "009970",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/009970_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "010060",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/010060_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "010060",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/010060_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "010120",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/010120_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "010120",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/010120_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "010130",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/010130_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "010130",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/010130_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "010140",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/010140_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "010140",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/010140_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "010620",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/010620_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2015-05-14",
+      "max_date": "2025-12-11"
+    },
+    {
+      "ticker": "010690",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/010690_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "010780",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/010780_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "010950",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/010950_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "010950",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/010950_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "011070",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/011070_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "011070",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/011070_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "011170",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/011170_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "011170",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/011170_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "011200",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/011200_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "011200",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/011200_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "011210",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/011210_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "011210",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/011210_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "011780",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/011780_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "011780",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/011780_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "011790",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/011790_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "011790",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/011790_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "012330",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/012330_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "012330",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/012330_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "012450",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/012450_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "012450",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/012450_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "012630",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/012630_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "0126Z0",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/0126Z0_daily_prices.csv",
+      "rows_read": "2350",
+      "min_date": "2025-11-24",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "0126Z0",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/0126Z0_daily_prices.csv",
+      "rows_read": "137",
+      "min_date": "2025-11-24",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "012750",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/012750_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "012750",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/012750_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "013890",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/013890_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2001-04-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "014680",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/014680_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "014680",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/014680_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "014820",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/014820_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "014820",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/014820_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "014830",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/014830_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "015760",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/015760_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "015760",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/015760_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "016360",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/016360_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "016360",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/016360_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "016380",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/016380_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "017670",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/017670_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "017670",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/017670_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "017800",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/017800_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "017800",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/017800_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "017960",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/017960_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "017960",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/017960_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "018250",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/018250_daily_prices.csv",
+      "rows_read": "2112",
+      "min_date": "2018-03-22",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "018260",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/018260_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "018260",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/018260_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "018880",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/018880_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "018880",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/018880_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "019170",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/019170_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "019680",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/019680_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "020000",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/020000_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "020150",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/020150_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "020560",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/020560_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "021240",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/021240_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "021240",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/021240_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "022100",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/022100_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "022100",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/022100_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "023530",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/023530_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "023530",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/023530_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "024110",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/024110_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "024110",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/024110_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "025540",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/025540_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "025860",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/025860_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "026960",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/026960_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "026960",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/026960_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "027410",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/027410_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "028050",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/028050_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "028050",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/028050_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "028260",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/028260_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "028260",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/028260_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "028670",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/028670_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "028670",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/028670_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "029530",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/029530_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "029780",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/029780_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "029780",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/029780_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "030000",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/030000_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "030000",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/030000_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "030200",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/030200_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "030200",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/030200_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "031430",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/031430_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "032350",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/032350_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "032640",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/032640_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "032640",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/032640_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "032830",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/032830_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "032830",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/032830_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "033530",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/033530_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "033780",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/033780_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "033780",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/033780_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "033920",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/033920_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "034020",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/034020_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "034020",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/034020_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "034120",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/034120_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "034220",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/034220_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "034220",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/034220_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "034230",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/034230_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "034230",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/034230_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "034730",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/034730_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "034730",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/034730_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "035250",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/035250_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "035250",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/035250_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "035420",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/035420_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "035420",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/035420_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "035720",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/035720_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "035720",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/035720_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "036460",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/036460_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "036460",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/036460_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "036570",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/036570_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "036570",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/036570_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "036580",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/036580_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "037620",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/037620_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2006-07-27",
+      "max_date": "2017-01-18"
+    },
+    {
+      "ticker": "039130",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/039130_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "039490",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/039490_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "039490",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/039490_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "042660",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/042660_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "042660",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/042660_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "042670",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/042670_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2015-06-23",
+      "max_date": "2026-01-22"
+    },
+    {
+      "ticker": "042700",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/042700_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "042700",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/042700_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "047040",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/047040_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "047040",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/047040_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "047050",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/047050_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "047050",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/047050_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "047810",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/047810_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "047810",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/047810_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "049770",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/049770_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2014-12-29",
+      "max_date": "2025-07-29"
+    },
+    {
+      "ticker": "051600",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/051600_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "051600",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/051600_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "051900",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/051900_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "051900",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/051900_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "051910",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/051910_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "051910",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/051910_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "052690",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/052690_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "052690",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/052690_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "055550",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/055550_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "055550",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/055550_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "057050",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/057050_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "060980",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/060980_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "062040",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/062040_daily_prices.csv",
+      "rows_read": "2164",
+      "min_date": "2024-07-29",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "062040",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/062040_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "064350",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/064350_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "064350",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/064350_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "064400",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/064400_daily_prices.csv",
+      "rows_read": "1450",
+      "min_date": "2025-02-05",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "064400",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/064400_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "064960",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/064960_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "066570",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/066570_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "066570",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/066570_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "066970",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/066970_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "066970",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/066970_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "068270",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/068270_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "068270",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/068270_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "068870",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/068870_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2006-07-24",
+      "max_date": "2017-01-13"
+    },
+    {
+      "ticker": "069260",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/069260_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "069260",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/069260_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "069620",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/069620_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "069620",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/069620_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "069960",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/069960_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "069960",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/069960_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "071050",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/071050_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "071050",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/071050_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "071320",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/071320_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "071320",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/071320_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "071840",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/071840_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "071970",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/071970_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "071970",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/071970_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "073240",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/073240_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "073240",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/073240_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "078520",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/078520_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "078930",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/078930_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "078930",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/078930_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "079160",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/079160_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "079430",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/079430_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "079550",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/079550_daily_prices.csv",
+      "rows_read": "2597",
+      "min_date": "2015-10-02",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "079550",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/079550_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "079980",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/079980_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "081660",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/081660_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "081660",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/081660_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "082740",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/082740_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "082740",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/082740_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "084870",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/084870_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "086280",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/086280_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "086280",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/086280_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "086790",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/086790_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "086790",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/086790_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "088350",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/088350_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "088350",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/088350_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "090430",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/090430_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "090430",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/090430_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "093050",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/093050_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "093370",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/093370_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "093370",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/093370_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "096760",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/096760_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "096770",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/096770_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "096770",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/096770_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "097230",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/097230_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "097950",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/097950_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "097950",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/097950_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "103140",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/103140_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "103140",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/103140_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "104700",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/104700_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "105560",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/105560_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "105560",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/105560_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "105630",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/105630_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "108670",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/108670_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "111770",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/111770_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "111770",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/111770_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "112610",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/112610_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "112610",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/112610_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "114090",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/114090_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "114090",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/114090_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "115390",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/115390_daily_prices.csv",
+      "rows_read": "2599",
+      "min_date": "2014-05-13",
+      "max_date": "2024-12-05"
+    },
+    {
+      "ticker": "120110",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/120110_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "120110",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/120110_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "128940",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/128940_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "128940",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/128940_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "137310",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/137310_daily_prices.csv",
+      "rows_read": "1742",
+      "min_date": "2021-07-16",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "137310",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/137310_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "138040",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/138040_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "138040",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/138040_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "138930",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/138930_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "138930",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/138930_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "139130",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/139130_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "139130",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/139130_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "139480",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/139480_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "139480",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/139480_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "145720",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/145720_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2017-03-15",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "145990",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/145990_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "161390",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/161390_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "161390",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/161390_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "161890",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/161890_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "161890",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/161890_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "170900",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/170900_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "175330",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/175330_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "175330",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/175330_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "178920",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/178920_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "180640",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/180640_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "180640",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/180640_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "185750",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/185750_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "185750",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/185750_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "192080",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/192080_daily_prices.csv",
+      "rows_read": "2585",
+      "min_date": "2015-11-04",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "192080",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/192080_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "192400",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/192400_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "192820",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/192820_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "192820",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/192820_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "204320",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/204320_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "204320",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/204320_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "207940",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/207940_daily_prices.csv",
+      "rows_read": "2460",
+      "min_date": "2016-11-10",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "207940",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/207940_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "214320",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/214320_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2015-09-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "241560",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/241560_daily_prices.csv",
+      "rows_read": "2571",
+      "min_date": "2016-11-18",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "241560",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/241560_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "241590",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/241590_daily_prices.csv",
+      "rows_read": "2400",
+      "min_date": "2016-10-04",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "251270",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/251270_daily_prices.csv",
+      "rows_read": "2280",
+      "min_date": "2017-05-12",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "251270",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/251270_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "259960",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/259960_daily_prices.csv",
+      "rows_read": "2165",
+      "min_date": "2021-08-10",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "259960",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/259960_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "267250",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/267250_daily_prices.csv",
+      "rows_read": "2360",
+      "min_date": "2017-05-10",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "267250",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/267250_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "267260",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/267260_daily_prices.csv",
+      "rows_read": "2360",
+      "min_date": "2017-05-10",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "267260",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/267260_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "268280",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/268280_daily_prices.csv",
+      "rows_read": "2436",
+      "min_date": "2017-05-22",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "268280",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/268280_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "271560",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/271560_daily_prices.csv",
+      "rows_read": "2292",
+      "min_date": "2017-07-07",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "271560",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/271560_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "271940",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/271940_daily_prices.csv",
+      "rows_read": "1432",
+      "min_date": "2021-09-01",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "272210",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/272210_daily_prices.csv",
+      "rows_read": "2498",
+      "min_date": "2019-11-13",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "272210",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/272210_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "278470",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/278470_daily_prices.csv",
+      "rows_read": "737",
+      "min_date": "2024-02-27",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "278470",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/278470_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "280360",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/280360_daily_prices.csv",
+      "rows_read": "2548",
+      "min_date": "2017-10-30",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "280360",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/280360_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "282330",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/282330_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2017-12-08",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "282330",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/282330_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "284740",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/284740_daily_prices.csv",
+      "rows_read": "2543",
+      "min_date": "2018-01-11",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "285130",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/285130_daily_prices.csv",
+      "rows_read": "2208",
+      "min_date": "2018-01-05",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "285130",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/285130_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "294870",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/294870_daily_prices.csv",
+      "rows_read": "2466",
+      "min_date": "2018-06-12",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "298020",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/298020_daily_prices.csv",
+      "rows_read": "2324",
+      "min_date": "2018-07-13",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "298020",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/298020_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "298040",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/298040_daily_prices.csv",
+      "rows_read": "2324",
+      "min_date": "2018-07-13",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "298040",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/298040_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "298050",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/298050_daily_prices.csv",
+      "rows_read": "2324",
+      "min_date": "2018-07-13",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "298050",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/298050_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "300720",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/300720_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2018-08-06",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "300720",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/300720_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "302440",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/302440_daily_prices.csv",
+      "rows_read": "2330",
+      "min_date": "2021-03-18",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "302440",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/302440_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "307950",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/307950_daily_prices.csv",
+      "rows_read": "2170",
+      "min_date": "2019-03-28",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "307950",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/307950_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "316140",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/316140_daily_prices.csv",
+      "rows_read": "2185",
+      "min_date": "2019-02-13",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "316140",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/316140_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "323410",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/323410_daily_prices.csv",
+      "rows_read": "2455",
+      "min_date": "2021-08-06",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "323410",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/323410_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "326030",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/326030_daily_prices.csv",
+      "rows_read": "1664",
+      "min_date": "2020-07-02",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "326030",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/326030_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "329180",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/329180_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2021-09-17",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "329180",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/329180_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "336260",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/336260_daily_prices.csv",
+      "rows_read": "2300",
+      "min_date": "2019-10-18",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "352820",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/352820_daily_prices.csv",
+      "rows_read": "1608",
+      "min_date": "2020-10-15",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "352820",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/352820_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "361610",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/361610_daily_prices.csv",
+      "rows_read": "1358",
+      "min_date": "2021-05-11",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "361610",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/361610_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "373220",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/373220_daily_prices.csv",
+      "rows_read": "1352",
+      "min_date": "2022-01-27",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "373220",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/373220_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "375500",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/375500_daily_prices.csv",
+      "rows_read": "1683",
+      "min_date": "2021-01-25",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "375500",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/375500_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "377300",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/377300_daily_prices.csv",
+      "rows_read": "1400",
+      "min_date": "2021-11-03",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "377300",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/377300_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "381970",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/381970_daily_prices.csv",
+      "rows_read": "2153",
+      "min_date": "2021-10-13",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "383220",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/383220_daily_prices.csv",
+      "rows_read": "1766",
+      "min_date": "2021-05-21",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "383220",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/383220_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "383800",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/383800_daily_prices.csv",
+      "rows_read": "2600",
+      "min_date": "2021-05-27",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "402340",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/402340_daily_prices.csv",
+      "rows_read": "1688",
+      "min_date": "2021-11-29",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "402340",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/402340_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "443060",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/443060_daily_prices.csv",
+      "rows_read": "1328",
+      "min_date": "2024-05-08",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "443060",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/443060_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "450080",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/450080_daily_prices.csv",
+      "rows_read": "2198",
+      "min_date": "2023-11-17",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "450080",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/450080_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "454910",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/454910_daily_prices.csv",
+      "rows_read": "2204",
+      "min_date": "2023-10-05",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "454910",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/454910_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "456040",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/456040_daily_prices.csv",
+      "rows_read": "1466",
+      "min_date": "2023-05-30",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "457190",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/457190_daily_prices.csv",
+      "rows_read": "1277",
+      "min_date": "2023-05-31",
+      "max_date": "2026-05-06"
+    },
+    {
+      "ticker": "457190",
+      "source_label": "current_local_daily_price",
+      "source_ref": "data/457190_daily_prices.csv",
+      "rows_read": "200",
+      "min_date": "2025-07-16",
+      "max_date": "2026-05-12"
+    },
+    {
+      "ticker": "489790",
+      "source_label": "historical_kospi200_local_daily_price",
+      "source_ref": "data/historical_kospi200/prices/489790_daily_prices.csv",
+      "rows_read": "2156",
+      "min_date": "2024-09-27",
+      "max_date": "2026-05-06"
+    }
+  ],
+  "candidate_slots": [
+    {
+      "schema_version": "v1_3_candidate_rank_slot_policy.v3",
+      "collection_boundary": "evidence_only_generated_artifact_not_for_valuation_scoring_trading_or_production_ranking",
+      "mapping_mode": "rolling_rank_slot_desc_average_traded_value_20d",
+      "candidate_id": "sc_v1_3_high_turnover",
+      "evidence_id": "ee_v1_0_rc_sc_v1_3_high_turnover_1d_5101aca49335",
+      "rank_slot": "1",
+      "slot_reason": "highest_20d_average_traded_value_for_requested_as_of_date",
+      "rank_scope": "full_local_kospi200_daily_universe_files",
+      "not_strategy_composition": "true",
+      "no_feedback_check": "rank_uses_only_existing_local_price_volume_or_approved_snapshot_values_available_for_the_as_of_date"
+    },
+    {
+      "schema_version": "v1_3_candidate_rank_slot_policy.v3",
+      "collection_boundary": "evidence_only_generated_artifact_not_for_valuation_scoring_trading_or_production_ranking",
+      "mapping_mode": "rolling_rank_slot_desc_average_traded_value_20d",
+      "candidate_id": "sc_v1_3_missing_liquidity",
+      "evidence_id": "ee_v1_0_rc_sc_v1_3_missing_liquidity_1d_189794a48a70",
+      "rank_slot": "2",
+      "slot_reason": "next_highest_20d_average_traded_value_for_requested_as_of_date",
+      "rank_scope": "full_local_kospi200_daily_universe_files",
+      "not_strategy_composition": "true",
+      "no_feedback_check": "rank_uses_only_existing_local_price_volume_or_approved_snapshot_values_available_for_the_as_of_date"
+    }
+  ],
+  "row_counts": {
+    "rank_timeseries": 83242,
+    "period_mapping": 544,
+    "latest_handoff": 2,
+    "observed_as_of_dates": 272,
+    "unique_daily_tickers": 319,
+    "unique_daily_tickers_with_20d_rows": 319,
+    "long_gap_count_over_7_calendar_days": 1
+  },
+  "latest_resolution": [
+    {
+      "schema_version": "v1_3_candidate_ticker_mapping_period.v3",
+      "collection_boundary": "evidence_only_generated_artifact_not_for_valuation_scoring_trading_or_production_ranking",
+      "mapping_mode": "rolling_rank_slot_desc_average_traded_value_20d",
+      "requested_period_start": "2025-03-31",
+      "requested_period_end": "2026-05-13",
+      "observed_coverage_start": "2025-03-31",
+      "observed_coverage_end": "2026-05-12",
+      "as_of_date": "2026-05-12",
+      "coverage_status": "observed_local_daily_rank_date",
+      "rank_scope": "full_local_kospi200_daily_universe_files",
+      "universe_ticker_count_for_date": "200",
+      "candidate_id": "sc_v1_3_high_turnover",
+      "evidence_id": "ee_v1_0_rc_sc_v1_3_high_turnover_1d_5101aca49335",
+      "rank_slot": "1",
+      "slot_reason": "highest_20d_average_traded_value_for_requested_as_of_date",
+      "resolved_ticker": "000660",
+      "resolved_company_name": "SK하이닉스",
+      "resolved_liquidity_rank": "1",
+      "average_traded_value_20d": "6361836727250.0",
+      "average_traded_value_window_start": "2026-04-13",
+      "average_traded_value_window_end": "2026-05-12",
+      "source_type": "full_local_daily_price_close_times_volume_rolling_20d",
+      "source_ref": "data/000660_daily_prices.csv",
+      "market_cap_proxy": "1408299873240000",
+      "market_cap_status": "available_from_latest_approved_snapshot",
+      "market_cap_as_of_date": "2026-05-13",
+      "candidate_mapping_status": "dynamic_full_local_universe_rank_slot_resolution_for_as_of_date",
+      "not_strategy_composition": "true",
+      "no_feedback_check": "rank_uses_only_existing_local_price_volume_or_approved_snapshot_values_available_for_the_as_of_date"
+    },
+    {
+      "schema_version": "v1_3_candidate_ticker_mapping_period.v3",
+      "collection_boundary": "evidence_only_generated_artifact_not_for_valuation_scoring_trading_or_production_ranking",
+      "mapping_mode": "rolling_rank_slot_desc_average_traded_value_20d",
+      "requested_period_start": "2025-03-31",
+      "requested_period_end": "2026-05-13",
+      "observed_coverage_start": "2025-03-31",
+      "observed_coverage_end": "2026-05-12",
+      "as_of_date": "2026-05-12",
+      "coverage_status": "observed_local_daily_rank_date",
+      "rank_scope": "full_local_kospi200_daily_universe_files",
+      "universe_ticker_count_for_date": "200",
+      "candidate_id": "sc_v1_3_missing_liquidity",
+      "evidence_id": "ee_v1_0_rc_sc_v1_3_missing_liquidity_1d_189794a48a70",
+      "rank_slot": "2",
+      "slot_reason": "next_highest_20d_average_traded_value_for_requested_as_of_date",
+      "resolved_ticker": "005930",
+      "resolved_company_name": "삼성전자",
+      "resolved_liquidity_rank": "2",
+      "average_traded_value_20d": "6297164325150.0",
+      "average_traded_value_window_start": "2026-04-13",
+      "average_traded_value_window_end": "2026-05-12",
+      "source_type": "full_local_daily_price_close_times_volume_rolling_20d",
+      "source_ref": "data/005930_daily_prices.csv",
+      "market_cap_proxy": "1660343124672000",
+      "market_cap_status": "available_from_latest_approved_snapshot",
+      "market_cap_as_of_date": "2026-05-13",
+      "candidate_mapping_status": "dynamic_full_local_universe_rank_slot_resolution_for_as_of_date",
+      "not_strategy_composition": "true",
+      "no_feedback_check": "rank_uses_only_existing_local_price_volume_or_approved_snapshot_values_available_for_the_as_of_date"
+    }
+  ],
+  "coverage_gaps_over_7_calendar_days": [
+    {
+      "from": "2025-10-02",
+      "to": "2025-10-10",
+      "calendar_days": 8,
+      "gap_type": "calendar_gap_over_7_days"
+    }
+  ],
+  "evidence_only_boundary": "generated artifact only; do not use for valuation scoring, trading, production ranking, or strategy composition claims",
+  "market_cap_policy": "market_cap_proxy is attached only when the resolved ticker exists in the latest approved market-cap snapshot; no full-universe market-cap backfill or inference was performed",
+  "supplement_check": "existing local historical_kospi200 and current daily price files were used; no new external data collection was performed",
+  "selection_note": "candidate rows store rank slots and point-in-time full-local-universe resolutions; ticker assignment can change as 20D average traded-value rank changes",
+  "schema_header_note": "CSV headers are ASCII; Korean company names remain UTF-8 data values when available.",
+  "top5_supplemental_mapping_ref": "data/v1_3_liquidity/v1_3_liquidity_top5_mapping_requested_period.csv",
+  "top5_supplemental_latest_ref": "data/v1_3_liquidity/v1_3_liquidity_top5_mapping_latest.csv",
+  "top5_supplemental_manifest_ref": "data/v1_3_liquidity/v1_3_liquidity_top5_mapping_manifest.json",
+  "top5_supplemental_note": "top5 view extends rank-slot context; candidate handoff remains limited to existing candidate IDs in rank slots 1 and 2."
+}

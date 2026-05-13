@@ -876,6 +876,74 @@ def build_test_manifest(validation_results: Sequence[Mapping[str, Any]] | None =
     return rows
 
 
+def audit_route_state_alignment(
+    project_root: str | Path = PROJECT_ROOT,
+    phase_status: Sequence[Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    root = Path(project_root)
+    rows = list(phase_status or build_phase_status_matrix(root))
+    completed_phase_ids = {
+        str(row.get("phase_id") or "")
+        for row in rows
+        if row.get("status") == STATUS_COMPLETE
+    }
+    if not {"Phase 6", "Phase 7", "Phase 8"}.issubset(completed_phase_ids):
+        return {
+            "expected_route_state": "not_applicable_before_phase_8_complete",
+            "status": STATUS_COMPLETE,
+            "missing_required_markers": [],
+            "stale_markers": [],
+        }
+
+    required_markers = {
+        "docs/root_hard_stops.md": (
+            "open through Phase 9",
+            "Phase 9 `v1.0-rc freeze readiness validation",
+        ),
+        "docs/roadmap_status.md": (
+            "ACTIVE through Phase 9",
+            "Phase 6 through Phase 9 are complete",
+        ),
+        "docs/context/EXTENSION_REGISTRY.toml": (
+            'status = "active_v1_0_rc_phase_9_readiness_route"',
+            'state = "active_phase_9_readiness_contract_route"',
+        ),
+        "docs/extension/v1_0_freeze_plan.md": (
+            "Phase 9: COMPLETE / freeze readiness validation packet",
+        ),
+    }
+    stale_markers = (
+        "active_v1_0_rc_phase_5_readiness_route",
+        "active_phase_5_readiness_contract_route",
+        "Phase 0 through Phase 5 only",
+        "Phase 6+ remains unopened",
+        "Phase 6+: NOT OPEN",
+        "Phase 6+ modules without later explicit task approval",
+    )
+
+    missing: list[str] = []
+    stale: list[str] = []
+    for relative_path, markers in required_markers.items():
+        path = root / relative_path
+        if not path.exists():
+            missing.append(f"{relative_path}: file missing")
+            continue
+        text = path.read_text(encoding="utf-8")
+        for marker in markers:
+            if marker not in text:
+                missing.append(f"{relative_path}: missing {marker}")
+        for marker in stale_markers:
+            if marker in text:
+                stale.append(f"{relative_path}: stale {marker}")
+
+    return {
+        "expected_route_state": "active_v1_0_rc_phase_9_readiness_route",
+        "status": STATUS_NEEDS_FIX if missing or stale else STATUS_COMPLETE,
+        "missing_required_markers": missing,
+        "stale_markers": stale,
+    }
+
+
 def build_freeze_readiness_report(
     project_root: str | Path = PROJECT_ROOT,
     validation_results: Sequence[Mapping[str, Any]] | None = None,
@@ -887,6 +955,7 @@ def build_freeze_readiness_report(
     horizon = audit_horizon_policy(root)
     rebalance = audit_rebalance_disclosure()
     boundaries = audit_boundaries()
+    route_state_alignment = audit_route_state_alignment(root, phase_status)
     test_manifest = build_test_manifest(validation_results)
     blockers: list[str] = []
     blockers.extend(
@@ -905,6 +974,8 @@ def build_freeze_readiness_report(
         blockers.append("Rebalancing disclosure audit failed")
     if boundaries["status"] != STATUS_COMPLETE:
         blockers.append("Evidence/selector/review boundary audit failed")
+    if route_state_alignment["status"] != STATUS_COMPLETE:
+        blockers.append("v1.0-rc route state is not aligned with completed Phase 6-9 readiness artifacts")
     blockers.extend(_test_manifest_blockers(test_manifest))
     minor_followups = [
         "SelectorModelManifestV1 remains safely skipped until an approved historical review label manifest exists",
@@ -927,6 +998,7 @@ def build_freeze_readiness_report(
         "horizon_policy_audit": horizon,
         "rebalance_disclosure_audit": rebalance,
         "boundary_audit": boundaries,
+        "route_state_alignment_audit": route_state_alignment,
         "test_manifest": test_manifest,
         "freeze_readiness_verdict": verdict,
         "blockers": blockers,
@@ -1081,6 +1153,7 @@ __all__ = (
     "contains_prohibited_action_language",
     "contains_user_facing_rebalance_instruction",
     "determine_freeze_verdict",
+    "audit_route_state_alignment",
     "audit_boundaries",
     "audit_horizon_policy",
     "audit_rebalance_disclosure",

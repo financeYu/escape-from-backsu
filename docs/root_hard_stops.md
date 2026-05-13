@@ -34,14 +34,16 @@ belong in docs or project-local skills.
   authorize order generation, position sizing, live trading, production
   activation, new market-data ingestion, universe expansion, or
   valuation/fundamental scoring activation.
-- The active `v1.0-rc evidence-only readiness route` is open through Phase 5
+- The active `v1.0-rc evidence-only readiness route` is open through Phase 9
   only: Phase 0 scope/freeze planning, Phase 1 next-day / 1D hardcoding audit,
   Phase 2 `HorizonPolicy`, Phase 3 `SimulationRunManifest`, Phase 4
-  `WeightConfig` loop, and Phase 5 `LayerRegistry`. It is a pre-freeze
-  readiness route only and does not authorize final v1.0 freeze, tag, release,
-  push, production activation, live trading, valuation/fundamental scoring
-  activation, futures activation, or Phase 6+ modules without later explicit
-  approval.
+  `WeightConfig` loop, Phase 5 `LayerRegistry`, Phase 6
+  `EvaluationEvidenceV1`, Phase 7 ML/rule-based selector/evaluator, Phase 8
+  `ManualReviewPacket`, and Phase 9 `v1.0-rc freeze readiness validation
+  packet`. It is a pre-freeze readiness route only and does not authorize final
+  v1.0 freeze, tag, release, push, production activation, live trading,
+  valuation/fundamental scoring activation, futures activation, or any new
+  v1.0 module beyond Phase 9 without later explicit approval.
 - v0.1 and v0.2 are archived reference states. They are not current progress
   and must not be loaded into active context unless a named
   provenance/regression/compatibility check requires them.
@@ -179,10 +181,11 @@ The active v0.3 route authorizes candidate/evidence work only:
   prioritization inputs
 - v0.5 `PersonalDecisionSupportPacket` contracts and packets framed only as
   private evidence/risk/manual-check support
-- v1.0-rc readiness contracts and helpers through Phase 5 only:
+- v1.0-rc readiness contracts and helpers through Phase 9 only:
   `HorizonPolicy`, `SimulationRunManifest`, `WeightConfig` loop,
-  `LayerRegistry`, compatibility metadata, validation tests, and manual-review
-  support
+  `LayerRegistry`, `EvaluationEvidenceV1`, ML/rule-based selector/evaluator,
+  `ManualReviewPacket`, freeze-readiness validation packets, compatibility
+  metadata, validation tests, and manual-review support
 - validation tests, route validators, no-lookahead checks, point-in-time checks,
   no-feedback checks, and review packets
 - work in the approved separate role branch/worktree for the owning lane
@@ -210,9 +213,7 @@ active contract.
 - Valuation/fundamental scoring activation.
 - Final v1.0 freeze, tag, release, push, or production-readiness declaration
   from v1.0-rc readiness artifacts.
-- v1.0-rc Phase 6+ modules without a later explicit task approval, including
-  `EvaluationEvidenceV1` full implementation, ML selector/evaluator
-  implementation, and `ManualReviewPacket`.
+- New v1.0-rc modules beyond Phase 9 without a later explicit task approval.
 
 ## Route Ownership
 

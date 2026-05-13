@@ -101,6 +101,15 @@ def _render_freeze_packet(report: Mapping[str, Any]) -> str:
     lines.append("## Minor Follow-ups")
     lines.extend(_bullet_lines(report["minor_followups"]))
     lines.append("")
+    route_state = report["route_state_alignment_audit"]
+    lines.append("## Route State Alignment")
+    lines.append(f"- expected_route_state: {route_state['expected_route_state']}")
+    lines.append(f"- status: {route_state['status']}")
+    lines.append(
+        f"- missing_required_markers: {route_state['missing_required_markers'] or 'none'}"
+    )
+    lines.append(f"- stale_markers: {route_state['stale_markers'] or 'none'}")
+    lines.append("")
     lines.append("## Phase Status")
     lines.append(_phase_table(report["phase_status_matrix"]))
     lines.append("")
@@ -190,6 +199,7 @@ def _render_lineage_matrix(report: Mapping[str, Any]) -> str:
 def _render_guardrail_audit(report: Mapping[str, Any]) -> str:
     horizon = report["horizon_policy_audit"]
     boundary = report["boundary_audit"]
+    route_state = report["route_state_alignment_audit"]
     lines = [
         "# v1.0-rc Guardrail Audit",
         "",
@@ -205,6 +215,14 @@ def _render_guardrail_audit(report: Mapping[str, Any]) -> str:
         if key != "prohibited_language_leaks":
             lines.append(f"- {key}: {value}")
     lines.append(f"- prohibited_language_leaks: {boundary['prohibited_language_leaks'] or 'none'}")
+    lines.append("")
+    lines.append("## Route State Alignment")
+    lines.append(f"- expected_route_state: {route_state['expected_route_state']}")
+    lines.append(f"- status: {route_state['status']}")
+    lines.append(
+        f"- missing_required_markers: {route_state['missing_required_markers'] or 'none'}"
+    )
+    lines.append(f"- stale_markers: {route_state['stale_markers'] or 'none'}")
     lines.append("")
     return "\n".join(lines)
 

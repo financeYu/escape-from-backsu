@@ -1,7 +1,7 @@
 # v1.0-rc Freeze Readiness Packet
 
 - packet_version: v1_0_rc_freeze_readiness_packet_v1_0
-- created_at: 2026-05-13T08:18:18+00:00
+- created_at: 2026-05-13T08:47:07+00:00
 - route_scope: v1_0_rc_phase_9_freeze_readiness_validation
 - freeze_readiness_verdict: FREEZE_READY_WITH_MINOR_FOLLOW_UPS
 - evidence_only_notice: Phase 9 packages evidence-only candidate-only manual-review readiness; it is not production release.
@@ -14,6 +14,12 @@
 ## Minor Follow-ups
 - SelectorModelManifestV1 remains safely skipped until an approved historical review label manifest exists
 - Phase 9 packet records validation status; repository review/commit workflow remains separate
+
+## Route State Alignment
+- expected_route_state: active_v1_0_rc_phase_9_readiness_route
+- status: COMPLETE
+- missing_required_markers: none
+- stale_markers: none
 
 ## Phase Status
 | phase_id | phase_name | status | blocker_summary | follow_up_summary |

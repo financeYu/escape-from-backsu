@@ -17,6 +17,7 @@ from src.validation.v1_0_rc_freeze_readiness import (
     contains_prohibited_action_language,
     contains_user_facing_rebalance_instruction,
     determine_freeze_verdict,
+    audit_route_state_alignment,
 )
 
 
@@ -25,6 +26,33 @@ def test_v1_0_rc_phase_status_matrix_detects_required_phases():
 
     assert [row["phase_id"] for row in matrix] == [f"Phase {index}" for index in range(9)]
     assert all(row["status"] == STATUS_COMPLETE for row in matrix)
+
+
+def test_v1_0_rc_route_state_alignment_matches_phase9_authority_docs():
+    audit = audit_route_state_alignment()
+
+    assert audit["status"] == STATUS_COMPLETE
+    assert audit["missing_required_markers"] == []
+    assert audit["stale_markers"] == []
+
+
+def test_v1_0_rc_route_state_alignment_rejects_stale_phase5_authority_docs(tmp_path):
+    phase_status = [{"phase_id": f"Phase {index}", "status": STATUS_COMPLETE} for index in range(9)]
+    required_docs = {
+        "docs/root_hard_stops.md": "open through Phase 5 only\nPhase 6+ modules without later explicit task approval\n",
+        "docs/roadmap_status.md": "Phase 6+ remains unopened\n",
+        "docs/context/EXTENSION_REGISTRY.toml": 'status = "active_v1_0_rc_phase_5_readiness_route"\n',
+        "docs/extension/v1_0_freeze_plan.md": "Phase 6+: NOT OPEN / requires later explicit task approval\n",
+    }
+    for relative_path, text in required_docs.items():
+        path = tmp_path / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    audit = audit_route_state_alignment(tmp_path, phase_status)
+
+    assert audit["status"] == "NEEDS FIX"
+    assert audit["stale_markers"]
 
 
 def test_v1_0_rc_contract_manifest_requires_core_contracts():

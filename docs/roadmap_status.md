@@ -14,10 +14,11 @@ ACTIVE as the evidence-only application lane that consumes v0.3 selector
 feature matrix and label manifest artifacts. Post-MVP `v0.5 personal decision
 support route` is ACTIVE as a contract-only private review route that consumes
 v0.3/v0.4 artifacts read-only and emits manual-check support packets only.
-`v1.0-rc evidence-only readiness route` is ACTIVE through Phase 5 only as a
+`v1.0-rc evidence-only readiness route` is ACTIVE through Phase 9 only as a
 pre-freeze readiness lane for scope/freeze planning, next-day / 1D audit,
-`HorizonPolicy`, `SimulationRunManifest`, `WeightConfig` loop, and
-`LayerRegistry`.
+`HorizonPolicy`, `SimulationRunManifest`, `WeightConfig` loop,
+`LayerRegistry`, `EvaluationEvidenceV1`, ML/rule selector/evaluator,
+`ManualReviewPacket`, and freeze-readiness validation packets.
 
 Product goal:
 
@@ -40,10 +41,10 @@ Direction lock:
   coverage gaps, risk flags, cost-sensitivity flags, and manual review
   checklists, but it must not generate order instructions, position sizing, or
   future-return claims.
-- v1.0-rc Phase 0 through Phase 5 prepare evidence-only readiness contracts.
+- v1.0-rc Phase 0 through Phase 9 prepare evidence-only readiness contracts.
   They do not authorize final v1.0 freeze, tags, pushes, production
   activation, live execution, valuation/fundamental activation, futures
-  activation, or Phase 6+ implementation.
+  activation, or new post-Phase9 implementation.
 - Do not route routine v0.3 work back through archived v0.1/v0.2 standards.
 - If a task is blocked, choose the next concrete v0.3 artifact:
   `ResearchHypothesis`, `StrategyHypothesis`, `StrategyCandidate`,
@@ -70,7 +71,8 @@ Current baseline facts:
   documents. Phase 2 and Phase 3 are complete as `HorizonPolicy` and
   `SimulationRunManifest` readiness contracts. Phase 4 and Phase 5 are
   complete as `WeightConfig` loop and `LayerRegistry` readiness contracts.
-  Phase 6+ remains unopened.
+  Phase 6 through Phase 9 are complete as evidence-only readiness contracts,
+  selector/review support, and freeze-readiness validation packet artifacts.
 
 Current active route skill:
 
@@ -145,9 +147,19 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v1_0_simulation_run_manifest_contract.md`
 - `docs/extension/v1_0_weight_config_loop_contract.md`
 - `docs/extension/v1_0_layer_registry_contract.md`
+- `docs/extension/v1_0_evaluation_evidence_v1_contract.md`
+- `docs/extension/v1_0_selector_evaluator_contract.md`
+- `docs/extension/v1_0_manual_review_packet_contract.md`
+- `docs/extension/v1_0_rc_phase_status_matrix.md`
+- `docs/extension/v1_0_rc_contract_manifest.md`
+- `docs/extension/v1_0_rc_artifact_lineage_matrix.md`
+- `docs/extension/v1_0_rc_guardrail_audit.md`
+- `docs/extension/v1_0_rc_rebalance_disclosure_audit.md`
+- `docs/extension/v1_0_rc_validation_test_manifest.md`
 - `config/horizon_policy.toml`
 - `config/weight_config_loop.toml`
 - `config/layer_registry.toml`
+- `config/evaluation_evidence_v1.toml`
 - `docs/context/EXTENSION_REGISTRY.toml`
 
 ## Archived v0.1/v0.2 References
@@ -184,9 +196,11 @@ Allowed now:
 - v0.5 personal decision support contracts and packets limited to evidence
   summary, risk flags, coverage gaps, current-condition status, diagnostic
   references, and manual review checklists
-- v1.0-rc Phase 0 through Phase 5 readiness artifacts limited to scope/freeze
+- v1.0-rc Phase 0 through Phase 9 readiness artifacts limited to scope/freeze
   planning, next-day / 1D hardcoding audit, `HorizonPolicy`,
-  `SimulationRunManifest`, `WeightConfig` loop, and `LayerRegistry`
+  `SimulationRunManifest`, `WeightConfig` loop, `LayerRegistry`,
+  `EvaluationEvidenceV1`, ML/rule selector/evaluator, `ManualReviewPacket`,
+  and freeze-readiness validation packets
 - historical return/risk/performance summaries when framed as evidence only
 
 Still blocked without later explicit approval:
@@ -195,7 +209,7 @@ Still blocked without later explicit approval:
 - valuation/fundamental scoring activation
 - new market-data ingestion or universe expansion
 - final v1.0 freeze, tag, release, push, or production-readiness declaration
-- v1.0-rc Phase 6+ implementation without a later explicit task approval
+- new v1.0-rc post-Phase9 implementation without a later explicit task approval
 
 ## Parallel Workspace Policy
 
@@ -244,7 +258,11 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | v1.0-rc Phase 3 SimulationRunManifest | COMPLETE / readiness contract |
 | v1.0-rc Phase 4 WeightConfig loop | COMPLETE / readiness contract |
 | v1.0-rc Phase 5 LayerRegistry | COMPLETE / readiness contract |
-| v1.0-rc Phase 6+ modules | NOT OPEN / requires later explicit task approval |
+| v1.0-rc Phase 6 EvaluationEvidenceV1 | COMPLETE / readiness contract |
+| v1.0-rc Phase 7 ML/rule-based selector evaluator | COMPLETE / readiness contract |
+| v1.0-rc Phase 8 ManualReviewPacket | COMPLETE / readiness contract |
+| v1.0-rc Phase 9 freeze-readiness validation packet | COMPLETE / readiness validation |
+| v1.0-rc post-Phase9 modules | NOT OPEN / requires later explicit task approval |
 
 ## Baseline Contracts
 
@@ -262,7 +280,8 @@ Quant-local owner-lane handoff, not a cross-project handoff.
   runtime ranking activation, or production activation.
 - v1.0-rc readiness outputs must not become final release evidence, production
   activation, live execution, valuation/fundamental activation, futures/index
-  activation, or Phase 6+ implementation without later explicit approval.
+  activation, or new post-Phase9 implementation without later explicit
+  approval.
 
 ## Research Ingestion State
 

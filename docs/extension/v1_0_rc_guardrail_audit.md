@@ -23,3 +23,9 @@
 - new_market_data_ingestion_introduced: False
 - status: COMPLETE
 - prohibited_language_leaks: none
+
+## Route State Alignment
+- expected_route_state: active_v1_0_rc_phase_9_readiness_route
+- status: COMPLETE
+- missing_required_markers: none
+- stale_markers: none

@@ -18,7 +18,13 @@ v0.3/v0.4 artifacts read-only and emits manual-check support packets only.
 pre-freeze readiness lane for scope/freeze planning, next-day / 1D audit,
 `HorizonPolicy`, `SimulationRunManifest`, `WeightConfig` loop,
 `LayerRegistry`, `EvaluationEvidenceV1`, ML/rule selector/evaluator,
-`ManualReviewPacket`, and freeze-readiness validation packets.
+`ManualReviewPacket`, and freeze-readiness validation packets. Local v1.0
+freeze is COMPLETE. Post-v1.0 development is now staged as v1.x releases:
+v1.1 net profitability evidence runner, v1.2 baseline ML selector
+application, v1.3 cost/turnover/liquidity reliability layer, v1.4
+point-in-time revision layer, v1.5 point-in-time valuation plus
+quality/profitability layer, v1.6 confidence/robustness/review-priority
+integration, then a v2.0 readiness packet.
 
 Product goal:
 
@@ -42,9 +48,14 @@ Direction lock:
   checklists, but it must not generate order instructions, position sizing, or
   future-return claims.
 - v1.0-rc Phase 0 through Phase 9 prepare evidence-only readiness contracts.
-  They do not authorize final v1.0 freeze, tags, pushes, production
-  activation, live execution, valuation/fundamental activation, futures
-  activation, or new post-Phase9 implementation.
+  They are complete as the local v1.0 freeze baseline. They do not authorize
+  tags, pushes, production activation, live execution, valuation/fundamental
+  activation, or futures activation.
+- v1.x staged releases remain evidence-only, candidate-only, and
+  manual-review-support only. v1.x must not introduce live trading,
+  brokerage, orders, buy/sell/hold wording, production ranking replacement,
+  automatic rebalance instructions, future-return claims, or proven-alpha
+  language.
 - Do not route routine v0.3 work back through archived v0.1/v0.2 standards.
 - If a task is blocked, choose the next concrete v0.3 artifact:
   `ResearchHypothesis`, `StrategyHypothesis`, `StrategyCandidate`,
@@ -72,7 +83,10 @@ Current baseline facts:
   `SimulationRunManifest` readiness contracts. Phase 4 and Phase 5 are
   complete as `WeightConfig` loop and `LayerRegistry` readiness contracts.
   Phase 6 through Phase 9 are complete as evidence-only readiness contracts,
-  selector/review support, and freeze-readiness validation packet artifacts.
+  selector/review support, freeze-readiness validation packet artifacts, and
+  the local v1.0 freeze baseline.
+- v1.x staged release plan is active for post-v1.0 development sequencing.
+  The next stage is v1.1 net profitability evidence runner.
 
 Current active route skill:
 
@@ -158,6 +172,7 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v1_0_rc_rebalance_disclosure_audit.md`
 - `docs/extension/v1_0_rc_validation_test_manifest.md`
 - `docs/extension/v1_0_rc_post_freeze_backlog_separation.md`
+- `docs/extension/v1_x_staged_release_plan.md`
 - `reports/review/v1_0_rc_ml_reproduction_report.md`
 - `config/horizon_policy.toml`
 - `config/weight_config_loop.toml`
@@ -276,7 +291,14 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | v1.0-rc Phase 7 ML/rule-based selector evaluator | COMPLETE / readiness contract |
 | v1.0-rc Phase 8 ManualReviewPacket | COMPLETE / readiness contract |
 | v1.0-rc Phase 9 freeze-readiness validation packet | COMPLETE / readiness validation |
-| v1.0-rc post-Phase9 modules | NOT OPEN / requires later explicit task approval |
+| v1.0 freeze | COMPLETE / local freeze baseline; no tag, push, release, or production activation |
+| v1.1 net profitability evidence runner | ACTIVE / evidence-only staged release |
+| v1.2 baseline ML selector application | PLANNED / evidence-only staged release |
+| v1.3 cost/turnover/liquidity reliability layer | PLANNED / evidence-only staged release |
+| v1.4 point-in-time revision layer | PLANNED / evidence-only staged release |
+| v1.5 point-in-time valuation + quality/profitability layer | PLANNED / candidate-only staged release |
+| v1.6 confidence/robustness/review-priority integration | PLANNED / manual-review-support staged release |
+| v2.0 readiness packet | PLANNED / readiness packet only |
 
 ## Baseline Contracts
 
@@ -292,10 +314,11 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 - v0.5 personal decision support outputs must not become order instructions,
   automatic position sizing, buy/sell/hold imperatives, move-to-cash commands,
   runtime ranking activation, or production activation.
-- v1.0-rc readiness outputs must not become final release evidence, production
-  activation, live execution, valuation/fundamental activation, futures/index
-  activation, or new post-Phase9 implementation without later explicit
-  approval.
+- v1.0 freeze completion and v1.x staged outputs must not become tag/release
+  evidence, production activation, live execution, valuation/fundamental
+  activation, futures/index activation, production ranking replacement,
+  automatic rebalance instructions, or future-return claims without later
+  explicit approval.
 
 ## Research Ingestion State
 

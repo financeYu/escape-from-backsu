@@ -2,7 +2,7 @@
 # The active route state is governed by docs/root_hard_stops.md and
 # docs/roadmap_status.md.
 
-status = "active_v1_0_rc_phase_9_readiness_route"
+status = "active_v1_x_staged_release_route"
 baseline = "docs/context/MVP_V0_1_BASELINE.md"
 archive_index = "docs/context/ARCHIVE_INDEX.md"
 archived_v0_1_v0_2 = "docs/roadmap_archive/v0_1_v0_2_archive.md"
@@ -249,8 +249,8 @@ blocked = [
 ]
 
 [extension.v1_0_rc_readiness]
-state = "active_phase_9_readiness_contract_route"
-permission = "v1.0-rc evidence-only readiness route is active for Phase 0 through Phase 9 only; it prepares scope, audit, HorizonPolicy, SimulationRunManifest, WeightConfig loop, LayerRegistry, EvaluationEvidenceV1, selector/evaluator, ManualReviewPacket, and freeze-readiness validation packet artifacts and does not authorize final release, tag, push, production activation, live trading, valuation/fundamental scoring activation, futures activation, or new post-Phase9 modules"
+state = "complete_local_v1_0_freeze_baseline"
+permission = "v1.0-rc evidence-only readiness route completed Phase 0 through Phase 9 and is now the local v1.0 freeze baseline; it does not authorize tag, release, push, production activation, live trading, valuation/fundamental scoring activation, futures activation, or production behavior"
 freeze_plan = "docs/extension/v1_0_freeze_plan.md"
 scope_boundary = "docs/extension/v1_0_scope_boundary.md"
 hardcoding_audit = "docs/extension/v1_0_next_day_hardcoding_audit.md"
@@ -314,7 +314,7 @@ allowed = [
   "manual review support",
 ]
 blocked = [
-  "final v1.0 release, tag, push, or freeze declaration",
+  "v1.0 release, tag, or push without explicit end-stage instruction",
   "live trading or brokerage integration",
   "order generation",
   "buy/sell/hold recommendation language",
@@ -326,6 +326,63 @@ blocked = [
   "futures/options/index trading activation",
   "new market-data ingestion",
   "new post-Phase9 modules without later explicit task approval",
+]
+
+[extension.v1_x_staged_release]
+state = "active_post_v1_0_staged_release_route"
+permission = "post-v1.0 v1.x staged development is active for evidence-only, candidate-only, manual-review-support outputs; it does not authorize live trading, brokerage, orders, buy/sell/hold wording, production ranking replacement, automatic rebalance instructions, future-return claims, proven-alpha language, or production activation"
+context = "docs/extension/v1_x_staged_release_plan.md"
+input_baseline = "extension.v1_0_rc_readiness"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+architecture_chain = [
+  "agent-coordinator",
+  "agent-planner",
+  "agent-plan-review",
+  "agent-supervisor",
+  "agent-worker-pool",
+  "agent-reporter",
+]
+git_policy = "fetch=false; pull=false; push=false; commit=false; stage=false unless explicitly instructed at the appropriate end stage"
+current_stage = "v1.1"
+stage_sequence = [
+  "v1.1 net profitability evidence runner",
+  "v1.2 baseline ML selector application",
+  "v1.3 cost/turnover/liquidity reliability layer",
+  "v1.4 point-in-time revision layer",
+  "v1.5 point-in-time valuation plus quality/profitability layer",
+  "v1.6 confidence/robustness/review-priority integration",
+  "v2.0 readiness packet",
+]
+required_stage_report = [
+  "changed files",
+  "generated artifacts",
+  "tests run",
+  "guardrail result",
+  "skipped items with reason",
+  "completion verdict",
+  "next stage recommendation",
+]
+allowed = [
+  "historical or simulated net profitability display",
+  "baseline ML selector comparison for review prioritization",
+  "cost, turnover, and liquidity reliability evidence",
+  "point-in-time revision evidence",
+  "candidate-only valuation, quality, and profitability evidence after point-in-time proof",
+  "confidence, robustness, and review-priority integration",
+  "v2.0 readiness packet preparation",
+]
+blocked = [
+  "live trading or brokerage integration",
+  "orders or order generation",
+  "buy/sell/hold wording",
+  "production ranking replacement",
+  "automatic rebalance instructions",
+  "move-to-cash commands",
+  "future-return claims",
+  "proven-alpha language",
+  "production activation",
+  "new market-data ingestion or universe expansion without separate approval",
 ]
 
 [extension.v0_1n_candidate_ml]

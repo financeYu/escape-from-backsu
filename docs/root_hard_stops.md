@@ -40,10 +40,17 @@ belong in docs or project-local skills.
   `WeightConfig` loop, Phase 5 `LayerRegistry`, Phase 6
   `EvaluationEvidenceV1`, Phase 7 ML/rule-based selector/evaluator, Phase 8
   `ManualReviewPacket`, and Phase 9 `v1.0-rc freeze readiness validation
-  packet`. It is a pre-freeze readiness route only and does not authorize final
-  v1.0 freeze, tag, release, push, production activation, live trading,
-  valuation/fundamental scoring activation, futures activation, or any new
-  v1.0 module beyond Phase 9 without later explicit approval.
+  packet`. It is complete as the local v1.0 freeze baseline. The freeze
+  completion does not authorize tag, release, push, production activation, live
+  trading, valuation/fundamental scoring activation, futures activation, or
+  any production behavior.
+- The active post-v1.0 route is `v1.x staged release development`. It opens
+  v1.1 net profitability evidence runner, v1.2 baseline ML selector
+  application, v1.3 cost/turnover/liquidity reliability layer, v1.4
+  point-in-time revision layer, v1.5 point-in-time valuation plus
+  quality/profitability layer, v1.6 confidence/robustness/review-priority
+  integration, and a later v2.0 readiness packet. All outputs remain
+  evidence-only, candidate-only, and manual-review-support only.
 - v0.1 and v0.2 are archived reference states. They are not current progress
   and must not be loaded into active context unless a named
   provenance/regression/compatibility check requires them.
@@ -113,6 +120,13 @@ private decision support route. It may organize evidence, current-condition
 status from approved KOSPI/KOSPI200 local lanes, risk flags, cost-sensitivity
 flags, coverage gaps, and manual review checklists. It must not answer with an
 instruction to transact.
+
+v1.x starts after the local v1.0 freeze baseline. It prioritizes a fast
+historical or simulated net profitability display in v1.1, then improves
+reliability through ML comparison, cost/liquidity, point-in-time revision,
+candidate-only valuation/quality/profitability evidence, and confidence or
+review-priority integration. It is not a live trading, production activation,
+automatic rebalance, or future-return claim path.
 
 ## Direction Lock
 
@@ -186,6 +200,13 @@ The active v0.3 route authorizes candidate/evidence work only:
   `LayerRegistry`, `EvaluationEvidenceV1`, ML/rule-based selector/evaluator,
   `ManualReviewPacket`, freeze-readiness validation packets, compatibility
   metadata, validation tests, and manual-review support
+- v1.x staged release planning and implementation for evidence-only,
+  candidate-only, manual-review-support outputs:
+  v1.1 net profitability evidence runner, v1.2 baseline ML selector
+  application, v1.3 cost/turnover/liquidity reliability layer, v1.4
+  point-in-time revision layer, v1.5 point-in-time valuation plus
+  quality/profitability layer, v1.6 confidence/robustness/review-priority
+  integration, and v2.0 readiness packet preparation
 - validation tests, route validators, no-lookahead checks, point-in-time checks,
   no-feedback checks, and review packets
 - work in the approved separate role branch/worktree for the owning lane
@@ -211,9 +232,11 @@ active contract.
   move-to-cash commands, or future-return prediction claims from v0.5 decision
   support packets.
 - Valuation/fundamental scoring activation.
-- Final v1.0 freeze, tag, release, push, or production-readiness declaration
-  from v1.0-rc readiness artifacts.
-- New v1.0-rc modules beyond Phase 9 without a later explicit task approval.
+- v1.0 tag, release, push, or production-readiness declaration from freeze
+  artifacts without explicit end-stage instruction.
+- Production ranking replacement, automatic rebalance instructions,
+  buy/sell/hold wording, future-return claims, or proven-alpha language from
+  v1.x evidence.
 
 ## Route Ownership
 

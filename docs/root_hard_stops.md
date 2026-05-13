@@ -34,13 +34,14 @@ belong in docs or project-local skills.
   authorize order generation, position sizing, live trading, production
   activation, new market-data ingestion, universe expansion, or
   valuation/fundamental scoring activation.
-- The active `v1.0-rc evidence-only readiness route` is open through Phase 3
+- The active `v1.0-rc evidence-only readiness route` is open through Phase 5
   only: Phase 0 scope/freeze planning, Phase 1 next-day / 1D hardcoding audit,
-  Phase 2 `HorizonPolicy`, and Phase 3 `SimulationRunManifest`. It is a
-  pre-freeze readiness route only and does not authorize final v1.0 freeze,
-  tag, release, push, production activation, live trading,
-  valuation/fundamental scoring activation, futures activation, or Phase 4+
-  modules without later explicit approval.
+  Phase 2 `HorizonPolicy`, Phase 3 `SimulationRunManifest`, Phase 4
+  `WeightConfig` loop, and Phase 5 `LayerRegistry`. It is a pre-freeze
+  readiness route only and does not authorize final v1.0 freeze, tag, release,
+  push, production activation, live trading, valuation/fundamental scoring
+  activation, futures activation, or Phase 6+ modules without later explicit
+  approval.
 - v0.1 and v0.2 are archived reference states. They are not current progress
   and must not be loaded into active context unless a named
   provenance/regression/compatibility check requires them.
@@ -178,9 +179,10 @@ The active v0.3 route authorizes candidate/evidence work only:
   prioritization inputs
 - v0.5 `PersonalDecisionSupportPacket` contracts and packets framed only as
   private evidence/risk/manual-check support
-- v1.0-rc readiness contracts and helpers through Phase 3 only:
-  `HorizonPolicy`, `SimulationRunManifest`, compatibility metadata, validation
-  tests, and manual-review support
+- v1.0-rc readiness contracts and helpers through Phase 5 only:
+  `HorizonPolicy`, `SimulationRunManifest`, `WeightConfig` loop,
+  `LayerRegistry`, compatibility metadata, validation tests, and manual-review
+  support
 - validation tests, route validators, no-lookahead checks, point-in-time checks,
   no-feedback checks, and review packets
 - work in the approved separate role branch/worktree for the owning lane
@@ -208,10 +210,9 @@ active contract.
 - Valuation/fundamental scoring activation.
 - Final v1.0 freeze, tag, release, push, or production-readiness declaration
   from v1.0-rc readiness artifacts.
-- v1.0-rc Phase 4+ modules without a later explicit task approval, including
-  `WeightConfig` loop, `LayerRegistry`, `EvaluationEvidenceV1` full
-  implementation, ML selector/evaluator implementation, and
-  `ManualReviewPacket`.
+- v1.0-rc Phase 6+ modules without a later explicit task approval, including
+  `EvaluationEvidenceV1` full implementation, ML selector/evaluator
+  implementation, and `ManualReviewPacket`.
 
 ## Route Ownership
 

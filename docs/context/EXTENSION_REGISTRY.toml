@@ -2,7 +2,7 @@
 # The active route state is governed by docs/root_hard_stops.md and
 # docs/roadmap_status.md.
 
-status = "active_v1_0_rc_phase_3_readiness_route"
+status = "active_v1_0_rc_phase_5_readiness_route"
 baseline = "docs/context/MVP_V0_1_BASELINE.md"
 archive_index = "docs/context/ARCHIVE_INDEX.md"
 archived_v0_1_v0_2 = "docs/roadmap_archive/v0_1_v0_2_archive.md"
@@ -249,16 +249,22 @@ blocked = [
 ]
 
 [extension.v1_0_rc_readiness]
-state = "active_phase_3_readiness_contract_route"
-permission = "v1.0-rc evidence-only readiness route is active for Phase 0 through Phase 3 only; it prepares scope, audit, HorizonPolicy, and SimulationRunManifest contracts and does not authorize final release, tag, push, production activation, live trading, valuation/fundamental scoring activation, futures activation, or Phase 4+ modules"
+state = "active_phase_5_readiness_contract_route"
+permission = "v1.0-rc evidence-only readiness route is active for Phase 0 through Phase 5 only; it prepares scope, audit, HorizonPolicy, SimulationRunManifest, WeightConfig loop, and LayerRegistry contracts and does not authorize final release, tag, push, production activation, live trading, valuation/fundamental scoring activation, futures activation, or Phase 6+ modules"
 freeze_plan = "docs/extension/v1_0_freeze_plan.md"
 scope_boundary = "docs/extension/v1_0_scope_boundary.md"
 hardcoding_audit = "docs/extension/v1_0_next_day_hardcoding_audit.md"
 horizon_policy_contract = "docs/extension/v1_0_horizon_policy_contract.md"
 horizon_policy_config = "config/horizon_policy.toml"
 simulation_run_manifest_contract = "docs/extension/v1_0_simulation_run_manifest_contract.md"
+weight_config_loop_contract = "docs/extension/v1_0_weight_config_loop_contract.md"
+weight_config_loop_config = "config/weight_config_loop.toml"
+layer_registry_contract = "docs/extension/v1_0_layer_registry_contract.md"
+layer_registry_config = "config/layer_registry.toml"
 horizon_policy_loader = "src/validation/horizon_policy.py"
 simulation_run_manifest_helper = "Quant_mvp/backtest_mvp/simulation_run_manifest.py"
+weight_config_loop_helper = "Quant_mvp/backtest_mvp/weight_config_loop.py"
+layer_registry_validator = "src/validation/layer_registry.py"
 default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
 completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
 current_completed_phases = [
@@ -266,6 +272,8 @@ current_completed_phases = [
   "Phase 1 next-day / 1D hardcoding audit",
   "Phase 2 HorizonPolicy",
   "Phase 3 SimulationRunManifest",
+  "Phase 4 WeightConfig loop",
+  "Phase 5 LayerRegistry",
 ]
 supported_horizon_ids = [
   "1d",
@@ -277,6 +285,8 @@ allowed = [
   "candidate-only backtest/simulation planning",
   "horizon generalization readiness contracts",
   "SimulationRunManifest readiness contracts",
+  "WeightConfig dry-run plan-only loop contracts",
+  "LayerRegistry extension contracts",
   "historical/simulated rebalance disclosure in manifests",
   "manual review support",
 ]
@@ -292,7 +302,7 @@ blocked = [
   "valuation/fundamental scoring activation",
   "futures/options/index trading activation",
   "new market-data ingestion",
-  "Phase 4+ modules without later explicit task approval",
+  "Phase 6+ modules without later explicit task approval",
 ]
 
 [extension.v0_1n_candidate_ml]

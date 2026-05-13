@@ -7,8 +7,8 @@ Status: pre-freeze readiness boundary for v1.0-rc planning.
 - evidence-only candidate strategy evaluation
 - candidate-only backtest/simulation planning
 - horizon generalization planning
-- weight-loop planning
-- inactive/candidate-only layer extension planning
+- candidate-only WeightConfig loop planning and capped dry-run plan generation
+- inactive/candidate-only/diagnostic-only layer extension registration
 - EvaluationEvidence and AdoptionCandidate planning
 - manual-review packet planning
 
@@ -25,6 +25,8 @@ Status: pre-freeze readiness boundary for v1.0-rc planning.
 - new market-data ingestion
 - multi-universe expansion
 - backtest feedback into scoring/ranking/model features
+- production ranking replacement
+- active scoring from valuation/fundamental or futures/options/index layers
 
 ## Language boundary
 

@@ -1,0 +1,63 @@
+# v1.0-rc WeightConfig loop config.
+# Candidate-only dry-run planning; not production scoring or ranking.
+
+[defaults]
+weight_config_version = "v1_0_rc_weight_config_0_1"
+weight_config_source = "config/weight_config_loop.toml"
+horizon_policy_id = "1d"
+evaluation_mode = "dry_run_plan_only"
+generated_by = "v1_0_rc_weight_config_loop"
+candidate_id = "sc_v1_0_rc_fixture"
+strategy_candidate_ref = "Quant_mvp/config/v0_3_strategy_candidate_registry.toml"
+normalization_ref = "candidate_only_weight_normalization_v1_0_rc"
+weight_sum_policy = "sum_to_one"
+missing_score_policy = "fail_closed"
+inactive_score_policy = "reject"
+diagnostic_score_policy = "exclude_from_active_weights"
+max_candidate_count = 3
+evidence_only_notice = "candidate-only evidence-only WeightConfig loop plan for manual review support"
+prohibited_actions_notice = "does not create live execution, brokerage integration, order generation, recommendation language, trade-signal framing, live automatic rebalance instructions, move-to-cash commands, future-return claims, production ranking replacement, or valuation/fundamental scoring activation"
+rebalance_disclosure = "rebalancing_is_historical_simulation_context_only_not_user_instruction"
+
+[defaults.date_range]
+start = "2026-01-02"
+end = "2026-03-31"
+
+[defaults.constraints]
+non_negative_weights = true
+max_weight = 1.0
+min_weight = 0.0
+
+[defaults.candidate_set_spec]
+kind = "explicit_fixture_set"
+deterministic_order = true
+
+[[weight_config]]
+weight_config_id = "wc_v1_0_rc_equal_technical_statistical"
+score_family = "technical_statistical"
+score_group = "active_candidate_layers"
+grid_spec = "explicit_candidate_set"
+
+[weight_config.score_weights]
+technical_momentum_layer = 0.5
+statistical_volatility_layer = 0.5
+
+[[weight_config]]
+weight_config_id = "wc_v1_0_rc_momentum_tilt"
+score_family = "technical_statistical"
+score_group = "active_candidate_layers"
+grid_spec = "explicit_candidate_set"
+
+[weight_config.score_weights]
+technical_momentum_layer = 0.7
+statistical_volatility_layer = 0.3
+
+[[weight_config]]
+weight_config_id = "wc_v1_0_rc_volatility_tilt"
+score_family = "technical_statistical"
+score_group = "active_candidate_layers"
+grid_spec = "explicit_candidate_set"
+
+[weight_config.score_weights]
+technical_momentum_layer = 0.3
+statistical_volatility_layer = 0.7

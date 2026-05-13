@@ -1,0 +1,69 @@
+# v1.0-rc EvaluationEvidenceV1 metric and selector allowlist.
+
+[metric_allowlist]
+metrics_schema_version = "v1_0_rc_evaluation_metrics_v1_0"
+allowed_metric_names = [
+  "realized_return_summary",
+  "realized_volatility_summary",
+  "realized_drawdown_summary",
+  "realized_turnover_summary",
+  "realized_cost_summary",
+  "sharpe_like_historical_summary",
+  "hit_rate_historical_summary",
+  "rank_ic_historical_summary",
+  "coverage_ratio",
+  "invalid_period_count",
+  "missing_data_count",
+]
+blocked_metric_names = [
+  "expected_return",
+  "predicted_return",
+  "future_return",
+  "alpha_signal",
+  "trade_signal",
+  "buy_score",
+  "sell_score",
+  "guaranteed_return",
+  "production_score",
+]
+
+[selector_allowlist]
+status = "explicit_allowlist"
+allowed_fields = [
+  "evidence_id",
+  "candidate_id",
+  "strategy_candidate_id",
+  "weight_config_id",
+  "horizon_policy_id",
+  "evidence_status",
+  "evidence_mode",
+  "metric_values",
+  "metric_units",
+  "coverage_summary",
+  "data_quality_summary",
+  "evidence_quality_flags",
+  "leakage_check_status",
+  "no_lookahead_check_status",
+  "rebalance_frequency",
+  "rebalance_disclosure",
+  "rebalancing_role",
+  "turnover_summary",
+  "cost_model",
+  "slippage_model",
+  "universe_scope",
+  "date_range",
+  "evaluation_window",
+]
+blocked_fields = [
+  "raw_future_label",
+  "future_return",
+  "expected_return",
+  "predicted_return",
+  "production_score",
+  "order_generation_enabled",
+  "live_execution_enabled",
+  "brokerage_integration_enabled",
+  "user_facing_auto_rebalance_instruction_enabled",
+  "production_ranking_update_enabled",
+  "valuation_fundamental_active_scoring_enabled",
+]

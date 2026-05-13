@@ -8,17 +8,19 @@ Current readiness state:
 - Phase 1: COMPLETE / next-day / 1D hardcoding audit.
 - Phase 2: COMPLETE / HorizonPolicy contract.
 - Phase 3: COMPLETE / SimulationRunManifest contract.
-- Phase 4+: NOT OPEN / requires later explicit task approval.
+- Phase 4: COMPLETE / WeightConfig loop contract.
+- Phase 5: COMPLETE / LayerRegistry contract.
+- Phase 6+: NOT OPEN / requires later explicit task approval.
 
 ## Purpose
 
 v1.0-rc prepares the project for a future evidence-only multi-horizon
 strategy candidate selector.
 
-Phase 0 through Phase 3 prepare the scope boundary, next-day / 1D hardcoding
-audit, HorizonPolicy contract, and SimulationRunManifest contract needed before
-later selector-readiness work starts. They do not create final v1.0 release
-evidence.
+Phase 0 through Phase 5 prepare the scope boundary, next-day / 1D hardcoding
+audit, HorizonPolicy contract, SimulationRunManifest contract, WeightConfig
+loop contract, and LayerRegistry contract needed before later
+selector-readiness work starts. They do not create final v1.0 release evidence.
 
 Final v1.0 freeze, tag, release, and push are out of scope for this plan.
 
@@ -72,14 +74,13 @@ Phase 2 may start only when all of these are true:
 - No hard-stop violation is present.
 - Unresolved findings are documented as manual review items.
 
-## Phase 4 entry boundary
+## Phase 6 entry boundary
 
-Phase 4 may start only under a later explicit task approval. Phase 0 through
-Phase 3 do not authorize the `WeightConfig` loop, `LayerRegistry`,
-`EvaluationEvidenceV1` full implementation, ML selector/evaluator
-implementation, `ManualReviewPacket`, final v1.0 freeze, tag, release, push,
-production activation, live execution, valuation/fundamental activation, or
-futures/options/index activation.
+Phase 6 may start only under a later explicit task approval. Phase 0 through
+Phase 5 do not authorize `EvaluationEvidenceV1` full implementation, ML
+selector/evaluator implementation, `ManualReviewPacket`, final v1.0 freeze,
+tag, release, push, production activation, live execution,
+valuation/fundamental activation, or futures/options/index activation.
 
 ## Phase 0 and Phase 1 acceptance boundary
 

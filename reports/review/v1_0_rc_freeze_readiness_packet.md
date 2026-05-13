@@ -1,7 +1,7 @@
 # v1.0-rc Freeze Readiness Packet
 
 - packet_version: v1_0_rc_freeze_readiness_packet_v1_0
-- created_at: 2026-05-13T08:47:07+00:00
+- created_at: 2026-05-13T10:49:15+00:00
 - route_scope: v1_0_rc_phase_9_freeze_readiness_validation
 - freeze_readiness_verdict: FREEZE_READY_WITH_MINOR_FOLLOW_UPS
 - evidence_only_notice: Phase 9 packages evidence-only candidate-only manual-review readiness; it is not production release.
@@ -35,6 +35,17 @@
 | Phase 8 | ManualReviewPacket | COMPLETE |  | none |
 
 ## Boundary Summary
+- core_boundary_lock_status: COMPLETE
+- core_boundary_evidence_only: True
+- core_boundary_candidate_only: True
+- core_boundary_manual_review_support: True
+- core_boundary_live_trading_enabled: False
+- core_boundary_brokerage_integration_enabled: False
+- core_boundary_order_generation_enabled: False
+- core_boundary_buy_sell_hold_framing_present: False
+- core_boundary_valuation_fundamental_active_scoring_enabled: False
+- core_boundary_futures_index_macro_regime_active_scoring_enabled: False
+- core_boundary_production_ranking_replacement_enabled: False
 - evidence_only_boundary_preserved: True
 - candidate_only_boundary_preserved: True
 - manual_review_only_boundary_preserved: True

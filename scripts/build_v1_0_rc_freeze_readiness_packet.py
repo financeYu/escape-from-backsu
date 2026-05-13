@@ -115,6 +115,21 @@ def _render_freeze_packet(report: Mapping[str, Any]) -> str:
     lines.append("")
     lines.append("## Boundary Summary")
     boundary = report["boundary_audit"]
+    core = boundary["core_boundary_lock"]
+    lines.append(f"- core_boundary_lock_status: {core['status']}")
+    for key in (
+        "evidence_only",
+        "candidate_only",
+        "manual_review_support",
+        "live_trading_enabled",
+        "brokerage_integration_enabled",
+        "order_generation_enabled",
+        "buy_sell_hold_framing_present",
+        "valuation_fundamental_active_scoring_enabled",
+        "futures_index_macro_regime_active_scoring_enabled",
+        "production_ranking_replacement_enabled",
+    ):
+        lines.append(f"- core_boundary_{key}: {core[key]}")
     for key in (
         "evidence_only_boundary_preserved",
         "candidate_only_boundary_preserved",
@@ -211,8 +226,24 @@ def _render_guardrail_audit(report: Mapping[str, Any]) -> str:
         "",
         "## Evidence / Selector / Review Boundaries",
     ]
+    core = boundary["core_boundary_lock"]
+    lines.append(f"- core_boundary_lock_status: {core['status']}")
+    for key in (
+        "evidence_only",
+        "candidate_only",
+        "manual_review_support",
+        "live_trading_enabled",
+        "brokerage_integration_enabled",
+        "order_generation_enabled",
+        "buy_sell_hold_framing_present",
+        "valuation_fundamental_active_scoring_enabled",
+        "futures_index_macro_regime_active_scoring_enabled",
+        "production_ranking_replacement_enabled",
+    ):
+        lines.append(f"- core_boundary_{key}: {core[key]}")
+    lines.append(f"- core_boundary_blockers: {core['blockers'] or 'none'}")
     for key, value in boundary.items():
-        if key != "prohibited_language_leaks":
+        if key not in {"core_boundary_lock", "prohibited_language_leaks"}:
             lines.append(f"- {key}: {value}")
     lines.append(f"- prohibited_language_leaks: {boundary['prohibited_language_leaks'] or 'none'}")
     lines.append("")

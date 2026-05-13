@@ -7,6 +7,18 @@
 - status: COMPLETE
 
 ## Evidence / Selector / Review Boundaries
+- core_boundary_lock_status: COMPLETE
+- core_boundary_evidence_only: True
+- core_boundary_candidate_only: True
+- core_boundary_manual_review_support: True
+- core_boundary_live_trading_enabled: False
+- core_boundary_brokerage_integration_enabled: False
+- core_boundary_order_generation_enabled: False
+- core_boundary_buy_sell_hold_framing_present: False
+- core_boundary_valuation_fundamental_active_scoring_enabled: False
+- core_boundary_futures_index_macro_regime_active_scoring_enabled: False
+- core_boundary_production_ranking_replacement_enabled: False
+- core_boundary_blockers: none
 - evidence_only_boundary_preserved: True
 - candidate_only_boundary_preserved: True
 - manual_review_only_boundary_preserved: True

@@ -10,6 +10,7 @@ from src.validation.v1_0_rc_freeze_readiness import (
     audit_rebalance_disclosure,
     build_artifact_lineage_matrix,
     build_contract_manifest,
+    build_core_boundary_lock,
     build_freeze_readiness_report,
     build_phase_status_matrix,
     build_sample_readiness_artifacts,
@@ -161,13 +162,54 @@ def test_v1_0_rc_rebalance_audit_blocks_user_facing_instruction():
 def test_v1_0_rc_evidence_boundary_blocks_live_execution():
     audit = audit_boundaries()
 
+    assert audit["core_boundary_lock"]["status"] == STATUS_COMPLETE
     assert audit["prohibited_flags_false"] is True
     assert audit["evidence_only_boundary_preserved"] is True
+
+
+def test_v1_0_rc_core_boundary_lock_freezes_step1_contract():
+    lock = build_core_boundary_lock(
+        evidence_only=True,
+        candidate_only=True,
+        manual_review_support=True,
+        live_trading_enabled=False,
+        brokerage_integration_enabled=False,
+        order_generation_enabled=False,
+        buy_sell_hold_framing_present=False,
+        valuation_fundamental_active_scoring_enabled=False,
+        futures_index_macro_regime_active_scoring_enabled=False,
+        production_ranking_replacement_enabled=False,
+    )
+
+    assert lock["status"] == STATUS_COMPLETE
+    assert lock["blockers"] == []
+
+
+def test_v1_0_rc_core_boundary_lock_rejects_production_or_trading_escape():
+    lock = build_core_boundary_lock(
+        evidence_only=True,
+        candidate_only=True,
+        manual_review_support=False,
+        live_trading_enabled=True,
+        brokerage_integration_enabled=True,
+        order_generation_enabled=True,
+        buy_sell_hold_framing_present=True,
+        valuation_fundamental_active_scoring_enabled=True,
+        futures_index_macro_regime_active_scoring_enabled=True,
+        production_ranking_replacement_enabled=True,
+    )
+
+    assert lock["status"] == "NEEDS FIX"
+    assert len(lock["blockers"]) == 8
 
 
 def test_v1_0_rc_evidence_boundary_blocks_brokerage_and_orders():
     report = build_freeze_readiness_report()
 
+    core = report["boundary_audit"]["core_boundary_lock"]
+    assert core["brokerage_integration_enabled"] is False
+    assert core["order_generation_enabled"] is False
+    assert core["production_ranking_replacement_enabled"] is False
     assert report["boundary_audit"]["production_ranking_changed"] is False
     assert report["boundary_audit"]["backtest_feedback_score_optimization_introduced"] is False
 

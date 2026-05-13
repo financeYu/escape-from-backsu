@@ -53,6 +53,18 @@ NOTICE_KEYS = {
     "manual_review_only_notice",
     "not_investment_advice_notice",
 }
+CORE_BOUNDARY_EXPECTATIONS = {
+    "evidence_only": True,
+    "candidate_only": True,
+    "manual_review_support": True,
+    "live_trading_enabled": False,
+    "brokerage_integration_enabled": False,
+    "order_generation_enabled": False,
+    "buy_sell_hold_framing_present": False,
+    "valuation_fundamental_active_scoring_enabled": False,
+    "futures_index_macro_regime_active_scoring_enabled": False,
+    "production_ranking_replacement_enabled": False,
+}
 
 
 PHASE_DEFINITIONS: tuple[dict[str, Any], ...] = (
@@ -719,6 +731,10 @@ def audit_boundaries() -> dict[str, Any]:
     ]
     payloads = [sample["evidence"], sample["selector_score_manifest"], sample["manual_review_packet"], plan]
     prohibited_flags_false = all(not bool(payload.get(flag, False)) for payload in payloads for flag in PROHIBITED_FLAGS)
+    prohibited_flag_enabled = {
+        flag: any(bool(payload.get(flag, False)) for payload in payloads)
+        for flag in PROHIBITED_FLAGS
+    }
     language_leaks = [
         name
         for name, payload in (
@@ -728,7 +744,28 @@ def audit_boundaries() -> dict[str, Any]:
         )
         if contains_prohibited_action_language(payload)
     ]
+    core_boundary_lock = build_core_boundary_lock(
+        evidence_only=True,
+        candidate_only=plan["production_ranking_changed"] is False and plan["best_weight_selected"] is False,
+        manual_review_support=(
+            sample["manual_review_packet"]["manual_review_required"] is True
+            and sample["selector_score_manifest"]["manual_review_required"] is True
+        ),
+        live_trading_enabled=prohibited_flag_enabled["live_execution_enabled"],
+        brokerage_integration_enabled=prohibited_flag_enabled["brokerage_integration_enabled"],
+        order_generation_enabled=prohibited_flag_enabled["order_generation_enabled"],
+        buy_sell_hold_framing_present=bool(language_leaks),
+        valuation_fundamental_active_scoring_enabled=bool(valuation_fundamental_active_layers),
+        futures_index_macro_regime_active_scoring_enabled=bool(
+            futures_index_macro_regime_active_layers
+        ),
+        production_ranking_replacement_enabled=(
+            prohibited_flag_enabled["production_ranking_update_enabled"]
+            or plan["production_ranking_changed"] is not False
+        ),
+    )
     return {
+        "core_boundary_lock": core_boundary_lock,
         "evidence_only_boundary_preserved": True,
         "candidate_only_boundary_preserved": plan["production_ranking_changed"] is False and plan["best_weight_selected"] is False,
         "manual_review_only_boundary_preserved": sample["manual_review_packet"]["manual_review_required"] is True,
@@ -753,9 +790,24 @@ def audit_boundaries() -> dict[str, Any]:
                 or valuation_fundamental_active_layers
                 or futures_index_macro_regime_active_layers
                 or not prohibited_flags_false
+                or core_boundary_lock["status"] != STATUS_COMPLETE
             )
             else STATUS_COMPLETE
         ),
+    }
+
+
+def build_core_boundary_lock(**values: bool) -> dict[str, Any]:
+    lock = {key: bool(values.get(key, not expected)) for key, expected in CORE_BOUNDARY_EXPECTATIONS.items()}
+    blockers = [
+        f"{key} expected {expected} got {lock[key]}"
+        for key, expected in CORE_BOUNDARY_EXPECTATIONS.items()
+        if lock[key] is not expected
+    ]
+    return {
+        **lock,
+        "status": STATUS_NEEDS_FIX if blockers else STATUS_COMPLETE,
+        "blockers": blockers,
     }
 
 
@@ -1145,6 +1197,7 @@ __all__ = (
     "NOT_FREEZE_READY",
     "build_artifact_lineage_matrix",
     "build_contract_manifest",
+    "build_core_boundary_lock",
     "build_freeze_readiness_report",
     "build_phase_status_matrix",
     "build_sample_readiness_artifacts",

@@ -2,6 +2,21 @@
 
 Status: pre-freeze readiness boundary for v1.0-rc planning.
 
+## Step 1 Core Boundary Lock
+
+Freeze-ready core boundary:
+
+- evidence-only: locked true
+- candidate-only: locked true
+- manual-review-support: locked true
+- live trading: locked false
+- brokerage integration: locked false
+- order generation: locked false
+- buy/sell/hold framing: locked false
+- valuation/fundamental active scoring: locked false
+- futures/index/macro/regime active scoring: locked false
+- production ranking replacement: locked false
+
 ## Allowed for v1.0 planning
 
 - evidence-only candidate strategy evaluation

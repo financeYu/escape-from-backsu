@@ -72,6 +72,16 @@ authorize final v1.0 freeze, production ranking replacement, live trading,
 brokerage integration, order generation, or valuation/fundamental active
 scoring.
 
+## Post-freeze backlog separation
+
+Step 4 promotes the temporary post-freeze backlog notes into
+`docs/extension/v1_0_rc_post_freeze_backlog_separation.md`. The packet is a
+blocked follow-up ledger only. It keeps valuation/fundamental activation,
+macro/regime/futures/index activation, universe expansion, data-ingestion
+expansion, production ranking semantics changes, real-time triggers, live
+rebalance/execution, and broker integration outside the v1.0-rc Phase 0-9
+freeze-readiness scope unless a later explicit approval opens a narrower route.
+
 ## Phase map
 
 | phase | scope |

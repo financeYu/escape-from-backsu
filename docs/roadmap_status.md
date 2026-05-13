@@ -157,6 +157,7 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v1_0_rc_guardrail_audit.md`
 - `docs/extension/v1_0_rc_rebalance_disclosure_audit.md`
 - `docs/extension/v1_0_rc_validation_test_manifest.md`
+- `docs/extension/v1_0_rc_post_freeze_backlog_separation.md`
 - `reports/review/v1_0_rc_ml_reproduction_report.md`
 - `config/horizon_policy.toml`
 - `config/weight_config_loop.toml`
@@ -164,11 +165,12 @@ Archived/supporting probability compatibility route:
 - `config/evaluation_evidence_v1.toml`
 - `docs/context/EXTENSION_REGISTRY.toml`
 
-## Local v1.0-rc Freeze-Trigger State
+## Local v1.0-rc Freeze-Gate State
 
 | local step | status | route meaning |
 | --- | --- | --- |
 | Step 3 / ML reproduction report | COMPLETE | freeze trigger evidence review is complete; it does not activate production ranking, trading, valuation/fundamental scoring, ingestion, universe expansion, or broker integration |
+| Step 4 / post-freeze backlog separation | COMPLETE | temporary backlog notes are promoted into `docs/extension/v1_0_rc_post_freeze_backlog_separation.md`; all listed items remain outside freeze scope unless a later explicit approval opens a narrower route |
 
 ## Archived v0.1/v0.2 References
 

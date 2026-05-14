@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from pathlib import Path
 from typing import Callable, Iterable, Optional
@@ -13,6 +13,10 @@ import pandas as pd
 
 from stock_core.cache.csv_cache import DEFAULT_PRICE_CACHE_POLICY, PriceCachePolicy
 from stock_core.indicators.technicals import add_indicators
+from stock_core.ml.kis_revision_snapshot_collector import (
+    collect_kis_revision_raw_snapshots,
+    ensure_kis_access_token,
+)
 from stock_core.providers.kospi200_universe_provider import UniverseEntry, get_universe_constituents
 from stock_core.providers.naver_price_provider import get_price_df
 from stock_core.ranking.scorer import LEGACY_PLACEHOLDER_SCORE_NOTICE, score_stock
@@ -49,6 +53,13 @@ LEGACY_LATEST_TOP_JSON_NAME = "latest_top5.json"
 ALGORITHM_RANKING_SOURCE = "root src.scanner.latest_ranking"
 ALGORITHM_RANKING_SNAPSHOT_SOURCE = "latest_score_top"
 CANONICAL_LATEST_RANKING_CSV_PATH = PROJECT_ROOT.parent / "reports" / "selection" / "latest_ranking.csv"
+KIS_REVISION_SNAPSHOT_BOUNDARY_NOTICE = (
+    "v1_4_kis_revision_raw_snapshot_data_support_only_no_auto_reference"
+)
+KIS_REVISION_SNAPSHOT_CONSUMPTION_POLICY = (
+    "raw_snapshots_may_accumulate_but_must_not_feed_v1_4_features_scores_rankings_"
+    "or_incremental_evidence_until_explicit_pit_promotion"
+)
 
 
 @dataclass(frozen=True)
@@ -626,6 +637,131 @@ def _render_top_rankings_charts(
     )
 
 
+def _build_kis_revision_snapshot_codes(universe: list[UniverseEntry]) -> list[str]:
+    seen: set[str] = set()
+    codes: list[str] = []
+    for entry in universe:
+        raw_code = str(entry.code).strip()
+        if not raw_code:
+            continue
+        code = raw_code.zfill(6)
+        if code in seen:
+            continue
+        seen.add(code)
+        codes.append(code)
+    return codes
+
+
+def _build_kis_revision_snapshot_date_range(completed_at: datetime) -> tuple[str, str]:
+    end_date = completed_at.strftime("%Y%m%d")
+    start_date = (completed_at - timedelta(days=30)).strftime("%Y%m%d")
+    return start_date, end_date
+
+
+def _collect_kis_revision_snapshots_for_daily_update(
+    *,
+    universe: list[UniverseEntry],
+    completed_at: datetime,
+    enabled: bool,
+    token_preflight_meta: dict,
+    collector=collect_kis_revision_raw_snapshots,
+) -> dict:
+    """Collect v1.4 KIS raw snapshots without changing ranking behavior."""
+
+    base_meta = {
+        "enabled": enabled,
+        "provider": "kis_open_api",
+        "status": "skipped",
+        "boundary_notice": KIS_REVISION_SNAPSHOT_BOUNDARY_NOTICE,
+        "feature_allowlist_state": "blocked_candidate_only",
+        "usable_for_v1_4_feature_manifest": False,
+        "auto_reference_allowed": False,
+        "downstream_consumption_policy": KIS_REVISION_SNAPSHOT_CONSUMPTION_POLICY,
+        "promotion_required_before_use": [
+            "verified_available_at_mapping_per_endpoint",
+            "history_window_covering_at_least_3_months",
+            "sector_taxonomy_lineage_for_relative_revision_metrics",
+            "quant_review_gate_pass_for_feature_manifest_promotion",
+        ],
+        "token_preflight": token_preflight_meta,
+    }
+    if not enabled:
+        return {**base_meta, "reason": "daily_kis_revision_snapshot_collection_disabled"}
+
+    codes = _build_kis_revision_snapshot_codes(universe)
+    start_date, end_date = _build_kis_revision_snapshot_date_range(completed_at)
+    request_meta = {
+        **base_meta,
+        "status": "requested",
+        "codes_requested": len(codes),
+        "start_date": start_date,
+        "end_date": end_date,
+    }
+    if not codes:
+        return {**request_meta, "status": "skipped", "reason": "no_universe_codes_available"}
+
+    try:
+        result = collector(codes=codes, start_date=start_date, end_date=end_date, max_pages=1)
+    except Exception as exc:
+        message = str(exc)
+        status = "blocked" if "KIS token is not ready" in message else "failed"
+        logger.warning("KIS revision raw snapshot collection %s: %s", status, exc)
+        return {
+            **request_meta,
+            "status": status,
+            "error_type": type(exc).__name__,
+            "error": message,
+        }
+
+    return {
+        **request_meta,
+        "status": "collected",
+        "output_path": str(result.output_path),
+        "records_written": result.records_written,
+        "endpoint_counts": dict(result.endpoint_counts),
+        "token_refreshed": result.token_refreshed,
+        "token_expires_at": result.token_expires_at,
+    }
+
+
+def _prefetch_kis_revision_token_for_daily_update(
+    *,
+    enabled: bool,
+    token_provider=ensure_kis_access_token,
+) -> dict:
+    """Ensure KIS token freshness before the daily chart refresh begins."""
+
+    if not enabled:
+        return {
+            "enabled": False,
+            "status": "skipped",
+            "reason": "daily_kis_revision_snapshot_collection_disabled",
+        }
+
+    try:
+        token_state = token_provider()
+    except Exception as exc:
+        logger.warning("KIS token preflight failed before daily update: %s", exc)
+        return {
+            "enabled": True,
+            "status": "failed",
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+            "secret_values_redacted": True,
+        }
+
+    summary = token_state.redacted_summary()
+    return {
+        "enabled": True,
+        "status": summary.get("status", "unknown"),
+        "refreshed": summary.get("refreshed", False),
+        "expires_at": summary.get("expires_at"),
+        "missing_materials": summary.get("missing_materials", []),
+        "warnings": summary.get("warnings", []),
+        "secret_values_redacted": True,
+    }
+
+
 def _build_topn_meta(
     *,
     completed_at: datetime,
@@ -642,6 +778,7 @@ def _build_topn_meta(
     chart_paths: list[str],
     chart_failed_codes: list[str],
     runtime_policy: BatchRuntimePolicy,
+    kis_revision_snapshot_meta: dict,
 ) -> dict:
     return {
         "as_of": completed_at.strftime("%Y-%m-%d"),
@@ -674,6 +811,7 @@ def _build_topn_meta(
         "runtime_boundary_notice": runtime_policy.runtime_boundary_notice,
         "canonical_ranking_source": "root src.scanner.latest_ranking",
         "financial_refresh_with_price": runtime_policy.refresh_financials_with_price,
+        "kis_revision_raw_snapshot": kis_revision_snapshot_meta,
     }
 
 
@@ -736,6 +874,9 @@ def _build_and_export_topn_outputs(
     render_charts: bool,
     worker_count: int,
     runtime_policy: BatchRuntimePolicy,
+    collect_kis_revision_snapshots: bool,
+    kis_revision_token_preflight_meta: dict,
+    kis_revision_snapshot_collector=collect_kis_revision_raw_snapshots,
 ) -> tuple[pd.DataFrame, dict]:
     top_df = _select_daily_top_rankings(
         rows,
@@ -751,8 +892,16 @@ def _build_and_export_topn_outputs(
         render_charts=render_charts,
         runtime_policy=runtime_policy,
     )
+    completed_at = datetime.now()
+    kis_revision_snapshot_meta = _collect_kis_revision_snapshots_for_daily_update(
+        universe=universe,
+        completed_at=completed_at,
+        enabled=collect_kis_revision_snapshots,
+        token_preflight_meta=kis_revision_token_preflight_meta,
+        collector=kis_revision_snapshot_collector,
+    )
     meta = _build_topn_meta(
-        completed_at=datetime.now(),
+        completed_at=completed_at,
         pages=pages,
         top_n=top_n,
         use_market_cap_override=use_market_cap_override,
@@ -766,6 +915,7 @@ def _build_and_export_topn_outputs(
         chart_paths=chart_paths,
         chart_failed_codes=chart_failed_codes,
         runtime_policy=runtime_policy,
+        kis_revision_snapshot_meta=kis_revision_snapshot_meta,
     )
     _export_outputs(top_df, meta)
     logger.info("Exported latest top-ranked outputs to %s", OUTPUTS_DIR)
@@ -782,9 +932,16 @@ def run_daily_top5_update(
     top_n: int = DEFAULT_TOP_N,
     use_market_cap_override: bool = False,
     runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
+    collect_kis_revision_snapshots: bool = False,
+    kis_revision_token_provider=ensure_kis_access_token,
+    kis_revision_snapshot_collector=collect_kis_revision_raw_snapshots,
 ) -> tuple[pd.DataFrame, dict]:
     """Run the configured universe batch and export the latest top-ranked artifacts."""
 
+    kis_revision_token_preflight_meta = _prefetch_kis_revision_token_for_daily_update(
+        enabled=collect_kis_revision_snapshots,
+        token_provider=kis_revision_token_provider,
+    )
     top_n, universe, worker_count = _prepare_topn_run(
         top_n=top_n,
         refresh_universe=refresh_universe,
@@ -813,6 +970,9 @@ def run_daily_top5_update(
         render_charts=render_charts,
         worker_count=worker_count,
         runtime_policy=runtime_policy,
+        collect_kis_revision_snapshots=collect_kis_revision_snapshots,
+        kis_revision_token_preflight_meta=kis_revision_token_preflight_meta,
+        kis_revision_snapshot_collector=kis_revision_snapshot_collector,
     )
 
 
@@ -832,6 +992,9 @@ def run_daily_top5_update_if_due(
     top_n: int = DEFAULT_TOP_N,
     use_market_cap_override: bool = False,
     runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
+    collect_kis_revision_snapshots: bool = False,
+    kis_revision_token_provider=ensure_kis_access_token,
+    kis_revision_snapshot_collector=collect_kis_revision_raw_snapshots,
 ) -> tuple[Optional[pd.DataFrame], dict]:
     """Run the Top-N update only when the business-day 21:00 deadline is due."""
 
@@ -861,6 +1024,9 @@ def run_daily_top5_update_if_due(
         top_n=top_n,
         use_market_cap_override=use_market_cap_override,
         runtime_policy=runtime_policy,
+        collect_kis_revision_snapshots=collect_kis_revision_snapshots,
+        kis_revision_token_provider=kis_revision_token_provider,
+        kis_revision_snapshot_collector=kis_revision_snapshot_collector,
     )
     meta.update(due_meta)
     return top_df, meta

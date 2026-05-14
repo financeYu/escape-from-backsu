@@ -48,6 +48,7 @@ def run_daily_scan(
     top_n: int = 5,
     use_market_cap_override: bool = False,
     due_only: bool = False,
+    collect_kis_revision_snapshots: bool = True,
 ) -> int:
     """Run the current daily Top-N batch flow used by the GUI and scripts."""
 
@@ -60,6 +61,7 @@ def run_daily_scan(
         max_workers=workers,
         top_n=top_n,
         use_market_cap_override=use_market_cap_override,
+        collect_kis_revision_snapshots=collect_kis_revision_snapshots,
     )
     if top5_df is None:
         print(f"[Info] Daily update skipped: {meta['reason']}")
@@ -117,6 +119,11 @@ def _add_scan_parser(subparsers: argparse._SubParsersAction) -> None:
         action="store_true",
         help="Run only when the latest business-day 21:00 update is due or missed",
     )
+    scan_parser.add_argument(
+        "--no-kis-revision-snapshots",
+        action="store_true",
+        help="Skip append-only KIS v1.4 revision raw snapshot collection during the daily scan",
+    )
 
 
 def _add_single_parser(subparsers: argparse._SubParsersAction) -> None:
@@ -159,6 +166,7 @@ def main(argv: list[str] | None = None) -> int:
             top_n=getattr(args, "top_n", 5),
             use_market_cap_override=getattr(args, "market_cap_override", False),
             due_only=getattr(args, "due_only", False),
+            collect_kis_revision_snapshots=not getattr(args, "no_kis_revision_snapshots", False),
         )
 
     if args.command == "single":

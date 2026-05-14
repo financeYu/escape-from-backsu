@@ -141,6 +141,119 @@ class PipelineTests(unittest.TestCase):
         self.assertEqual(meta["canonical_ranking_source"], "root src.scanner.latest_ranking")
         self.assertFalse(meta["financial_refresh_with_price"])
         self.assertEqual(top5_df["runtime_boundary_notice"].tolist(), [LEGACY_PLACEHOLDER_SCORE_NOTICE])
+        self.assertEqual(meta["kis_revision_raw_snapshot"]["status"], "skipped")
+
+    def test_run_daily_top5_update_collects_kis_revision_snapshots_when_enabled(self) -> None:
+        row = make_row("005930", "Samsung Electronics")
+        calls = []
+        token_calls = []
+
+        class FakeKisResult:
+            output_path = Path("data/kis_revision_raw_snapshots/fake.jsonl")
+            records_written = 3
+            endpoint_counts = {"estimate_perform": 1, "invest_opinion": 1, "invest_opbysec": 1}
+            token_refreshed = False
+            token_expires_at = "2999-01-01 00:00:00"
+
+        class FakeTokenState:
+            def redacted_summary(self):
+                return {
+                    "status": "ready",
+                    "refreshed": True,
+                    "expires_at": "2999-01-01 00:00:00",
+                    "missing_materials": [],
+                    "warnings": [],
+                    "secret_values_redacted": True,
+                }
+
+        def fake_token_provider():
+            token_calls.append("called")
+            return FakeTokenState()
+
+        def fake_collector(**kwargs):
+            calls.append(kwargs)
+            return FakeKisResult()
+
+        with (
+            patch(
+                "stock_core.pipeline.daily_update._build_universe_entries",
+                return_value=[UniverseEntry(code="005930", name="Samsung Electronics")],
+            ),
+            patch("stock_core.pipeline.daily_update._process_universe_entry", return_value=row),
+            patch("stock_core.pipeline.daily_update._render_selected_charts", return_value=([], [])),
+            patch("stock_core.pipeline.daily_update._export_outputs"),
+        ):
+            _top_df, meta = run_daily_top5_update(
+                pages=1,
+                use_cache=True,
+                refresh_universe=False,
+                render_charts=True,
+                max_workers=1,
+                collect_kis_revision_snapshots=True,
+                kis_revision_token_provider=fake_token_provider,
+                kis_revision_snapshot_collector=fake_collector,
+            )
+
+        self.assertEqual(token_calls, ["called"])
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0]["codes"], ["005930"])
+        self.assertEqual(calls[0]["max_pages"], 1)
+        self.assertEqual(meta["kis_revision_raw_snapshot"]["status"], "collected")
+        self.assertEqual(meta["kis_revision_raw_snapshot"]["token_preflight"]["status"], "ready")
+        self.assertTrue(meta["kis_revision_raw_snapshot"]["token_preflight"]["refreshed"])
+        self.assertEqual(meta["kis_revision_raw_snapshot"]["records_written"], 3)
+        self.assertEqual(
+            meta["kis_revision_raw_snapshot"]["feature_allowlist_state"],
+            "blocked_candidate_only",
+        )
+        self.assertFalse(meta["kis_revision_raw_snapshot"]["usable_for_v1_4_feature_manifest"])
+        self.assertFalse(meta["kis_revision_raw_snapshot"]["auto_reference_allowed"])
+        self.assertIn(
+            "must_not_feed_v1_4_features",
+            meta["kis_revision_raw_snapshot"]["downstream_consumption_policy"],
+        )
+
+    def test_run_daily_top5_update_records_kis_snapshot_blocker_without_raising(self) -> None:
+        row = make_row("005930", "Samsung Electronics")
+
+        class FakeTokenState:
+            def redacted_summary(self):
+                return {
+                    "status": "blocked",
+                    "refreshed": False,
+                    "expires_at": None,
+                    "missing_materials": ["KIS_APP_KEY"],
+                    "warnings": [],
+                    "secret_values_redacted": True,
+                }
+
+        def fake_collector(**_kwargs):
+            raise RuntimeError("KIS token is not ready: secret_values_redacted")
+
+        with (
+            patch(
+                "stock_core.pipeline.daily_update._build_universe_entries",
+                return_value=[UniverseEntry(code="005930", name="Samsung Electronics")],
+            ),
+            patch("stock_core.pipeline.daily_update._process_universe_entry", return_value=row),
+            patch("stock_core.pipeline.daily_update._render_selected_charts", return_value=([], [])),
+            patch("stock_core.pipeline.daily_update._export_outputs"),
+        ):
+            top_df, meta = run_daily_top5_update(
+                pages=1,
+                use_cache=True,
+                refresh_universe=False,
+                render_charts=True,
+                max_workers=1,
+                collect_kis_revision_snapshots=True,
+                kis_revision_token_provider=lambda: FakeTokenState(),
+                kis_revision_snapshot_collector=fake_collector,
+            )
+
+        self.assertEqual(len(top_df), 1)
+        self.assertEqual(meta["kis_revision_raw_snapshot"]["status"], "blocked")
+        self.assertEqual(meta["kis_revision_raw_snapshot"]["token_preflight"]["status"], "blocked")
+        self.assertEqual(meta["kis_revision_raw_snapshot"]["error_type"], "RuntimeError")
 
     def test_run_daily_top5_update_honors_top_n(self) -> None:
         rows = [

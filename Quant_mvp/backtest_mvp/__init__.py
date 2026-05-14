@@ -50,6 +50,11 @@ from Quant_mvp.backtest_mvp.net_profitability_runner_v1 import (
     run_net_profitability_evidence_v1_1,
     validate_net_profitability_artifacts_v1_1,
 )
+from Quant_mvp.backtest_mvp.revision_layer_v1_4 import (
+    RevisionLayerConfig,
+    run_v1_4_revision_layer,
+    validate_v1_4_revision_artifacts,
+)
 from Quant_mvp.backtest_mvp.selector_evaluator_v1 import (
     build_rule_based_selector_score_manifest_v1,
     build_selector_feature_matrix_v1,
@@ -81,6 +86,7 @@ __all__ = (
     "CostLiquidityReliabilityConfig",
     "EvaluationEvidenceResult",
     "NetProfitabilityRunnerConfig",
+    "RevisionLayerConfig",
     "STEP17_BACKTEST_NOTICE",
     "WeightConfigCandidate",
     "build_contract_only_evaluation_evidence_packet",
@@ -101,6 +107,7 @@ __all__ = (
     "run_net_profitability_evidence_v1_1",
     "run_v1_3_cost_turnover_liquidity_reliability",
     "run_v1_2_baseline_ml_selector_application",
+    "run_v1_4_revision_layer",
     "run_v0_3_evaluation_evidence",
     "validate_evaluation_evidence_record",
     "validate_evaluation_evidence_v1",
@@ -110,6 +117,7 @@ __all__ = (
     "validate_net_profitability_artifacts_v1_1",
     "validate_v1_3_reliability_artifacts",
     "validate_v1_3_candidate_liquidity_handoff",
+    "validate_v1_4_revision_artifacts",
     "validate_selector_score_manifest_v1",
     "validate_simulation_run_manifest",
     "validate_v1_2_ml_selector_artifacts",

@@ -41,6 +41,7 @@ class CliTests(unittest.TestCase):
             max_workers=None,
             top_n=5,
             use_market_cap_override=False,
+            collect_kis_revision_snapshots=True,
         )
 
     def test_due_only_cli_path_uses_due_checked_pipeline(self) -> None:
@@ -59,6 +60,7 @@ class CliTests(unittest.TestCase):
             max_workers=None,
             top_n=5,
             use_market_cap_override=False,
+            collect_kis_revision_snapshots=True,
         )
 
     def test_single_stock_cli_normalizes_alphanumeric_code_before_fetch(self) -> None:

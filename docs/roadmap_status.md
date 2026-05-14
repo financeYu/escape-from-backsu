@@ -88,9 +88,12 @@ Current baseline facts:
 - v1.x staged release plan is active for post-v1.0 development sequencing.
   v1.1 net profitability evidence runner, v1.2 baseline ML selector
   application, and v1.3 cost/turnover/liquidity reliability layer are
-  implemented. v1.3 reports missing liquidity proxies as manual-review data
-  gaps when traded-value, market-cap, or capacity-reference inputs are absent.
-  v1.4 point-in-time revision layer is the next planned stage.
+  implemented. v1.4 point-in-time revision layer is temporarily complete as a
+  diagnostic-only closure: the contract, fail-closed coverage report, empty
+  feature manifest path, layer registry entry, chart_mvp diagnostic handoff,
+  and KIS raw snapshot collection support exist, but KIS/raw diagnostic data
+  must not be auto-referenced as revision features, scores, rankings, or
+  incremental evidence until an explicit PIT promotion review passes.
 
 Current active route skill:
 
@@ -180,6 +183,7 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v1_1_net_profitability_evidence_runner.md`
 - `docs/extension/v1_2_baseline_ml_selector_application.md`
 - `docs/extension/v1_3_cost_turnover_liquidity_reliability_layer.md`
+- `docs/extension/v1_4_revision_layer.md`
 - `reports/review/v1_0_rc_ml_reproduction_report.md`
 - `config/horizon_policy.toml`
 - `config/weight_config_loop.toml`
@@ -302,7 +306,7 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | v1.1 net profitability evidence runner | COMPLETE / evidence-only runner implemented |
 | v1.2 baseline ML selector application | COMPLETE / evidence-only selector comparison implemented |
 | v1.3 cost/turnover/liquidity reliability layer | IMPLEMENTED / evidence-only reliability layer with liquidity data gaps reported |
-| v1.4 point-in-time revision layer | PLANNED / evidence-only staged release |
+| v1.4 point-in-time revision layer | TEMPORARY COMPLETE / diagnostic-only closure; KIS raw snapshot collection may continue as data support, but v1.4 features and incremental comparison remain blocked until explicit PIT promotion |
 | v1.5 point-in-time valuation + quality/profitability layer | PLANNED / candidate-only staged release |
 | v1.6 confidence/robustness/review-priority integration | PLANNED / manual-review-support staged release |
 | v2.0 readiness packet | PLANNED / readiness packet only |

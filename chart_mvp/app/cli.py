@@ -52,6 +52,7 @@ def run_daily_scan(
     top_n: int = 5,
     use_market_cap_override: bool = False,
     due_only: bool = False,
+    collect_kis_revision_snapshots: bool = True,
 ) -> int:
     _sync_impl_hooks()
     return _impl.run_daily_scan(
@@ -63,6 +64,7 @@ def run_daily_scan(
         top_n=top_n,
         use_market_cap_override=use_market_cap_override,
         due_only=due_only,
+        collect_kis_revision_snapshots=collect_kis_revision_snapshots,
     )
 
 

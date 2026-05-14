@@ -344,7 +344,7 @@ architecture_chain = [
   "agent-reporter",
 ]
 git_policy = "fetch=false; pull=false; push=false; commit=false; stage=false unless explicitly instructed at the appropriate end stage"
-current_stage = "v1.4"
+current_stage = "v1.5_planned_after_v1_4_temporary_diagnostic_closure"
 stage_sequence = [
   "v1.1 net profitability evidence runner",
   "v1.2 baseline ML selector application",
@@ -482,6 +482,46 @@ blocked = [
   "production ranking replacement",
   "automatic rebalance instructions",
   "move-to-cash commands",
+  "future-return claims",
+  "proven-alpha language",
+  "production activation",
+]
+
+[extension.v1_4_revision_layer]
+state = "temporary_complete_diagnostic_only_revision_closure"
+permission = "v1.4 revision layer is temporarily complete as diagnostic-only data support: KIS raw snapshots may continue to accumulate, but raw/diagnostic revision material must not be auto-referenced as features, scores, rankings, valuation inputs, or incremental evidence until explicit PIT promotion review passes; it does not authorize live trading, brokerage, orders, buy/sell/hold wording, production ranking replacement, automatic rebalance instructions, future-return claims, proven-alpha language, valuation/fundamental active scoring, or production activation"
+context = "docs/extension/v1_4_revision_layer.md"
+input_route = "extension.v1_3_cost_turnover_liquidity_reliability"
+owner_lane = "Quant_mvp quant governance + backtest/simulation"
+runner = "Quant_mvp/backtest_mvp/revision_layer_v1_4.py"
+diagnostic_handoff_builder = "chart_mvp/scripts/build_v1_4_revision_diagnostic_handoff.py"
+raw_snapshot_collection = "chart_mvp app daily run collects KIS raw snapshots as isolated data support"
+auto_reference_allowed = false
+usable_for_v1_4_feature_manifest = false
+full_pit_completion_state = "deferred_until_verified_available_at_history_and_sector_revision_percentile"
+tests = "tests/backtest/test_v1_4_revision_layer.py"
+output_artifacts = [
+  "v1_4_revision_data_contract",
+  "v1_4_revision_coverage_report",
+  "v1_4_revision_feature_manifest",
+  "v1_4_revision_layer_registry_entry",
+  "v1_4_incremental_revision_evidence_report",
+  "v1_4_revision_manual_review_section",
+  "chart_mvp/data/v1_4_revision/v1_4_candidate_revision_diagnostic_handoff_latest.csv",
+  "chart_mvp/data/v1_4_revision/v1_4_candidate_revision_diagnostic_manifest_latest.json",
+]
+lineage = "EvaluationEvidenceV1 -> optional chart_mvp diagnostic financial cache handoff and isolated KIS raw snapshot collection -> PIT revision handoff rows only after explicit promotion -> revision coverage report -> allowlisted revision feature manifest -> candidate-only/diagnostic-only layer registry -> incremental comparison stub -> manual review section"
+completion_statement = "Temporary v1.4 closure can fail closed on missing or non-PIT revision data, chart_mvp can keep collecting diagnostic/raw support data, downstream routes cannot consume it as features, and required PIT revision data remains listed before full incremental comparison"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+blocked = [
+  "live trading or brokerage integration",
+  "orders or order generation",
+  "buy/sell/hold wording",
+  "production ranking replacement",
+  "automatic rebalance instructions",
+  "valuation/fundamental active scoring",
+  "auto-referencing KIS raw snapshots as revision features before PIT promotion",
   "future-return claims",
   "proven-alpha language",
   "production activation",

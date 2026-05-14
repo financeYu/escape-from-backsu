@@ -28,7 +28,7 @@ All outputs remain:
 | v1.1 | net profitability evidence runner | historical/simulated net profitability display packet | backtest/simulation | complete |
 | v1.2 | baseline ML selector application | baseline selector comparison packet | ML/evaluator | complete |
 | v1.3 | cost/turnover/liquidity reliability layer | reliability adjustment and sensitivity packet | backtest/simulation + quant governance | implemented with liquidity data gaps reported |
-| v1.4 | point-in-time revision layer | point-in-time revision evidence packet | quant governance + data-support lane | planned |
+| v1.4 | point-in-time revision layer | point-in-time revision evidence packet | quant governance + data-support lane | temporary complete / diagnostic-only closure; KIS raw snapshots continue as data support only |
 | v1.5 | point-in-time valuation + quality/profitability layer | candidate-only valuation, quality, and profitability evidence packet | quant governance | planned |
 | v1.6 | confidence/robustness/review-priority integration | confidence and manual review priority packet | ML/evaluator + root governance | planned |
 | v2.0 readiness | readiness packet | v2.0 readiness packet with unresolved blockers | root governance | planned |
@@ -98,11 +98,21 @@ Goal: improve reliability with cost, turnover, and liquidity sensitivity.
 Goal: add a point-in-time revision layer before stronger claims are considered.
 
 - [ ] Identify which fields require point-in-time revision handling.
-- [ ] Fail closed when revision provenance or as-of timing is missing.
-- [ ] Separate current, revised, and unavailable evidence states.
-- [ ] Preserve no-lookahead checks in validators or packet metadata.
-- [ ] Run targeted point-in-time tests and guardrail wording checks.
-- [ ] Produce the v1.4 completion packet.
+- [x] Draft the revision data contract and required data list.
+- [x] Fail closed when revision provenance or as-of timing is missing.
+- [x] Separate available, failed, and unavailable revision evidence states.
+- [x] Build chart_mvp diagnostic-only handoff from existing local financial caches.
+- [x] Preserve point-in-time checks in validators or packet metadata.
+- [x] Run targeted point-in-time skeleton tests and guardrail wording checks.
+- [x] Produce a temporary v1.4 diagnostic-only closure packet that preserves
+  the missing PIT data list and blocks feature/incremental-evidence use.
+- [ ] Produce the full v1.4 completion packet after approved PIT revision
+  source coverage and incremental comparison.
+
+Temporary closure rule: KIS revision raw snapshots may continue to accumulate
+through the daily chart refresh, but downstream v1.5/v1.6 work must not read
+those raw snapshots as revision features, scores, rankings, valuation inputs,
+or incremental evidence until a later explicit PIT promotion review passes.
 
 ## v1.5 Checklist
 

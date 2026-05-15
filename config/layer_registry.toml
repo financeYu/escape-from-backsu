@@ -118,6 +118,35 @@ validation_rules = ["valuation_active_scoring_false", "no_production_ranking"]
 dependency_refs = []
 
 [[layer]]
+layer_id = "v1_5_valuation_quality_profitability_layer"
+layer_name = "v1.5 valuation quality profitability diagnostic layer"
+layer_version = "v1_5_0_1"
+layer_category = "valuation"
+layer_status = "diagnostic_only"
+adapter_ref = "v1_5_non_computing_diagnostic_adapter"
+input_schema_ref = "v1_5_point_in_time_fundamental_handoff"
+output_schema_ref = "v1_5_candidate_only_valuation_quality_diagnostics"
+required_inputs = ["point_in_time_fundamental_handoff"]
+optional_inputs = ["sector_metadata", "paired_incremental_comparison_artifacts"]
+output_fields = ["v1_5_valuation_quality_diagnostic_context"]
+owner_route = "v1_x_staged_release_v1_5"
+allowed_modes = ["dry_run_plan_only"]
+blocked_modes = ["live_trading", "paper_trading", "brokerage_order", "trade_signal", "buy_sell_recommendation", "automatic_rebalance_instruction", "move_to_cash", "production_execution"]
+evidence_role = "diagnostic_context"
+scoring_role = "diagnostic_context"
+ranking_role = "none"
+production_enabled = false
+candidate_only_enabled = false
+diagnostic_only_enabled = true
+valuation_fundamental_active_scoring_enabled = false
+live_execution_enabled = false
+brokerage_integration_enabled = false
+order_generation_enabled = false
+notes = "v1.5 PIT valuation and quality diagnostics remain pending-data only until real PIT fundamental coverage is verified."
+validation_rules = ["valuation_active_scoring_false", "diagnostic_not_ranking", "no_live_execution"]
+dependency_refs = ["docs/extension/v1_5_valuation_quality_profitability_layer.md"]
+
+[[layer]]
 layer_id = "futures_macro_reference_layer"
 layer_name = "Futures macro reference placeholder"
 layer_version = "v1_0_rc_0_1"

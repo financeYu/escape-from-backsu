@@ -102,6 +102,24 @@ OPENDART_V1_4_ENDPOINTS: dict[str, dict[str, Any]] = {
         "source_ref": "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS003&apiId=2019016",
         "coverage": "filing_based_financial_statement_accounts",
     },
+    "alot_matter": {
+        "api_path": "/api/alotMatter.json",
+        "request_fields": ("crtfc_key", "corp_code", "bsns_year", "reprt_code"),
+        "response_fields": (
+            "rcept_no",
+            "corp_cls",
+            "corp_code",
+            "corp_name",
+            "se",
+            "stock_knd",
+            "thstrm",
+            "frmtrm",
+            "lwfr",
+            "stlm_dt",
+        ),
+        "source_ref": "https://opendart.fss.or.kr/guide/detail.do?apiGrpCd=DS002&apiId=2019005",
+        "coverage": "filing_based_dividend_matters",
+    },
 }
 
 JsonGet = Callable[[str, Mapping[str, str], int], dict[str, Any]]
@@ -287,6 +305,25 @@ def collect_opendart_v1_4_raw_snapshots(
                 records_written += 1
                 endpoint_counts["single_account"] += 1
 
+            if "alot_matter" in selected_endpoints:
+                raw_json = fetch_opendart_alot_matter(
+                    api_key=api_key,
+                    corp_code=corp_code,
+                    bsns_year=bsns_year,
+                    reprt_code=reprt_code,
+                    timeout_seconds=timeout_seconds,
+                    get_json=requester_json,
+                )
+                record = build_opendart_raw_snapshot_record(
+                    endpoint_name="alot_matter",
+                    code=code,
+                    request_date=f"{bsns_year}:{reprt_code}",
+                    raw_json=_with_request_context(raw_json, code=code, corp_code=corp_code),
+                )
+                _write_record(handle, record)
+                records_written += 1
+                endpoint_counts["alot_matter"] += 1
+
     return OpenDartSnapshotCollectionResult(
         output_path=output_path,
         records_written=records_written,
@@ -355,6 +392,28 @@ def fetch_opendart_single_account(
     requester = get_json or _get_json
     return requester(
         f"{OPENDART_BASE_URL}{OPENDART_V1_4_ENDPOINTS['single_account']['api_path']}",
+        {
+            "crtfc_key": api_key,
+            "corp_code": corp_code,
+            "bsns_year": bsns_year,
+            "reprt_code": reprt_code,
+        },
+        timeout_seconds,
+    )
+
+
+def fetch_opendart_alot_matter(
+    *,
+    api_key: str,
+    corp_code: str,
+    bsns_year: str,
+    reprt_code: str,
+    timeout_seconds: int,
+    get_json: JsonGet | None = None,
+) -> dict[str, Any]:
+    requester = get_json or _get_json
+    return requester(
+        f"{OPENDART_BASE_URL}{OPENDART_V1_4_ENDPOINTS['alot_matter']['api_path']}",
         {
             "crtfc_key": api_key,
             "corp_code": corp_code,

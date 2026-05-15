@@ -29,7 +29,7 @@ All outputs remain:
 | v1.2 | baseline ML selector application | baseline selector comparison packet | ML/evaluator | complete |
 | v1.3 | cost/turnover/liquidity reliability layer | reliability adjustment and sensitivity packet | backtest/simulation + quant governance | implemented with liquidity data gaps reported |
 | v1.4 | point-in-time revision layer | point-in-time revision evidence packet | quant governance + data-support lane | temporary complete / diagnostic-only closure; KIS raw snapshots continue as data support only |
-| v1.5 | point-in-time valuation + quality/profitability layer | candidate-only valuation, quality, and profitability evidence packet | quant governance | planned |
+| v1.5 | point-in-time valuation + quality/profitability layer | candidate-only valuation, quality, and profitability evidence packet | quant governance | limited complete / contract and fixture path complete; real PIT fundamentals not verified |
 | v1.6 | confidence/robustness/review-priority integration | confidence and manual review priority packet | ML/evaluator + root governance | planned |
 | v2.0 readiness | readiness packet | v2.0 readiness packet with unresolved blockers | root governance | planned |
 
@@ -119,15 +119,21 @@ or incremental evidence until a later explicit PIT promotion review passes.
 Goal: add point-in-time valuation plus quality/profitability evidence as
 candidate-only review support.
 
-- [ ] Require point-in-time availability proof before any valuation,
+- [x] Require point-in-time availability proof before any valuation,
   quality, or profitability field is used.
-- [ ] Keep valuation/fundamental outputs candidate-only and inactive for
+- [x] Keep valuation/fundamental outputs candidate-only and inactive for
   production ranking.
-- [ ] Separate valuation, quality, profitability, and price-only evidence.
-- [ ] Block valuation/fundamental scoring activation.
-- [ ] Run targeted valuation/quality/profitability tests and guardrail wording
+- [x] Separate valuation, quality, profitability, and price-only evidence.
+- [x] Block valuation/fundamental scoring activation.
+- [x] Run targeted valuation/quality/profitability tests and guardrail wording
   checks.
-- [ ] Produce the v1.5 completion packet.
+- [x] Produce the v1.5 completion packet.
+
+Limited closure rule: current v1.5 artifacts implement the contract,
+validators, manifests, sector-relative scaffolding, incremental-comparison
+framework, ManualReviewPacket-compatible section, and fixture coverage.
+Repository-wide real PIT fundamental coverage remains unverified, so v1.5
+remains LIMITED COMPLETE rather than real-data valuation evidence.
 
 ## v1.6 Checklist
 

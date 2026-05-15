@@ -20,11 +20,12 @@ class OpenDartV14SnapshotTest(unittest.TestCase):
     def test_endpoint_contract_covers_v1_4_supplement_sources(self):
         self.assertEqual(
             set(OPENDART_V1_4_ENDPOINTS),
-            {"corp_code", "disclosure_list", "single_account"},
+            {"corp_code", "disclosure_list", "single_account", "alot_matter"},
         )
         self.assertEqual(OPENDART_V1_4_ENDPOINTS["corp_code"]["api_path"], "/api/corpCode.xml")
         self.assertEqual(OPENDART_V1_4_ENDPOINTS["disclosure_list"]["api_path"], "/api/list.json")
         self.assertEqual(OPENDART_V1_4_ENDPOINTS["single_account"]["api_path"], "/api/fnlttSinglAcnt.json")
+        self.assertEqual(OPENDART_V1_4_ENDPOINTS["alot_matter"]["api_path"], "/api/alotMatter.json")
 
     def test_api_key_readiness_loads_parent_api_management_without_values(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -107,6 +108,20 @@ class OpenDartV14SnapshotTest(unittest.TestCase):
                             }
                         ],
                     }
+                if "alotMatter.json" in url:
+                    return {
+                        "status": "000",
+                        "list": [
+                            {
+                                "rcept_no": "20250318000001",
+                                "corp_code": params["corp_code"],
+                                "se": "dividend_per_share",
+                                "stock_knd": "common",
+                                "thstrm": "1000",
+                                "stlm_dt": "2025-12-31",
+                            }
+                        ],
+                    }
                 raise AssertionError(url)
 
             result = collect_opendart_v1_4_raw_snapshots(
@@ -122,12 +137,13 @@ class OpenDartV14SnapshotTest(unittest.TestCase):
                 get_bytes=fake_bytes,
             )
 
-            self.assertEqual(result.records_written, 3)
+            self.assertEqual(result.records_written, 4)
             self.assertEqual(result.endpoint_counts["corp_code"], 1)
             self.assertEqual(result.endpoint_counts["disclosure_list"], 1)
             self.assertEqual(result.endpoint_counts["single_account"], 1)
+            self.assertEqual(result.endpoint_counts["alot_matter"], 1)
             self.assertEqual(result.missing_codes, ())
-            self.assertEqual(len(json_calls), 2)
+            self.assertEqual(len(json_calls), 3)
             records = [
                 json.loads(line)
                 for line in Path(result.output_path).read_text(encoding="utf-8").splitlines()
@@ -135,7 +151,7 @@ class OpenDartV14SnapshotTest(unittest.TestCase):
             ]
             for record in records:
                 validate_opendart_raw_snapshot_record(record)
-            self.assertEqual([record["endpoint_name"] for record in records], ["corp_code", "disclosure_list", "single_account"])
+            self.assertEqual([record["endpoint_name"] for record in records], ["corp_code", "disclosure_list", "single_account", "alot_matter"])
             self.assertEqual(records[1]["raw_json"]["_request_context"]["corp_code"], "00126380")
 
     def _make_project(self, tmpdir):

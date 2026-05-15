@@ -15,7 +15,11 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from stock_core.cache.csv_cache import get_financial_statement_cache_path, save_financial_statements
-from stock_core.providers.naver_finance import _make_unique_column_names, extract_financial_statements_from_html
+from stock_core.providers.naver_finance import (
+    _make_unique_column_names,
+    extract_financial_statements_from_html,
+    extract_ratio_policy_snapshot_from_html,
+)
 
 
 METRIC_REVENUE = "\ub9e4\ucd9c\uc561"
@@ -73,6 +77,27 @@ HTML_NON_PERIOD_SAMPLE = f"""
 </html>
 """
 
+HTML_RATIO_POLICY_SAMPLE = """
+<html>
+  <body>
+    종목 시세 정보 2026년 05월 15일 16시 10분 기준 장마감
+    날짜 2026.05.15 기준(KRX 장마감)
+    현재가 270,500
+    투자정보
+    상장주식수 5,846,278,608
+    PER/EPS PER l EPS(2025.12)
+    PER = 현재가 ÷ EPS EPS는 지배기업귀속 최근 4분기 합산 순이익을 수정평균발행주식수로 나눈 값이며,
+    보통주와 우선주를 합산해서 계산합니다.
+    41.21 배 l 6,564 원
+    PBR l BPS (2025.12)
+    PBR= 현재가 ÷ BPS BPS는 최근 분기 자본총계를 수정기말유통주식수로 나눈 값이며,
+    보통주와 우선주를 합산해서 계산합니다.
+    4.23 배 l 63,997 원
+    배당수익률 = (배당금 / 현재가) x 100
+  </body>
+</html>
+"""
+
 
 class NaverFinanceTests(unittest.TestCase):
     def test_make_unique_column_names_preserves_first_label(self) -> None:
@@ -95,6 +120,36 @@ class NaverFinanceTests(unittest.TestCase):
         frame = extract_financial_statements_from_html(HTML_NON_PERIOD_SAMPLE, code="005930")
 
         self.assertTrue(frame.empty)
+
+    def test_extract_ratio_policy_snapshot_from_html_records_reference_policy(self) -> None:
+        row = extract_ratio_policy_snapshot_from_html(
+            HTML_RATIO_POLICY_SAMPLE,
+            code="005930",
+            fetched_at="2026-05-15T11:00:00+00:00",
+            raw_html_path="raw.html",
+        )
+
+        self.assertEqual(row["ticker"], "005930")
+        self.assertEqual(row["vendor_snapshot_date"], "2026-05-15T11:00:00+00:00")
+        self.assertEqual(row["price_date"], "2026-05-15")
+        self.assertEqual(row["price_value"], "270,500")
+        self.assertEqual(row["price_policy"], "naver_main_current_price")
+        self.assertEqual(row["adjusted_price_policy"], "not_disclosed_by_naver_main")
+        self.assertIn("modified_average_issued_shares", row["eps_policy"])
+        self.assertIn("modified_period_end_floating_shares", row["bps_policy"])
+        self.assertEqual(row["per_formula"], "current_price_divided_by_eps_vendor_reported")
+        self.assertEqual(row["pbr_formula"], "current_price_divided_by_bps_vendor_reported")
+        self.assertIn("adjusted_price_policy", row["missing_policy_fields"])
+
+    def test_ratio_policy_source_available_date_uses_kst_crawl_date(self) -> None:
+        row = extract_ratio_policy_snapshot_from_html(
+            HTML_RATIO_POLICY_SAMPLE,
+            code="005930",
+            fetched_at="2026-05-15T15:30:00+00:00",
+            raw_html_path="raw.html",
+        )
+
+        self.assertEqual(row["source_available_date"], "2026-05-16")
 
     def test_save_financial_statements_uses_expected_cache_path(self) -> None:
         frame = pd.DataFrame(

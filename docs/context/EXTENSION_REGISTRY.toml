@@ -527,6 +527,100 @@ blocked = [
   "production activation",
 ]
 
+[extension.v1_5_valuation_quality_profitability]
+state = "limited_complete_contract_fixture_path"
+permission = "v1.5 point-in-time valuation plus quality/profitability layer is implemented as candidate-only manual-review diagnostics with pending-data PIT validation, feature manifests, sector-relative scaffolding, incremental-comparison framework, and manual-review section; real PIT fundamental coverage remains unverified, so outputs must not activate valuation/fundamental scoring, production ranking, live trading, brokerage, orders, buy/sell/hold wording, automatic rebalance instructions, future-return claims, proven-alpha language, or production activation"
+context = "docs/extension/v1_5_valuation_quality_profitability_layer.md"
+input_route = "extension.v1_4_revision_layer"
+owner_lane = "Quant_mvp quant governance + valuation_review gate"
+runner = "Quant_mvp/backtest_mvp/valuation_quality_layer_v1_5.py"
+tests = "tests/backtest/test_v1_5_valuation_quality_layer.py"
+layer_registry_entry = "config/layer_registry.toml::v1_5_valuation_quality_profitability_layer"
+chart_local_pending_handoff_builder = "chart_mvp/src/stock_core/ml/v1_5_valuation_quality_handoff.py"
+chart_local_pending_handoff_cli = "chart_mvp/scripts/build_v1_5_valuation_quality_handoff.py"
+chart_local_pending_handoff_output = "chart_mvp/data/v1_5_valuation/v1_5_chart_local_valuation_quality_pending_handoff_latest.csv"
+chart_local_pending_handoff_manifest = "chart_mvp/data/v1_5_valuation/v1_5_chart_local_valuation_quality_pending_manifest_latest.json"
+local_supplementation_builder = "chart_mvp/src/stock_core/ml/v1_5_supplementation.py"
+local_supplementation_cli = "chart_mvp/scripts/build_v1_5_supplementation.py"
+local_supplementation_optional_raw_snapshot = "chart_mvp/data/opendart_v1_4_raw_snapshots/*/*.jsonl"
+local_supplementation_pipeline_cli = "chart_mvp/scripts/run_v1_5_fundamental_supplementation_pipeline.py"
+completion_state = "LIMITED COMPLETE until real PIT fundamental data coverage and paired incremental comparison artifacts are verified"
+tests_required = [
+  "PIT availability alignment",
+  "missing availability metadata",
+  "stale/restated data handling",
+  "feature allowlist and manifest behavior",
+  "sector-relative raw vs adjusted separation",
+  "ManualReviewPacket valuation section",
+  "LayerRegistry status",
+  "chart_mvp local pending-data handoff builder",
+  "chart_mvp local supplementation builder",
+  "chart_mvp valuation formula reconciliation review",
+  "chart_mvp chart-ratio policy reconstruction",
+  "chart_mvp valuation scoring readiness guardrail",
+]
+output_artifacts = [
+  "v1_5_fundamental_data_contract",
+  "v1_5_pit_validation_report",
+  "v1_5_valuation_feature_manifest",
+  "v1_5_quality_profitability_feature_manifest",
+  "v1_5_investment_feature_manifest",
+  "v1_5_sector_relative_valuation_report",
+  "v1_5_incremental_valuation_evidence_report",
+  "v1_5_manual_review_valuation_section",
+  "v1_5_validation_manifest",
+  "v1_5_completion_report",
+  "v1_5_chart_local_valuation_quality_pending_handoff",
+  "v1_5_chart_local_valuation_quality_pending_manifest",
+  "v1_5_dart_pit_metadata_enriched_handoff",
+  "v1_5_dart_pit_metadata_enriched_manifest",
+  "v1_5_opendart_fundamental_collection",
+  "v1_5_opendart_fundamental_collection_manifest",
+  "v1_5_fundamental_value_reconciliation",
+  "v1_5_fundamental_value_reconciliation_manifest",
+  "v1_5_valuation_formula_reconciliation_review",
+  "v1_5_valuation_formula_reconciliation_review_manifest",
+  "v1_5_valuation_formula_components",
+  "v1_5_valuation_formula_components_manifest",
+  "v1_5_chart_ratio_policy_reconstruction",
+  "v1_5_chart_ratio_policy_reconstruction_manifest",
+  "v1_5_valuation_formula_policy",
+  "v1_5_valuation_scoring_readiness",
+  "v1_5_valuation_scoring_readiness_manifest",
+  "v1_5_naver_ratio_asof_snapshot_registry",
+  "v1_5_naver_ratio_asof_resolved",
+  "v1_5_canonical_valuation_component_table",
+  "v1_5_canonical_per_pbr_formula_policy",
+  "v1_5_per_pbr_reconciliation_matrix",
+  "v1_5_dividend_yield_component_table",
+  "v1_5_technical_ml_baseline_for_incremental",
+  "v1_5_technical_ml_plus_valuation_overlay",
+  "v1_5_incremental_valuation_real_comparison",
+  "v1_5_complete_readiness_gap_report",
+  "v1_5_completion_hygiene_report",
+  "v1_5_fundamental_source_lineage_report",
+  "v1_5_pit_policy_registry",
+  "v1_5_incremental_valuation_evidence_report",
+  "v1_5_missing_pit_fundamental_requirements",
+  "v1_5_limited_completion_update",
+]
+lineage = "EvaluationEvidenceV1 -> PIT fundamental handoff -> validation report -> valuation/quality/investment manifests -> sector-relative diagnostics -> incremental comparison framework -> manual review section"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+valuation_review_gate = ".agents/skills/valuation_review/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+blocked = [
+  "live trading or brokerage integration",
+  "orders or order generation",
+  "buy/sell/hold wording",
+  "production ranking replacement",
+  "automatic rebalance instructions",
+  "valuation/fundamental active scoring",
+  "new market-data ingestion or universe expansion",
+  "future-return claims",
+  "proven-alpha language",
+  "production activation",
+]
+
 [extension.v0_1n_candidate_ml]
 state = "superseded_by_predictive_probability_v0_2"
 permission = "archived reference folded into v0.2 prob_up_1d_candidate; not current progress and not an active implementation route"

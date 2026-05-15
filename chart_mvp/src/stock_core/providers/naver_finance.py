@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import re
 import time
+from datetime import UTC, datetime
+from hashlib import sha256
+from html import unescape
 from io import StringIO
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
@@ -22,6 +26,7 @@ HEADERS = {
         "Chrome/123.0.0.0 Safari/537.36"
     )
 }
+KST = ZoneInfo("Asia/Seoul")
 FINANCIAL_STATEMENT_ROW_KEYWORDS = (
     "\ub9e4\ucd9c\uc561",
     "\uc601\uc5c5\uc774\uc775",
@@ -36,6 +41,39 @@ FINANCIAL_STATEMENT_ROW_KEYWORDS = (
     "\ubc30\ub2f9\uc218\uc775\ub960",
 )
 FISCAL_PERIOD_LABEL_PATTERN = re.compile(r"\d{4}[/.-](?:\d{2}|Q[1-4])(?:\(E\))?")
+NAVER_RATIO_POLICY_SNAPSHOT_SCHEMA_VERSION = "v1_5_naver_ratio_policy_snapshot_v1_0"
+NAVER_RATIO_POLICY_SNAPSHOT_COLUMNS = [
+    "schema_version",
+    "ticker",
+    "vendor_name",
+    "vendor_or_origin",
+    "source_system",
+    "source_url",
+    "vendor_snapshot_date",
+    "vendor_as_of_date",
+    "source_available_date",
+    "source_available_policy",
+    "price_basis_datetime",
+    "price_date",
+    "price_value",
+    "price_policy",
+    "adjusted_price_policy",
+    "shares_outstanding",
+    "shares_policy",
+    "eps_policy",
+    "bps_policy",
+    "per_formula",
+    "pbr_formula",
+    "dividend_yield_formula",
+    "per_reported_value",
+    "eps_reported_value",
+    "pbr_reported_value",
+    "bps_reported_value",
+    "raw_html_sha256",
+    "raw_html_path",
+    "source_lineage_status",
+    "missing_policy_fields",
+]
 
 
 def build_session() -> requests.Session:
@@ -105,6 +143,173 @@ def fetch_main_page_html(
     )
     response.raise_for_status()
     return response.text
+
+
+def extract_ratio_policy_snapshot_from_html(
+    html: str,
+    code: str,
+    *,
+    fetched_at: str | None = None,
+    raw_html_path: str = "",
+) -> dict[str, str]:
+    """Extract reference-only PER/PBR policy metadata from a Naver main page.
+
+    The returned row is a crawl-time snapshot. It can document what the page
+    disclosed at fetch time, but it does not prove historical availability for
+    an earlier evaluation date by itself.
+    """
+
+    fetched_at_text = fetched_at or datetime.now(UTC).replace(microsecond=0).isoformat()
+    text = _html_to_text(html)
+    price_date = _extract_price_date(text)
+    price_value = _first_match(text, r"\ud604\uc7ac\uac00\s*([\d,]+)")
+    shares_outstanding = _first_match(text, r"\uc0c1\uc7a5\uc8fc\uc2dd\uc218\s*([\d,]+)")
+    per_value, eps_value = _extract_pair_after_label(text, "PER/EPS")
+    pbr_value, bps_value = _extract_pair_after_label(text, "PBR")
+    per_formula = (
+        "current_price_divided_by_eps_vendor_reported"
+        if re.search(r"PER\s*=\s*\ud604\uc7ac\uac00\s*(?:\u00f7|/)\s*EPS", text)
+        else ""
+    )
+    pbr_formula = (
+        "current_price_divided_by_bps_vendor_reported"
+        if re.search(r"PBR\s*=\s*\ud604\uc7ac\uac00\s*(?:\u00f7|/)\s*BPS", text)
+        else ""
+    )
+    dividend_formula = (
+        "dividend_per_share_divided_by_current_price_vendor_reported"
+        if re.search(r"\ubc30\ub2f9\uc218\uc775\ub960\s*=\s*\(\s*\ubc30\ub2f9\uae08\s*/\s*\ud604\uc7ac\uac00\s*\)\s*x\s*100", text)
+        else ""
+    )
+    eps_policy = (
+        "controlling_owner_recent_4q_net_income_divided_by_modified_average_issued_shares_common_plus_preferred"
+        if "\ucd5c\uadfc 4\ubd84\uae30 \ud569\uc0b0 \uc21c\uc774\uc775" in text and "\uc218\uc815\ud3c9\uade0\ubc1c\ud589\uc8fc\uc2dd\uc218" in text
+        else ""
+    )
+    bps_policy = (
+        "recent_quarter_equity_divided_by_modified_period_end_floating_shares_common_plus_preferred"
+        if "\ucd5c\uadfc \ubd84\uae30 \uc790\ubcf8\ucd1d\uacc4" in text and "\uc218\uc815\uae30\ub9d0\uc720\ud1b5\uc8fc\uc2dd\uc218" in text
+        else ""
+    )
+    shares_policy = "|".join(part for part in [eps_policy, bps_policy] if part)
+    price_policy = "naver_main_current_price" if per_formula or pbr_formula else ""
+    source_date = _source_available_date_from_fetched_at(fetched_at_text)
+    row = {
+        "schema_version": NAVER_RATIO_POLICY_SNAPSHOT_SCHEMA_VERSION,
+        "ticker": code,
+        "vendor_name": "Naver Finance",
+        "vendor_or_origin": "Naver Finance main.naver",
+        "source_system": "NaverFinance_main_page",
+        "source_url": f"{MAIN_URL}?code={code}",
+        "vendor_snapshot_date": fetched_at_text,
+        "vendor_as_of_date": price_date,
+        "source_available_date": source_date,
+        "source_available_policy": "crawl_fetch_date_only_not_historical_vendor_publication_date",
+        "price_basis_datetime": _extract_price_basis_datetime(text),
+        "price_date": price_date,
+        "price_value": price_value,
+        "price_policy": price_policy,
+        "adjusted_price_policy": "not_disclosed_by_naver_main",
+        "shares_outstanding": shares_outstanding,
+        "shares_policy": shares_policy,
+        "eps_policy": eps_policy,
+        "bps_policy": bps_policy,
+        "per_formula": per_formula,
+        "pbr_formula": pbr_formula,
+        "dividend_yield_formula": dividend_formula,
+        "per_reported_value": per_value,
+        "eps_reported_value": eps_value,
+        "pbr_reported_value": pbr_value,
+        "bps_reported_value": bps_value,
+        "raw_html_sha256": sha256(html.encode("utf-8")).hexdigest(),
+        "raw_html_path": raw_html_path,
+        "source_lineage_status": "policy_extracted_reference_snapshot",
+        "missing_policy_fields": "",
+    }
+    row["missing_policy_fields"] = "|".join(_missing_ratio_policy_fields(row))
+    if row["missing_policy_fields"]:
+        row["source_lineage_status"] = "policy_extracted_partial_reference_snapshot"
+    return row
+
+
+def crawl_ratio_policy_snapshot(code: str, timeout: int = 10) -> dict[str, str]:
+    """Fetch Naver main page and extract reference-only ratio policy metadata."""
+
+    fetched_at = datetime.now(UTC).replace(microsecond=0).isoformat()
+    with build_session() as session:
+        html = fetch_main_page_html(code=code, session=session, timeout=timeout)
+    return extract_ratio_policy_snapshot_from_html(html, code, fetched_at=fetched_at)
+
+
+def _html_to_text(html: str) -> str:
+    text = re.sub(r"(?is)<script.*?</script>|<style.*?</style>", " ", html)
+    text = re.sub(r"<[^>]+>", " ", text)
+    return re.sub(r"\s+", " ", unescape(text)).strip()
+
+
+def _source_available_date_from_fetched_at(fetched_at: str) -> str:
+    value = str(fetched_at or "").strip()
+    if not value:
+        return ""
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return value[:10] if len(value) >= 10 else ""
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=KST)
+    return parsed.astimezone(KST).date().isoformat()
+
+
+def _extract_price_basis_datetime(text: str) -> str:
+    match = re.search(
+        r"(\d{4})\ub144\s*(\d{2})\uc6d4\s*(\d{2})\uc77c\s*(\d{2})\uc2dc\s*(\d{2})\ubd84\s*\uae30\uc900\s*([^\s]+)",
+        text,
+    )
+    if not match:
+        return ""
+    year, month, day, hour, minute, suffix = match.groups()
+    return f"{year}-{month}-{day}T{hour}:{minute}:00[{suffix}]"
+
+
+def _extract_price_date(text: str) -> str:
+    match = re.search(r"\ub0a0\uc9dc\s*(\d{4})\.(\d{2})\.(\d{2})\s*\uae30\uc900", text)
+    if match:
+        return "-".join(match.groups())
+    basis = _extract_price_basis_datetime(text)
+    return basis[:10] if basis else ""
+
+
+def _extract_pair_after_label(text: str, label: str) -> tuple[str, str]:
+    if label == "PER/EPS":
+        match = re.search(r"PER/EPS\s+PER\s*l\s*EPS.*?([\d,.]+)\s*\ubc30\s*l\s*([\d,.]+)\s*\uc6d0", text)
+        if match:
+            return match.group(1), match.group(2)
+    if label == "PBR":
+        match = re.search(r"PBR\s*l\s*BPS.*?([\d,.]+)\s*\ubc30\s*l\s*([\d,.]+)\s*\uc6d0", text)
+        if match:
+            return match.group(1), match.group(2)
+    index = text.find(label)
+    if index < 0:
+        return "", ""
+    match = re.search(r"([\d,.]+)\s*\ubc30\s*l\s*([\d,.]+)\s*\uc6d0", text[index:])
+    if not match:
+        return "", ""
+    return match.group(1), match.group(2)
+
+
+def _first_match(text: str, pattern: str) -> str:
+    match = re.search(pattern, text)
+    return match.group(1) if match else ""
+
+
+def _missing_ratio_policy_fields(row: dict[str, str]) -> list[str]:
+    missing = []
+    for field in ("vendor_snapshot_date", "price_date", "price_policy", "shares_policy", "source_available_date"):
+        if not row.get(field):
+            missing.append(field)
+    if row.get("adjusted_price_policy") == "not_disclosed_by_naver_main":
+        missing.append("adjusted_price_policy")
+    return missing
 
 
 def _flatten_column_name(column: object) -> str:

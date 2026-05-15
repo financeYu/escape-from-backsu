@@ -184,6 +184,7 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v1_2_baseline_ml_selector_application.md`
 - `docs/extension/v1_3_cost_turnover_liquidity_reliability_layer.md`
 - `docs/extension/v1_4_revision_layer.md`
+- `docs/extension/v1_5_valuation_quality_profitability_layer.md`
 - `reports/review/v1_0_rc_ml_reproduction_report.md`
 - `config/horizon_policy.toml`
 - `config/weight_config_loop.toml`
@@ -307,7 +308,7 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | v1.2 baseline ML selector application | COMPLETE / evidence-only selector comparison implemented |
 | v1.3 cost/turnover/liquidity reliability layer | IMPLEMENTED / evidence-only reliability layer with liquidity data gaps reported |
 | v1.4 point-in-time revision layer | TEMPORARY COMPLETE / diagnostic-only closure; KIS raw snapshot collection may continue as data support, but v1.4 features and incremental comparison remain blocked until explicit PIT promotion |
-| v1.5 point-in-time valuation + quality/profitability layer | PLANNED / candidate-only staged release |
+| v1.5 point-in-time valuation + quality/profitability layer | LIMITED COMPLETE / contract, PIT validator, manifests, sector diagnostics, incremental framework, manual-review section, chart_mvp local pending-data handoff, local supplementation plan, OpenDART collection, value reconciliation report, formula reconciliation review, formula components, chart-ratio policy reconstruction, valuation scoring readiness guardrail, source-lineage report, PIT policy registry, completion hygiene report, and COMPLETE-readiness gap report exist; formula-mappable quality/profitability fields reconcile diagnostically, dividend_yield has a PIT diagnostic path for current candidates but is not promoted, local P/E and P/B are internally reconstructable from chart-cache EPS/BPS but still differ from evaluation-date close formula, partial diagnostic readiness is separated from blocked valuation readiness, and valuation scoring remains blocked from activation |
 | v1.6 confidence/robustness/review-priority integration | PLANNED / manual-review-support staged release |
 | v2.0 readiness packet | PLANNED / readiness packet only |
 

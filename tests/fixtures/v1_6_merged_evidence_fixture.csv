@@ -1,0 +1,7 @@
+candidate_id,ticker,evaluation_date,horizon_id,split_id,seed,layer_id,evidence_status,coverage,data_quality,stability,evidence_value,source_artifact,lineage_ref,limitations
+CANDIDATE_A,005930,2026-05-14,1d,walk_forward_a,1,profitability,diagnostic_ready,0.92,0.90,0.86,0.80,v1_1_profitability_fixture,profitability:001,
+CANDIDATE_A,005930,2026-05-14,1w,walk_forward_b,2,ml,diagnostic_ready,0.88,0.87,0.84,0.74,v1_2_ml_fixture,ml:001,
+CANDIDATE_A,005930,2026-05-14,1m,walk_forward_c,3,cost,diagnostic_ready,0.86,0.85,0.82,0.69,v1_3_cost_fixture,cost:001,
+CANDIDATE_B,000660,2026-05-14,1d,walk_forward_a,1,profitability,partial_diagnostic_ready,0.58,0.55,0.42,0.30,v1_5_handoff_fixture,valuation:002,limited quality evidence
+CANDIDATE_B,000660,2026-05-14,1w,walk_forward_b,2,ml,blocked_by_reconciliation,0.57,0.54,0.41,0.32,v1_5_handoff_fixture,valuation:002,valuation reconciliation unresolved
+CANDIDATE_B,000660,2026-05-14,1m,walk_forward_c,3,cost,skipped_missing_baseline_artifacts,0.56,0.53,0.40,0.33,v1_5_handoff_fixture,valuation:002,baseline artifact missing

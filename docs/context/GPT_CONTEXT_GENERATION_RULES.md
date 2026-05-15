@@ -13,8 +13,9 @@ waste, clear baseline trust, and no repetitive reuse of old Step summaries.
 ## Current Route Rule
 
 - Post-MVP v0.3 research-to-strategy adoption is the active route.
-- Post-v1.0 v1.x staged release development is active; v1.1 through v1.3
-  are implemented, and v1.4 point-in-time revision is the next planned stage.
+- Post-v1.0 v1.x staged release development is active; v1.1 through v1.5
+  are upstream evidence/status layers, and v1.6 is the manual-review priority
+  integration route.
 - KOSPI200 technical MVP v0.1 is frozen archive baseline.
 - v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only.
 - GPT-facing context must treat Step 1-20 as trusted archive baseline.
@@ -36,8 +37,9 @@ Use this shape:
 1. current baseline, compressed to no more than 3 confirmed facts
 2. current request and decision needed now
 3. boundaries and forbidden scope for the current request
-4. route-only task file paths for deeper lookup
-5. instruction to produce fresh reasoning for the current decision
+4. north-star goal memory and evidence conditions/gaps for the current request
+5. route-only task file paths for deeper lookup
+6. instruction to produce fresh reasoning for the current decision
 
 Do not include a Step-by-Step roadmap table in default GPT context.
 Do not include this rules file, the budget policy, or the routing index in the
@@ -75,8 +77,10 @@ Compress baseline context to the smallest useful set. Prefer:
 
 - v0.3 research-to-strategy adoption is the active route.
 - v1.x staged release development is active after the local v1.0 freeze;
-  v1.1 net profitability, v1.2 ML selector comparison, and v1.3
-  cost/turnover/liquidity reliability are implemented, with v1.4 next.
+  v1.1 net profitability, v1.2 ML selector comparison, v1.3
+  cost/turnover/liquidity reliability, v1.4 revision diagnostics, and v1.5
+  valuation/quality/profitability readiness are upstream evidence/status
+  layers for v1.6 manual review priority.
 - v0.1 is frozen KOSPI200 technical baseline; v0.2 `prob_up_1d_candidate` is
   archived/supporting compatibility only.
 - Valuation/fundamental activation, universe expansion, new data ingestion,
@@ -110,6 +114,28 @@ or old score catalog entries.
 Keep confirmed context facts separate from the new decision. Context briefs
 should say what is known, what is being decided now, and what must stay out of
 scope.
+
+## North-Star Goal Memory Rule
+
+When the user asks to refresh GPT context around their investing/quant goal,
+record the goal as an evidence objective, not as a performance claim. The
+brief may say the user wants to use machine learning on KOSPI200 strategy
+candidates with technical, valuation, quality, risk, cost, and robustness
+evidence to identify review-preferred candidates with repeatable historical
+risk-adjusted evidence. It must also state that this is not a live trading
+system, not a guarantee, and not authorization for valuation/fundamental score
+activation or production ranking.
+
+The brief should ask GPT to report:
+
+- required evidence conditions, such as point-in-time data, no-lookahead
+  labels/features, predeclared candidates, benchmark/risk/cost comparisons,
+  walk-forward or split stability, and lineage
+- current gaps or blockers, especially valuation readiness limits, formula
+  reconciliation limits, missing upstream artifacts, insufficient coverage,
+  or manual-review-only constraints
+- the single highest-priority next task that advances evidence quality without
+  crossing hard stops
 
 ## GitHub/Local Work Rule
 
@@ -147,6 +173,16 @@ Status: routing aid, not an authority document.
 ## Current Request
 - Task:
 - Decision needed:
+
+## North-Star Goal Memory
+- Goal:
+- Current framing:
+- Priority:
+
+## Conditions And Gaps To Report
+- Required conditions:
+- Current gaps or blockers:
+- Highest-priority next task:
 
 ## Do Not Repeat
 Do not repeat completed Step history. Use the baseline as trusted context and focus on the current decision.

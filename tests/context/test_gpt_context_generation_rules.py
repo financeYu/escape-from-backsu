@@ -27,6 +27,9 @@ def test_gpt_rules_define_required_budget_and_repetition_rules() -> None:
     assert ".agents/skills/gpt-context-refresh/SKILL.md" in text
     assert "v0.3 research-to-strategy adoption is the active route" in text
     assert "v1.x staged release development is active" in text
+    assert "North-Star Goal Memory Rule" in text
+    assert "required evidence conditions" in text
+    assert "single highest-priority next task" in text
     assert (
         "Do not repeat completed Step history. Use the baseline as trusted context and focus on the current decision."
         in text
@@ -85,6 +88,8 @@ def test_gpt_context_quant_is_the_submission_brief() -> None:
 
     assert len(text.splitlines()) <= 80
     assert "GPT Context Quant" in text
+    assert "## North-Star Goal Memory" in text
+    assert "## Conditions And Gaps To Report" in text
     assert "Do not repeat completed Step history" in text
     assert "GPT_CONTEXT_GENERATION_RULES.md" not in text
     assert "CONTEXT_ROUTING_INDEX.md" not in text
@@ -103,7 +108,12 @@ def test_gpt_brief_builder_stays_under_80_lines() -> None:
     assert len(text.splitlines()) <= 80
     assert text.count("v0.3 research-to-strategy adoption") == 1
     assert text.count("v1.x staged release development") == 1
+    assert "v1.1-v1.5 are upstream evidence/status layers" in text
     assert "v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only" in text
+    assert "## North-Star Goal Memory" in text
+    assert "## Conditions And Gaps To Report" in text
+    assert "review-preferred candidates with repeatable historical risk-adjusted support" in text
+    assert "not a live trading system, performance guarantee, or expected-return claim" in text
     assert (
         "Do not repeat completed Step history. Use the baseline as trusted context and focus on the current decision."
         in text

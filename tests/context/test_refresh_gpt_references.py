@@ -40,6 +40,9 @@ def test_refresh_gpt_references_updates_both_gpt_files(tmp_path: Path) -> None:
     assert "Prepare a focused GPT reference for the candidate ML gate." in brief_text
     assert "Post-MVP v0.3 research-to-strategy adoption is the active route." in brief_text
     assert "Post-v1.0 v1.x staged release development is active" in brief_text
+    assert "## North-Star Goal Memory" in brief_text
+    assert "## Conditions And Gaps To Report" in brief_text
+    assert "not a live trading system, performance guarantee, or expected-return claim" in brief_text
     assert len(brief_text.splitlines()) <= 80
 
 
@@ -123,3 +126,9 @@ def _write_minimal_project(root: Path) -> None:
     (root / "docs/context/EXTENSION_REGISTRY.toml").write_text("status = \"test\"", encoding="utf-8")
     (root / "docs/extension").mkdir(parents=True, exist_ok=True)
     (root / "docs/extension/v1_x_staged_release_plan.md").write_text("v1.x", encoding="utf-8")
+    (root / "docs/extension/v1_1_net_profitability_evidence_runner.md").write_text("v1.1", encoding="utf-8")
+    (root / "docs/extension/v1_2_baseline_ml_selector_application.md").write_text("v1.2", encoding="utf-8")
+    (root / "docs/extension/v1_3_cost_turnover_liquidity_reliability_layer.md").write_text("v1.3", encoding="utf-8")
+    (root / "docs/extension/v1_4_revision_layer.md").write_text("v1.4", encoding="utf-8")
+    (root / "docs/extension/v1_5_valuation_quality_profitability_layer.md").write_text("v1.5", encoding="utf-8")
+    (root / "docs/extension/v1_6_confidence_robustness_review_priority.md").write_text("v1.6", encoding="utf-8")

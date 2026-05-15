@@ -17,7 +17,7 @@ import tomllib
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_HORIZON_POLICY_CONFIG = PROJECT_ROOT / "config" / "horizon_policy.toml"
 DEFAULT_HORIZON_ID = "1d"
-SUPPORTED_HORIZON_IDS = frozenset({"1d", "1w", "1m"})
+SUPPORTED_HORIZON_IDS = frozenset({"1d", "5d", "20d", "1w", "1m"})
 ALLOWED_SIGNAL_FREQUENCIES = frozenset({"daily", "weekly", "monthly"})
 ALLOWED_REBALANCE_FREQUENCIES = frozenset({"daily", "weekly", "monthly", "none"})
 ALLOWED_CALENDAR_POLICIES = frozenset({"trading_days"})

@@ -40,6 +40,32 @@ def test_horizon_policy_loads_1w() -> None:
     assert policy.calendar_policy == "trading_days"
 
 
+def test_horizon_policy_loads_5d() -> None:
+    policy = resolve_horizon_policy("5d")
+
+    assert policy.horizon_id == "5d"
+    assert policy.signal_frequency == "weekly"
+    assert policy.entry_lag_trading_days == 1
+    assert policy.holding_period_trading_days == 5
+    assert policy.rebalance_frequency == "weekly"
+    assert policy.label_horizon == "5d"
+    assert policy.simulation_horizon == "5d"
+    assert policy.calendar_policy == "trading_days"
+
+
+def test_horizon_policy_loads_20d() -> None:
+    policy = resolve_horizon_policy("20d")
+
+    assert policy.horizon_id == "20d"
+    assert policy.signal_frequency == "monthly"
+    assert policy.entry_lag_trading_days == 1
+    assert policy.holding_period_trading_days == 20
+    assert policy.rebalance_frequency == "monthly"
+    assert policy.label_horizon == "20d"
+    assert policy.simulation_horizon == "20d"
+    assert policy.calendar_policy == "trading_days"
+
+
 def test_horizon_policy_loads_1m() -> None:
     policy = resolve_horizon_policy("1m")
 
@@ -96,10 +122,18 @@ def test_horizon_policy_rebalance_frequency_is_simulation_only() -> None:
 
 def test_backtest_config_can_be_created_from_horizon_policy_without_changing_legacy_constructor() -> None:
     legacy = BacktestConfig()
-    config = BacktestConfig.from_horizon_policy("1w", top_n=3)
+    config = BacktestConfig.from_horizon_policy("5d", top_n=3)
 
     assert legacy.holding_period_days == 20
     assert config.holding_period_days == 5
     assert config.execution_lag_days == 1
     assert config.rebalance_frequency == "weekly"
     assert config.top_n == 3
+
+
+def test_backtest_config_uses_20d_horizon_for_monthly_rebalance() -> None:
+    config = BacktestConfig.from_horizon_policy("20d", top_n=3)
+
+    assert config.holding_period_days == 20
+    assert config.execution_lag_days == 1
+    assert config.rebalance_frequency == "monthly"

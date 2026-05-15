@@ -48,9 +48,11 @@ belong in docs or project-local skills.
   v1.1 net profitability evidence runner, v1.2 baseline ML selector
   application, v1.3 cost/turnover/liquidity reliability layer, v1.4
   point-in-time revision layer, v1.5 point-in-time valuation plus
-  quality/profitability layer, v1.6 confidence/robustness/review-priority
-  integration, and a later v2.0 readiness packet. All outputs remain
-  evidence-only, candidate-only, and manual-review-support only.
+  quality/profitability layer, v1.6 high-confidence prediction,
+  robustness, and reproducibility integration, and a later v2.0 readiness
+  packet. Outputs are model-evaluation and user decision-support artifacts;
+  they do not by themselves authorize brokerage, order generation, or live
+  execution.
 - v0.1 and v0.2 are archived reference states. They are not current progress
   and must not be loaded into active context unless a named
   provenance/regression/compatibility check requires them.
@@ -112,21 +114,40 @@ live trading or production activation.
 v0.4 starts after v0.3 feature matrix and label manifest preparation. It may
 check trainability, fit a baseline selector only when positive and negative
 classes and candidate-level evidence exist, and emit review-prioritization
-manifests. It is not a future-return prediction claim, trade signal, runtime
-ranking activation, or production activation path.
+manifests. It is not an unvalidated future-return claim, automated order
+signal, runtime ranking activation, or production activation path.
 
 v0.5 starts after v0.4 diagnostics and v0.4.2 evidence coverage checks as a
 private decision support route. It may organize evidence, current-condition
 status from approved KOSPI/KOSPI200 local lanes, risk flags, cost-sensitivity
-flags, coverage gaps, and manual review checklists. It must not answer with an
-instruction to transact.
+flags, coverage gaps, validated directional expectations, confidence
+summaries, and decision checklists. It must not generate brokerage orders,
+automatic sizing, automatic rebalance, or move-to-cash commands.
 
 v1.x starts after the local v1.0 freeze baseline. It prioritizes a fast
 historical or simulated net profitability display in v1.1, then improves
 reliability through ML comparison, cost/liquidity, point-in-time revision,
 candidate-only valuation/quality/profitability evidence, and confidence or
-review-priority integration. It is not a live trading, production activation,
-automatic rebalance, or future-return claim path.
+review-priority integration. v1.6 may implement high-confidence predictive
+modeling that estimates expected return, confidence, robustness, and
+reproducibility under predeclared validation. It is not a brokerage,
+automatic execution, automatic rebalance, or production activation path.
+
+Prediction and decision language policy:
+
+- The project should not repeat generic no-trading or evidence-only disclaimer
+  language in every output when the active task already has this route context.
+- The user owns the final buy, sell, hold, or no-action decision. Project
+  outputs may provide directional expected-return, confidence, uncertainty,
+  and reproducibility fields when those fields are produced by an approved
+  validation contract.
+- Block only automated execution language and unsupported claims: brokerage
+  instructions, order placement, position sizing, automatic rebalance,
+  unconditional future-return guarantees, or proven-alpha language without
+  validation.
+- Prefer precise model language such as validated, out-of-sample,
+  walk-forward, net-of-cost, calibrated, confidence-bounded, and
+  reproducibility-checked over blanket defensive phrasing.
 
 ## Direction Lock
 
@@ -193,20 +214,26 @@ The active v0.3 route authorizes candidate/evidence work only:
 - v0.4 trainability manifests, model manifests when training succeeds, and
   selector score manifests framed only as `AdoptionCandidate` review
   prioritization inputs
-- v0.5 `PersonalDecisionSupportPacket` contracts and packets framed only as
-  private evidence/risk/manual-check support
+- v0.5 `PersonalDecisionSupportPacket` contracts and packets framed as
+  private model evidence, expected-return/confidence summaries when validated,
+  risk context, and user-owned decision support
 - v1.0-rc readiness contracts and helpers through Phase 9 only:
   `HorizonPolicy`, `SimulationRunManifest`, `WeightConfig` loop,
   `LayerRegistry`, `EvaluationEvidenceV1`, ML/rule-based selector/evaluator,
   `ManualReviewPacket`, freeze-readiness validation packets, compatibility
   metadata, validation tests, and manual-review support
-- v1.x staged release planning and implementation for evidence-only,
-  candidate-only, manual-review-support outputs:
+- v1.x staged release planning and implementation for validated model
+  evaluation, prediction-confidence, and user decision-support outputs:
   v1.1 net profitability evidence runner, v1.2 baseline ML selector
   application, v1.3 cost/turnover/liquidity reliability layer, v1.4
   point-in-time revision layer, v1.5 point-in-time valuation plus
-  quality/profitability layer, v1.6 confidence/robustness/review-priority
-  integration, and v2.0 readiness packet preparation
+  quality/profitability layer, v1.6 high-confidence prediction,
+  robustness, reproducibility, and review-priority integration, and v2.0
+  readiness packet preparation
+- validated predictive model outputs that expose expected-return estimates,
+  confidence bands, calibration, walk-forward or out-of-sample stability,
+  net-of-cost sensitivity, failure conditions, and reproducibility evidence
+  for user-owned decision making
 - validation tests, route validators, no-lookahead checks, point-in-time checks,
   no-feedback checks, and review packets
 - work in the approved separate role branch/worktree for the owning lane
@@ -226,17 +253,16 @@ active contract.
 - New market-data ingestion or live vendor assumptions.
 - Live trading, brokerage integration, order generation, or real-money
   execution.
-- Buy/sell recommendation language or trade-signal framing for selector
-  outputs.
-- Order instructions, automatic position sizing, automatic rebalance,
-  move-to-cash commands, or future-return prediction claims from v0.5 decision
-  support packets.
+- Automated order instructions, brokerage workflows, automatic position
+  sizing, automatic rebalance, or move-to-cash commands.
+- Unsupported or unconditional future-return guarantees, proven-alpha
+  language, or predictive claims that lack the active validation contract.
 - Valuation/fundamental scoring activation.
 - v1.0 tag, release, push, or production-readiness declaration from freeze
   artifacts without explicit end-stage instruction.
 - Production ranking replacement, automatic rebalance instructions,
-  buy/sell/hold wording, future-return claims, or proven-alpha language from
-  v1.x evidence.
+  automated execution wording, unsupported future-return guarantees, or
+  proven-alpha language from v1.x outputs.
 
 ## Route Ownership
 

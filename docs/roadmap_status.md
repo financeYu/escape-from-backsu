@@ -23,8 +23,8 @@ freeze is COMPLETE. Post-v1.0 development is now staged as v1.x releases:
 v1.1 net profitability evidence runner, v1.2 baseline ML selector
 application, v1.3 cost/turnover/liquidity reliability layer, v1.4
 point-in-time revision layer, v1.5 point-in-time valuation plus
-quality/profitability layer, v1.6 confidence/robustness/review-priority
-integration, then a v2.0 readiness packet.
+quality/profitability layer, v1.6 high-confidence prediction,
+robustness, and reproducibility integration, then a v2.0 readiness packet.
 
 Product goal:
 
@@ -44,17 +44,20 @@ Direction lock:
   selector score manifests, and `AdoptionCandidate` review prioritization.
 - v0.5 consumes v0.3 evidence and v0.4 diagnostics as read-only inputs for
   `PersonalDecisionSupportPacket` preparation. It may organize evidence,
-  coverage gaps, risk flags, cost-sensitivity flags, and manual review
-  checklists, but it must not generate order instructions, position sizing, or
-  future-return claims.
+  coverage gaps, risk flags, cost-sensitivity flags, validated directional
+  expectations, confidence summaries, and user decision checklists, but it
+  must not generate brokerage orders, automatic sizing, automatic rebalance, or
+  move-to-cash commands.
 - v1.0-rc Phase 0 through Phase 9 prepare evidence-only readiness contracts.
   They are complete as the local v1.0 freeze baseline. They do not authorize
   tags, pushes, production activation, live execution, valuation/fundamental
   activation, or futures activation.
-- v1.x staged releases remain evidence-only, candidate-only, and
-  manual-review-support only. v1.x must not introduce live trading,
-  brokerage, orders, buy/sell/hold wording, production ranking replacement,
-  automatic rebalance instructions, future-return claims, or proven-alpha
+- v1.x staged releases now build toward validated predictive model outputs
+  for user-owned decisions. v1.x may expose directional expected-return,
+  confidence, calibration, and reproducibility fields when produced by an
+  approved validation contract. v1.x must not introduce live trading,
+  brokerage, orders, production ranking replacement, automatic rebalance
+  instructions, unsupported future-return guarantees, or proven-alpha
   language.
 - Do not route routine v0.3 work back through archived v0.1/v0.2 standards.
 - If a task is blocked, choose the next concrete v0.3 artifact:
@@ -71,13 +74,15 @@ Current baseline facts:
   evidence-only backtest/simulation, selector/evaluator review, and adoption
   evidence.
 - v0.4 is the active route for ML/rule selector application. It does not
-  authorize live trading, order generation, buy/sell recommendation language,
-  production activation, new market-data ingestion, or universe expansion.
+  authorize live trading, order generation, production activation, new
+  market-data ingestion, or universe expansion.
 - v0.5 is the active contract-only route for private personal decision support.
-  It does not authorize live trading, brokerage integration, order generation,
-  buy/sell/hold imperative language, automatic rebalance, move-to-cash
-  instructions, production activation, new market-data ingestion, universe
-  expansion, or valuation/fundamental scoring activation.
+  The user owns the final buy, sell, hold, or no-action decision. v0.5 may
+  organize model evidence, current-condition context, and decision factors, but
+  it does not authorize live trading, brokerage integration, order generation,
+  automatic rebalance, move-to-cash instructions, production activation, new
+  market-data ingestion, universe expansion, or valuation/fundamental scoring
+  activation.
 - v1.0-rc Phase 0 and Phase 1 are complete as readiness planning and audit
   documents. Phase 2 and Phase 3 are complete as `HorizonPolicy` and
   `SimulationRunManifest` readiness contracts. Phase 4 and Phase 5 are
@@ -231,14 +236,19 @@ Allowed now:
   succeeds, and selector score manifests limited to AdoptionCandidate review
   prioritization
 - v0.5 personal decision support contracts and packets limited to evidence
-  summary, risk flags, coverage gaps, current-condition status, diagnostic
-  references, and manual review checklists
+  summary, directional expected-return and confidence summaries when
+  validated, risk flags, coverage gaps, current-condition status, diagnostic
+  references, and user-owned decision checklists
 - v1.0-rc Phase 0 through Phase 9 readiness artifacts limited to scope/freeze
   planning, next-day / 1D hardcoding audit, `HorizonPolicy`,
   `SimulationRunManifest`, `WeightConfig` loop, `LayerRegistry`,
   `EvaluationEvidenceV1`, ML/rule selector/evaluator, `ManualReviewPacket`,
   and freeze-readiness validation packets
 - historical return/risk/performance summaries when framed as evidence only
+- v1.6 high-confidence predictive model work limited to validated
+  expected-return estimates, confidence bands, calibration, walk-forward or
+  out-of-sample stability, net-of-cost sensitivity, leakage checks,
+  reproducibility evidence, and documented failure conditions
 
 Still blocked without later explicit approval:
 
@@ -309,7 +319,7 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | v1.3 cost/turnover/liquidity reliability layer | IMPLEMENTED / evidence-only reliability layer with liquidity data gaps reported |
 | v1.4 point-in-time revision layer | TEMPORARY COMPLETE / diagnostic-only closure; KIS raw snapshot collection may continue as data support, but v1.4 features and incremental comparison remain blocked until explicit PIT promotion |
 | v1.5 point-in-time valuation + quality/profitability layer | LIMITED COMPLETE / contract, PIT validator, manifests, sector diagnostics, incremental framework, manual-review section, chart_mvp local pending-data handoff, local supplementation plan, OpenDART collection, value reconciliation report, formula reconciliation review, formula components, chart-ratio policy reconstruction, valuation scoring readiness guardrail, source-lineage report, PIT policy registry, completion hygiene report, and COMPLETE-readiness gap report exist; formula-mappable quality/profitability fields reconcile diagnostically, dividend_yield has a PIT diagnostic path for current candidates but is not promoted, local P/E and P/B are internally reconstructable from chart-cache EPS/BPS but still differ from evaluation-date close formula, partial diagnostic readiness is separated from blocked valuation readiness, and valuation scoring remains blocked from activation |
-| v1.6 confidence/robustness/review-priority integration | PLANNED / manual-review-support staged release |
+| v1.6 high-confidence prediction, robustness, and reproducibility integration | PLANNED / validated predictive model and user decision-support staged release |
 | v2.0 readiness packet | PLANNED / readiness packet only |
 
 ## Baseline Contracts
@@ -321,16 +331,17 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 - Generated evidence reports, runtime outputs, chart images, local caches, raw
   market data, `.env`, and secrets are not default context.
 - v0.3 evidence must not become automatic production activation.
-- v0.4 selector outputs must not become trade signals, order instructions,
-  runtime ranking activation, or production activation.
-- v0.5 personal decision support outputs must not become order instructions,
-  automatic position sizing, buy/sell/hold imperatives, move-to-cash commands,
-  runtime ranking activation, or production activation.
+- v0.4 selector outputs must not become order instructions, runtime ranking
+  activation, or production activation.
+- v0.5 personal decision support outputs may include model-derived directional
+  expectations and confidence summaries when validated, but must not become
+  order instructions, automatic position sizing, automatic rebalance,
+  move-to-cash commands, runtime ranking activation, or production activation.
 - v1.0 freeze completion and v1.x staged outputs must not become tag/release
   evidence, production activation, live execution, valuation/fundamental
   activation, futures/index activation, production ranking replacement,
-  automatic rebalance instructions, or future-return claims without later
-  explicit approval.
+  automatic rebalance instructions, or unsupported future-return guarantees
+  without later explicit approval.
 
 ## Research Ingestion State
 
@@ -350,7 +361,10 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 - config-first implementation
 - documented strategy candidate before evaluation
 - predeclared evaluation criteria before backtest/simulation
-- no automatic production activation from evaluation evidence
+- no automatic production activation from evaluation or prediction outputs
+- validate predictive outputs with out-of-sample or walk-forward evidence,
+  calibration checks, net-of-cost sensitivity, leakage checks, and documented
+  failure conditions before using them for user decision support
 - no active valuation/fundamental activation while valuation status is
   candidate-only
 - no price-only evidence as valuation language

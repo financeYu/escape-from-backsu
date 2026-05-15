@@ -275,6 +275,14 @@ class BacktestSecurityResult:
     exit_date: str | None = None
     execution_price: float | None = None
     exit_price: float | None = None
+    execution_high: float | None = None
+    execution_low: float | None = None
+    exit_high: float | None = None
+    exit_low: float | None = None
+    holding_period_high: float | None = None
+    holding_period_low: float | None = None
+    max_intraperiod_gain: float | None = None
+    max_intraperiod_loss: float | None = None
     backtest_weight: float | None = None
     realized_holding_return: float | None = None
     evaluation_return: float | None = None
@@ -296,6 +304,14 @@ class BacktestSecurityResult:
             "exit_date": self.exit_date,
             "execution_price": self.execution_price,
             "exit_price": self.exit_price,
+            "execution_high": self.execution_high,
+            "execution_low": self.execution_low,
+            "exit_high": self.exit_high,
+            "exit_low": self.exit_low,
+            "holding_period_high": self.holding_period_high,
+            "holding_period_low": self.holding_period_low,
+            "max_intraperiod_gain": self.max_intraperiod_gain,
+            "max_intraperiod_loss": self.max_intraperiod_loss,
             "backtest_weight": self.backtest_weight,
             "realized_holding_return": self.realized_holding_return,
             "evaluation_return": self.evaluation_return,

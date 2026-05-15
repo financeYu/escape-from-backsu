@@ -235,6 +235,8 @@ def test_v1_0_rc_horizon_policy_audit_requires_1d_1w_1m():
     audit = audit_horizon_policy()
 
     assert audit["one_day_one_week_one_month_supported"] is True
+    assert audit["one_day_five_day_twenty_day_supported"] is True
+    assert {"1d", "5d", "20d"}.issubset(audit["supported_horizons"])
     assert audit["explicit_default_1d"] is True
     assert audit["status"] == STATUS_COMPLETE
 

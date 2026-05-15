@@ -413,6 +413,14 @@ def _price_skipped_security_result(
         exit_date=location["exit_date"],
         execution_price=location["execution_price"],
         exit_price=location["exit_price"],
+        execution_high=location["execution_high"],
+        execution_low=location["execution_low"],
+        exit_high=location["exit_high"],
+        exit_low=location["exit_low"],
+        holding_period_high=location["holding_period_high"],
+        holding_period_low=location["holding_period_low"],
+        max_intraperiod_gain=location["max_intraperiod_gain"],
+        max_intraperiod_loss=location["max_intraperiod_loss"],
         backtest_weight=weight,
         transaction_cost_bps=config.transaction_cost_bps,
         slippage_bps=config.slippage_bps,
@@ -440,6 +448,14 @@ def _evaluated_security_result(
         exit_date=location["exit_date"],
         execution_price=location["execution_price"],
         exit_price=location["exit_price"],
+        execution_high=location["execution_high"],
+        execution_low=location["execution_low"],
+        exit_high=location["exit_high"],
+        exit_low=location["exit_low"],
+        holding_period_high=location["holding_period_high"],
+        holding_period_low=location["holding_period_low"],
+        max_intraperiod_gain=location["max_intraperiod_gain"],
+        max_intraperiod_loss=location["max_intraperiod_loss"],
         backtest_weight=weight,
         realized_holding_return=realized_holding_return,
         evaluation_return=realized_holding_return,
@@ -477,6 +493,8 @@ def _price_location(
         execution_index,
         config.execution_price_policy,
     )
+    execution_high = _price_field(price_history, execution_index, "high")
+    execution_low = _price_field(price_history, execution_index, "low")
     if execution_price is None or execution_price <= 0:
         flags.append(BacktestLimitationFlag.MISSING_EXECUTION_PRICE)
 
@@ -485,6 +503,8 @@ def _price_location(
         return _missing_exit_price_location(
             execution_date=execution_date,
             execution_price=execution_price,
+            execution_high=execution_high,
+            execution_low=execution_low,
             flags=flags,
         )
 
@@ -493,14 +513,34 @@ def _price_location(
         exit_index,
         config.exit_price_policy,
     )
+    exit_high = _price_field(price_history, exit_index, "high")
+    exit_low = _price_field(price_history, exit_index, "low")
     if exit_price is None or exit_price <= 0:
         flags.append(BacktestLimitationFlag.MISSING_EXIT_PRICE)
+    holding_period_high, holding_period_low = _holding_period_high_low(
+        price_history,
+        start_index=execution_index,
+        end_index=exit_index,
+    )
+    max_intraperiod_gain, max_intraperiod_loss = _intraperiod_extremes(
+        execution_price=execution_price,
+        holding_period_high=holding_period_high,
+        holding_period_low=holding_period_low,
+    )
 
     return _price_location_payload(
         execution_date=execution_date,
         exit_date=exit_date,
         execution_price=execution_price,
         exit_price=exit_price,
+        execution_high=execution_high,
+        execution_low=execution_low,
+        exit_high=exit_high,
+        exit_low=exit_low,
+        holding_period_high=holding_period_high,
+        holding_period_low=holding_period_low,
+        max_intraperiod_gain=max_intraperiod_gain,
+        max_intraperiod_loss=max_intraperiod_loss,
         flags=tuple(_dedupe_flags(flags)),
     )
 
@@ -529,12 +569,59 @@ def _price_point(
     return date_string(row["date"]), safe_float(row[price_policy])
 
 
+def _price_field(
+    price_history: pd.DataFrame,
+    row_index: int,
+    field_name: str,
+) -> float | None:
+    return safe_float(price_history.iloc[row_index][field_name])
+
+
+def _holding_period_high_low(
+    price_history: pd.DataFrame,
+    *,
+    start_index: int,
+    end_index: int,
+) -> tuple[float | None, float | None]:
+    holding_window = price_history.iloc[start_index : end_index + 1]
+    return safe_float(holding_window["high"].max()), safe_float(holding_window["low"].min())
+
+
+def _intraperiod_extremes(
+    *,
+    execution_price: float | None,
+    holding_period_high: float | None,
+    holding_period_low: float | None,
+) -> tuple[float | None, float | None]:
+    if execution_price is None or execution_price <= 0:
+        return None, None
+    max_gain = (
+        (holding_period_high / execution_price) - 1.0
+        if holding_period_high is not None
+        else None
+    )
+    max_loss = (
+        (holding_period_low / execution_price) - 1.0
+        if holding_period_low is not None
+        else None
+    )
+    return max_gain, max_loss
+
+
 def _missing_price_location() -> _PriceLocation:
     return _price_location_payload(
         execution_date=None,
         exit_date=None,
         execution_price=None,
         exit_price=None,
+        execution_high=None,
+        execution_low=None,
+        exit_high=None,
+        exit_low=None,
+        holding_period_high=None,
+        holding_period_low=None,
+        max_intraperiod_gain=None,
+        max_intraperiod_loss=None,
         flags=(
             BacktestLimitationFlag.INSUFFICIENT_PRICE_HISTORY,
             BacktestLimitationFlag.MISSING_EXECUTION_PRICE,
@@ -547,6 +634,8 @@ def _missing_exit_price_location(
     *,
     execution_date: str,
     execution_price: float | None,
+    execution_high: float | None,
+    execution_low: float | None,
     flags: list[str],
 ) -> _PriceLocation:
     flags.extend(
@@ -560,6 +649,14 @@ def _missing_exit_price_location(
         exit_date=None,
         execution_price=execution_price,
         exit_price=None,
+        execution_high=execution_high,
+        execution_low=execution_low,
+        exit_high=None,
+        exit_low=None,
+        holding_period_high=None,
+        holding_period_low=None,
+        max_intraperiod_gain=None,
+        max_intraperiod_loss=None,
         flags=tuple(flags),
     )
 
@@ -570,6 +667,14 @@ def _price_location_payload(
     exit_date: str | None,
     execution_price: float | None,
     exit_price: float | None,
+    execution_high: float | None,
+    execution_low: float | None,
+    exit_high: float | None,
+    exit_low: float | None,
+    holding_period_high: float | None,
+    holding_period_low: float | None,
+    max_intraperiod_gain: float | None,
+    max_intraperiod_loss: float | None,
     flags: Sequence[str],
 ) -> _PriceLocation:
     return {
@@ -577,6 +682,14 @@ def _price_location_payload(
         "exit_date": exit_date,
         "execution_price": execution_price,
         "exit_price": exit_price,
+        "execution_high": execution_high,
+        "execution_low": execution_low,
+        "exit_high": exit_high,
+        "exit_low": exit_low,
+        "holding_period_high": holding_period_high,
+        "holding_period_low": holding_period_low,
+        "max_intraperiod_gain": max_intraperiod_gain,
+        "max_intraperiod_loss": max_intraperiod_loss,
         "flags": tuple(_dedupe_flags(flags)),
     }
 

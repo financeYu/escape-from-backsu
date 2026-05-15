@@ -162,6 +162,196 @@ def test_execution_lag_days_respected() -> None:
     assert selected["exit_date"] == "2026-01-06"
 
 
+def test_horizon_policy_controls_rebalance_schedule() -> None:
+    ranking_dates = pd.bdate_range("2026-01-02", "2026-02-06")
+    ranking = pd.DataFrame(
+        [
+            {
+                "ticker": "005930",
+                "ranking_date": date.date().isoformat(),
+                "rank": 1,
+                "ranking_validity_flag": "valid",
+            }
+            for date in ranking_dates
+        ]
+    )
+    prices = pd.DataFrame(
+        [
+            {
+                "ticker": "005930",
+                "date": date.date().isoformat(),
+                "open": 100.0,
+                "high": 101.0,
+                "low": 99.0,
+                "close": 100.0,
+                "volume": 100,
+            }
+            for date in pd.bdate_range("2026-01-02", "2026-03-13")
+        ]
+    )
+
+    daily = run_conservative_backtest(
+        ranking,
+        prices,
+        config=BacktestConfig.from_horizon_policy(
+            "1d",
+            top_n=1,
+            transaction_cost_bps=0.0,
+            slippage_bps=0.0,
+        ),
+    )
+    weekly = run_conservative_backtest(
+        ranking,
+        prices,
+        config=BacktestConfig.from_horizon_policy(
+            "5d",
+            top_n=1,
+            transaction_cost_bps=0.0,
+            slippage_bps=0.0,
+        ),
+    )
+    monthly = run_conservative_backtest(
+        ranking,
+        prices,
+        config=BacktestConfig.from_horizon_policy(
+            "20d",
+            top_n=1,
+            transaction_cost_bps=0.0,
+            slippage_bps=0.0,
+        ),
+    )
+
+    assert daily.summary.period_count == len(ranking_dates)
+    assert [period.decision_date for period in weekly.period_results] == [
+        "2026-01-02",
+        "2026-01-05",
+        "2026-01-12",
+        "2026-01-19",
+        "2026-01-26",
+        "2026-02-02",
+    ]
+    assert [period.decision_date for period in monthly.period_results] == [
+        "2026-01-02",
+        "2026-02-02",
+    ]
+
+
+def test_horizon_high_low_uses_selected_holding_period() -> None:
+    ranking = pd.DataFrame(
+        [
+            {
+                "ticker": "005930",
+                "ranking_date": "2026-01-02",
+                "rank": 1,
+                "ranking_validity_flag": "valid",
+            }
+        ]
+    )
+    prices = pd.DataFrame(
+        [
+            {
+                "ticker": "005930",
+                "date": date.date().isoformat(),
+                "open": 100.0,
+                "high": high,
+                "low": low,
+                "close": 100.0,
+                "volume": 100,
+            }
+            for date, high, low in zip(
+                pd.bdate_range("2026-01-02", periods=30),
+                [
+                    100.0,
+                    101.0,
+                    110.0,
+                    105.0,
+                    108.0,
+                    150.0,
+                    109.0,
+                    120.0,
+                    118.0,
+                    119.0,
+                    121.0,
+                    122.0,
+                    123.0,
+                    124.0,
+                    125.0,
+                    126.0,
+                    127.0,
+                    128.0,
+                    129.0,
+                    130.0,
+                    131.0,
+                    200.0,
+                    132.0,
+                    133.0,
+                    134.0,
+                    135.0,
+                    136.0,
+                    137.0,
+                    138.0,
+                    139.0,
+                ],
+                [
+                    100.0,
+                    99.0,
+                    90.0,
+                    95.0,
+                    96.0,
+                    80.0,
+                    97.0,
+                    94.0,
+                    93.0,
+                    92.0,
+                    91.0,
+                    89.0,
+                    88.0,
+                    87.0,
+                    86.0,
+                    85.0,
+                    84.0,
+                    83.0,
+                    82.0,
+                    81.0,
+                    79.0,
+                    50.0,
+                    78.0,
+                    77.0,
+                    76.0,
+                    75.0,
+                    74.0,
+                    73.0,
+                    72.0,
+                    71.0,
+                ],
+            )
+        ]
+    )
+
+    rows = {}
+    for horizon_id in ("1d", "5d", "20d"):
+        result = run_conservative_backtest(
+            ranking,
+            prices,
+            config=BacktestConfig.from_horizon_policy(
+                horizon_id,
+                top_n=1,
+                transaction_cost_bps=0.0,
+                slippage_bps=0.0,
+            ),
+        )
+        rows[horizon_id] = result.to_security_frame().iloc[0]
+
+    assert rows["1d"]["holding_period_high"] == 110.0
+    assert rows["1d"]["holding_period_low"] == 90.0
+    assert rows["5d"]["holding_period_high"] == 150.0
+    assert rows["5d"]["holding_period_low"] == 80.0
+    assert rows["20d"]["holding_period_high"] == 200.0
+    assert rows["20d"]["holding_period_low"] == 50.0
+    assert rows["20d"]["max_intraperiod_gain"] == pytest.approx(1.0)
+    assert rows["20d"]["max_intraperiod_loss"] == pytest.approx(-0.5)
+
+
 def test_missing_execution_price_creates_flag() -> None:
     prices = price_rows()
     mask = prices["ticker"].eq("005930") & prices["date"].eq("2026-01-05")

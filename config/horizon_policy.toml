@@ -18,6 +18,30 @@ rebalance_disclosure_required = true
 compatibility_note = "Default compatibility horizon; must be selected explicitly or through the documented default resolver."
 
 [[horizon_policy]]
+horizon_id = "5d"
+signal_frequency = "weekly"
+entry_lag_trading_days = 1
+holding_period_trading_days = 5
+rebalance_frequency = "weekly"
+label_horizon = "5d"
+simulation_horizon = "5d"
+calendar_policy = "trading_days"
+rebalance_disclosure_required = true
+compatibility_note = "Five trading-day weekly review horizon."
+
+[[horizon_policy]]
+horizon_id = "20d"
+signal_frequency = "monthly"
+entry_lag_trading_days = 1
+holding_period_trading_days = 20
+rebalance_frequency = "monthly"
+label_horizon = "20d"
+simulation_horizon = "20d"
+calendar_policy = "trading_days"
+rebalance_disclosure_required = true
+compatibility_note = "Twenty trading-day monthly review horizon."
+
+[[horizon_policy]]
 horizon_id = "1w"
 signal_frequency = "weekly"
 entry_lag_trading_days = 1

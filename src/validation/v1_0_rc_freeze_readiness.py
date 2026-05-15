@@ -1323,7 +1323,8 @@ def audit_horizon_policy(project_root: str | Path = PROJECT_ROOT) -> dict[str, A
 
     root = Path(project_root)
     config = load_horizon_policy_config(root / "config" / "horizon_policy.toml")
-    policies = {horizon_id: resolve_horizon_policy(horizon_id) for horizon_id in ("1d", "1w", "1m")}
+    policy_ids = ("1d", "5d", "20d", "1w", "1m")
+    policies = {horizon_id: resolve_horizon_policy(horizon_id) for horizon_id in policy_ids}
     default_1d = str(config.get("defaults", {}).get("default_horizon_id")) == "1d"
     field_status = {
         horizon_id: {
@@ -1344,7 +1345,8 @@ def audit_horizon_policy(project_root: str | Path = PROJECT_ROOT) -> dict[str, A
     ]
     return {
         "supported_horizons": sorted(policies),
-        "one_day_one_week_one_month_supported": set(policies) == {"1d", "1w", "1m"},
+        "one_day_one_week_one_month_supported": {"1d", "1w", "1m"}.issubset(policies),
+        "one_day_five_day_twenty_day_supported": {"1d", "5d", "20d"}.issubset(policies),
         "explicit_default_1d": default_1d,
         "policy_fields_explicit": field_status,
         "horizon_fields_not_silently_conflated": True,

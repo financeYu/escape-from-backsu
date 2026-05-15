@@ -814,6 +814,15 @@ def build_v1_5_supplementation(config: V15SupplementationConfig) -> dict[str, An
         limited_update,
         config,
     )
+    complete_blocker_resolution_status = _complete_blocker_resolution_status(
+        per_pbr_variance_debug_rows,
+        per_pbr_formula_route_decision,
+        incremental_baseline_dependency_check,
+        incremental_real_comparison_rows,
+        v1_6_readiness_handoff_rows,
+        complete_readiness_gap_report,
+        config,
+    )
     completion_hygiene_report = _completion_hygiene_report(
         outputs_hint=[],
         naver_asof_registry_rows=naver_asof_registry_rows,
@@ -882,6 +891,7 @@ def build_v1_5_supplementation(config: V15SupplementationConfig) -> dict[str, An
         "per_pbr_variance_debug_summary": config.output_dir / "v1_5_per_pbr_variance_debug_summary_latest.json",
         "per_pbr_formula_route_decision": config.output_dir / "v1_5_per_pbr_formula_route_decision_latest.json",
         "incremental_baseline_dependency_check": config.output_dir / "v1_5_incremental_baseline_dependency_check_latest.json",
+        "complete_blocker_resolution_status": config.output_dir / "v1_5_complete_blocker_resolution_status_latest.json",
         "complete_readiness_gap_report": config.output_dir / "v1_5_complete_readiness_gap_report_latest.json",
         "completion_hygiene_report": config.output_dir / "v1_5_completion_hygiene_report_latest.json",
         "missing_requirements": config.output_dir / "v1_5_missing_pit_fundamental_requirements_latest.json",
@@ -1079,6 +1089,7 @@ def build_v1_5_supplementation(config: V15SupplementationConfig) -> dict[str, An
     )
     _write_json(outputs["per_pbr_formula_route_decision"], per_pbr_formula_route_decision)
     _write_json(outputs["incremental_baseline_dependency_check"], incremental_baseline_dependency_check)
+    _write_json(outputs["complete_blocker_resolution_status"], complete_blocker_resolution_status)
     _write_json(outputs["complete_readiness_gap_report"], complete_readiness_gap_report)
     _write_json(outputs["completion_hygiene_report"], completion_hygiene_report)
     _write_json(outputs["missing_requirements"], missing_requirements)
@@ -1140,6 +1151,7 @@ def build_v1_5_supplementation(config: V15SupplementationConfig) -> dict[str, An
         "per_pbr_variance_debug_summary": _per_pbr_variance_debug_summary(per_pbr_variance_debug_rows, config),
         "per_pbr_formula_route_decision": per_pbr_formula_route_decision,
         "incremental_baseline_dependency_check": incremental_baseline_dependency_check,
+        "complete_blocker_resolution_status": complete_blocker_resolution_status,
         "complete_readiness_gap_report": complete_readiness_gap_report,
         "completion_hygiene_report": completion_hygiene_report,
         "missing_requirements": missing_requirements,
@@ -2697,11 +2709,17 @@ def _incremental_baseline_dependency_check(
     config: V15SupplementationConfig,
 ) -> dict[str, Any]:
     required_keys = ["candidate_id", "ticker", "evaluation_date", "horizon_id"]
+    checked_artifacts = _baseline_dependency_checked_artifacts(technical_ml_scores_path, config)
     missing_files = []
     if technical_ml_scores_path is None:
         missing_files.append("technical_ml_scores_path_not_configured")
     elif not technical_ml_scores_path.exists():
         missing_files.append(str(technical_ml_scores_path))
+    missing_files.extend(
+        item["path"]
+        for item in checked_artifacts
+        if item.get("required_for_real_comparison") == "true" and item.get("exists") == "false" and item.get("path")
+    )
     missing_keys_by_candidate: dict[str, list[str]] = {}
     for row in baseline_rows:
         missing = [
@@ -2732,8 +2750,79 @@ def _incremental_baseline_dependency_check(
             if status != "joinable_baseline_available"
             else "none"
         ),
+        "checked_artifacts": checked_artifacts,
+        "non_overlapping_conditions": _baseline_non_overlapping_conditions(baseline_rows),
         "valuation_scoring_activation_allowed": False,
     }
+
+
+def _baseline_dependency_checked_artifacts(
+    technical_ml_scores_path: Path | None,
+    config: V15SupplementationConfig,
+) -> list[dict[str, str]]:
+    data_root = config.output_dir.parent
+    workspace_root = data_root.parent.parent
+    artifacts = [
+        {
+            "stage": "v1_2_or_v0_4_selector_scores",
+            "path": str(technical_ml_scores_path) if technical_ml_scores_path else "",
+            "artifact_role": "technical_ml_candidate_score_source",
+            "required_for_real_comparison": "true",
+        },
+        {
+            "stage": "v1_3_liquidity",
+            "path": str(data_root / "v1_3_liquidity" / "v1_3_candidate_liquidity_handoff_records_latest.csv"),
+            "artifact_role": "candidate_ticker_evaluation_handoff_not_technical_ml_baseline",
+            "required_for_real_comparison": "false",
+        },
+        {
+            "stage": "v1_1_net_profitability",
+            "path": str(workspace_root / "Quant_mvp" / "data" / "v1_1" / "v1_1_selector_score_manifest_latest.json"),
+            "artifact_role": "expected_historical_or_simulated_evidence_score_manifest",
+            "required_for_real_comparison": "false",
+        },
+        {
+            "stage": "v1_2_baseline_ml_selector",
+            "path": str(workspace_root / "Quant_mvp" / "data" / "v1_2" / "v1_2_selector_score_manifest_latest.json"),
+            "artifact_role": "expected_v1_2_selector_score_manifest",
+            "required_for_real_comparison": "false",
+        },
+    ]
+    checked = []
+    for artifact in artifacts:
+        path_text = artifact["path"]
+        path = Path(path_text) if path_text else None
+        exists = bool(path and path.exists())
+        row_count = ""
+        available_columns = ""
+        if exists and path is not None and path.suffix.lower() == ".csv":
+            rows = _read_csv_rows(path)
+            row_count = str(len(rows))
+            if rows:
+                available_columns = "|".join(rows[0].keys())
+        elif exists and path is not None and path.suffix.lower() == ".jsonl":
+            rows = _read_jsonl_rows(path)
+            row_count = str(len(rows))
+            if rows:
+                available_columns = "|".join(rows[0].keys())
+        checked.append(
+            {
+                **artifact,
+                "exists": "true" if exists else "false",
+                "row_count": row_count,
+                "available_columns": available_columns,
+            }
+        )
+    return checked
+
+
+def _baseline_non_overlapping_conditions(baseline_rows: list[dict[str, str]]) -> list[str]:
+    conditions = []
+    if any(row.get("technical_ml_baseline_status") != "available" for row in baseline_rows):
+        conditions.append("candidate_id_not_overlapping_with_configured_technical_ml_scores")
+    if any(row.get("horizon_id") == "missing_horizon_id" for row in baseline_rows):
+        conditions.append("horizon_id_missing_from_v1_5_candidate_handoff")
+    return conditions
 
 
 def _v1_6_start_readiness_report(
@@ -2811,6 +2900,79 @@ def _candidate_metadata_rows(pending_rows: list[dict[str, str]]) -> dict[str, di
             "horizon_id": row.get("horizon_id", ""),
         }
     return result
+
+
+def _complete_blocker_resolution_status(
+    variance_debug_rows: list[dict[str, str]],
+    formula_route_decision: dict[str, Any],
+    baseline_dependency_check: dict[str, Any],
+    incremental_rows: list[dict[str, str]],
+    handoff_rows: list[dict[str, str]],
+    gap_report: dict[str, Any],
+    config: V15SupplementationConfig,
+) -> dict[str, Any]:
+    incremental_statuses = sorted({row.get("comparison_status", "") for row in incremental_rows if row.get("comparison_status")})
+    vendor_statuses = sorted(
+        {
+            row.get("price_to_earnings_vendor_reference_status", "")
+            for row in handoff_rows
+            if row.get("price_to_earnings_vendor_reference_status")
+        }
+        | {
+            row.get("price_to_book_vendor_reference_status", "")
+            for row in handoff_rows
+            if row.get("price_to_book_vendor_reference_status")
+        }
+    )
+    formula_statuses = sorted(
+        {
+            row.get("price_to_earnings_canonical_formula_status", "")
+            for row in handoff_rows
+            if row.get("price_to_earnings_canonical_formula_status")
+        }
+        | {
+            row.get("price_to_book_canonical_formula_status", "")
+            for row in handoff_rows
+            if row.get("price_to_book_canonical_formula_status")
+        }
+    )
+    per_pbr_ready = formula_statuses == ["diagnostic_ready"]
+    baseline_ready = baseline_dependency_check.get("dependency_check_status") == "joinable_baseline_available"
+    incremental_ready = any(status == "diagnostic_comparison_ready_not_scoring" for status in incremental_statuses)
+    can_promote = per_pbr_ready and baseline_ready and incremental_ready
+    remaining_blockers = []
+    if not per_pbr_ready:
+        remaining_blockers.append("PER/PBR formula_reconciled_ready remains unavailable")
+    if any(status.startswith("reference_only") or status == "vendor_reference_only" for status in vendor_statuses):
+        remaining_blockers.append("Naver/chart-local PER/PBR remains vendor_reference_only or after_evaluation_date")
+    if not baseline_ready:
+        remaining_blockers.append("joinable technical_ml baseline keyed by candidate_id/ticker/evaluation_date/horizon_id is unavailable")
+    if not incremental_ready:
+        remaining_blockers.append("incremental real comparison remains skipped")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "created_at": config.created_at,
+        "report_type": "v1_5_complete_blocker_resolution_status",
+        "current_verdict": "LIMITED COMPLETE",
+        "can_promote_v1_5_to_COMPLETE": can_promote,
+        "v1_6_can_continue": True,
+        "per_pbr_reconciliation_status": gap_report.get("per_pbr_reconciliation_status", {}),
+        "per_pbr_formula_statuses": formula_statuses,
+        "canonical_formula_route_status": formula_route_decision.get("decision", ""),
+        "canonical_formula_route_recommendation": formula_route_decision.get("recommendation", ""),
+        "naver_chart_local_vendor_reference_status": vendor_statuses,
+        "technical_ml_baseline_dependency_status": baseline_dependency_check.get("dependency_check_status", ""),
+        "technical_ml_baseline_missing_files": baseline_dependency_check.get("missing_files", []),
+        "technical_ml_baseline_missing_keys_by_candidate": baseline_dependency_check.get("missing_keys_by_candidate", {}),
+        "technical_ml_baseline_checked_artifacts": baseline_dependency_check.get("checked_artifacts", []),
+        "technical_ml_baseline_non_overlapping_conditions": baseline_dependency_check.get("non_overlapping_conditions", []),
+        "incremental_real_comparison_status": incremental_statuses or ["skipped_missing_baseline_artifacts"],
+        "valuation_scoring_activation_status": "disabled",
+        "valuation_scoring_activation_allowed": False,
+        "variance_debug_row_count": len(variance_debug_rows),
+        "remaining_blockers": remaining_blockers,
+        "requirements_to_promote_to_COMPLETE": gap_report.get("requirements_to_promote_to_COMPLETE", []),
+    }
 
 
 def _complete_readiness_gap_report(

@@ -604,6 +604,12 @@ class V15SupplementationTests(unittest.TestCase):
                 baseline_check["dependency_check_status"],
                 "skipped_missing_baseline_artifacts",
             )
+            self.assertTrue(baseline_check["checked_artifacts"])
+            self.assertIn(str(root / "missing_scores.jsonl"), baseline_check["missing_files"])
+            self.assertIn(
+                "horizon_id_missing_from_v1_5_candidate_handoff",
+                baseline_check["non_overlapping_conditions"],
+            )
             self.assertIn(
                 "technical_ml_baseline_row",
                 baseline_check["missing_keys_by_candidate"]["sc_v1_5_diag"],
@@ -616,6 +622,15 @@ class V15SupplementationTests(unittest.TestCase):
             self.assertTrue(Path(result["outputs"]["per_pbr_variance_debug"]).exists())
             self.assertTrue(Path(result["outputs"]["per_pbr_formula_route_decision"]).exists())
             self.assertTrue(Path(result["outputs"]["incremental_baseline_dependency_check"]).exists())
+            blocker_status = result["complete_blocker_resolution_status"]
+            self.assertFalse(blocker_status["can_promote_v1_5_to_COMPLETE"])
+            self.assertTrue(blocker_status["v1_6_can_continue"])
+            self.assertEqual(blocker_status["valuation_scoring_activation_status"], "disabled")
+            self.assertIn(
+                "joinable technical_ml baseline keyed by candidate_id/ticker/evaluation_date/horizon_id is unavailable",
+                blocker_status["remaining_blockers"],
+            )
+            self.assertTrue(Path(result["outputs"]["complete_blocker_resolution_status"]).exists())
 
     @staticmethod
     def _write_multi_field_pending_handoff(

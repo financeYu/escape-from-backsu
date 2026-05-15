@@ -97,6 +97,42 @@ def test_net_profitability_runner_outputs_net_and_benchmark_relative_metrics() -
     assert evidence_metric["net_return"] == pytest.approx(first_summary["net_return"])
 
 
+def test_net_profitability_runner_keeps_configurable_top_n_capital_simulation() -> None:
+    artifacts = run_net_profitability_evidence_v1_1(
+        _records(),
+        config=NetProfitabilityRunnerConfig(
+            retained_model_count=2,
+            initial_capital_amount=1_000_000,
+            simulation_period_days=365,
+        ),
+    )
+
+    report = artifacts["v1_1_capital_simulation_report"]
+
+    assert report["initial_capital_amount"] == pytest.approx(1_000_000)
+    assert report["simulation_period_days"] == 365
+    assert report["retained_model_count"] == 2
+    assert report["retained_candidate_ids"] == ["sc_v1_1_a", "sc_v1_1_b"]
+    assert report["retained_model_summaries"][0]["final_amount"] > report["retained_model_summaries"][1]["final_amount"]
+    assert report["risk_metrics_available_separately"] is True
+    assert artifacts["v1_1_validation_manifest"]["retention_policy"] == (
+        "top_n_by_final_amount_with_risk_adjusted_metrics_separate"
+    )
+
+
+def test_net_profitability_runner_exposes_risk_adjusted_ranking_separately() -> None:
+    artifacts = run_net_profitability_evidence_v1_1(_records())
+    report = artifacts["v1_1_risk_adjusted_review_report"]
+
+    assert report["capital_ranking_not_overwritten"] is True
+    assert report["risk_adjusted_summaries"][0]["candidate_id"] == "sc_v1_1_a"
+    assert report["risk_adjusted_summaries"][0]["sharpe_like_historical_summary"] == pytest.approx(
+        artifacts["v1_1_top_k_profitability_report"]["candidate_summaries"][0][
+            "sharpe_like_historical_summary"
+        ]
+    )
+
+
 def test_net_profitability_runner_is_reproducible_for_same_config_and_inputs() -> None:
     config = NetProfitabilityRunnerConfig(top_k=2, random_seed=7)
 
@@ -118,6 +154,21 @@ def test_net_profitability_run_id_changes_when_per_record_cost_changes() -> None
     assert base["v1_1_net_profitability_evidence_runner"]["run_id"] != changed["v1_1_net_profitability_evidence_runner"]["run_id"]
 
 
+def test_net_profitability_run_id_changes_when_simulation_config_changes() -> None:
+    base = run_net_profitability_evidence_v1_1(
+        _records(),
+        config=NetProfitabilityRunnerConfig(simulation_period_days=180),
+    )
+    changed = run_net_profitability_evidence_v1_1(
+        _records(),
+        config=NetProfitabilityRunnerConfig(simulation_period_days=365),
+    )
+
+    assert base["v1_1_net_profitability_evidence_runner"]["run_id"] != changed[
+        "v1_1_net_profitability_evidence_runner"
+    ]["run_id"]
+
+
 def test_net_profitability_runner_rejects_missing_guardrail_status() -> None:
     records = _records()
     del records[0]["no_lookahead_check_status"]
@@ -132,6 +183,13 @@ def test_net_profitability_runner_rejects_missing_date_range() -> None:
 
     with pytest.raises(ValueError, match="date_range"):
         run_net_profitability_evidence_v1_1(records)
+
+
+def test_net_profitability_runner_rejects_invalid_reusable_simulation_config() -> None:
+    with pytest.raises(ValueError, match="retained_model_count"):
+        NetProfitabilityRunnerConfig(retained_model_count=0)
+    with pytest.raises(ValueError, match="simulation_period_days"):
+        NetProfitabilityRunnerConfig(simulation_period_days=0)
 
 
 def test_net_profitability_runner_rejects_guardrail_language_outside_notices() -> None:

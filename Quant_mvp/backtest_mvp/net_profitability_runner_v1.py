@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from datetime import date
 from hashlib import sha256
 from math import ceil
 from statistics import fmean
@@ -56,6 +57,9 @@ class NetProfitabilityRunnerConfig:
 
     horizon_policy_id: str = "1d"
     top_k: int = 5
+    retained_model_count: int = 5
+    initial_capital_amount: float = 10_000_000.0
+    simulation_period_days: int = 252
     top_decile_fraction: float = 0.10
     random_seed: int = 0
     cost_rate: float = 0.001
@@ -63,6 +67,16 @@ class NetProfitabilityRunnerConfig:
     created_at: str = DEFAULT_CREATED_AT
     strategy_candidate_ref: str = "Quant_mvp/config/v0_3_strategy_candidate_registry.toml"
     config_ref: str = "Quant_mvp/backtest_mvp/net_profitability_runner_v1.py"
+
+    def __post_init__(self) -> None:
+        if self.top_k < 1:
+            raise ValueError("v1.1 top_k must be at least 1")
+        if self.retained_model_count < 1:
+            raise ValueError("v1.1 retained_model_count must be at least 1")
+        if self.initial_capital_amount <= 0:
+            raise ValueError("v1.1 initial_capital_amount must be positive")
+        if self.simulation_period_days < 1:
+            raise ValueError("v1.1 simulation_period_days must be at least 1")
 
 
 def run_net_profitability_evidence_v1_1(
@@ -79,6 +93,11 @@ def run_net_profitability_evidence_v1_1(
     sorted_records = sorted(normalized, key=lambda item: (-item["selector_score"], item["candidate_id"]))
     top_k_records = sorted_records[: max(1, min(cfg.top_k, len(sorted_records)))]
     top_decile_records = sorted_records[: _top_decile_count(len(sorted_records), cfg.top_decile_fraction)]
+    capital_ranked_records = sorted(
+        normalized,
+        key=lambda item: (-item["capital_simulation"]["final_amount"], item["candidate_id"]),
+    )
+    retained_records = capital_ranked_records[: max(1, min(cfg.retained_model_count, len(capital_ranked_records)))]
     run_id = make_net_profitability_run_id(sorted_records, cfg)
     evidences = [_build_evidence(record, cfg, run_id) for record in sorted_records]
     selector_manifest = _build_selector_manifest(evidences, sorted_records, cfg, run_id)
@@ -101,6 +120,16 @@ def run_net_profitability_evidence_v1_1(
             selection_policy=f"top_k={len(top_k_records)} by selector_score descending",
         ),
         "v1_1_cost_turnover_summary": _cost_turnover_summary(run_id, sorted_records),
+        "v1_1_capital_simulation_report": _capital_simulation_report(
+            run_id=run_id,
+            config=cfg,
+            records=capital_ranked_records,
+            retained_records=retained_records,
+        ),
+        "v1_1_risk_adjusted_review_report": _risk_adjusted_review_report(
+            run_id=run_id,
+            records=sorted_records,
+        ),
         "v1_1_manual_review_profitability_packet": {
             "packet_set_version": "v1_1_manual_review_profitability_packet_v1_0",
             "run_id": run_id,
@@ -174,6 +203,11 @@ def make_net_profitability_run_id(
                 "invalid_period_count": record["invalid_period_count"],
                 "missing_data_count": record["missing_data_count"],
                 "date_range": record["date_range"],
+                "evidence_period_days": record["evidence_period_days"],
+                "simulation_period_days": config.simulation_period_days,
+                "initial_capital_amount": config.initial_capital_amount,
+                "simulation_period_net_return": record["simulation_period_net_return"],
+                "final_amount": record["capital_simulation"]["final_amount"],
                 "leakage_check_status": record["leakage_check_status"],
                 "no_lookahead_check_status": record["no_lookahead_check_status"],
             }
@@ -196,11 +230,21 @@ def _normalized_record(record: Mapping[str, Any], config: NetProfitabilityRunner
     slippage_rate = max(0.0, _as_float(record.get("slippage_rate", config.slippage_rate), "slippage_rate"))
     cost_drag = turnover * (cost_rate + slippage_rate)
     net_return = gross_return - cost_drag
+    if net_return <= -1.0:
+        raise ValueError("v1.1 net_return must be greater than -1 for capital simulation")
     volatility = max(0.0, _as_float(record.get("volatility", 0.0), "volatility"))
     max_drawdown = _as_float(record.get("max_drawdown", 0.0), "max_drawdown")
     coverage_ratio = _bounded_ratio(record.get("coverage_ratio", 1.0), "coverage_ratio")
     leakage_check_status = _required_pass_status(record, "leakage_check_status")
     no_lookahead_check_status = _required_pass_status(record, "no_lookahead_check_status")
+    date_range = _required_date_range(record)
+    evidence_period_days = _date_range_day_count(date_range)
+    simulation_period_net_return = _compound_return_for_days(
+        net_return=net_return,
+        evidence_period_days=evidence_period_days,
+        simulation_period_days=config.simulation_period_days,
+    )
+    final_amount = config.initial_capital_amount * (1.0 + simulation_period_net_return)
     return {
         "candidate_id": candidate_id,
         "strategy_candidate_id": strategy_candidate_id,
@@ -220,7 +264,16 @@ def _normalized_record(record: Mapping[str, Any], config: NetProfitabilityRunner
         "coverage_ratio": coverage_ratio,
         "invalid_period_count": int(record.get("invalid_period_count", 0)),
         "missing_data_count": int(record.get("missing_data_count", 0)),
-        "date_range": _required_date_range(record),
+        "date_range": date_range,
+        "evidence_period_days": evidence_period_days,
+        "simulation_period_net_return": simulation_period_net_return,
+        "capital_simulation": {
+            "initial_capital_amount": round(config.initial_capital_amount, 2),
+            "simulation_period_days": config.simulation_period_days,
+            "final_amount": round(final_amount, 2),
+            "profit_amount": round(final_amount - config.initial_capital_amount, 2),
+            "period_scaling_policy": "compound_existing_candidate_net_evidence_over_configured_days",
+        },
         "leakage_check_status": leakage_check_status,
         "no_lookahead_check_status": no_lookahead_check_status,
         "universe_scope": str(record.get("universe_scope") or "KOSPI200_candidate_only"),
@@ -425,6 +478,7 @@ def _profitability_report(
                 "sharpe_like_historical_summary": record["sharpe_like_historical_summary"],
                 "turnover": record["turnover"],
                 "cost_drag": record["cost_drag"],
+                "capital_simulation": record["capital_simulation"],
             }
             for record in records
         ],
@@ -446,6 +500,94 @@ def _cost_turnover_summary(run_id: str, records: Sequence[Mapping[str, Any]]) ->
     }
 
 
+def _capital_simulation_report(
+    *,
+    run_id: str,
+    config: NetProfitabilityRunnerConfig,
+    records: Sequence[Mapping[str, Any]],
+    retained_records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    return {
+        "report_name": "v1_1_capital_simulation_report",
+        "run_id": run_id,
+        "selection_policy": (
+            f"retain_top_n={len(retained_records)} by final_amount descending "
+            f"from configured retained_model_count={config.retained_model_count}"
+        ),
+        "initial_capital_amount": round(config.initial_capital_amount, 2),
+        "simulation_period_days": config.simulation_period_days,
+        "candidate_count": len(records),
+        "retained_model_count": len(retained_records),
+        "retained_candidate_ids": [record["candidate_id"] for record in retained_records],
+        "retained_model_summaries": [
+            _capital_model_summary(record, rank=index)
+            for index, record in enumerate(retained_records, start=1)
+        ],
+        "all_model_summaries": [
+            _capital_model_summary(record, rank=index)
+            for index, record in enumerate(records, start=1)
+        ],
+        "ranking_metric": "final_amount",
+        "risk_metrics_available_separately": True,
+        "evidence_only_notice": EVIDENCE_ONLY_NOTICE,
+    }
+
+
+def _risk_adjusted_review_report(
+    *,
+    run_id: str,
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    ranked = sorted(
+        records,
+        key=lambda item: (
+            item["sharpe_like_historical_summary"] is None,
+            -(item["sharpe_like_historical_summary"] or 0.0),
+            item["candidate_id"],
+        ),
+    )
+    return {
+        "report_name": "v1_1_risk_adjusted_review_report",
+        "run_id": run_id,
+        "selection_policy": "rank candidates by sharpe_like_historical_summary for separate user review",
+        "candidate_count": len(ranked),
+        "risk_adjusted_summaries": [
+            {
+                "risk_adjusted_rank": index,
+                "candidate_id": record["candidate_id"],
+                "net_return": record["net_return"],
+                "simulation_period_net_return": record["simulation_period_net_return"],
+                "volatility": record["volatility"],
+                "max_drawdown": record["max_drawdown"],
+                "sharpe_like_historical_summary": record["sharpe_like_historical_summary"],
+                "turnover": record["turnover"],
+                "coverage_ratio": record["coverage_ratio"],
+            }
+            for index, record in enumerate(ranked, start=1)
+        ],
+        "capital_ranking_not_overwritten": True,
+        "evidence_only_notice": EVIDENCE_ONLY_NOTICE,
+    }
+
+
+def _capital_model_summary(record: Mapping[str, Any], *, rank: int) -> dict[str, Any]:
+    simulation = record["capital_simulation"]
+    return {
+        "capital_rank": rank,
+        "candidate_id": record["candidate_id"],
+        "initial_capital_amount": simulation["initial_capital_amount"],
+        "simulation_period_days": simulation["simulation_period_days"],
+        "simulation_period_net_return": record["simulation_period_net_return"],
+        "final_amount": simulation["final_amount"],
+        "profit_amount": simulation["profit_amount"],
+        "net_return": record["net_return"],
+        "evidence_period_days": record["evidence_period_days"],
+        "max_drawdown": record["max_drawdown"],
+        "volatility": record["volatility"],
+        "sharpe_like_historical_summary": record["sharpe_like_historical_summary"],
+    }
+
+
 def _validation_manifest(
     run_id: str,
     config: NetProfitabilityRunnerConfig,
@@ -457,6 +599,11 @@ def _validation_manifest(
         "candidate_count": len(records),
         "reproducible_run": True,
         "net_metric_output": True,
+        "capital_simulation_output": True,
+        "retained_model_count": config.retained_model_count,
+        "initial_capital_amount": round(config.initial_capital_amount, 2),
+        "simulation_period_days": config.simulation_period_days,
+        "retention_policy": "top_n_by_final_amount_with_risk_adjusted_metrics_separate",
         "top_k_evidence": True,
         "manifest_lineage": "HorizonPolicy -> SimulationRunManifest -> EvaluationEvidenceV1",
         "guardrail_status": "pass",
@@ -548,7 +695,28 @@ def _required_date_range(record: Mapping[str, Any]) -> dict[str, str]:
     end = str(value.get("end") or "").strip()
     if not start or not end or start == "unknown" or end == "unknown":
         raise ValueError("v1.1 net profitability record requires explicit date_range start and end")
+    _date_range_day_count({"start": start, "end": end})
     return {"start": start, "end": end}
+
+
+def _date_range_day_count(date_range: Mapping[str, str]) -> int:
+    start = date.fromisoformat(str(date_range["start"]))
+    end = date.fromisoformat(str(date_range["end"]))
+    if end < start:
+        raise ValueError("v1.1 date_range end must be on or after start")
+    return (end - start).days + 1
+
+
+def _compound_return_for_days(
+    *,
+    net_return: float,
+    evidence_period_days: int,
+    simulation_period_days: int,
+) -> float:
+    if evidence_period_days < 1:
+        raise ValueError("v1.1 evidence_period_days must be at least 1")
+    scaled = (1.0 + net_return) ** (simulation_period_days / evidence_period_days) - 1.0
+    return round(scaled, 8)
 
 
 def _reject_prohibited_language(payload: Mapping[str, Any]) -> None:

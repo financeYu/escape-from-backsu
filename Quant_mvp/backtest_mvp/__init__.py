@@ -36,6 +36,11 @@ from Quant_mvp.backtest_mvp.evaluation_evidence_v1 import (
     build_evaluation_evidence_v1,
     validate_evaluation_evidence_v1,
 )
+from Quant_mvp.backtest_mvp.ensemble_weight_search_v1_6 import (
+    EnsembleWeightSearchConfig,
+    run_v1_6_ensemble_weight_search,
+    validate_v1_6_ensemble_weight_search_artifacts,
+)
 from Quant_mvp.backtest_mvp.manual_review_packet_v1 import (
     build_manual_review_packet_v1,
     validate_manual_review_packet_v1,
@@ -89,6 +94,7 @@ __all__ = (
     "CandidateRankingSnapshotConfig",
     "ConservativeBacktestResult",
     "CostLiquidityReliabilityConfig",
+    "EnsembleWeightSearchConfig",
     "EvaluationEvidenceResult",
     "NetProfitabilityRunnerConfig",
     "RevisionLayerConfig",
@@ -115,6 +121,7 @@ __all__ = (
     "run_v1_2_baseline_ml_selector_application",
     "run_v1_4_revision_layer",
     "run_v1_5_valuation_quality_layer",
+    "run_v1_6_ensemble_weight_search",
     "run_v0_3_evaluation_evidence",
     "validate_evaluation_evidence_record",
     "validate_evaluation_evidence_v1",
@@ -126,6 +133,7 @@ __all__ = (
     "validate_v1_3_candidate_liquidity_handoff",
     "validate_v1_4_revision_artifacts",
     "validate_v1_5_valuation_quality_artifacts",
+    "validate_v1_6_ensemble_weight_search_artifacts",
     "validate_selector_score_manifest_v1",
     "validate_simulation_run_manifest",
     "validate_v1_2_ml_selector_artifacts",

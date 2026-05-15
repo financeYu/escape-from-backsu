@@ -43,6 +43,17 @@ Cost and slippage can be supplied per record or through
 net_return = gross_return - turnover * (cost_rate + slippage_rate)
 ```
 
+Reusable comparison settings live in `NetProfitabilityRunnerConfig`:
+
+- `retained_model_count`: how many top models to retain by simulated final amount
+- `initial_capital_amount`: same starting capital assigned to each model
+- `simulation_period_days`: configurable n-day comparison period
+
+The configurable capital comparison compounds each candidate's existing
+net-of-cost evidence over `simulation_period_days`. Risk-adjusted review
+metrics remain in a separate report and do not overwrite the final-amount
+ranking.
+
 The runner fails closed when lineage-critical fields are missing. In
 particular, `date_range.start`, `date_range.end`, `leakage_check_status`, and
 `no_lookahead_check_status` must come from the approved input summary rather
@@ -55,6 +66,8 @@ The runner emits these artifact keys:
 - `v1_1_net_profitability_evidence_runner`
 - `v1_1_top_k_profitability_report`
 - `v1_1_cost_turnover_summary`
+- `v1_1_capital_simulation_report`
+- `v1_1_risk_adjusted_review_report`
 - `v1_1_manual_review_profitability_packet`
 - `v1_1_validation_manifest`
 - `v1_1_top_decile_profitability_report`
@@ -74,6 +87,9 @@ v1.1 is complete when:
 - net return, benchmark-relative net return, max drawdown, Sharpe-like
   historical summary, turnover, and cost drag are emitted
 - top-k and top-decile candidate groups are summarized net of cost
+- a configurable top-n capital simulation report retains models by final
+  amount from the same starting capital
+- risk-adjusted ranking is emitted separately for user review
 - lineage connects `HorizonPolicy -> SimulationRunManifest ->
   EvaluationEvidenceV1`
 - guardrails block order, buy/sell/hold, production ranking replacement,

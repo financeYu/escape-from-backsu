@@ -17,7 +17,10 @@ composite scores, production ranks, or active trading outputs.
 
 - Contract module: `Quant_mvp/backtest_mvp/confidence_review_priority_v1_6.py`
 - Runner module: `src/review_priority/v1_6_confidence_review_priority.py`
-- Test: `tests/backtest/test_v1_6_confidence_review_priority.py`
+- Ensemble search module:
+  `Quant_mvp/backtest_mvp/ensemble_weight_search_v1_6.py`
+- Tests: `tests/backtest/test_v1_6_confidence_review_priority.py`,
+  `tests/backtest/test_v1_6_ensemble_weight_search.py`
 - Owner lane: ML/evaluator plus root governance
 - Completion gate: `.agents/skills/quant-review-gate/SKILL.md`
 
@@ -178,6 +181,13 @@ fallback threshold.
 Composite output is `manual_review_priority` only, with values for human
 review queue handling. It is not a live system output or execution input.
 
+The ensemble weight search is a separate v1.6 evaluation helper. It can consume
+already-approved model return rows and search non-negative, sum-to-one mixture
+weights. To reduce data contamination risk, candidate weights come from a
+predeclared grid, retained ensembles are selected on the validation split, and
+the test split is reported only as untouched final review evidence. The test
+split must not be used to pick or revise weights.
+
 ## Completion Criteria
 
 v1.6 contract/design is complete when:
@@ -190,3 +200,5 @@ v1.6 contract/design is complete when:
 - focused contract and runner tests pass
 - fixture execution emits all required CSV and JSON files
 - forbidden column and wording guards reject unsafe inputs
+- ensemble weight search keeps train, validation, and test roles separated
+  when model-mixture weights are evaluated

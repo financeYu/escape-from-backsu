@@ -49,8 +49,10 @@ belong in docs or project-local skills.
   application, v1.3 cost/turnover/liquidity reliability layer, v1.4
   point-in-time revision layer, v1.5 point-in-time valuation plus
   quality/profitability layer, v1.6 high-confidence prediction,
-  robustness, and reproducibility integration, and a later v2.0 readiness
-  packet. Outputs are model-evaluation and user decision-support artifacts;
+  robustness, and reproducibility integration. The current stage is v2.0
+  evidence-readiness preparation, which checks whether v1.1 through v1.6
+  evidence is ready for later limited selector review. Outputs are
+  model-evaluation and user decision-support artifacts;
   they do not by themselves authorize brokerage, order generation, or live
   execution.
 - v0.1 and v0.2 are archived reference states. They are not current progress
@@ -81,6 +83,12 @@ belong in docs or project-local skills.
   `agent-supervisor` before any worker, selected domain gate, implementation,
   validation, or completion acceptance begins. Worker-pool and reporter steps
   are downstream of the approved supervisor handoff.
+- When a versioned stage or gate closes, completion acceptance must include
+  status synchronization: update `docs/roadmap_status.md`, update
+  `docs/context/EXTENSION_REGISTRY.toml` when the active stage changes, update
+  the owning plan/checklist packet, refresh GPT-facing context rules or
+  generated context only when that route wording is affected, and run the
+  focused validation before reporting `COMPLETE`.
 
 ## Archive Separation
 

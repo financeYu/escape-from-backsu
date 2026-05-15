@@ -1,0 +1,58 @@
+{
+  "automatic_action_allowed": false,
+  "blocking_reason_codes": [
+    "blocked_by_upstream_reconciliation",
+    "insufficient_baseline_artifact"
+  ],
+  "candidate_count": 3,
+  "carry_forward_limitations": [
+    "insufficient_horizon_coverage",
+    "insufficient_layer_redundancy_evidence",
+    "insufficient_split_or_seed_coverage",
+    "missing_input_column:coverage",
+    "missing_input_column:data_quality",
+    "missing_input_column:stability",
+    "valuation_score_not_consumed|v1_6_consumes_status_flags_only|per_pbr_blocked_by_reconciliation_allowed|vendor_reference_only_not_formula_verified|adjusted_price_policy_not_disclosed_by_naver_main|historical_evaluation_before_first_vendor_snapshot|incremental_evidence_status=skipped_missing_baseline_artifacts|diagnostic_missing_pit_revision_fields|available_at_missing;estimate_as_of_date_missing;eps_estimate_1m_ago_missing;eps_estimate_3m_ago_missing;analyst_revision_up_count_1m_missing;analyst_revision_down_count_1m_missing;sector_id_missing;sector_revision_percentile_missing;chart_financial_cache_is_not_revision_history|feature_readiness=price_to_earnings:blocked_by_reconciliation;price_to_book:blocked_by_reconciliation;roe:diagnostic_ready;operating_margin:diagnostic_ready;net_margin:diagnostic_ready;debt_ratio:diagnostic_ready;dividend_yield:diagnostic_ready|skipped_missing_candidate_overlap|candidate_overlapping_technical_ml_baseline_missing"
+  ],
+  "config_status": "config_present",
+  "contract_version": "v1_6_confidence_review_priority_contract_v1_0",
+  "created_at": "2026-05-15T15:09:00.806503+00:00",
+  "evidence_only_notice": "v1.6 outputs are confidence, robustness, and manual review priority support only",
+  "guardrail_summary": {
+    "automatic_action_allowed": false,
+    "forbidden_column_policy": "reject_input_and_output_columns",
+    "forbidden_language_policy": "reject_input_and_generated_output_language",
+    "manual_review_only": true,
+    "valuation_scoring_activation_allowed": false
+  },
+  "input_mode": "project_artifacts",
+  "lineage_refs": "v1_5_to_v1_6_handoff|rolling_rank_slot_desc_average_traded_value_20d;rank_scope=full_local_kospi200_daily_universe_files;rank_slot=1;as_of_date=2026-05-12;source=data/000660_daily_prices.csv|chart_mvp_financial_statement_cache:000660:000660_financial_statements.csv|v1_5_feature_level_readiness|ee_v1_0_rc_sc_v1_3_high_turnover_1d_5101aca49335;v1_5_to_v1_6_handoff|rolling_rank_slot_desc_average_traded_value_20d;rank_scope=full_local_kospi200_daily_universe_files;rank_slot=2;as_of_date=2026-05-12;source=data/005930_daily_prices.csv|chart_mvp_financial_statement_cache:005930:005930_financial_statements.csv|v1_5_feature_level_readiness|ee_v1_0_rc_sc_v1_3_missing_liquidity_1d_189794a48a70;v1_5_to_v1_6_handoff|rolling_rank_slot_desc_average_traded_value_20d;rank_scope=full_local_kospi200_daily_universe_files;rank_slot=4;candidate=sc_v1_3_low_drag;as_of_date=2026-05-12;source=data/005380_daily_prices.csv|chart_mvp_financial_statement_cache:005380:005380_financial_statements.csv|v1_5_feature_level_readiness|ee_v1_0_rc_sc_v1_3_low_drag_1d_3955d197ec26",
+  "manual_review_only": true,
+  "manual_review_only_notice": "manual_review_priority is a human review queue category, not an automated ordering or action instruction",
+  "manual_review_priority_summary": {
+    "blocked_manual_review": 3
+  },
+  "missing_dependencies": [
+    "insufficient_horizon_coverage",
+    "insufficient_layer_redundancy_evidence",
+    "insufficient_split_or_seed_coverage",
+    "missing_input_column:coverage",
+    "missing_input_column:data_quality",
+    "missing_input_column:stability"
+  ],
+  "output_file_names": [
+    "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_confidence_score_manifest_latest.csv",
+    "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_horizon_stability_report_latest.csv",
+    "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_split_stability_report_latest.csv",
+    "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_layer_redundancy_report_latest.csv",
+    "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_composite_review_priority_manifest_latest.csv",
+    "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_v2_0_readiness_packet_latest.json",
+    "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_v2_0_readiness_packet_latest.md",
+    "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_integration_guardrail_lineage_packet_test_report_latest.json"
+  ],
+  "readiness_verdict": "V2_0_NOT_READY",
+  "schema_version": "v1_6",
+  "source_artifact_refs": "chart_mvp\\data\\v1_5_valuation\\v1_6_readiness_status_handoff_from_v1_5_latest.csv|chart_mvp\\data\\v1_3_liquidity\\v1_3_candidate_liquidity_handoff_records_latest.csv|chart_mvp\\data\\v1_4_revision\\v1_4_candidate_revision_diagnostic_handoff_latest.csv|chart_mvp\\data\\v1_5_valuation\\v1_5_feature_level_readiness_latest.csv|chart_mvp\\data\\v1_5_valuation\\v1_5_incremental_valuation_real_comparison_latest.csv",
+  "threshold_source": "Quant_mvp\\config\\thresholds.toml",
+  "valuation_scoring_activation_allowed": false
+}

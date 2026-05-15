@@ -108,6 +108,8 @@ def _context_header_sections(config: ContextConfig) -> list[str]:
         "",
         "- Refresh only when the user explicitly requests this ChatGPT reference update.",
         "- Keep latest-only local retention and exclude secrets, caches, charts, and generated data.",
+        "- Exclude prohibited action, recommendation, activation, guarantee, and unsupported-performance phrase examples from GPT-facing output.",
+        "- Route to `docs/root_hard_stops.md` for exact forbidden wording instead of copying those phrases into GPT context.",
         "",
         "## Authority Order",
         "",
@@ -125,6 +127,7 @@ def _roadmap_context_sections(roadmap: str) -> list[str]:
     return [
         "## Current Roadmap Position",
         "",
+        _exclude_forbidden_phrase_lines(
         _compact_first_section(
             roadmap,
             (
@@ -134,16 +137,19 @@ def _roadmap_context_sections(roadmap: str) -> list[str]:
                 ("## 현재 활성 단계", "## 현재 판정", 12),
             ),
         ),
+        ),
         "",
         "## Current Authorization",
         "",
-        _compact_first_section(
-            roadmap,
-            (
-                ("## Current Authorization", "## Parallel Workspace Policy", 14),
-                ("## 현재 Baseline 핵심", "## Research Ingestion 상태", 6),
-                ("## 최근 완료 Step 요약", "## 상세 이력 위치", 8),
-            ),
+        _exclude_forbidden_phrase_lines(
+            _compact_first_section(
+                roadmap,
+                (
+                    ("## Current Authorization", "## Parallel Workspace Policy", 14),
+                    ("## 현재 Baseline 핵심", "## Research Ingestion 상태", 6),
+                    ("## 최근 완료 Step 요약", "## 상세 이력 위치", 8),
+                ),
+            )
         ),
         "",
     ]
@@ -158,12 +164,9 @@ def _guardrail_context_sections(hard_stops: str) -> list[str]:
         "",
         "## Active Guardrails",
         "",
-        _compact_section(
-            hard_stops,
-            "## Forbidden Scope Without Explicit Approval",
-            next_heading="## Route Ownership",
-            max_lines=14,
-        ),
+        "- Manual-review evidence support only; activation or instruction framing stays out of GPT-facing wording.",
+        "- Prohibited phrase examples are intentionally excluded from this GPT-facing snapshot.",
+        "- See `docs/root_hard_stops.md#forbidden-scope-without-explicit-approval` for exact authority wording.",
         "",
     ]
 
@@ -183,6 +186,8 @@ def _route_reference_sections() -> list[str]:
         "- v1.x staged release plan: `docs/extension/v1_x_staged_release_plan.md`.",
         "- v1.2 ML selector application: `docs/extension/v1_2_baseline_ml_selector_application.md`.",
         "- v1.3 cost, turnover, and liquidity reliability layer: `docs/extension/v1_3_cost_turnover_liquidity_reliability_layer.md`.",
+        "- v1.6 confidence/review-priority integration: `docs/extension/v1_6_confidence_robustness_review_priority.md`.",
+        "- v2.0 evidence-readiness gap report: `docs/extension/v2_0_evidence_readiness_gap_report.md`.",
         "- Score catalog: `Quant_mvp/docs/score_catalog.md` (on-demand only; not embedded).",
         "- Active route skill: `.agents/skills/quant-strategy-adoption-gate/SKILL.md`.",
         "- Active architecture skills: `.agents/skills/agent-coordinator/SKILL.md` through `.agents/skills/agent-reporter/SKILL.md`.",
@@ -272,6 +277,38 @@ def _format_limited_lines(lines: list[str], *, max_lines: int) -> str:
     if len(cleaned) > max_lines:
         limited.append(f"- omitted {len(cleaned) - max_lines} additional lines for compact context")
     return "\n".join(limited) if limited else "- unavailable"
+
+
+def _exclude_forbidden_phrase_lines(text: str) -> str:
+    markers = (
+        "live trading",
+        "brokerage",
+        "order generation",
+        "real-money",
+        "buy/sell",
+        "buy/sell/hold",
+        "trade-signal",
+        "automatic rebalance",
+        "move-to-cash",
+        "future-return",
+        "proven-alpha",
+        "production ranking",
+        "kosdaq150",
+        "futures",
+        "options",
+        "nasdaq",
+    )
+    kept: list[str] = []
+    removed = 0
+    for line in text.splitlines():
+        lowered = line.lower()
+        if any(marker in lowered for marker in markers):
+            removed += 1
+            continue
+        kept.append(line)
+    if removed:
+        kept.append("- prohibited phrase examples excluded; see root hard stops for exact authority wording")
+    return "\n".join(kept) if kept else "- unavailable"
 
 
 def _truncate_context(text: str, *, max_chars: int) -> str:

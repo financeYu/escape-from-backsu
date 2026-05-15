@@ -66,8 +66,11 @@ Before refreshing GPT-facing context, root must provide or reconstruct:
 6. Ensure GPT-facing output routes to file paths instead of embedding source
    bodies, archive history, validation logs, full score catalog content, raw
    data, charts, or secrets.
-7. Run focused context tests and `git diff --check`.
-8. Finish through `quant-review-gate` before accepting completion.
+7. Exclude prohibited action, recommendation, activation, guarantee, and
+   unsupported-performance phrase examples from GPT-facing output; use safe
+   boundary categories and route to authority docs for exact wording.
+8. Run focused context tests and `git diff --check`.
+9. Finish through `quant-review-gate` before accepting completion.
 
 ## Output Requirements
 

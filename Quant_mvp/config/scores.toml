@@ -6,7 +6,7 @@
 [registry_status]
 registry_stage = "step_9_research_tester_raw_score_contract_with_step20_mvp_downstream_contracts"
 registry_alignment = "official_step_5_score_definitions"
-official_candidate_count = 8
+official_candidate_count = 11
 research_adjustment_source = "research_mvp/reports/research_ingestion/step5_candidate_evidence.md"
 research_adjustment_status = "candidate_metadata_only_runtime_activation_disabled"
 runtime_score_implementation = false
@@ -202,3 +202,72 @@ definition_doc_anchor = "efficiency_ratio_trend"
 step9_formula_variant = "signed_return_direction_times_efficiency_ratio"
 step9_formula_window_source = "Quant_mvp/config/windows.toml [statistics].efficiency_ratio"
 notes = "Signed trend-efficiency role is locked for Step 9 raw testing; later review may adopt, defer, downgrade, or reject it. Keep as the limited trend-quality representative instead of adding separate medium-term momentum variants."
+
+[[scores]]
+score_id = "price_near_52w_high"
+name = "price_near_52w_high"
+branch = "technical"
+family = "breakout"
+role = "research_candidate"
+first_pass_status = "define_for_post_mvp_testing_after_redundancy_review"
+research_priority = "medium"
+research_adjustment = "promote_from_folded_backlog_to_narrow_candidate"
+enabled = true
+runtime_enabled = false
+normalization = "cross_sectional_percentile"
+secondary_normalization = "rolling_percentile"
+required_data = ["ohlcv"]
+required_inputs = ["high", "close", "prior_252d_high"]
+minimum_history = 252
+score_direction = "higher_is_closer_to_or_above_prior_252d_high"
+blocked_by_data = false
+definition_doc_anchor = "price_near_52w_high"
+step9_formula_variant = "close_divided_by_prior_252d_high_minus_one"
+step9_formula_window_source = "future score contract must add fixed prior 252 trading day high window"
+notes = "Narrow post-MVP candidate only. It must be compared against donchian_breakout_distance before implementation because trend and breakout overlap risk is high."
+
+[[scores]]
+score_id = "volume_price_confirmation"
+name = "volume_price_confirmation"
+branch = "technical"
+family = "flow"
+role = "filter_candidate"
+first_pass_status = "define_as_filter_candidate_before_direct_use"
+research_priority = "medium"
+research_adjustment = "promote_from_flow_backlog_to_conditional_candidate"
+enabled = true
+runtime_enabled = false
+normalization = "rolling_robust_zscore"
+secondary_normalization = "cross_sectional_percentile_after_clipping"
+required_data = ["ohlcv"]
+required_inputs = ["return_20d", "obv_slope_20", "adl_slope_20", "cmf_20"]
+minimum_history = 60
+score_direction = "higher_is_stronger_price_volume_confirmation_when_linked_to_named_price_score"
+blocked_by_data = false
+definition_doc_anchor = "volume_price_confirmation"
+step9_formula_variant = "predeclared_price_score_times_clipped_flow_confirmation"
+step9_formula_window_source = "Quant_mvp/config/windows.toml [returns].medium and [indicators].obv_slope, adl_slope, cmf"
+notes = "Filter or interaction candidate only. The linked price score must be named before implementation, and volume evidence remains OHLCV participation context without ownership or valuation interpretation."
+
+[[scores]]
+score_id = "amihud_illiquidity_diagnostic"
+name = "amihud_illiquidity_diagnostic"
+branch = "diagnostic"
+family = "liquidity_risk"
+role = "diagnostic_only"
+first_pass_status = "diagnostic_context_only"
+research_priority = "medium"
+research_adjustment = "add_as_v1_3_liquidity_reliability_candidate"
+enabled = true
+runtime_enabled = false
+normalization = "rolling_percentile"
+secondary_normalization = "cross_sectional_diagnostic_percentile"
+required_data = ["ohlcv"]
+required_inputs = ["close", "volume", "return_1d", "traded_value_proxy"]
+minimum_history = 120
+score_direction = "higher_is_higher_price_impact_illiquidity_risk"
+blocked_by_data = false
+definition_doc_anchor = "amihud_illiquidity_diagnostic"
+step9_formula_variant = "rolling_mean_absolute_return_divided_by_traded_value_proxy"
+step9_formula_window_source = "future score contract must add fixed liquidity diagnostic window after v1_3 review"
+notes = "Reliability diagnostic only. It may support cost, turnover, and liquidity review later, but must not become a direct ranking score without explicit reclassification."

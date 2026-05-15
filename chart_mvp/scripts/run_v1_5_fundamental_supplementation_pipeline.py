@@ -1,8 +1,9 @@
 """Run the local v1.5 fundamental supplementation pipeline.
 
 The pipeline is candidate-only and evidence-only. It can optionally collect
-OpenDART raw snapshots for the candidates already present in the v1.5 pending
-handoff, then rebuild the supplementation artifacts from local files.
+OpenDART raw snapshots for dynamically selected candidates from the current
+v1.5 pending handoff, then rebuild the supplementation artifacts from local
+files.
 """
 
 from __future__ import annotations
@@ -25,6 +26,10 @@ if str(SRC_DIR) not in sys.path:
 from stock_core.ml.opendart_v1_4_snapshot import (  # noqa: E402
     DEFAULT_OPENDART_SNAPSHOT_DIR,
     collect_opendart_v1_4_raw_snapshots,
+)
+from stock_core.ml.v1_5_candidate_selection import (  # noqa: E402
+    V15CollectionCandidateSelectionConfig,
+    build_v1_5_collection_candidate_selection,
 )
 from stock_core.ml.v1_5_supplementation import (  # noqa: E402
     V15SupplementationConfig,
@@ -53,7 +58,19 @@ def main() -> int:
         )
     )
     pending_handoff_path = Path(str(handoff_result["output_csv"]))
-    codes = _candidate_codes(pending_handoff_path)
+    opendart_selection_csv = args.output_dir / "v1_5_opendart_candidate_code_selection_latest.csv"
+    opendart_selection_manifest = args.output_dir / "v1_5_opendart_candidate_code_selection_manifest_latest.json"
+    opendart_selection_result = build_v1_5_collection_candidate_selection(
+        V15CollectionCandidateSelectionConfig(
+            pending_handoff_path=pending_handoff_path,
+            output_csv_path=opendart_selection_csv,
+            output_manifest_path=opendart_selection_manifest,
+            selection_purpose="opendart_fundamental_collection",
+            max_codes=args.max_opendart_candidate_tickers,
+            source_candidate_handoff_path=args.candidate_handoff,
+        )
+    )
+    codes = list(opendart_selection_result["selected_codes"])
     naver_selection_rows = _naver_ratio_policy_ticker_selection_rows(
         pending_handoff_path,
         max_codes=args.max_naver_ratio_policy_tickers,
@@ -114,6 +131,14 @@ def main() -> int:
         "schema_version": "v1_5_fundamental_supplementation_pipeline_v1_0",
         "created_at": datetime.now(UTC).replace(microsecond=0).isoformat(),
         "candidate_codes": codes,
+        "candidate_code_selection_csv": str(opendart_selection_csv),
+        "candidate_code_selection_manifest": str(opendart_selection_manifest),
+        "candidate_code_selection_policy": "v1_5_dynamic_collection_candidate_selection_policy_v1",
+        "candidate_code_generation_mode": "runtime_from_pending_handoff",
+        "candidate_code_selection_mode": "ranked_best_fit",
+        "candidate_code_pool": opendart_selection_result["manifest"]["candidate_code_pool"],
+        "candidate_code_selected_count": len(codes),
+        "hardcoded_tickers_used": False,
         "naver_ratio_policy_candidate_selection_csv": str(naver_selection_csv),
         "naver_ratio_policy_candidate_selection_manifest": str(naver_selection_manifest),
         "naver_ratio_policy_selected_codes": naver_codes,
@@ -136,20 +161,13 @@ def main() -> int:
             status=manifest["limited_completion_update"]["current_status"],
             collection=collection_status,
             naver_collection=naver_collection_status,
-            codes=",".join(naver_codes),
+            codes=",".join(codes),
             manifest=manifest_path,
         )
     )
     if args.collect_naver_ratio_policy and naver_collection_status == "failed":
         return 1
     return 0
-
-
-def _candidate_codes(path: Path) -> list[str]:
-    with path.open(encoding="utf-8-sig", newline="") as handle:
-        rows = list(csv.DictReader(handle))
-    return sorted({str(row.get("ticker", "")).strip() for row in rows if row.get("ticker")})
-
 
 def _naver_ratio_policy_ticker_selection_rows(path: Path, max_codes: int = 0) -> list[dict[str, str]]:
     with path.open(encoding="utf-8-sig", newline="") as handle:
@@ -356,6 +374,15 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--max-pages", type=int, default=1)
     parser.add_argument("--timeout-seconds", type=int, default=20)
     parser.add_argument("--sleep-seconds", type=float, default=0.3)
+    parser.add_argument(
+        "--max-opendart-candidate-tickers",
+        type=int,
+        default=1,
+        help=(
+            "Maximum OpenDART candidate tickers selected at collection time from the "
+            "current pending handoff; 0 means all eligible."
+        ),
+    )
     parser.add_argument("--collect-naver-ratio-policy", action="store_true")
     parser.add_argument(
         "--max-naver-ratio-policy-tickers",

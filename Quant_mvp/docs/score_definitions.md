@@ -231,3 +231,86 @@ not activate runtime score calculation.
 - `data_requirements`: Daily close history.
 - `notes_on_interpretability`: A high signed score means a cleaner technical
   trend path, not superior business quality.
+
+## `price_near_52w_high`
+
+- `score_name`: `price_near_52w_high`
+- `score_family`: `breakout`
+- `score_branch`: `technical`
+- `purpose`: Measure whether price is close to or above a prior long-window
+  high while keeping it separate from shorter Donchian breakout testing.
+- `market_regime_where_it_helps`: Markets where long-window price leadership is
+  persistent enough to warrant review after redundancy diagnostics.
+- `raw_input_features`: `high`, `close`, prior 252 trading day high.
+- `raw_formula_design`: Candidate raw form:
+  `(close_t / rolling_max(high, 252)_{t-1}) - 1`. The high window must use only
+  completed prior bars to avoid same-day lookahead. Any alternative denominator
+  or ATR-scaled variant requires a versioned definition update before testing.
+- `normalization_candidates`: Primary `cross_sectional_percentile`; secondary
+  `rolling_percentile` for per-stock context.
+- `minimum_history_needed`: 252 trading days.
+- `expected_overlap_risk`: High overlap with `donchian_breakout_distance`,
+  relative strength, moving-average trend, and plain trend-return ideas.
+- `failure_modes`: Crowded breakouts, sector momentum clustering, high exposure
+  to recent winners, corporate-action adjustment errors, and redundant trend
+  exposure.
+- `data_requirements`: Daily high and close history; adjusted high/close
+  preferred.
+- `notes_on_interpretability`: High values mean long-window technical
+  leadership or proximity to the prior high. They do not imply business quality
+  or valuation support.
+
+## `volume_price_confirmation`
+
+- `score_name`: `volume_price_confirmation`
+- `score_family`: `flow`
+- `score_branch`: `technical`
+- `purpose`: Check whether a predefined price score is confirmed by OHLCV-based
+  participation indicators.
+- `market_regime_where_it_helps`: Breakout, trend, or reversal-candidate review
+  where price movement without volume support may be less reliable.
+- `raw_input_features`: `return_20d`, `obv_slope_20`, `adl_slope_20`,
+  `cmf_20`.
+- `raw_formula_design`: Define a clipped flow confirmation term from the
+  predeclared OBV slope, ADL slope, and CMF inputs. If used as an interaction,
+  multiply or gate only a named price score selected before testing. The linked
+  score and clipping rule must be fixed before implementation.
+- `normalization_candidates`: Primary `rolling_robust_zscore`; secondary
+  `cross_sectional_percentile` after clipping and missingness review.
+- `minimum_history_needed`: 60 trading days.
+- `expected_overlap_risk`: Medium overlap with `cmf_confirmation`, liquidity
+  diagnostics, and broad activity filters.
+- `failure_modes`: Volume spikes, stale or zero volume rows, gap-heavy high/low
+  ranges, false participation readings, and accidentally turning a filter into
+  a standalone score.
+- `data_requirements`: Daily high, low, close, and volume.
+- `notes_on_interpretability`: This is price-volume confirmation context only.
+  It must not be read as ownership, institutional demand, or valuation evidence.
+
+## `amihud_illiquidity_diagnostic`
+
+- `score_name`: `amihud_illiquidity_diagnostic`
+- `score_family`: `liquidity_risk`
+- `score_branch`: `diagnostic`
+- `purpose`: Estimate price-impact liquidity risk from absolute return relative
+  to traded value proxy.
+- `market_regime_where_it_helps`: Cost, turnover, and execution-reliability
+  review where thin trading can distort candidate evidence.
+- `raw_input_features`: `close`, `volume`, one-day absolute return, traded value
+  proxy.
+- `raw_formula_design`: Candidate diagnostic form:
+  `mean(abs(return_1d) / max(close * volume, epsilon), N)`, with `N` fixed by a
+  later versioned liquidity diagnostic contract. The denominator must use only
+  same-day or prior available OHLCV values, and the epsilon rule must be fixed
+  before testing.
+- `normalization_candidates`: Primary `rolling_percentile`; secondary
+  cross-sectional diagnostic percentile for same-date reliability review.
+- `minimum_history_needed`: 120 trading days.
+- `expected_overlap_risk`: Medium overlap with `realized_vol_percentile`,
+  volume filters, turnover diagnostics, and later cost sensitivity summaries.
+- `failure_modes`: Low-price distortions, suspended or zero-volume days, stale
+  rows, split-adjustment issues, and misusing a risk diagnostic as a direct
+  ranking input.
+- `data_requirements`: Daily close and volume history; adjusted close preferred.
+- `notes_on_interpretability`: Higher values mean higher estimated price-impact
+  risk. This candidate is diagnostic-only unless explicitly reclassified later.

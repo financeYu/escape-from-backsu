@@ -42,7 +42,13 @@ def test_refresh_gpt_references_updates_both_gpt_files(tmp_path: Path) -> None:
     assert "Post-v1.0 v1.x staged release development is active" in brief_text
     assert "## North-Star Goal Memory" in brief_text
     assert "## Conditions And Gaps To Report" in brief_text
-    assert "not a live trading system, performance guarantee, or expected-return claim" in brief_text
+    assert "manual-review evidence support only" in brief_text
+    assert "exact forbidden wording instead of copying those phrases" in brief_text
+    assert "prohibited phrase examples excluded" in project_text
+    assert "buy/sell/hold" not in brief_text
+    assert "proven-alpha" not in brief_text
+    assert "future-return claims" not in brief_text
+    assert "live trading" not in brief_text
     assert len(brief_text.splitlines()) <= 80
 
 

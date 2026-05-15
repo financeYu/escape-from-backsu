@@ -1,0 +1,24 @@
+{
+  "adapter_policy": "No valuation scores are consumed. Status/readiness flags and lineage only are merged. Missing coverage/data_quality/stability remain missing for the v1.6 runner.",
+  "created_at": "2026-05-15T15:08:52.867446+00:00",
+  "found_artifacts": {
+    "v1_3_liquidity": "chart_mvp\\data\\v1_3_liquidity\\v1_3_candidate_liquidity_handoff_records_latest.csv",
+    "v1_4_revision": "chart_mvp\\data\\v1_4_revision\\v1_4_candidate_revision_diagnostic_handoff_latest.csv",
+    "v1_5_feature_readiness": "chart_mvp\\data\\v1_5_valuation\\v1_5_feature_level_readiness_latest.csv",
+    "v1_5_incremental_comparison": "chart_mvp\\data\\v1_5_valuation\\v1_5_incremental_valuation_real_comparison_latest.csv",
+    "v1_5_to_v1_6_handoff": "chart_mvp\\data\\v1_5_valuation\\v1_6_readiness_status_handoff_from_v1_5_latest.csv"
+  },
+  "horizon_join_key_available": false,
+  "join_keys": [
+    "candidate_id",
+    "ticker",
+    "evaluation_date"
+  ],
+  "merged_row_count": 3,
+  "missing_or_limited_artifacts": {
+    "v1_1_net_profitability": "latest v1.1 net profitability project output not found",
+    "v1_2_baseline_ml_selector": "latest v1.2 baseline ML selector project output not found"
+  },
+  "output_csv": "Quant_mvp\\data\\v1_6\\review_priority\\v1_6_real_available_merged_evidence_status_latest.csv",
+  "schema_version": "v1_6_real_artifact_adapter_v1"
+}

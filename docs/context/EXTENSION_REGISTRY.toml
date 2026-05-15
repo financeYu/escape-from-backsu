@@ -344,7 +344,7 @@ architecture_chain = [
   "agent-reporter",
 ]
 git_policy = "fetch=false; pull=false; push=false; commit=false; stage=false unless explicitly instructed at the appropriate end stage"
-current_stage = "v1.5_planned_after_v1_4_temporary_diagnostic_closure"
+current_stage = "v2_0_evidence_readiness_preparation_after_v1_6_readiness_input"
 stage_sequence = [
   "v1.1 net profitability evidence runner",
   "v1.2 baseline ML selector application",
@@ -362,6 +362,15 @@ required_stage_report = [
   "skipped items with reason",
   "completion verdict",
   "next stage recommendation",
+  "status synchronization updates",
+]
+stage_completion_sync_required = true
+stage_completion_sync_targets = [
+  "docs/roadmap_status.md",
+  "docs/context/EXTENSION_REGISTRY.toml",
+  "owning route plan or checklist",
+  "GPT-facing context rules or generated context when route wording changes",
+  "focused validation evidence",
 ]
 allowed = [
   "historical or simulated net profitability display",
@@ -609,6 +618,76 @@ default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
 valuation_review_gate = ".agents/skills/valuation_review/SKILL.md"
 completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
 blocked = [
+  "live trading or brokerage integration",
+  "orders or order generation",
+  "buy/sell/hold wording",
+  "production ranking replacement",
+  "automatic rebalance instructions",
+  "valuation/fundamental active scoring",
+  "new market-data ingestion or universe expansion",
+  "future-return claims",
+  "proven-alpha language",
+  "production activation",
+]
+
+[extension.v1_6_confidence_robustness_review_priority]
+state = "implemented_for_v2_0_readiness_input"
+permission = "v1.6 confidence, robustness, review-priority integration, and ensemble weight search are implemented for manual-review evidence and v2.0 readiness handoff only; outputs must not activate valuation/fundamental scoring, production ranking, live trading, brokerage, orders, buy/sell/hold wording, automatic rebalance instructions, future-return claims, proven-alpha language, or production activation"
+context = "docs/extension/v1_6_confidence_robustness_review_priority.md"
+input_route = "extension.v1_5_valuation_quality_profitability"
+owner_lane = "Quant_mvp ML/evaluator + root governance"
+contract_module = "Quant_mvp/backtest_mvp/confidence_review_priority_v1_6.py"
+runner = "src/review_priority/v1_6_confidence_review_priority.py"
+ensemble_weight_search = "Quant_mvp/backtest_mvp/ensemble_weight_search_v1_6.py"
+tests = [
+  "tests/backtest/test_v1_6_confidence_review_priority.py",
+  "tests/backtest/test_v1_6_ensemble_weight_search.py",
+]
+output_artifacts = [
+  "v1_6_confidence_score_manifest",
+  "v1_6_horizon_stability_report",
+  "v1_6_split_stability_report",
+  "v1_6_layer_redundancy_report",
+  "v1_6_composite_review_priority_manifest",
+  "v1_6_v2_0_readiness_packet",
+  "v1_6_ensemble_weight_search_manifest",
+  "v1_6_retained_ensemble_weight_report",
+  "v1_6_ensemble_leakage_audit",
+]
+lineage = "v1.1 profitability evidence -> v1.2 ML selector evidence -> v1.3 cost/liquidity reliability -> v1.4 PIT revision status -> v1.5 valuation/quality readiness status -> v1.6 confidence and manual review priority -> v2.0 readiness handoff"
+completion_state = "IMPLEMENTED FOR READINESS INPUT; v2.0 must still validate readiness rows and blockers"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+blocked = [
+  "live trading or brokerage integration",
+  "orders or order generation",
+  "buy/sell/hold wording",
+  "production ranking replacement",
+  "automatic rebalance instructions",
+  "valuation/fundamental active scoring",
+  "new market-data ingestion or universe expansion",
+  "future-return claims",
+  "proven-alpha language",
+  "production activation",
+]
+
+[extension.v2_0_evidence_readiness]
+state = "active_evidence_readiness_preparation"
+permission = "v2.0 evidence readiness preparation may validate manual-review readiness rows, lineage, coverage, feature/label separation, leakage/no-lookahead status, cost/liquidity status, robustness status, and manual-review priority status; it does not authorize release, production activation, valuation/fundamental scoring activation, live trading, brokerage, orders, buy/sell/hold wording, automatic rebalance instructions, future-return claims, proven-alpha language, new market-data ingestion, or universe expansion"
+context = "docs/extension/v2_0_evidence_readiness_gap_report.md"
+input_route = "extension.v1_6_confidence_robustness_review_priority"
+owner_lane = "root governance + ML/evaluator review"
+validator = "src/validation/v2_0_evidence_readiness.py"
+tests = "tests/validation/test_v2_0_evidence_readiness.py"
+output_artifacts = [
+  "v2_0_evidence_readiness_gap_report",
+]
+lineage = "v1.1 through v1.6 staged evidence/status rows -> v2.0 evidence readiness gap report"
+completion_state = "ACTIVE PREPARATION; readiness verdict may be limited or not ready until rows and blockers are validated"
+default_domain_gate = ".agents/skills/quant-strategy-adoption-gate/SKILL.md"
+completion_gate = ".agents/skills/quant-review-gate/SKILL.md"
+blocked = [
+  "release or production-readiness declaration",
   "live trading or brokerage integration",
   "orders or order generation",
   "buy/sell/hold wording",

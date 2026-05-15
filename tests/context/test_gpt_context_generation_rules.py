@@ -28,6 +28,7 @@ def test_gpt_rules_define_required_budget_and_repetition_rules() -> None:
     assert "v0.3 research-to-strategy adoption is the active route" in text
     assert "v1.x staged release development is active" in text
     assert "North-Star Goal Memory Rule" in text
+    assert "Forbidden Phrase Exclusion Rule" in text
     assert "required evidence conditions" in text
     assert "single highest-priority next task" in text
     assert (
@@ -37,6 +38,7 @@ def test_gpt_rules_define_required_budget_and_repetition_rules() -> None:
     assert "Completed Step 1-20 history is archive-only" in text
     assert "Full validation logs are archive-only" in text
     assert "full score catalog" in text.lower()
+    assert "route to `docs/root_hard_stops.md` for" in text
 
 
 def test_context_budget_policy_has_gpt_specific_defaults() -> None:
@@ -52,6 +54,7 @@ def test_context_budget_policy_has_gpt_specific_defaults() -> None:
     assert "No repeated Step completion summaries" in text
     assert "No pasted old validation logs" in text
     assert "No full score catalog" in text
+    assert "No prohibited action, recommendation, activation, guarantee" in text
     assert "Route to file paths instead of embedding file bodies" in text
 
 
@@ -108,16 +111,22 @@ def test_gpt_brief_builder_stays_under_80_lines() -> None:
     assert len(text.splitlines()) <= 80
     assert text.count("v0.3 research-to-strategy adoption") == 1
     assert text.count("v1.x staged release development") == 1
-    assert "v1.1-v1.5 are upstream evidence/status layers" in text
+    assert "v1.1-v1.6 are upstream evidence/status layers" in text
+    assert "v2.0 evidence-readiness preparation is the current route" in text
     assert "v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only" in text
     assert "## North-Star Goal Memory" in text
     assert "## Conditions And Gaps To Report" in text
     assert "review-preferred candidates with repeatable historical risk-adjusted support" in text
-    assert "not a live trading system, performance guarantee, or expected-return claim" in text
+    assert "manual-review evidence support only" in text
+    assert "exact forbidden wording instead of copying those phrases" in text
     assert (
         "Do not repeat completed Step history. Use the baseline as trusted context and focus on the current decision."
         in text
     )
+    assert "buy/sell/hold" not in text
+    assert "proven-alpha" not in text
+    assert "future-return claims" not in text
+    assert "live trading" not in text
     assert "| Step 1 |" not in text
     assert "Completed Step 1-20 and v0.1/v0.2 material are archive-only" in text
     assert "GPT_CONTEXT_GENERATION_RULES.md" not in text

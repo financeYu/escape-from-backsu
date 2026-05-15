@@ -113,6 +113,9 @@ Rules:
 - No pasted old validation logs.
 - No full score catalog.
 - No long guardrail prose copied from older context.
+- No prohibited action, recommendation, activation, guarantee, or
+  unsupported-performance phrase examples in GPT-facing output; route to
+  authority docs for exact wording.
 - Route to file paths instead of embedding file bodies.
 - Completed Step 1-20 history is archive-only.
 - Full validation logs are archive-only.

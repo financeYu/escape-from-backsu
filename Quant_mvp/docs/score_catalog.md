@@ -61,6 +61,9 @@ valuation support.
 | `rsi_price_divergence` | `oscillator_divergence` | `technical` | deferred pattern proxy | defer pending simple proxy review | oscillator divergence, with pattern-mining warning |
 | `realized_vol_percentile` | `volatility_regime` | `diagnostic` | regime diagnostic | keep out of direct ranking use until reviewed | risk/regime context and testing discipline |
 | `efficiency_ratio_trend` | `trend_efficiency` | `technical` | limited trend-quality candidate | keep as the limited trend representative | smooth-trend versus noisy-trend proxy |
+| `price_near_52w_high` | `breakout` | `technical` | narrow research candidate | define only after redundancy warning | long-window breakout proximity evidence |
+| `volume_price_confirmation` | `flow` | `technical` | conditional filter candidate | define as linked confirmation before direct use | price-volume participation confirmation |
+| `amihud_illiquidity_diagnostic` | `liquidity_risk` | `diagnostic` | diagnostic-only reliability candidate | context-only for cost/liquidity review | price-impact liquidity diagnostic |
 
 ## Non-MVP Or Folded Ideas
 
@@ -69,9 +72,8 @@ valuation support.
 | `prob_up_1d_candidate` / `next_horizon_up_probability_score` | post-MVP candidate-only design in `Quant_mvp/docs/next_horizon_up_probability_score_design.md`; v0.2 final-score semantic contract in `Quant_mvp/docs/v0_2_final_score_prob_up_1d_contract.md` | future v0.2 semantic candidate for calibrated 1-day-ahead adjusted-close up probability; may become `final_composite_score` only after all final score gates pass; not MVP v0.1 ranking, backtest, or GUI activation |
 | `medium_term_relative_strength` | folded into trend/breakout review queue | Korea evidence is mixed and overlap with breakout, 52-week high, and trend return is high |
 | `moving_average_trend_structure` | folded into `efficiency_ratio_trend` or later trend review | high overlap with breakout and relative strength |
-| `price_near_52w_high` | folded into `donchian_breakout_distance` as longer-window alternative | concept is useful but redundant in first MVP set |
 | `time_series_trend_return` | folded into `efficiency_ratio_trend` review | too close to relative strength unless a separate use is justified through later review |
-| `volume_participation_momentum_filter` | future conditional filter / diagnostic backlog | strict turnover may require shares outstanding; OHLCV proxy needs review |
+| `volume_participation_momentum_filter` | narrowed into `volume_price_confirmation`; strict turnover remains deferred | strict turnover may require shares outstanding; OHLCV confirmation proxy is safer for candidate review |
 | `trading_activity_variability_penalty` | diagnostic backlog | risk/liquidity context, not a first-pass ranking input |
 | chart-pattern geometry | out of scope for MVP | subjective boundaries and high parameter-mining risk |
 
@@ -90,3 +92,13 @@ valuation support.
   slightly toward the reversal family and away from standalone squeeze, flow,
   and oscillator-divergence candidates. This is candidate governance only;
   runtime activation and MVP v0.1 composite semantics remain unchanged.
+- 2026-05-16 narrow candidate expansion adds `price_near_52w_high`,
+  `volume_price_confirmation`, and `amihud_illiquidity_diagnostic` as
+  definition-only candidates. This does not implement raw scores, enable
+  runtime scoring, change ranking semantics, or feed any evaluation result back
+  into scoring.
+- The expansion is intentionally small: one long-window breakout candidate, one
+  linked price-volume confirmation candidate, and one liquidity diagnostic.
+  Medium-term relative strength, moving-average trend, MACD acceleration, and
+  oscillator consensus remain excluded until distinctness evidence justifies a
+  versioned update.

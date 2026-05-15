@@ -24,7 +24,10 @@ v1.1 net profitability evidence runner, v1.2 baseline ML selector
 application, v1.3 cost/turnover/liquidity reliability layer, v1.4
 point-in-time revision layer, v1.5 point-in-time valuation plus
 quality/profitability layer, v1.6 high-confidence prediction,
-robustness, and reproducibility integration, then a v2.0 readiness packet.
+robustness, and reproducibility integration. The current post-v1.0 stage is
+v2.0 evidence-readiness preparation: v2.0 checks whether staged v1.1 through
+v1.6 evidence is ready for later limited selector review and records blockers
+when readiness is unavailable.
 
 Product goal:
 
@@ -99,6 +102,11 @@ Current baseline facts:
   and KIS raw snapshot collection support exist, but KIS/raw diagnostic data
   must not be auto-referenced as revision features, scores, rankings, or
   incremental evidence until an explicit PIT promotion review passes.
+- v1.5 point-in-time valuation plus quality/profitability is LIMITED COMPLETE
+  as candidate-only diagnostics. v1.6 confidence, robustness, and review
+  priority integration now has contract, runner, ensemble weight search, tests,
+  and v2.0 readiness handoff paths. The active follow-on stage is v2.0
+  evidence-readiness preparation, not v1.5 planning.
 
 Current active route skill:
 
@@ -190,6 +198,8 @@ Archived/supporting probability compatibility route:
 - `docs/extension/v1_3_cost_turnover_liquidity_reliability_layer.md`
 - `docs/extension/v1_4_revision_layer.md`
 - `docs/extension/v1_5_valuation_quality_profitability_layer.md`
+- `docs/extension/v1_6_confidence_robustness_review_priority.md`
+- `docs/extension/v2_0_evidence_readiness_gap_report.md`
 - `reports/review/v1_0_rc_ml_reproduction_report.md`
 - `config/horizon_policy.toml`
 - `config/weight_config_loop.toml`
@@ -249,6 +259,9 @@ Allowed now:
   expected-return estimates, confidence bands, calibration, walk-forward or
   out-of-sample stability, net-of-cost sensitivity, leakage checks,
   reproducibility evidence, and documented failure conditions
+- v2.0 evidence-readiness gap checks limited to manual-review readiness rows,
+  lineage, coverage, feature/label separation, leakage and no-lookahead status,
+  cost/liquidity status, robustness status, and manual-review priority status
 
 Still blocked without later explicit approval:
 
@@ -319,8 +332,30 @@ Quant-local owner-lane handoff, not a cross-project handoff.
 | v1.3 cost/turnover/liquidity reliability layer | IMPLEMENTED / evidence-only reliability layer with liquidity data gaps reported |
 | v1.4 point-in-time revision layer | TEMPORARY COMPLETE / diagnostic-only closure; KIS raw snapshot collection may continue as data support, but v1.4 features and incremental comparison remain blocked until explicit PIT promotion |
 | v1.5 point-in-time valuation + quality/profitability layer | LIMITED COMPLETE / contract, PIT validator, manifests, sector diagnostics, incremental framework, manual-review section, chart_mvp local pending-data handoff, local supplementation plan, OpenDART collection, value reconciliation report, formula reconciliation review, formula components, chart-ratio policy reconstruction, valuation scoring readiness guardrail, source-lineage report, PIT policy registry, completion hygiene report, and COMPLETE-readiness gap report exist; formula-mappable quality/profitability fields reconcile diagnostically, dividend_yield has a PIT diagnostic path for current candidates but is not promoted, local P/E and P/B are internally reconstructable from chart-cache EPS/BPS but still differ from evaluation-date close formula, partial diagnostic readiness is separated from blocked valuation readiness, and valuation scoring remains blocked from activation |
-| v1.6 high-confidence prediction, robustness, and reproducibility integration | PLANNED / validated predictive model and user decision-support staged release |
-| v2.0 readiness packet | PLANNED / readiness packet only |
+| v1.6 high-confidence prediction, robustness, and reproducibility integration | IMPLEMENTED FOR READINESS INPUT / confidence-review-priority contract, runner, ensemble weight search, tests, and v2.0 readiness handoff paths exist; generated v1.6 artifacts remain local review evidence and do not activate production behavior |
+| v2.0 readiness packet | ACTIVE PREPARATION / evidence-readiness gap report contract, validator, and tests exist; current work should assemble or validate readiness rows and report blockers rather than treating v2.0 as complete |
+
+## Stage Completion Synchronization Process
+
+Every versioned stage closure must keep the plan and actual work aligned before
+root reports `COMPLETE`.
+
+Required closeout updates:
+
+- update `docs/roadmap_status.md` current route text, active artifacts, current
+  authorization, and overall step state
+- update `docs/context/EXTENSION_REGISTRY.toml` `current_stage`, affected stage
+  state, inputs, outputs, lineage, tests, and next-stage references
+- update the owning route plan or checklist, such as
+  `docs/extension/v1_x_staged_release_plan.md`
+- update GPT-facing generation rules or generated context only when the current
+  route wording changes
+- run focused tests, `git diff --check`, targeted wording/activation checks,
+  and the review gate validator
+- report unrelated dirty files separately from the stage closeout scope
+
+If any required status-sync update is skipped, the stage result must be
+`PARTIALLY COMPLETE` or `NEEDS FIX`, not `COMPLETE`.
 
 ## Baseline Contracts
 

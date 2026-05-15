@@ -1,0 +1,2 @@
+schema_version,layer_id_a,layer_id_b,candidate_count,spearman_correlation,redundancy_status,threshold_source,gap_note,reason_codes,manual_review_only_notice
+v1_6,,,0,,insufficient_data,,missing layer_id or evidence_value,limited_quality_evidence;manual_review_only,"manual_review_priority is a human review queue category, not an automated ordering or action instruction"

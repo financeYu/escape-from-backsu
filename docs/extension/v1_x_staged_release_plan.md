@@ -30,8 +30,8 @@ All outputs remain:
 | v1.3 | cost/turnover/liquidity reliability layer | reliability adjustment and sensitivity packet | backtest/simulation + quant governance | implemented with liquidity data gaps reported |
 | v1.4 | point-in-time revision layer | point-in-time revision evidence packet | quant governance + data-support lane | temporary complete / diagnostic-only closure; KIS raw snapshots continue as data support only |
 | v1.5 | point-in-time valuation + quality/profitability layer | candidate-only valuation, quality, and profitability evidence packet | quant governance | limited complete / contract and fixture path complete; real PIT fundamentals not verified |
-| v1.6 | confidence/robustness/review-priority integration | confidence and manual review priority packet | ML/evaluator + root governance | planned |
-| v2.0 readiness | readiness packet | v2.0 readiness packet with unresolved blockers | root governance | planned |
+| v1.6 | confidence/robustness/review-priority integration | confidence and manual review priority packet | ML/evaluator + root governance | implemented for v2.0 readiness input |
+| v2.0 readiness | readiness packet | v2.0 readiness packet with unresolved blockers | root governance | active preparation |
 
 ## Stage Checklist
 
@@ -50,6 +50,27 @@ The completion verdict must be one of:
 - `COMPLETE`
 - `PARTIALLY COMPLETE`
 - `NEEDS FIX`
+
+## Stage Completion Synchronization
+
+After every versioned stage or gate closure, the same closeout packet must
+include status synchronization evidence. This prevents the implementation,
+plan, registry, and GPT-facing context from drifting apart.
+
+Required synchronization before reporting `COMPLETE`:
+
+- update `docs/roadmap_status.md` current route text, active artifacts,
+  authorization, and overall step state
+- update `docs/context/EXTENSION_REGISTRY.toml` `current_stage`, affected
+  stage state, inputs, outputs, lineage, tests, and next-stage references
+- update this staged release plan or the owning route checklist
+- update GPT context generation wording or generated GPT context only when the
+  current route wording changed
+- run focused tests, `git diff --check`, targeted wording/activation checks,
+  and the review gate validator
+
+If a stage implementation is complete but these status-sync updates are not,
+the closeout verdict is `PARTIALLY COMPLETE` until synchronization is finished.
 
 ## v1.1 Checklist
 
@@ -147,6 +168,11 @@ production ranking.
 - [ ] Run targeted integration tests and guardrail wording checks.
 - [ ] Produce the v1.6 completion packet.
 
+Current state: v1.6 contract, runner, ensemble weight search, tests, and v2.0
+readiness handoff paths exist as readiness inputs. The next active work is v2.0
+evidence-readiness preparation, which must validate assembled readiness rows
+and report blockers instead of treating v2.0 as complete.
+
 ## v2.0 Readiness Packet Checklist
 
 Goal: summarize whether staged v1.x evidence is sufficient for a later v2.0
@@ -159,6 +185,11 @@ decision.
 - [ ] Recommend the single highest-priority next stage or blocker fix.
 - [ ] Avoid production activation, release, push, trading, or execution
   language unless separately approved.
+
+Current state: active preparation. The readiness gap report contract,
+validator, and tests exist. The next concrete task is assembling or validating
+readiness rows from v1.1 through v1.6 evidence/status artifacts and preserving
+blockers when evidence is missing.
 
 ## Guardrail Checklist
 

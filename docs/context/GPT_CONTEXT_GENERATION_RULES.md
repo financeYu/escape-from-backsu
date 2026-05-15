@@ -13,9 +13,9 @@ waste, clear baseline trust, and no repetitive reuse of old Step summaries.
 ## Current Route Rule
 
 - Post-MVP v0.3 research-to-strategy adoption is the active route.
-- Post-v1.0 v1.x staged release development is active; v1.1 through v1.5
-  are upstream evidence/status layers, and v1.6 is the manual-review priority
-  integration route.
+- Post-v1.0 v1.x staged release development is active; v1.1 through v1.6
+  are upstream evidence/status layers, and v2.0 evidence-readiness preparation
+  is the current route.
 - KOSPI200 technical MVP v0.1 is frozen archive baseline.
 - v0.2 `prob_up_1d_candidate` is archived/supporting compatibility only.
 - GPT-facing context must treat Step 1-20 as trusted archive baseline.
@@ -79,8 +79,8 @@ Compress baseline context to the smallest useful set. Prefer:
 - v1.x staged release development is active after the local v1.0 freeze;
   v1.1 net profitability, v1.2 ML selector comparison, v1.3
   cost/turnover/liquidity reliability, v1.4 revision diagnostics, and v1.5
-  valuation/quality/profitability readiness are upstream evidence/status
-  layers for v1.6 manual review priority.
+  valuation/quality/profitability readiness, and v1.6 confidence/review
+  priority are upstream evidence/status layers for v2.0 readiness preparation.
 - v0.1 is frozen KOSPI200 technical baseline; v0.2 `prob_up_1d_candidate` is
   archived/supporting compatibility only.
 - Valuation/fundamental activation, universe expansion, new data ingestion,
@@ -102,6 +102,18 @@ and full score catalog material are archive-only.
 
 List file paths instead of embedding file bodies. Route to targeted files for
 detail, and read archives only on demand for an allowed reason.
+
+## Forbidden Phrase Exclusion Rule
+
+GPT-facing context must not repeat prohibited action, recommendation,
+activation, guarantee, or unsupported-performance phrases as examples. State
+the safe boundary category instead, and route to `docs/root_hard_stops.md` for
+the exact authority wording when a human needs the full list.
+
+Do not copy blocked wording from authority docs into
+`docs/context/gpt/gpt_context_quant.md` or the ChatGPT project reference
+snapshot. Use safe phrases such as "manual-review evidence support only" and
+"activation or instruction framing stays out of GPT-facing wording."
 
 ## Fresh Reasoning Requirement
 
@@ -189,8 +201,7 @@ Do not repeat completed Step history. Use the baseline as trusted context and fo
 
 ## Boundaries
 - No quant/scoring/ranking/report/backtest/valuation/data-ingestion logic changes unless explicitly requested and allowed.
-- No KOSDAQ150/futures/options/Nasdaq implementation unless the routed task opens it.
-- No trading recommendation or proven-alpha language.
+- Keep prohibited activation, recommendation, guarantee, and unsupported-performance phrases out of the GPT-facing prompt; route to authority docs for exact wording.
 
 ## Route-Only References
 - `docs/context/MVP_V0_1_BASELINE.md`

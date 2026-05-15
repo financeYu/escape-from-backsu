@@ -1,0 +1,32 @@
+{
+  "carry_forward_limitations_visible": true,
+  "contract_version": "v1_6_confidence_review_priority_contract_v1_0",
+  "created_at": "2026-05-15T15:09:00.821800+00:00",
+  "forbidden_columns_absent": true,
+  "forbidden_columns_by_file": {
+    "v1_6_composite_review_priority_manifest_latest.csv": [],
+    "v1_6_confidence_score_manifest_latest.csv": [],
+    "v1_6_horizon_stability_report_latest.csv": [],
+    "v1_6_layer_redundancy_report_latest.csv": [],
+    "v1_6_split_stability_report_latest.csv": [],
+    "v1_6_v2_0_readiness_packet_latest.json": [],
+    "v1_6_v2_0_readiness_packet_latest.md": []
+  },
+  "forbidden_language_absent": true,
+  "forbidden_language_by_file": {
+    "v1_6_composite_review_priority_manifest_latest.csv": [],
+    "v1_6_confidence_score_manifest_latest.csv": [],
+    "v1_6_horizon_stability_report_latest.csv": [],
+    "v1_6_layer_redundancy_report_latest.csv": [],
+    "v1_6_split_stability_report_latest.csv": [],
+    "v1_6_v2_0_readiness_packet_latest.json": [],
+    "v1_6_v2_0_readiness_packet_latest.md": []
+  },
+  "lineage_or_source_refs_present": true,
+  "manual_review_only_confirmed": true,
+  "manual_review_only_notice": "manual_review_priority is a human review queue category, not an automated ordering or action instruction",
+  "readiness_verdict": "V2_0_NOT_READY",
+  "readiness_verdict_conservative": true,
+  "schema_version": "v1_6",
+  "top_review_priority_reason_codes_present": true
+}

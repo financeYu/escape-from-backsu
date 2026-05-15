@@ -8,6 +8,9 @@ from Quant_mvp.backtest_mvp.contracts import (
     BacktestSecurityResult,
     BacktestSummary,
     ConservativeBacktestResult,
+    WalkForwardConfig,
+    WalkForwardFoldResult,
+    WalkForwardSummary,
     find_forbidden_backtest_input_columns,
     validate_backtest_price_input,
     validate_backtest_ranking_input,
@@ -23,7 +26,7 @@ from Quant_mvp.backtest_mvp.candidate_rank_adapter import (
     CandidateRankingSnapshotConfig,
     build_candidate_ranking_snapshot,
 )
-from Quant_mvp.backtest_mvp.engine import run_conservative_backtest
+from Quant_mvp.backtest_mvp.engine import run_conservative_backtest, run_walk_forward_backtest
 from Quant_mvp.backtest_mvp.evaluation_evidence import (
     EvaluationEvidenceResult,
     build_contract_only_evaluation_evidence_packet,
@@ -100,6 +103,9 @@ __all__ = (
     "RevisionLayerConfig",
     "STEP17_BACKTEST_NOTICE",
     "ValuationQualityLayerConfig",
+    "WalkForwardConfig",
+    "WalkForwardFoldResult",
+    "WalkForwardSummary",
     "WeightConfigCandidate",
     "build_contract_only_evaluation_evidence_packet",
     "build_candidate_ranking_snapshot",
@@ -116,6 +122,7 @@ __all__ = (
     "find_forbidden_backtest_input_columns",
     "load_weight_config_candidates",
     "run_conservative_backtest",
+    "run_walk_forward_backtest",
     "run_net_profitability_evidence_v1_1",
     "run_v1_3_cost_turnover_liquidity_reliability",
     "run_v1_2_baseline_ml_selector_application",

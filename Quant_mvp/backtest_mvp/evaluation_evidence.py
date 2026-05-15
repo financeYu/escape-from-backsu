@@ -19,8 +19,9 @@ from Quant_mvp.backtest_mvp.candidate_rank_adapter import (
 from Quant_mvp.backtest_mvp.contracts import (
     BacktestConfig,
     ConservativeBacktestResult,
+    WalkForwardConfig,
 )
-from Quant_mvp.backtest_mvp.engine import run_conservative_backtest
+from Quant_mvp.backtest_mvp.engine import run_walk_forward_backtest
 from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 
 
@@ -85,6 +86,7 @@ def run_v0_3_evaluation_evidence(
     *,
     ranking_config: CandidateRankingSnapshotConfig | Mapping[str, Any] | None = None,
     backtest_config: BacktestConfig | Mapping[str, Any] | None = None,
+    walk_forward_config: WalkForwardConfig | Mapping[str, Any] | None = None,
     evaluation_id: str | None = None,
     created_at: str | None = None,
     source_refs: Sequence[str] | None = None,
@@ -110,10 +112,11 @@ def run_v0_3_evaluation_evidence(
         config=ranking_config,
         symbol_policy=symbol_policy,
     )
-    backtest_result = run_conservative_backtest(
+    backtest_result = run_walk_forward_backtest(
         ranking_snapshot,
         price_frame,
         config=backtest_config,
+        walk_forward_config=walk_forward_config,
         symbol_policy=symbol_policy,
     )
     evidence = build_evaluation_evidence_record(
@@ -244,9 +247,11 @@ def build_evaluation_evidence_record(
         "known_limitations": list(limitation_flags),
         "review_notes": [
             "benchmark series comparison is not computed unless an approved benchmark input is supplied later",
-            "walk_forward_or_out_of_sample_stability remains a downstream evidence requirement",
+            _walk_forward_review_note(backtest_result),
         ],
     }
+    if backtest_result.walk_forward_summary is not None:
+        evidence["walk_forward_stability_summary"] = backtest_result.walk_forward_summary.to_dict()
     if metric_summary["valid_security_count"] == 0:
         evidence["status"] = "invalidated"
         evidence["failure_flags"] = ["performance_metric_missing"]
@@ -596,7 +601,7 @@ def _materialize_price_input(
 
 def _metric_summary(backtest_result: ConservativeBacktestResult) -> dict[str, Any]:
     summary = backtest_result.summary
-    return {
+    payload = {
         "period_count": summary.period_count,
         "selected_security_count": summary.selected_security_count,
         "valid_security_count": summary.valid_security_count,
@@ -620,6 +625,14 @@ def _metric_summary(backtest_result: ConservativeBacktestResult) -> dict[str, An
         "cost_slippage_bps_round_trip": 2.0
         * (backtest_result.config.transaction_cost_bps + backtest_result.config.slippage_bps),
     }
+    if backtest_result.walk_forward_summary is not None:
+        walk_forward = backtest_result.walk_forward_summary
+        payload["walk_forward_passing_fold_ratio"] = walk_forward.passing_fold_ratio
+        payload["walk_forward_passing_fold_count"] = walk_forward.passing_fold_count
+        payload["walk_forward_fold_count"] = walk_forward.fold_count
+        payload["walk_forward_aggregate_total_return"] = walk_forward.aggregate_total_return
+        payload["walk_forward_method"] = walk_forward.method
+    return payload
 
 
 def _evaluation_window(backtest_result: ConservativeBacktestResult) -> dict[str, str | None]:
@@ -678,6 +691,7 @@ def _assumptions(candidate: Mapping[str, Any], backtest_result: ConservativeBack
         "candidate_only_interpretation",
         "no_runtime_connection",
         "equal_weight_portfolio",
+        "walk_forward_chronological_folds",
         f"top_n={backtest_result.config.top_n}",
         f"holding_period_days={backtest_result.config.holding_period_days}",
     ]
@@ -761,7 +775,10 @@ def _recorded_evaluation_checks(metric_summary: Mapping[str, Any]) -> dict[str, 
         "oos_walk_forward_stability": {
             "status": str(metric_summary.get("oos_stability_status") or "not_available"),
             "check": "walk_forward_or_out_of_sample_stability_must_be_recorded_or_explicitly_limited",
-            "required_next_action": "run_walk_forward_or_oos_stability_check_before_adoption_review",
+            "metric_refs": [
+                "metric_summary.oos_stability_status",
+                "walk_forward_stability_summary",
+            ],
         },
         "no_lookahead": {
             "status": "recorded_boundary_check",
@@ -796,6 +813,15 @@ def _point_in_time_check(limitation_flags: Sequence[str]) -> str:
     if "non_point_in_time_constituent_warning" in limitation_flags:
         return "point_in_time_constituent_membership_unverified_limitation_recorded"
     return "input_rows_validated_before_evaluation_with_no_future_return_columns"
+
+
+def _walk_forward_review_note(backtest_result: ConservativeBacktestResult) -> str:
+    if backtest_result.walk_forward_summary is None:
+        return "walk_forward_or_out_of_sample_stability remains a downstream evidence requirement"
+    return (
+        "walk-forward stability is recorded from chronological candidate-only "
+        "backtest folds; it is evidence only and not production activation"
+    )
 
 
 def _evaluation_id(candidate_id: str, created_at: str) -> str:

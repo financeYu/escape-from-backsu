@@ -14,7 +14,9 @@ if str(PROJECT_ROOT) not in sys.path:
 from Quant_mvp.backtest_mvp import (  # noqa: E402
     BacktestConfig,
     BacktestLimitationFlag,
+    WalkForwardConfig,
     run_conservative_backtest,
+    run_walk_forward_backtest,
 )
 from Quant_mvp.backtest_mvp.contracts import assert_ticker_strings  # noqa: E402
 from src.preprocess.schema_validator import GENERIC_EXCHANGE_SYMBOL_POLICY  # noqa: E402
@@ -160,6 +162,54 @@ def test_execution_lag_days_respected() -> None:
 
     assert selected["execution_date"] == "2026-01-05"
     assert selected["exit_date"] == "2026-01-06"
+
+
+def test_walk_forward_backtest_records_chronological_fold_summary() -> None:
+    ranking = pd.DataFrame(
+        [
+            {
+                "ticker": "005930",
+                "ranking_date": date.date().isoformat(),
+                "rank": 1,
+                "ranking_validity_flag": "valid",
+            }
+            for date in pd.bdate_range("2026-01-02", periods=6)
+        ]
+    )
+    prices = pd.DataFrame(
+        [
+            {
+                "ticker": "005930",
+                "date": date.date().isoformat(),
+                "open": 100.0 + index,
+                "high": 101.0 + index,
+                "low": 99.0 + index,
+                "close": 101.0 + index,
+                "volume": 100,
+            }
+            for index, date in enumerate(pd.bdate_range("2026-01-02", periods=10))
+        ]
+    )
+
+    result = run_walk_forward_backtest(
+        ranking,
+        prices,
+        config=one_period_config(top_n=1),
+        walk_forward_config=WalkForwardConfig(
+            fold_count=3,
+            minimum_test_periods_per_fold=2,
+            minimum_passing_fold_ratio=2 / 3,
+        ),
+    )
+
+    assert result.walk_forward_summary is not None
+    assert result.summary.oos_stability_status in {
+        "recorded_walk_forward_pass",
+        "recorded_walk_forward_fail",
+    }
+    assert result.walk_forward_summary.fold_count == 3
+    assert [fold.period_count for fold in result.walk_forward_summary.folds] == [2, 2, 2]
+    assert result.to_summary_dict()["walk_forward_summary"]["fold_count"] == 3
 
 
 def test_horizon_policy_controls_rebalance_schedule() -> None:

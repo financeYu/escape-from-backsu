@@ -261,6 +261,39 @@ class BacktestConfig:
 
 
 @dataclass(frozen=True)
+class WalkForwardConfig:
+    """Fold-level walk-forward evaluation assumptions."""
+
+    fold_count: int = 3
+    minimum_test_periods_per_fold: int = 1
+    minimum_passing_fold_ratio: float = 2 / 3
+
+    def __post_init__(self) -> None:
+        if self.fold_count < 1:
+            raise ValueError("walk-forward fold_count must be at least 1.")
+        if self.minimum_test_periods_per_fold < 1:
+            raise ValueError("walk-forward minimum_test_periods_per_fold must be at least 1.")
+        if not 0.0 < self.minimum_passing_fold_ratio <= 1.0:
+            raise ValueError("walk-forward minimum_passing_fold_ratio must be in (0, 1].")
+
+    @classmethod
+    def from_mapping(cls, values: Mapping[str, Any]) -> "WalkForwardConfig":
+        defaults = values.get("walk_forward", values)
+        if not isinstance(defaults, Mapping):
+            raise ValueError("walk-forward config must be a mapping.")
+        known_fields = cls.__dataclass_fields__.keys()
+        kwargs = {key: value for key, value in defaults.items() if key in known_fields}
+        return cls(**kwargs)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "fold_count": self.fold_count,
+            "minimum_test_periods_per_fold": self.minimum_test_periods_per_fold,
+            "minimum_passing_fold_ratio": self.minimum_passing_fold_ratio,
+        }
+
+
+@dataclass(frozen=True)
 class BacktestSecurityResult:
     """One selected or skipped security row for a Step 17 evaluation period."""
 
@@ -398,6 +431,90 @@ class BacktestSummary:
 
 
 @dataclass(frozen=True)
+class WalkForwardFoldResult:
+    """Metrics for one chronological walk-forward test fold."""
+
+    fold_index: int
+    start_date: str | None
+    end_date: str | None
+    period_count: int
+    selected_security_count: int
+    valid_security_count: int
+    skipped_security_count: int
+    mean_period_return: float | None
+    total_return: float | None
+    max_drawdown: float | None
+    period_volatility: float | None
+    sharpe_ratio: float | None
+    hit_rate: float | None
+    turnover_proxy: float | None
+    coverage_ratio: float | None
+    benchmark_relative_return: float | None
+    benchmark_comparison_status: str
+    passed: bool
+    limitation_flags: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "fold_index": self.fold_index,
+            "start_date": self.start_date,
+            "end_date": self.end_date,
+            "period_count": self.period_count,
+            "selected_security_count": self.selected_security_count,
+            "valid_security_count": self.valid_security_count,
+            "skipped_security_count": self.skipped_security_count,
+            "mean_period_return": self.mean_period_return,
+            "total_return": self.total_return,
+            "max_drawdown": self.max_drawdown,
+            "period_volatility": self.period_volatility,
+            "sharpe_ratio": self.sharpe_ratio,
+            "hit_rate": self.hit_rate,
+            "turnover_proxy": self.turnover_proxy,
+            "coverage_ratio": self.coverage_ratio,
+            "benchmark_relative_return": self.benchmark_relative_return,
+            "benchmark_comparison_status": self.benchmark_comparison_status,
+            "passed": self.passed,
+            "limitation_flags": self.limitation_flags,
+        }
+
+
+@dataclass(frozen=True)
+class WalkForwardSummary:
+    """Aggregate walk-forward stability evidence."""
+
+    status: str
+    method: str
+    fold_count: int
+    passing_fold_count: int
+    passing_fold_ratio: float
+    minimum_test_periods_per_fold: int
+    minimum_passing_fold_ratio: float
+    aggregate_total_return: float | None
+    aggregate_max_drawdown: float | None
+    benchmark_relative_return: float | None
+    benchmark_comparison_status: str
+    limitation_flags: tuple[str, ...]
+    folds: tuple[WalkForwardFoldResult, ...] = field(default_factory=tuple)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "status": self.status,
+            "method": self.method,
+            "fold_count": self.fold_count,
+            "passing_fold_count": self.passing_fold_count,
+            "passing_fold_ratio": self.passing_fold_ratio,
+            "minimum_test_periods_per_fold": self.minimum_test_periods_per_fold,
+            "minimum_passing_fold_ratio": self.minimum_passing_fold_ratio,
+            "aggregate_total_return": self.aggregate_total_return,
+            "aggregate_max_drawdown": self.aggregate_max_drawdown,
+            "benchmark_relative_return": self.benchmark_relative_return,
+            "benchmark_comparison_status": self.benchmark_comparison_status,
+            "limitation_flags": self.limitation_flags,
+            "folds": [fold.to_dict() for fold in self.folds],
+        }
+
+
+@dataclass(frozen=True)
 class ConservativeBacktestResult:
     """Complete in-memory Step 17 conservative backtest result."""
 
@@ -406,6 +523,7 @@ class ConservativeBacktestResult:
     summary: BacktestSummary
     metadata: Mapping[str, Any]
     limitation_flags: tuple[str, ...]
+    walk_forward_summary: WalkForwardSummary | None = None
 
     def to_security_frame(self) -> pd.DataFrame:
         rows = [
@@ -423,6 +541,8 @@ class ConservativeBacktestResult:
         payload["metadata"] = dict(self.metadata)
         payload["config"] = self.config.to_dict()
         payload["limitation_flags"] = self.limitation_flags
+        if self.walk_forward_summary is not None:
+            payload["walk_forward_summary"] = self.walk_forward_summary.to_dict()
         return payload
 
 
@@ -642,6 +762,9 @@ __all__ = (
     "RANKING_DATE_COLUMNS",
     "RANK_COLUMNS",
     "STEP17_BACKTEST_NOTICE",
+    "WalkForwardConfig",
+    "WalkForwardFoldResult",
+    "WalkForwardSummary",
     "assert_ticker_strings",
     "coerce_frame",
     "date_string",

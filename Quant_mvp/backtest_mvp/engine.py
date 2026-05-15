@@ -24,6 +24,9 @@ from Quant_mvp.backtest_mvp.contracts import (
     BacktestSecurityResult,
     BacktestSummary,
     ConservativeBacktestResult,
+    WalkForwardConfig,
+    WalkForwardFoldResult,
+    WalkForwardSummary,
     coerce_frame,
     date_string,
     is_upstream_blocked,
@@ -36,6 +39,10 @@ from src.preprocess.schema_validator import KOSPI200_SYMBOL_POLICY, SymbolPolicy
 
 
 _PriceLocation = dict[str, Any]
+WALK_FORWARD_METHOD = "chronological_fold_walk_forward_over_backtest_period_returns"
+WALK_FORWARD_PASS_STATUS = "recorded_walk_forward_pass"
+WALK_FORWARD_FAIL_STATUS = "recorded_walk_forward_fail"
+WALK_FORWARD_INSUFFICIENT_STATUS = "insufficient_walk_forward_coverage"
 
 
 def run_conservative_backtest(
@@ -72,6 +79,59 @@ def run_conservative_backtest(
         summary=summary,
         metadata=_build_result_metadata(resolved_config),
         limitation_flags=limitation_flags,
+    )
+
+
+def run_walk_forward_backtest(
+    ranking_snapshots: pd.DataFrame | Iterable[Mapping[str, Any]],
+    prices: pd.DataFrame | Iterable[Mapping[str, Any]],
+    *,
+    config: BacktestConfig | Mapping[str, Any] | None = None,
+    walk_forward_config: WalkForwardConfig | Mapping[str, Any] | None = None,
+    symbol_policy: SymbolPolicy = KOSPI200_SYMBOL_POLICY,
+) -> ConservativeBacktestResult:
+    """Run the conservative evaluator with chronological walk-forward folds."""
+
+    resolved_config = _resolve_config(config)
+    resolved_walk_forward = _resolve_walk_forward_config(walk_forward_config)
+    prepared_rankings, price_by_ticker = _prepare_backtest_inputs(
+        ranking_snapshots,
+        prices,
+        symbol_policy=symbol_policy,
+    )
+    period_results = _evaluate_periods(
+        prepared_rankings,
+        price_by_ticker=price_by_ticker,
+        config=resolved_config,
+    )
+    walk_forward_summary = _build_walk_forward_summary(
+        period_results,
+        config=resolved_config,
+        walk_forward_config=resolved_walk_forward,
+    )
+    summary = _build_summary(
+        period_results,
+        resolved_config,
+        oos_stability_status=walk_forward_summary.status,
+    )
+    limitation_flags = _dedupe_flags(
+        (
+            *resolved_config.limitation_flags,
+            *summary.limitation_flags,
+            *walk_forward_summary.limitation_flags,
+        )
+    )
+    return ConservativeBacktestResult(
+        config=resolved_config,
+        period_results=period_results,
+        summary=summary,
+        metadata={
+            **_build_result_metadata(resolved_config),
+            "walk_forward_status": walk_forward_summary.status,
+            "walk_forward_method": WALK_FORWARD_METHOD,
+        },
+        limitation_flags=limitation_flags,
+        walk_forward_summary=walk_forward_summary,
     )
 
 
@@ -146,6 +206,16 @@ def _resolve_config(config: BacktestConfig | Mapping[str, Any] | None) -> Backte
     if isinstance(config, BacktestConfig):
         return config
     return BacktestConfig.from_mapping(config)
+
+
+def _resolve_walk_forward_config(
+    config: WalkForwardConfig | Mapping[str, Any] | None,
+) -> WalkForwardConfig:
+    if config is None:
+        return WalkForwardConfig()
+    if isinstance(config, WalkForwardConfig):
+        return config
+    return WalkForwardConfig.from_mapping(config)
 
 
 def _prepare_ranking_frame(
@@ -718,6 +788,8 @@ def _skipped_result(
 def _build_summary(
     period_results: Sequence[BacktestPeriodResult],
     config: BacktestConfig,
+    *,
+    oos_stability_status: str = "not_available_single_pass_snapshot",
 ) -> BacktestSummary:
     period_returns = [
         result.backtest_period_return
@@ -780,9 +852,143 @@ def _build_summary(
         benchmark_relative_return=None,
         benchmark_comparison_status="not_available_without_approved_benchmark_series",
         warmup_period_count=_leading_warmup_period_count(period_results),
-        oos_stability_status="not_available_single_pass_snapshot",
+        oos_stability_status=oos_stability_status,
         limitation_flags=limitation_flags,
     )
+
+
+def _build_walk_forward_summary(
+    period_results: Sequence[BacktestPeriodResult],
+    *,
+    config: BacktestConfig,
+    walk_forward_config: WalkForwardConfig,
+) -> WalkForwardSummary:
+    folds = tuple(
+        _walk_forward_fold_result(index, rows, config=config)
+        for index, rows in enumerate(
+            _walk_forward_period_folds(
+                tuple(period_results),
+                fold_count=walk_forward_config.fold_count,
+            ),
+            start=1,
+        )
+        if rows
+    )
+    passing_fold_count = sum(1 for fold in folds if fold.passed)
+    fold_count = len(folds)
+    passing_fold_ratio = passing_fold_count / fold_count if fold_count else 0.0
+    aggregate_returns = _valid_period_returns(period_results)
+    aggregate_total_return = _cumulative_return(aggregate_returns)
+    aggregate_max_drawdown = _max_drawdown(aggregate_returns)
+    sufficient_coverage = (
+        fold_count >= 2
+        and all(fold.period_count >= walk_forward_config.minimum_test_periods_per_fold for fold in folds)
+    )
+    passed = (
+        sufficient_coverage
+        and passing_fold_ratio >= walk_forward_config.minimum_passing_fold_ratio
+        and aggregate_total_return is not None
+        and aggregate_total_return > 0.0
+    )
+    if not sufficient_coverage:
+        status = WALK_FORWARD_INSUFFICIENT_STATUS
+    else:
+        status = WALK_FORWARD_PASS_STATUS if passed else WALK_FORWARD_FAIL_STATUS
+    limitation_flags = _dedupe_flags(
+        (
+            *(
+                flag
+                for period in period_results
+                for flag in period.limitation_flags
+            ),
+            *(
+                flag
+                for fold in folds
+                for flag in fold.limitation_flags
+            ),
+        )
+    )
+    return WalkForwardSummary(
+        status=status,
+        method=WALK_FORWARD_METHOD,
+        fold_count=fold_count,
+        passing_fold_count=passing_fold_count,
+        passing_fold_ratio=passing_fold_ratio,
+        minimum_test_periods_per_fold=walk_forward_config.minimum_test_periods_per_fold,
+        minimum_passing_fold_ratio=walk_forward_config.minimum_passing_fold_ratio,
+        aggregate_total_return=aggregate_total_return,
+        aggregate_max_drawdown=aggregate_max_drawdown,
+        benchmark_relative_return=None,
+        benchmark_comparison_status="not_available_without_approved_benchmark_series",
+        limitation_flags=limitation_flags,
+        folds=folds,
+    )
+
+
+def _walk_forward_period_folds(
+    period_results: Sequence[BacktestPeriodResult],
+    *,
+    fold_count: int,
+) -> tuple[tuple[BacktestPeriodResult, ...], ...]:
+    if not period_results:
+        return ()
+    resolved_fold_count = max(1, min(fold_count, len(period_results)))
+    base_size, remainder = divmod(len(period_results), resolved_fold_count)
+    folds: list[tuple[BacktestPeriodResult, ...]] = []
+    start = 0
+    for index in range(resolved_fold_count):
+        size = base_size + (1 if index < remainder else 0)
+        folds.append(tuple(period_results[start : start + size]))
+        start += size
+    return tuple(folds)
+
+
+def _walk_forward_fold_result(
+    fold_index: int,
+    period_results: Sequence[BacktestPeriodResult],
+    *,
+    config: BacktestConfig,
+) -> WalkForwardFoldResult:
+    period_returns = _valid_period_returns(period_results)
+    period_count = len(period_results)
+    total_return = _cumulative_return(period_returns)
+    mean_period_return = (
+        sum(period_returns) / len(period_returns) if period_returns else None
+    )
+    period_volatility = _sample_stdev(period_returns)
+    periods_per_year = 252.0 / max(float(config.holding_period_days), 1.0)
+    limitation_flags = _dedupe_flags(
+        flag for period in period_results for flag in period.limitation_flags
+    )
+    return WalkForwardFoldResult(
+        fold_index=fold_index,
+        start_date=min((period.decision_date for period in period_results), default=None),
+        end_date=max((period.decision_date for period in period_results), default=None),
+        period_count=period_count,
+        selected_security_count=sum(period.selected_security_count for period in period_results),
+        valid_security_count=sum(period.valid_security_count for period in period_results),
+        skipped_security_count=sum(period.skipped_security_count for period in period_results),
+        mean_period_return=mean_period_return,
+        total_return=total_return,
+        max_drawdown=_max_drawdown(period_returns),
+        period_volatility=period_volatility,
+        sharpe_ratio=_annualized_sharpe(mean_period_return, period_volatility, periods_per_year),
+        hit_rate=_hit_rate(period_returns),
+        turnover_proxy=_average_turnover_proxy(period_results),
+        coverage_ratio=_coverage_ratio(period_results),
+        benchmark_relative_return=None,
+        benchmark_comparison_status="not_available_without_approved_benchmark_series",
+        passed=total_return is not None and total_return > 0.0,
+        limitation_flags=limitation_flags,
+    )
+
+
+def _valid_period_returns(period_results: Sequence[BacktestPeriodResult]) -> list[float]:
+    return [
+        result.backtest_period_return
+        for result in period_results
+        if result.backtest_period_return is not None
+    ]
 
 
 def _cumulative_return(period_returns: Sequence[float]) -> float | None:
@@ -914,4 +1120,4 @@ def _dedupe_flags(flags: Sequence[str]) -> tuple[str, ...]:
     return tuple(dict.fromkeys(str(flag) for flag in flags if str(flag)))
 
 
-__all__ = ("run_conservative_backtest",)
+__all__ = ("run_conservative_backtest", "run_walk_forward_backtest")

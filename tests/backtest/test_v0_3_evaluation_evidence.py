@@ -176,7 +176,12 @@ def test_v0_3_candidate_runs_to_evaluation_evidence_record() -> None:
     assert "warmup_period_count" in evidence["risk_metric_summary"]
     assert "benchmark_relative_return" in evidence["performance_metric_summary"]
     assert evidence["metric_summary"]["benchmark_comparison"] == "not_available_without_approved_benchmark_series"
-    assert evidence["metric_summary"]["oos_stability_status"] == "not_available_single_pass_snapshot"
+    assert evidence["metric_summary"]["oos_stability_status"] in {
+        "recorded_walk_forward_pass",
+        "recorded_walk_forward_fail",
+        "insufficient_walk_forward_coverage",
+    }
+    assert evidence["walk_forward_stability_summary"]["fold_count"] > 0
     assert set(evidence["required_evaluation_checks"]) == {
         "cost",
         "drawdown",
@@ -187,7 +192,7 @@ def test_v0_3_candidate_runs_to_evaluation_evidence_record() -> None:
         "no_feedback",
     }
     assert evidence["required_evaluation_checks"]["oos_walk_forward_stability"]["status"] == (
-        "not_available_single_pass_snapshot"
+        evidence["metric_summary"]["oos_stability_status"]
     )
     assert evidence["comparison_group"] == [
         "v0_3_candidate_review_cohort",

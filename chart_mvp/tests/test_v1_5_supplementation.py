@@ -357,7 +357,20 @@ class V15SupplementationTests(unittest.TestCase):
             handoff = future["v1_6_readiness_handoff_rows"][0]
             self.assertEqual(handoff["overall_valuation_status"], "vendor_reference_only")
             self.assertEqual(handoff["manual_review_required"], "true")
-            self.assertIn("v1_6_must_consume_status_flags_only", handoff["limitations"])
+            self.assertIn("v1_6_consumes_status_flags_only", handoff["limitations"])
+            self.assertNotIn("valuation_score", handoff)
+            self.assertEqual(
+                handoff["price_to_earnings_canonical_formula_status"],
+                "blocked_by_reconciliation",
+            )
+            self.assertEqual(
+                handoff["price_to_earnings_vendor_reference_status"],
+                "vendor_reference_only",
+            )
+            self.assertEqual(
+                handoff["incremental_evidence_status"],
+                "skipped_missing_baseline_artifacts",
+            )
             self.assertTrue(Path(future["outputs"]["v1_6_readiness_handoff"]).exists())
 
     def test_naver_vendor_snapshot_readiness_requires_raw_html_hash_match(self) -> None:
@@ -580,6 +593,29 @@ class V15SupplementationTests(unittest.TestCase):
             self.assertTrue(Path(result["outputs"]["per_pbr_reconciliation_matrix"]).exists())
             self.assertTrue(Path(result["outputs"]["incremental_valuation_real_comparison"]).exists())
             self.assertTrue(Path(result["outputs"]["dividend_yield_readiness"]).exists())
+            debug = result["per_pbr_variance_debug_rows"][0]
+            self.assertEqual(debug["recommended_formula_route"], "near_match_needs_review")
+            self.assertIn("eps_bps_denominator_mismatch", debug["suspected_pe_mismatch_reason"])
+            route = result["per_pbr_formula_route_decision"]
+            self.assertEqual(route["decision"], "near_match_needs_review")
+            self.assertFalse(route["formula_reconciled_ready"])
+            baseline_check = result["incremental_baseline_dependency_check"]
+            self.assertEqual(
+                baseline_check["dependency_check_status"],
+                "skipped_missing_baseline_artifacts",
+            )
+            self.assertIn(
+                "technical_ml_baseline_row",
+                baseline_check["missing_keys_by_candidate"]["sc_v1_5_diag"],
+            )
+            start_report = result["v1_6_start_readiness_report"]
+            self.assertTrue(start_report["can_start_v1_6"])
+            self.assertEqual(start_report["start_basis"], "readiness_status_flags_only")
+            self.assertIn("valuation_score", start_report["fields_explicitly_not_used_as_score"])
+            self.assertTrue(Path(result["outputs"]["v1_6_start_readiness_report"]).exists())
+            self.assertTrue(Path(result["outputs"]["per_pbr_variance_debug"]).exists())
+            self.assertTrue(Path(result["outputs"]["per_pbr_formula_route_decision"]).exists())
+            self.assertTrue(Path(result["outputs"]["incremental_baseline_dependency_check"]).exists())
 
     @staticmethod
     def _write_multi_field_pending_handoff(

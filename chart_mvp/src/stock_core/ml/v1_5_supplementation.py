@@ -434,19 +434,14 @@ V16_READINESS_HANDOFF_COLUMNS = [
     "ticker",
     "candidate_id",
     "evaluation_date",
-    "roe_status",
-    "operating_margin_status",
-    "net_margin_status",
-    "debt_ratio_status",
-    "dividend_yield_status",
-    "price_to_earnings_formula_status",
-    "price_to_earnings_vendor_snapshot_status",
-    "price_to_earnings_diagnostic_usage_status",
-    "price_to_book_formula_status",
-    "price_to_book_vendor_snapshot_status",
-    "price_to_book_diagnostic_usage_status",
     "overall_valuation_status",
     "overall_quality_profitability_status",
+    "price_to_earnings_canonical_formula_status",
+    "price_to_book_canonical_formula_status",
+    "price_to_earnings_vendor_reference_status",
+    "price_to_book_vendor_reference_status",
+    "dividend_yield_status",
+    "incremental_evidence_status",
     "candidate_overall_readiness_status",
     "limitations",
     "manual_review_required",
@@ -512,6 +507,39 @@ PER_PBR_RECONCILIATION_MATRIX_COLUMNS = [
     "tolerance_bucket",
     "suspected_mismatch_reason",
     "reconciliation_status",
+]
+PER_PBR_VARIANCE_DEBUG_COLUMNS = [
+    "schema_version",
+    "candidate_id",
+    "evidence_id",
+    "ticker",
+    "evaluation_date",
+    "chart_local_pe",
+    "naver_pe",
+    "canonical_pe",
+    "chart_local_pb",
+    "naver_pb",
+    "canonical_pb",
+    "price",
+    "market_cap",
+    "shares_outstanding",
+    "net_income_total",
+    "net_income_attributable_to_owners",
+    "equity_total",
+    "equity_attributable_to_owners",
+    "eps",
+    "bps",
+    "implied_net_income_from_chart_pe",
+    "implied_equity_from_chart_pb",
+    "implied_eps_from_chart_pe",
+    "implied_bps_from_chart_pb",
+    "pe_delta_chart_vs_canonical",
+    "pb_delta_chart_vs_canonical",
+    "pe_delta_naver_vs_canonical",
+    "pb_delta_naver_vs_canonical",
+    "suspected_pe_mismatch_reason",
+    "suspected_pb_mismatch_reason",
+    "recommended_formula_route",
 ]
 DIVIDEND_YIELD_COMPONENT_COLUMNS = [
     "schema_version",
@@ -730,6 +758,36 @@ def build_v1_5_supplementation(config: V15SupplementationConfig) -> dict[str, An
         incremental_baseline_rows,
         incremental_overlay_rows,
     )
+    per_pbr_variance_debug_rows = _per_pbr_variance_debug_rows(
+        pending_rows,
+        canonical_component_rows,
+        naver_asof_resolved_rows,
+        naver_asof_registry_rows,
+    )
+    per_pbr_formula_route_decision = _per_pbr_formula_route_decision(
+        canonical_component_rows,
+        per_pbr_reconciliation_matrix_rows,
+        per_pbr_variance_debug_rows,
+        config,
+    )
+    incremental_baseline_dependency_check = _incremental_baseline_dependency_check(
+        incremental_baseline_rows,
+        technical_ml_scores_path,
+        config,
+    )
+    v1_6_readiness_handoff_rows = _v1_6_readiness_handoff_rows(
+        pending_rows,
+        scoring_readiness_rows,
+        feature_level_readiness_rows,
+        per_pbr_split_readiness_rows,
+        incremental_real_comparison_rows,
+    )
+    v1_6_start_readiness_report = _v1_6_start_readiness_report(
+        v1_6_readiness_handoff_rows,
+        per_pbr_formula_route_decision,
+        incremental_baseline_dependency_check,
+        config,
+    )
     limited_update = _limited_completion_update(
         enriched_rows,
         lineage_report,
@@ -819,6 +877,11 @@ def build_v1_5_supplementation(config: V15SupplementationConfig) -> dict[str, An
         "technical_ml_plus_valuation_overlay": config.output_dir / "v1_5_technical_ml_plus_valuation_overlay_latest.csv",
         "incremental_valuation_real_comparison": config.output_dir / "v1_5_incremental_valuation_real_comparison_latest.csv",
         "incremental_valuation_real_comparison_manifest": config.output_dir / "v1_5_incremental_valuation_real_comparison_manifest_latest.json",
+        "v1_6_start_readiness_report": config.output_dir / "v1_6_start_readiness_report_latest.json",
+        "per_pbr_variance_debug": config.output_dir / "v1_5_per_pbr_variance_debug_latest.csv",
+        "per_pbr_variance_debug_summary": config.output_dir / "v1_5_per_pbr_variance_debug_summary_latest.json",
+        "per_pbr_formula_route_decision": config.output_dir / "v1_5_per_pbr_formula_route_decision_latest.json",
+        "incremental_baseline_dependency_check": config.output_dir / "v1_5_incremental_baseline_dependency_check_latest.json",
         "complete_readiness_gap_report": config.output_dir / "v1_5_complete_readiness_gap_report_latest.json",
         "completion_hygiene_report": config.output_dir / "v1_5_completion_hygiene_report_latest.json",
         "missing_requirements": config.output_dir / "v1_5_missing_pit_fundamental_requirements_latest.json",
@@ -1008,6 +1071,14 @@ def build_v1_5_supplementation(config: V15SupplementationConfig) -> dict[str, An
         outputs["incremental_valuation_real_comparison_manifest"],
         _incremental_real_comparison_manifest(incremental_real_comparison_rows, config),
     )
+    _write_json(outputs["v1_6_start_readiness_report"], v1_6_start_readiness_report)
+    _write_csv(outputs["per_pbr_variance_debug"], per_pbr_variance_debug_rows, PER_PBR_VARIANCE_DEBUG_COLUMNS)
+    _write_json(
+        outputs["per_pbr_variance_debug_summary"],
+        _per_pbr_variance_debug_summary(per_pbr_variance_debug_rows, config),
+    )
+    _write_json(outputs["per_pbr_formula_route_decision"], per_pbr_formula_route_decision)
+    _write_json(outputs["incremental_baseline_dependency_check"], incremental_baseline_dependency_check)
     _write_json(outputs["complete_readiness_gap_report"], complete_readiness_gap_report)
     _write_json(outputs["completion_hygiene_report"], completion_hygiene_report)
     _write_json(outputs["missing_requirements"], missing_requirements)
@@ -1064,6 +1135,11 @@ def build_v1_5_supplementation(config: V15SupplementationConfig) -> dict[str, An
         "incremental_baseline_rows": incremental_baseline_rows,
         "incremental_overlay_rows": incremental_overlay_rows,
         "incremental_real_comparison_rows": incremental_real_comparison_rows,
+        "v1_6_start_readiness_report": v1_6_start_readiness_report,
+        "per_pbr_variance_debug_rows": per_pbr_variance_debug_rows,
+        "per_pbr_variance_debug_summary": _per_pbr_variance_debug_summary(per_pbr_variance_debug_rows, config),
+        "per_pbr_formula_route_decision": per_pbr_formula_route_decision,
+        "incremental_baseline_dependency_check": incremental_baseline_dependency_check,
         "complete_readiness_gap_report": complete_readiness_gap_report,
         "completion_hygiene_report": completion_hygiene_report,
         "missing_requirements": missing_requirements,
@@ -2193,6 +2269,224 @@ def _per_pbr_reconciliation_summary(
     }
 
 
+def _per_pbr_variance_debug_rows(
+    pending_rows: list[dict[str, str]],
+    canonical_rows: list[dict[str, str]],
+    naver_resolved_rows: list[dict[str, str]],
+    naver_registry_rows: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    canonical_by_key = {
+        (row.get("candidate_id", ""), row.get("field_name", "")): row
+        for row in canonical_rows
+    }
+    resolver_by_candidate = {row.get("candidate_id", ""): row for row in naver_resolved_rows}
+    naver_by_key = {
+        (
+            row.get("ticker", ""),
+            row.get("source_available_date", ""),
+            row.get("snapshot_date", ""),
+        ): row
+        for row in naver_registry_rows
+    }
+    pending_by_candidate: dict[str, dict[str, dict[str, str]]] = {}
+    for row in pending_rows:
+        field_name = row.get("field_name", "")
+        if field_name in VALUATION_FORMULA_REVIEW_FIELDS:
+            pending_by_candidate.setdefault(row.get("candidate_id", ""), {})[field_name] = row
+
+    rows = []
+    for candidate_id, fields in sorted(pending_by_candidate.items()):
+        pe_pending = fields.get("price_to_earnings", {})
+        pb_pending = fields.get("price_to_book", {})
+        metadata = pe_pending or pb_pending
+        ticker = metadata.get("ticker", "")
+        pe_component = canonical_by_key.get((candidate_id, "price_to_earnings"), {})
+        pb_component = canonical_by_key.get((candidate_id, "price_to_book"), {})
+        resolver = resolver_by_candidate.get(candidate_id, {})
+        naver = naver_by_key.get(
+            (
+                ticker,
+                resolver.get("selected_source_available_date", ""),
+                resolver.get("selected_snapshot_date", ""),
+            ),
+            {},
+        )
+        chart_pe = _parse_number(pe_pending.get("value", ""))
+        chart_pb = _parse_number(pb_pending.get("value", ""))
+        naver_pe = _parse_number(naver.get("per_reported_value", ""))
+        naver_pb = _parse_number(naver.get("pbr_reported_value", ""))
+        canonical_pe = _parse_number(pe_component.get("canonical_value", ""))
+        canonical_pb = _parse_number(pb_component.get("canonical_value", ""))
+        price = _parse_number(pe_component.get("price", "") or pb_component.get("price", ""))
+        market_cap = _parse_number(pe_component.get("market_cap", "") or pb_component.get("market_cap", ""))
+        shares = _parse_number(pe_component.get("shares_outstanding", "") or pb_component.get("shares_outstanding", ""))
+        net_income_total = _parse_number(pe_component.get("net_income", ""))
+        equity_total = _parse_number(pb_component.get("equity", ""))
+        eps = _parse_number(pe_component.get("eps", ""))
+        bps = _parse_number(pb_component.get("bps", ""))
+        route = _recommended_formula_route(pe_component, pb_component, canonical_pe, canonical_pb)
+        rows.append(
+            {
+                "schema_version": SCHEMA_VERSION,
+                "candidate_id": candidate_id,
+                "evidence_id": metadata.get("evidence_id", ""),
+                "ticker": ticker,
+                "evaluation_date": metadata.get("evaluation_date", ""),
+                "chart_local_pe": pe_pending.get("value", ""),
+                "naver_pe": _format_optional_number(naver_pe),
+                "canonical_pe": _format_optional_number(canonical_pe),
+                "chart_local_pb": pb_pending.get("value", ""),
+                "naver_pb": _format_optional_number(naver_pb),
+                "canonical_pb": _format_optional_number(canonical_pb),
+                "price": _format_optional_number(price),
+                "market_cap": _format_optional_number(market_cap),
+                "shares_outstanding": _format_optional_number(shares),
+                "net_income_total": _format_optional_number(net_income_total),
+                "net_income_attributable_to_owners": "",
+                "equity_total": _format_optional_number(equity_total),
+                "equity_attributable_to_owners": "",
+                "eps": _format_optional_number(eps),
+                "bps": _format_optional_number(bps),
+                "implied_net_income_from_chart_pe": _format_optional_number(_divide_optional(market_cap, chart_pe)),
+                "implied_equity_from_chart_pb": _format_optional_number(_divide_optional(market_cap, chart_pb)),
+                "implied_eps_from_chart_pe": _format_optional_number(_divide_optional(price, chart_pe)),
+                "implied_bps_from_chart_pb": _format_optional_number(_divide_optional(price, chart_pb)),
+                "pe_delta_chart_vs_canonical": _format_optional_number(_absolute_delta(chart_pe, canonical_pe)),
+                "pb_delta_chart_vs_canonical": _format_optional_number(_absolute_delta(chart_pb, canonical_pb)),
+                "pe_delta_naver_vs_canonical": _format_optional_number(_absolute_delta(naver_pe, canonical_pe)),
+                "pb_delta_naver_vs_canonical": _format_optional_number(_absolute_delta(naver_pb, canonical_pb)),
+                "suspected_pe_mismatch_reason": _variance_mismatch_reason(
+                    "price_to_earnings",
+                    pe_component,
+                    resolver,
+                    chart_pe,
+                    canonical_pe,
+                    naver_pe,
+                ),
+                "suspected_pb_mismatch_reason": _variance_mismatch_reason(
+                    "price_to_book",
+                    pb_component,
+                    resolver,
+                    chart_pb,
+                    canonical_pb,
+                    naver_pb,
+                ),
+                "recommended_formula_route": route,
+            }
+        )
+    return rows
+
+
+def _variance_mismatch_reason(
+    field_name: str,
+    component: dict[str, str],
+    resolver: dict[str, str],
+    chart_value: float | None,
+    canonical_value: float | None,
+    naver_value: float | None,
+) -> str:
+    reasons = []
+    if resolver.get("asof_resolution_status") != "vendor_snapshot_available_asof_evaluation":
+        reasons.append("price_date_mismatch")
+    if resolver.get("adjusted_price_policy", "not_disclosed_by_naver_main") == "not_disclosed_by_naver_main":
+        reasons.append("adjusted_price_policy_mismatch")
+    if component.get("component_status") == "missing_component":
+        reasons.append("market_cap_policy_mismatch")
+    if component.get("shares_date") and component.get("shares_date") != component.get("price_date"):
+        reasons.append("shares_policy_mismatch")
+    if field_name == "price_to_earnings":
+        reasons.append("net_income_total_vs_owner_attributable_mismatch")
+        if not component.get("net_income"):
+            reasons.append("missing_component")
+        if chart_value is not None and canonical_value is not None and _relative_difference(chart_value, canonical_value) not in (None, 0):
+            reasons.append("eps_bps_denominator_mismatch")
+        if naver_value is not None and canonical_value is not None and _relative_difference(naver_value, canonical_value) not in (None, 0):
+            reasons.append("ttm_vs_annual_mismatch")
+    else:
+        reasons.append("equity_total_vs_owner_attributable_mismatch")
+        if not component.get("equity"):
+            reasons.append("missing_component")
+        if chart_value is not None and canonical_value is not None and _relative_difference(chart_value, canonical_value) not in (None, 0):
+            reasons.append("eps_bps_denominator_mismatch")
+    if not component.get("fs_div"):
+        reasons.append("consolidated_vs_separate_mismatch")
+    return "|".join(dict.fromkeys(reasons)) if reasons else "unknown_vendor_formula"
+
+
+def _recommended_formula_route(
+    pe_component: dict[str, str],
+    pb_component: dict[str, str],
+    canonical_pe: float | None,
+    canonical_pb: float | None,
+) -> str:
+    component_statuses = {pe_component.get("component_status", ""), pb_component.get("component_status", "")}
+    if component_statuses and component_statuses <= {"canonical_component_ready_reference_only"}:
+        if canonical_pe is not None and canonical_pb is not None:
+            return "use_canonical_component_formula_for_diagnostic"
+    if "canonical_component_ready_reference_only" in component_statuses:
+        return "near_match_needs_review"
+    return "remain_blocked_by_reconciliation"
+
+
+def _per_pbr_variance_debug_summary(
+    rows: list[dict[str, str]],
+    config: V15SupplementationConfig,
+) -> dict[str, Any]:
+    route_counts: dict[str, int] = {}
+    reason_counts: dict[str, int] = {}
+    for row in rows:
+        route = row.get("recommended_formula_route", "")
+        route_counts[route] = route_counts.get(route, 0) + 1
+        for field in ("suspected_pe_mismatch_reason", "suspected_pb_mismatch_reason"):
+            for reason in row.get(field, "").split("|"):
+                if reason:
+                    reason_counts[reason] = reason_counts.get(reason, 0) + 1
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "created_at": config.created_at,
+        "row_count": len(rows),
+        "recommended_formula_route_counts": dict(sorted(route_counts.items())),
+        "suspected_mismatch_reason_counts": dict(sorted(reason_counts.items())),
+        "valuation_scoring_activation_allowed": False,
+        "formula_reconciled_ready": False,
+        "likely_formula_variance_cause": "chart_local_or_vendor_ratio_policy_differs_from_canonical_evaluation_date_market_cap_formula",
+    }
+
+
+def _per_pbr_formula_route_decision(
+    canonical_rows: list[dict[str, str]],
+    matrix_rows: list[dict[str, str]],
+    debug_rows: list[dict[str, str]],
+    config: V15SupplementationConfig,
+) -> dict[str, Any]:
+    component_statuses = sorted({row.get("component_status", "") for row in canonical_rows if row.get("component_status")})
+    reconciliation_statuses = sorted({row.get("reconciliation_status", "") for row in matrix_rows if row.get("reconciliation_status")})
+    route_counts = _per_pbr_variance_debug_summary(debug_rows, config)["recommended_formula_route_counts"]
+    if route_counts.get("use_canonical_component_formula_for_diagnostic"):
+        decision = "use_canonical_component_formula_for_diagnostic"
+    elif route_counts.get("near_match_needs_review"):
+        decision = "near_match_needs_review"
+    elif "vendor_reference_only" in reconciliation_statuses:
+        decision = "keep_vendor_reference_only"
+    else:
+        decision = "remain_blocked_by_reconciliation"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "created_at": config.created_at,
+        "decision": decision,
+        "canonical_component_statuses": component_statuses,
+        "reconciliation_statuses": reconciliation_statuses,
+        "route_counts": route_counts,
+        "formula_reconciled_ready": False,
+        "valuation_scoring_activation_allowed": False,
+        "chart_local_and_naver_ratio_policy": "vendor_reference_only_until_numeric_match_and_source_lineage_pass",
+        "recommendation": (
+            "Use canonical component formula only as future diagnostic input when PIT components are present; "
+            "keep chart-local and Naver PER/PBR as vendor_reference_only, and do not mark formula_reconciled_ready."
+        ),
+    }
+
+
 def _dividend_yield_component_rows(
     dividend_rows: list[dict[str, str]],
     market_sources: dict[str, dict[str, Any]],
@@ -2394,6 +2688,112 @@ def _incremental_real_comparison_manifest(
         "join_keys": ["candidate_id", "ticker", "evaluation_date", "horizon_id"],
         "scoring_activation_allowed": False,
         "promotion_status": "not_promoted",
+    }
+
+
+def _incremental_baseline_dependency_check(
+    baseline_rows: list[dict[str, str]],
+    technical_ml_scores_path: Path | None,
+    config: V15SupplementationConfig,
+) -> dict[str, Any]:
+    required_keys = ["candidate_id", "ticker", "evaluation_date", "horizon_id"]
+    missing_files = []
+    if technical_ml_scores_path is None:
+        missing_files.append("technical_ml_scores_path_not_configured")
+    elif not technical_ml_scores_path.exists():
+        missing_files.append(str(technical_ml_scores_path))
+    missing_keys_by_candidate: dict[str, list[str]] = {}
+    for row in baseline_rows:
+        missing = [
+            key
+            for key in required_keys
+            if not row.get(key) or row.get(key) == f"missing_{key}"
+        ]
+        if row.get("technical_ml_baseline_status") != "available":
+            missing.append("technical_ml_baseline_row")
+        if missing:
+            missing_keys_by_candidate[row.get("candidate_id", "")] = sorted(dict.fromkeys(missing))
+    status = (
+        "joinable_baseline_available"
+        if not missing_files and not missing_keys_by_candidate
+        else "skipped_missing_baseline_artifacts"
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "created_at": config.created_at,
+        "dependency_check_status": status,
+        "join_keys": required_keys,
+        "checked_technical_ml_scores_path": str(technical_ml_scores_path) if technical_ml_scores_path else "",
+        "missing_files": missing_files,
+        "missing_keys_by_candidate": missing_keys_by_candidate,
+        "baseline_row_count": len(baseline_rows),
+        "required_action": (
+            "Provide candidate-overlapping technical_ml baseline rows keyed by candidate_id/ticker/evaluation_date/horizon_id."
+            if status != "joinable_baseline_available"
+            else "none"
+        ),
+        "valuation_scoring_activation_allowed": False,
+    }
+
+
+def _v1_6_start_readiness_report(
+    handoff_rows: list[dict[str, str]],
+    formula_route_decision: dict[str, Any],
+    baseline_dependency_check: dict[str, Any],
+    config: V15SupplementationConfig,
+) -> dict[str, Any]:
+    handoff_statuses = sorted({row.get("candidate_overall_readiness_status", "") for row in handoff_rows if row.get("candidate_overall_readiness_status")})
+    incremental_statuses = sorted({row.get("incremental_evidence_status", "") for row in handoff_rows if row.get("incremental_evidence_status")})
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "created_at": config.created_at,
+        "report_type": "v1_6_start_readiness_report",
+        "can_start_v1_6": True,
+        "start_basis": "readiness_status_flags_only",
+        "v1_5_inputs_consumed": [
+            "v1_5_feature_level_readiness_latest.csv",
+            "v1_5_per_pbr_split_readiness_latest.csv",
+            "v1_5_incremental_valuation_real_comparison_latest.csv",
+            "v1_5_complete_readiness_gap_report_latest.json",
+        ],
+        "readiness_status_fields_used": [
+            "overall_quality_profitability_status",
+            "overall_valuation_status",
+            "price_to_earnings_canonical_formula_status",
+            "price_to_book_canonical_formula_status",
+            "price_to_earnings_vendor_reference_status",
+            "price_to_book_vendor_reference_status",
+            "dividend_yield_status",
+            "incremental_evidence_status",
+            "candidate_overall_readiness_status",
+        ],
+        "fields_explicitly_not_used_as_score": [
+            "price_to_earnings",
+            "price_to_book",
+            "dividend_yield",
+            "canonical_pe",
+            "canonical_pb",
+            "naver_pe",
+            "naver_pb",
+            "valuation_score",
+        ],
+        "open_blockers_carried_forward": [
+            "PER/PBR formula_reconciled_ready is unavailable",
+            "Naver/chart-local PER/PBR are vendor_reference_only",
+            baseline_dependency_check.get("dependency_check_status", "skipped_missing_baseline_artifacts"),
+            "separate approval required before valuation scoring or ranking connection",
+        ],
+        "handoff_candidate_count": len(handoff_rows),
+        "handoff_statuses": handoff_statuses,
+        "incremental_evidence_statuses": incremental_statuses,
+        "per_pbr_formula_route_decision": formula_route_decision.get("decision", ""),
+        "next_required_v1_6_tasks": [
+            "consume status flags in confidence/robustness/review-priority packet only",
+            "keep valuation score absent from ranking",
+            "continue PER/PBR formula variance debug in parallel",
+            "attach joinable technical_ml baseline if incremental comparison is required",
+        ],
+        "valuation_scoring_activation_allowed": False,
     }
 
 
@@ -3856,6 +4256,7 @@ def _v1_6_readiness_handoff_rows(
     scoring_rows: list[dict[str, str]],
     feature_rows: list[dict[str, str]],
     split_rows: list[dict[str, str]],
+    incremental_rows: list[dict[str, str]] | None = None,
 ) -> list[dict[str, str]]:
     metadata_by_candidate: dict[str, dict[str, str]] = {}
     for row in pending_rows:
@@ -3879,6 +4280,10 @@ def _v1_6_readiness_handoff_rows(
         (row.get("candidate_id", ""), row.get("field_name", "")): row
         for row in split_rows
     }
+    incremental_by_candidate = {
+        row.get("candidate_id", ""): row
+        for row in (incremental_rows or [])
+    }
     rows = []
     for candidate_id in sorted(metadata_by_candidate):
         metadata = metadata_by_candidate[candidate_id]
@@ -3893,6 +4298,10 @@ def _v1_6_readiness_handoff_rows(
             pe.get("diagnostic_usage_status", "reference_only_crawl_missing"),
             pb.get("diagnostic_usage_status", "reference_only_crawl_missing"),
         ]
+        pe_canonical_status = pe.get("formula_reconciled_status", "blocked_by_reconciliation")
+        pb_canonical_status = pb.get("formula_reconciled_status", "blocked_by_reconciliation")
+        pe_vendor_status = _vendor_reference_status(pe)
+        pb_vendor_status = _vendor_reference_status(pb)
         if all(status == "formula_diagnostic_ready_not_scoring" for status in valuation_usage):
             overall_valuation_status = "formula_diagnostic_ready_not_scoring"
         elif any(status == "vendor_reference_ready" for status in valuation_usage):
@@ -3909,9 +4318,13 @@ def _v1_6_readiness_handoff_rows(
         candidate_overall = scoring.get("candidate_overall_readiness_status", "")
         if overall_valuation_status in {"vendor_reference_only", "formula_diagnostic_ready_not_scoring"} or quality_ready:
             candidate_overall = "partial_diagnostic_ready"
+        incremental = incremental_by_candidate.get(candidate_id, {})
+        incremental_status = incremental.get("comparison_status", "skipped_missing_baseline_artifacts")
         limitations = [
-            "valuation_scoring_inactive",
-            "v1_6_must_consume_status_flags_only",
+            "valuation_score_not_consumed",
+            "v1_6_consumes_status_flags_only",
+            "per_pbr_blocked_by_reconciliation_allowed",
+            "vendor_reference_only_not_formula_verified",
         ]
         adjusted_policies = {
             pe.get("adjusted_price_policy", ""),
@@ -3921,31 +4334,39 @@ def _v1_6_readiness_handoff_rows(
             limitations.append("adjusted_price_policy_not_disclosed_by_naver_main")
         if "reference_only_after_evaluation_date" in valuation_usage:
             limitations.append("historical_evaluation_before_first_vendor_snapshot")
+        if incremental_status.startswith("skipped_"):
+            limitations.append(f"incremental_evidence_status={incremental_status}")
         rows.append(
             {
                 "schema_version": SCHEMA_VERSION,
                 "ticker": metadata.get("ticker", ""),
                 "candidate_id": candidate_id,
                 "evaluation_date": metadata.get("evaluation_date", ""),
-                "roe_status": feature_status_by_key.get((candidate_id, "roe"), "pending"),
-                "operating_margin_status": feature_status_by_key.get((candidate_id, "operating_margin"), "pending"),
-                "net_margin_status": feature_status_by_key.get((candidate_id, "net_margin"), "pending"),
-                "debt_ratio_status": feature_status_by_key.get((candidate_id, "debt_ratio"), "pending"),
-                "dividend_yield_status": feature_status_by_key.get((candidate_id, "dividend_yield"), "unsupported"),
-                "price_to_earnings_formula_status": pe.get("formula_reconciled_status", "blocked_by_reconciliation"),
-                "price_to_earnings_vendor_snapshot_status": pe.get("vendor_snapshot_status", "crawl_missing"),
-                "price_to_earnings_diagnostic_usage_status": pe.get("diagnostic_usage_status", "reference_only_crawl_missing"),
-                "price_to_book_formula_status": pb.get("formula_reconciled_status", "blocked_by_reconciliation"),
-                "price_to_book_vendor_snapshot_status": pb.get("vendor_snapshot_status", "crawl_missing"),
-                "price_to_book_diagnostic_usage_status": pb.get("diagnostic_usage_status", "reference_only_crawl_missing"),
                 "overall_valuation_status": overall_valuation_status,
                 "overall_quality_profitability_status": overall_quality_status,
+                "price_to_earnings_canonical_formula_status": pe_canonical_status,
+                "price_to_book_canonical_formula_status": pb_canonical_status,
+                "price_to_earnings_vendor_reference_status": pe_vendor_status,
+                "price_to_book_vendor_reference_status": pb_vendor_status,
+                "dividend_yield_status": feature_status_by_key.get((candidate_id, "dividend_yield"), "unsupported"),
+                "incremental_evidence_status": incremental_status,
                 "candidate_overall_readiness_status": candidate_overall or "pending",
                 "limitations": "|".join(dict.fromkeys(limitations)),
                 "manual_review_required": "true",
             }
         )
     return rows
+
+
+def _vendor_reference_status(split_row: dict[str, str]) -> str:
+    usage_status = split_row.get("diagnostic_usage_status", "reference_only_crawl_missing")
+    if usage_status == "vendor_reference_ready":
+        return "vendor_reference_only"
+    if usage_status.startswith("reference_only_"):
+        return usage_status
+    if usage_status == "formula_diagnostic_ready_not_scoring":
+        return "vendor_reference_not_required"
+    return f"reference_only_{split_row.get('vendor_snapshot_status', 'crawl_missing')}"
 
 
 def _naver_daily_crawl_health(

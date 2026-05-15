@@ -7,7 +7,7 @@
   "comparison_rows_path": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_selector_lr_rf_comparison.jsonl",
   "diagnostic_reference_only": true,
   "evaluation_mode": "diagnostic_comparison_only",
-  "generated_at_utc": "2026-05-08T12:46:16+00:00",
+  "generated_at_utc": "2026-05-15T22:48:48+00:00",
   "logistic_regression_score_manifest_path": "Quant_mvp\\data\\v0_4\\selector_scores\\v0_4_selector_score_manifest.json",
   "model_stage": "v0_4_ml_selector_application",
   "performance_claim_allowed": false,
@@ -19,11 +19,11 @@
   "summary": {
     "baseline_model_id": "logistic_regression",
     "challenger_model_id": "random_forest",
-    "compared_candidate_count": 62,
-    "lr_score_available_count": 62,
-    "max_abs_score_delta": 0.8119130811468358,
-    "mean_abs_score_delta": 0.2575471832980489,
-    "rank_correlation": 0.7014429251340938,
+    "compared_candidate_count": 82,
+    "lr_score_available_count": 82,
+    "max_abs_score_delta": 0.8745651917490261,
+    "mean_abs_score_delta": 0.20277297868453836,
+    "rank_correlation": 0.7831325301204819,
     "ranking_top_k_overlap": {
       "5": {
         "random_forest": {
@@ -33,7 +33,7 @@
         }
       }
     },
-    "rf_score_available_count": 62,
+    "rf_score_available_count": 82,
     "top_n": 5,
     "top_n_overlap": 5,
     "top_n_overlap_ratio": 1.0

@@ -2,36 +2,36 @@
   "coefficients": [
     {
       "abs_coefficient_rank": 3,
-      "coefficient": 0.9375036022085195,
+      "coefficient": 1.0445169573577562,
       "feature": "total_return"
     },
     {
       "abs_coefficient_rank": 6,
-      "coefficient": 0.034368870563870765,
+      "coefficient": 0.10538099459760053,
       "feature": "excess_return_vs_proxy"
     },
     {
       "abs_coefficient_rank": 1,
-      "coefficient": -1.266735017179994,
+      "coefficient": -1.3199217292263774,
       "feature": "max_drawdown_abs"
     },
     {
       "abs_coefficient_rank": 2,
-      "coefficient": -1.257602773292181,
+      "coefficient": -1.3027589337204306,
       "feature": "sharpe"
     },
     {
       "abs_coefficient_rank": 5,
-      "coefficient": -0.2489865628505898,
+      "coefficient": -0.26469867550082776,
       "feature": "turnover"
     },
     {
       "abs_coefficient_rank": 4,
-      "coefficient": 0.4096803449981871,
+      "coefficient": 0.4266249308132339,
       "feature": "volatility"
     }
   ],
-  "intercept": -0.6741946639882195,
+  "intercept": -1.1155094654110342,
   "interpretation_limits": [
     "coefficients are baseline diagnostics only",
     "correlated features may make individual coefficients unstable",

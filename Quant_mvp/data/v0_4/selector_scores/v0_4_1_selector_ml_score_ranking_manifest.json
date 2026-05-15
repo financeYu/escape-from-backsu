@@ -1,10 +1,10 @@
 {
   "adoption_auto_decision_allowed": false,
-  "all_scored_candidate_count": 62,
+  "all_scored_candidate_count": 82,
   "baseline_model_id": "logistic_regression",
   "baseline_relative_score_model_id": "logistic_regression",
   "blocked_reason": null,
-  "candidate_count": 62,
+  "candidate_count": 82,
   "candidate_set_policy": "same_candidate_set_intersection_of_compared_model_scores",
   "compared_model_ids": [
     "logistic_regression",
@@ -12,11 +12,11 @@
   ],
   "diagnostic_reference_only": true,
   "evaluation_mode": "diagnostic_ranking_only",
-  "generated_at_utc": "2026-05-08T12:46:16+00:00",
+  "generated_at_utc": "2026-05-15T22:48:48+00:00",
   "model_stage": "v0_4_ml_selector_application",
   "per_model_score_available_count": {
-    "logistic_regression": 62,
-    "random_forest": 62
+    "logistic_regression": 82,
+    "random_forest": 82
   },
   "per_model_score_excluded_from_ranking_count": {
     "logistic_regression": 0,

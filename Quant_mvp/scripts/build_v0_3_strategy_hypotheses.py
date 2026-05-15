@@ -19,6 +19,10 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from Quant_mvp.backtest_mvp.candidate_rank_adapter import (
+    CandidateRankingSnapshotConfig,
+    SUPPORTED_STRATEGY_TYPES as OHLCV_ADAPTER_SUPPORTED_STRATEGY_TYPES,
+)
 from Quant_mvp.scripts.artifact_io import write_csv as write_csv_records
 
 
@@ -28,6 +32,7 @@ DEFAULT_JSONL_NAME = "v0_3_strategy_hypotheses.jsonl"
 DEFAULT_CSV_NAME = "v0_3_strategy_hypotheses.csv"
 DEFAULT_MANIFEST_NAME = "v0_3_strategy_hypotheses_manifest.json"
 DEFAULT_RULE_GROUPS_NAME = "v0_3_strategy_ml_rule_groups.json"
+DEFAULT_PROMOTION_CONFIG = Path("Quant_mvp/config/v0_3_manual_review_gap_promotions.json")
 
 CURRENT_STAGE = "StrategyHypothesis"
 STRATEGY_BOUNDARY = (
@@ -51,6 +56,11 @@ STRATEGY_TYPES = {
     "other",
 }
 CONVERSION_STATUSES = {"ready_for_candidate_registry", "needs_refinement", "blocked"}
+OHLCV_ADAPTER_DEFAULT_CONFIG = CandidateRankingSnapshotConfig()
+PROMOTABLE_STRATEGY_TYPES = OHLCV_ADAPTER_SUPPORTED_STRATEGY_TYPES
+MANUAL_REVIEW_BLOCKER = "manual_review_required"
+EXIT_PERCENTILE_THRESHOLD = 0.50
+TRANSACTION_COST_ASSUMPTION_BPS = 10
 
 
 def _get(payload: dict[str, Any], path: str, default: Any = None) -> Any:
@@ -79,6 +89,14 @@ def _compact_text(value: Any, *, limit: int = 500) -> str | None:
     return text[: limit - 3].rstrip() + "..."
 
 
+def _percentile_text(value: float) -> str:
+    return f"{value:.2f}"
+
+
+def _trading_days_text(value: int) -> str:
+    return f"{value} trading days"
+
+
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     with path.open("r", encoding="utf-8") as handle:
@@ -97,6 +115,27 @@ def _write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
     with path.open("w", encoding="utf-8", newline="\n") as handle:
         for record in records:
             handle.write(json.dumps(record, ensure_ascii=False, sort_keys=True) + "\n")
+
+
+def load_manual_review_promotions(path: Path | None) -> dict[str, dict[str, Any]]:
+    if path is None or not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    promotions = payload.get("manual_review_gap_promotions", [])
+    if not isinstance(promotions, list):
+        raise ValueError("manual_review_gap_promotions must be a list")
+    by_id: dict[str, dict[str, Any]] = {}
+    for index, item in enumerate(promotions, start=1):
+        if not isinstance(item, dict):
+            raise ValueError(f"manual_review_gap_promotions[{index}] must be an object")
+        research_id = str(item.get("research_id") or "")
+        candidate_id = str(item.get("candidate_id") or "")
+        if not research_id or not candidate_id:
+            raise ValueError(f"manual_review_gap_promotions[{index}] requires research_id and candidate_id")
+        if research_id in by_id:
+            raise ValueError(f"duplicate manual review promotion research_id: {research_id}")
+        by_id[research_id] = item
+    return by_id
 
 
 def _strategy_type_from_research(record: dict[str, Any]) -> str:
@@ -132,34 +171,41 @@ def _strategy_type_from_research(record: dict[str, Any]) -> str:
 
 
 def _rule_template(strategy_type: str) -> dict[str, Any]:
+    config = OHLCV_ADAPTER_DEFAULT_CONFIG
+    entry_threshold = _percentile_text(config.entry_percentile_threshold)
+    exit_threshold = _percentile_text(EXIT_PERCENTILE_THRESHOLD)
+    momentum_window = _trading_days_text(config.momentum_window)
+    reversal_window = _trading_days_text(config.reversal_window)
+    volatility_window = _trading_days_text(config.volatility_window)
+    rebalance_window = _trading_days_text(config.rebalance_step_days)
     templates: dict[str, dict[str, Any]] = {
         "momentum": {
-            "signal_definition": "Cross-sectional percentile rank of 20-trading-day close-to-close return, with valid daily OHLCV warmup.",
-            "signal_calculation_window": "20 trading days primary; 60 trading days optional stability context.",
-            "entry_rule": "On each rebalance date, include securities with signal_percentile >= 0.80 and complete warmup coverage.",
-            "exit_rule": "Remove after 20 trading days or when signal_percentile < 0.50 at a scheduled rebalance.",
-            "holding_period": "20 trading days.",
-            "rebalance_rule": "Every 20 trading days using only data available through the prior close.",
+            "signal_definition": f"Cross-sectional percentile rank of {momentum_window} close-to-close return, with valid daily OHLCV warmup.",
+            "signal_calculation_window": f"{momentum_window} primary; 60 trading days optional stability context.",
+            "entry_rule": f"On each rebalance date, include securities with signal_percentile >= {entry_threshold} and complete warmup coverage.",
+            "exit_rule": f"Remove after {momentum_window} or when signal_percentile < {exit_threshold} at a scheduled rebalance.",
+            "holding_period": f"{momentum_window}.",
+            "rebalance_rule": f"Every {rebalance_window} using only data available through the prior close.",
             "primary_metric": "Information ratio versus the benchmark after the stated transaction-cost assumption.",
             "expected_positive_pattern": "Higher signal quantiles show stronger evidence-only forward return or risk-adjusted metric than lower quantiles after costs.",
         },
         "reversal": {
-            "signal_definition": "Cross-sectional percentile rank of negative 5-trading-day return, with optional 20-day volatility filter.",
-            "signal_calculation_window": "5 trading days primary; 20 trading days volatility context.",
-            "entry_rule": "On each rebalance date, include securities with reversal_signal_percentile >= 0.80 and valid warmup coverage.",
-            "exit_rule": "Remove after 5 trading days or when reversal_signal_percentile < 0.50 at a scheduled rebalance.",
-            "holding_period": "5 trading days.",
+            "signal_definition": f"Cross-sectional percentile rank of negative {reversal_window} return, with optional {volatility_window} volatility filter.",
+            "signal_calculation_window": f"{reversal_window} primary; {volatility_window} volatility context.",
+            "entry_rule": f"On each rebalance date, include securities with reversal_signal_percentile >= {entry_threshold} and valid warmup coverage.",
+            "exit_rule": f"Remove after {reversal_window} or when reversal_signal_percentile < {exit_threshold} at a scheduled rebalance.",
+            "holding_period": f"{reversal_window}.",
             "rebalance_rule": "Weekly using only data available through the prior close.",
             "primary_metric": "Mean forward return spread between top and bottom signal quantiles after costs.",
             "expected_positive_pattern": "Extreme short-horizon losers show evidence-only recovery relative to the benchmark bucket after costs.",
         },
         "volatility": {
-            "signal_definition": "Rolling 20-trading-day volatility percentile and volatility expansion or compression state from daily returns.",
-            "signal_calculation_window": "20 trading days primary; 60 trading days regime context.",
+            "signal_definition": f"Rolling {volatility_window} volatility percentile and volatility expansion or compression state from daily returns.",
+            "signal_calculation_window": f"{volatility_window} primary; 60 trading days regime context.",
             "entry_rule": "On each rebalance date, include securities in the predeclared volatility state bucket and complete warmup coverage.",
-            "exit_rule": "Remove after 20 trading days or when the volatility state changes at a scheduled rebalance.",
-            "holding_period": "20 trading days.",
-            "rebalance_rule": "Every 20 trading days using only data available through the prior close.",
+            "exit_rule": f"Remove after {rebalance_window} or when the volatility state changes at a scheduled rebalance.",
+            "holding_period": f"{rebalance_window}.",
+            "rebalance_rule": f"Every {rebalance_window} using only data available through the prior close.",
             "primary_metric": "Downside-risk-adjusted return spread versus benchmark state bucket after costs.",
             "expected_positive_pattern": "The predeclared volatility state shows a stable evidence-only metric advantage over the benchmark state bucket.",
         },
@@ -176,18 +222,53 @@ def _rule_template(strategy_type: str) -> dict[str, Any]:
     }
     default = {
         "signal_definition": "Predeclared daily OHLCV-derived feature percentile defined before simulation.",
-        "signal_calculation_window": "20 trading days primary unless the strategy group requires a longer warmup.",
+        "signal_calculation_window": f"{momentum_window} primary unless the strategy group requires a longer warmup.",
         "entry_rule": "On each rebalance date, include securities in the predeclared top signal bucket with complete warmup coverage.",
         "exit_rule": "Remove after the predeclared holding period or when the signal leaves the target bucket.",
-        "holding_period": "20 trading days.",
-        "rebalance_rule": "Every 20 trading days using only data available through the prior close.",
+        "holding_period": f"{rebalance_window}.",
+        "rebalance_rule": f"Every {rebalance_window} using only data available through the prior close.",
         "primary_metric": "Risk-adjusted spread versus benchmark after costs.",
         "expected_positive_pattern": "The predeclared signal bucket shows evidence-only separation from the benchmark after costs.",
     }
     return templates.get(strategy_type, default)
 
 
-def _conversion_status(record: dict[str, Any], strategy_type: str) -> str:
+def _candidate_id_from_research_id(research_id: str) -> str:
+    return f"sc:{research_id.removeprefix('rh:')}"
+
+
+def _manual_review_promotion(
+    record: dict[str, Any],
+    strategy_type: str,
+    promotions: dict[str, dict[str, Any]],
+) -> dict[str, Any] | None:
+    research_id = str(_get(record, "research_hypothesis.research_id") or "")
+    promotion = promotions.get(research_id)
+    if promotion is None:
+        return None
+    candidate_id = _candidate_id_from_research_id(research_id)
+    if promotion.get("candidate_id") != candidate_id:
+        raise ValueError(f"manual review promotion candidate_id mismatch for {research_id}")
+    blockers = {str(item) for item in _as_list(record.get("blocker")) if item}
+    required_data = {str(item) for item in _as_list(_get(record, "research_hypothesis.required_data"))}
+    if blockers - {MANUAL_REVIEW_BLOCKER}:
+        raise ValueError(f"manual review promotion has non-manual blockers for {research_id}: {sorted(blockers)}")
+    if MANUAL_REVIEW_BLOCKER not in blockers:
+        raise ValueError(f"manual review promotion requires manual_review_required blocker for {research_id}")
+    if "daily_ohlcv" not in required_data:
+        raise ValueError(f"manual review promotion requires daily_ohlcv data for {research_id}")
+    if strategy_type not in PROMOTABLE_STRATEGY_TYPES:
+        raise ValueError(f"manual review promotion strategy_type is not OHLCV-adapter supported: {strategy_type}")
+    return promotion
+
+
+def _conversion_status(
+    record: dict[str, Any],
+    strategy_type: str,
+    promotions: dict[str, dict[str, Any]],
+) -> str:
+    if _manual_review_promotion(record, strategy_type, promotions) is not None:
+        return "ready_for_candidate_registry"
     action = _get(record, "research_hypothesis.next_action")
     if action == "reject":
         return "blocked"
@@ -198,7 +279,16 @@ def _conversion_status(record: dict[str, Any], strategy_type: str) -> str:
     return "ready_for_candidate_registry"
 
 
-def _reason_for_status(record: dict[str, Any], status: str, strategy_type: str) -> str:
+def _reason_for_status(
+    record: dict[str, Any],
+    status: str,
+    strategy_type: str,
+    promotions: dict[str, dict[str, Any]],
+) -> str:
+    promotion = _manual_review_promotion(record, strategy_type, promotions)
+    if promotion is not None:
+        reason = promotion.get("review_resolution")
+        return str(reason or "Manual review gap resolved by tracked promotion allowlist.")
     if status == "ready_for_candidate_registry":
         return "ResearchHypothesis has a technical daily-OHLCV route and enough rule structure for candidate registry drafting."
     if status == "blocked":
@@ -254,14 +344,19 @@ def _non_ready_blocker(record: dict[str, Any], status: str, strategy_type: str) 
     return [f"{strategy_type}_strategy_requires_refinement_before_candidate_registry"]
 
 
-def research_record_to_strategy_record(record: dict[str, Any]) -> dict[str, Any]:
+def research_record_to_strategy_record(
+    record: dict[str, Any],
+    *,
+    manual_review_promotions: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     hypothesis = record.get("research_hypothesis")
     if not isinstance(hypothesis, dict):
         raise ValueError("record missing research_hypothesis")
 
+    promotions = manual_review_promotions or {}
     strategy_type = _strategy_type_from_research(record)
     template = _rule_template(strategy_type)
-    status = _conversion_status(record, strategy_type)
+    status = _conversion_status(record, strategy_type, promotions)
     linked_research_id = str(hypothesis.get("research_id"))
     strategy = {
         "strategy_hypothesis_id": f"sh:{linked_research_id.removeprefix('rh:')}",
@@ -277,7 +372,7 @@ def research_record_to_strategy_record(record: dict[str, Any]) -> dict[str, Any]
         "universe_filter": _universe_filter(record),
         "position_sizing": "Equal-weight evidence-only basket; max 5 percent per security; no leverage.",
         "risk_control": "Skip records with missing warmup data; apply no-lookahead, no-survivorship-bias, and transaction-cost checks before evidence use.",
-        "transaction_cost_assumption": "Initial candidate-only assumption: 10 bps per side; must be sensitivity-tested before EvaluationEvidence.",
+        "transaction_cost_assumption": f"Initial candidate-only assumption: {TRANSACTION_COST_ASSUMPTION_BPS:g} bps per side; must be sensitivity-tested before EvaluationEvidence.",
         "benchmark": "Equal-weight approved KOSPI200 daily OHLCV universe and a passive KOSPI200 proxy where available.",
         "primary_metric": template["primary_metric"],
         "secondary_metrics": [
@@ -298,8 +393,12 @@ def research_record_to_strategy_record(record: dict[str, Any]) -> dict[str, Any]
             f"Source ResearchHypothesis action: {hypothesis.get('next_action')}",
         ],
         "conversion_status": status,
-        "reason_for_status": _reason_for_status(record, status, strategy_type),
+        "reason_for_status": _reason_for_status(record, status, strategy_type, promotions),
     }
+    if _manual_review_promotion(record, strategy_type, promotions) is not None:
+        strategy["implementation_notes"].append(
+            "Manual-review gap resolved by tracked promotion config before StrategyCandidate regeneration."
+        )
     output = {
         "schema_version": "v0_3_strategy_hypothesis_output_0_1",
         "current_stage": CURRENT_STAGE,
@@ -456,6 +555,8 @@ def build_manifest(
     *,
     source_path: Path,
     run_id: str,
+    promotion_config_path: Path | None = None,
+    manual_review_promotion_count: int = 0,
 ) -> dict[str, Any]:
     strategies = [record["strategy_hypothesis"] for record in records]
     return {
@@ -469,6 +570,8 @@ def build_manifest(
         "ready_for_candidate_registry_count": sum(
             item["conversion_status"] == "ready_for_candidate_registry" for item in strategies
         ),
+        "manual_review_promotion_count": manual_review_promotion_count,
+        "manual_review_promotion_config_path": str(promotion_config_path) if promotion_config_path else None,
         "rule_group_count": len(rule_groups["groups"]),
         "strategy_boundary": STRATEGY_BOUNDARY,
         "no_feedback_check": "strategy_hypotheses_must_not_feed_scores_rankings_reports_models_or_auto_adoption",
@@ -481,10 +584,19 @@ def build_strategy_hypotheses(
     output_dir: Path,
     *,
     run_id: str,
+    promotion_config_path: Path | None = DEFAULT_PROMOTION_CONFIG,
     write_csv_output: bool = True,
 ) -> dict[str, Path]:
     research_records = _read_jsonl(input_path)
-    records = [research_record_to_strategy_record(record) for record in research_records]
+    promotions = load_manual_review_promotions(promotion_config_path)
+    records = [
+        research_record_to_strategy_record(record, manual_review_promotions=promotions)
+        for record in research_records
+    ]
+    applied_promotion_count = sum(
+        record["strategy_hypothesis"]["linked_research_id"] in promotions
+        for record in records
+    )
     rule_groups = build_rule_groups(records)
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -496,7 +608,14 @@ def build_strategy_hypotheses(
         json.dumps(rule_groups, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
-    manifest = build_manifest(records, rule_groups, source_path=input_path, run_id=run_id)
+    manifest = build_manifest(
+        records,
+        rule_groups,
+        source_path=input_path,
+        run_id=run_id,
+        promotion_config_path=promotion_config_path if applied_promotion_count else None,
+        manual_review_promotion_count=applied_promotion_count,
+    )
     manifest_path.write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -518,6 +637,7 @@ def parse_args() -> argparse.Namespace:
         "--run-id",
         default=datetime.now(timezone.utc).strftime("strategy_hypotheses_%Y%m%d_%H%M%S"),
     )
+    parser.add_argument("--promotion-config", type=Path, default=DEFAULT_PROMOTION_CONFIG)
     parser.add_argument("--no-csv", action="store_true", help="Do not write the CSV mirror.")
     return parser.parse_args()
 
@@ -528,6 +648,7 @@ def main() -> None:
         args.input,
         args.output_dir,
         run_id=args.run_id,
+        promotion_config_path=args.promotion_config,
         write_csv_output=not args.no_csv,
     )
     print(json.dumps({key: str(path) for key, path in paths.items()}, ensure_ascii=False, sort_keys=True))

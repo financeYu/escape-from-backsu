@@ -15,6 +15,14 @@ assert SPEC.loader is not None
 SPEC.loader.exec_module(builder)
 
 
+def _entry_threshold_text() -> str:
+    return f"{builder.OHLCV_ADAPTER_DEFAULT_CONFIG.entry_percentile_threshold:.2f}"
+
+
+def _momentum_window_text() -> str:
+    return f"{builder.OHLCV_ADAPTER_DEFAULT_CONFIG.momentum_window} trading days"
+
+
 def _research_record(**overrides):
     payload = {
         "schema_version": "v0_3_research_hypothesis_output_0_1",
@@ -75,8 +83,8 @@ def test_ready_research_hypothesis_becomes_strategy_hypothesis() -> None:
     assert strategy["linked_research_id"] == "rh:ecard:test"
     assert strategy["strategy_type"] == "momentum"
     assert strategy["conversion_status"] == "ready_for_candidate_registry"
-    assert "signal_percentile >= 0.80" in strategy["entry_rule"]
-    assert "20 trading days" in strategy["holding_period"]
+    assert f"signal_percentile >= {_entry_threshold_text()}" in strategy["entry_rule"]
+    assert _momentum_window_text() in strategy["holding_period"]
     assert "KOSPI200" in strategy["universe_filter"]
     assert record["next_stage_input"]["next_stage"] == "StrategyCandidate"
     assert record["blocker"] == []
@@ -97,6 +105,40 @@ def test_non_ready_research_hypothesis_is_not_candidate_registry_input() -> None
     assert record["strategy_hypothesis"]["conversion_status"] == "needs_refinement"
     assert record["next_stage_input"] is None
     assert record["blocker"] == ["strategy_definition_not_specific_enough"]
+
+
+def test_manual_review_gap_promotion_is_tracked_and_bounded() -> None:
+    research = _research_record(
+        research_hypothesis__next_action="needs_more_research",
+        research_hypothesis__reason_for_next_action="Manual review required.",
+        next_stage_input=None,
+        blocker=["manual_review_required"],
+        minimal_fix=["Resolve manual review."],
+    )
+    promotion = {
+        "rh:ecard:test": {
+            "research_id": "rh:ecard:test",
+            "candidate_id": "sc:ecard:test",
+            "review_resolution": "Manual review resolved for candidate-only OHLCV evidence.",
+        }
+    }
+
+    record = builder.research_record_to_strategy_record(
+        research,
+        manual_review_promotions=promotion,
+    )
+    strategy = record["strategy_hypothesis"]
+
+    assert strategy["conversion_status"] == "ready_for_candidate_registry"
+    assert "Manual review resolved" in strategy["reason_for_status"]
+    assert f"signal_percentile >= {_entry_threshold_text()}" in strategy["entry_rule"]
+    assert record["blocker"] == []
+    assert record["minimal_fix"] == []
+    assert record["next_stage_input"]["next_stage"] == "StrategyCandidate"
+
+
+def test_manual_review_promotion_strategy_types_follow_ohlcv_adapter_policy() -> None:
+    assert builder.PROMOTABLE_STRATEGY_TYPES == builder.OHLCV_ADAPTER_SUPPORTED_STRATEGY_TYPES
 
 
 def test_rejected_research_hypothesis_is_blocked() -> None:

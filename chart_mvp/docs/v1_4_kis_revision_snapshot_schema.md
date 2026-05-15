@@ -88,6 +88,15 @@ chart refresh still completes and the KIS section records `blocked` or
 `failed`. Use `--no-kis-revision-snapshots` to run the daily chart refresh
 without the KIS append-only snapshot step.
 
+The same daily refresh can request append-only KRX listed-info raw snapshots
+for code/ISIN/market/company mapping lineage. KRX collection is scoped to the
+existing local universe codes and requests the latest row per code; it is not a
+full listed-history crawl unless `--all-history` is explicitly used from the
+standalone script. KRX status is recorded under
+`krx_listed_info_raw_snapshot` in `outputs/last_run_meta.json`, and the step can
+be disabled with `--no-krx-listed-info-snapshots`. This does not promote sector
+or revision features.
+
 ## Normalized Consensus Schema Draft
 
 This draft is intentionally not allowlisted.

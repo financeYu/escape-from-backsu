@@ -213,6 +213,84 @@ class PipelineTests(unittest.TestCase):
             meta["kis_revision_raw_snapshot"]["downstream_consumption_policy"],
         )
 
+    def test_run_daily_top5_update_collects_krx_listed_info_when_enabled(self) -> None:
+        row = make_row("005930", "Samsung Electronics")
+        calls = []
+
+        class FakeKrxResult:
+            output_path = Path("data/krx_listed_info_raw_snapshots/fake.jsonl")
+            records_written = 1
+            total_count = 1
+            pages_collected = 1
+            selected_env_var = "DATA_GO_KR_API_KEY"
+
+        def fake_krx_collector(**kwargs):
+            calls.append(kwargs)
+            return FakeKrxResult()
+
+        with (
+            patch(
+                "stock_core.pipeline.daily_update._build_universe_entries",
+                return_value=[UniverseEntry(code="005930", name="Samsung Electronics")],
+            ),
+            patch("stock_core.pipeline.daily_update._process_universe_entry", return_value=row),
+            patch("stock_core.pipeline.daily_update._render_selected_charts", return_value=([], [])),
+            patch("stock_core.pipeline.daily_update._export_outputs"),
+        ):
+            _top_df, meta = run_daily_top5_update(
+                pages=1,
+                use_cache=True,
+                refresh_universe=False,
+                render_charts=True,
+                max_workers=1,
+                collect_krx_listed_info_snapshots=True,
+                krx_listed_info_snapshot_collector=fake_krx_collector,
+            )
+
+        self.assertEqual(calls, [{"codes": ["005930"], "max_pages": 1}])
+        self.assertEqual(meta["krx_listed_info_raw_snapshot"]["status"], "collected")
+        self.assertEqual(meta["krx_listed_info_raw_snapshot"]["records_written"], 1)
+        self.assertEqual(meta["krx_listed_info_raw_snapshot"]["total_count"], 1)
+        self.assertEqual(meta["krx_listed_info_raw_snapshot"]["codes_requested"], 1)
+        self.assertEqual(meta["krx_listed_info_raw_snapshot"]["query_mode"], "code_supplement_latest")
+        self.assertEqual(
+            meta["krx_listed_info_raw_snapshot"]["feature_allowlist_state"],
+            "blocked_candidate_only",
+        )
+        self.assertFalse(meta["krx_listed_info_raw_snapshot"]["usable_for_v1_4_feature_manifest"])
+        self.assertFalse(meta["krx_listed_info_raw_snapshot"]["auto_reference_allowed"])
+        self.assertIn("code", meta["krx_listed_info_raw_snapshot"]["supplemented_mapping_fields"])
+        self.assertIn("sector_revision_percentile", meta["krx_listed_info_raw_snapshot"]["blocked_fields"])
+
+    def test_run_daily_top5_update_records_krx_listed_info_failure_without_raising(self) -> None:
+        row = make_row("005930", "Samsung Electronics")
+
+        def fake_krx_collector(**_kwargs):
+            raise RuntimeError("KRX listed-info HTTP 403: Forbidden")
+
+        with (
+            patch(
+                "stock_core.pipeline.daily_update._build_universe_entries",
+                return_value=[UniverseEntry(code="005930", name="Samsung Electronics")],
+            ),
+            patch("stock_core.pipeline.daily_update._process_universe_entry", return_value=row),
+            patch("stock_core.pipeline.daily_update._render_selected_charts", return_value=([], [])),
+            patch("stock_core.pipeline.daily_update._export_outputs"),
+        ):
+            top_df, meta = run_daily_top5_update(
+                pages=1,
+                use_cache=True,
+                refresh_universe=False,
+                render_charts=True,
+                max_workers=1,
+                collect_krx_listed_info_snapshots=True,
+                krx_listed_info_snapshot_collector=fake_krx_collector,
+            )
+
+        self.assertEqual(len(top_df), 1)
+        self.assertEqual(meta["krx_listed_info_raw_snapshot"]["status"], "failed")
+        self.assertEqual(meta["krx_listed_info_raw_snapshot"]["error_type"], "RuntimeError")
+
     def test_run_daily_top5_update_records_kis_snapshot_blocker_without_raising(self) -> None:
         row = make_row("005930", "Samsung Electronics")
 

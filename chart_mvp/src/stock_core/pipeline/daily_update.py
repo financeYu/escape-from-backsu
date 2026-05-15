@@ -17,6 +17,7 @@ from stock_core.ml.kis_revision_snapshot_collector import (
     collect_kis_revision_raw_snapshots,
     ensure_kis_access_token,
 )
+from stock_core.ml.krx_listed_info_snapshot import collect_krx_listed_info_raw_snapshots
 from stock_core.providers.kospi200_universe_provider import UniverseEntry, get_universe_constituents
 from stock_core.providers.naver_price_provider import get_price_df
 from stock_core.ranking.scorer import LEGACY_PLACEHOLDER_SCORE_NOTICE, score_stock
@@ -59,6 +60,13 @@ KIS_REVISION_SNAPSHOT_BOUNDARY_NOTICE = (
 KIS_REVISION_SNAPSHOT_CONSUMPTION_POLICY = (
     "raw_snapshots_may_accumulate_but_must_not_feed_v1_4_features_scores_rankings_"
     "or_incremental_evidence_until_explicit_pit_promotion"
+)
+KRX_LISTED_INFO_SNAPSHOT_BOUNDARY_NOTICE = (
+    "v1_4_krx_listed_info_raw_snapshot_mapping_support_only_no_auto_reference"
+)
+KRX_LISTED_INFO_SNAPSHOT_CONSUMPTION_POLICY = (
+    "raw_listing_snapshots_may_support_code_isin_market_company_mapping_but_must_not_feed_"
+    "v1_4_revision_features_scores_rankings_or_sector_revision_percentiles"
 )
 
 
@@ -724,6 +732,74 @@ def _collect_kis_revision_snapshots_for_daily_update(
     }
 
 
+def _collect_krx_listed_info_snapshots_for_daily_update(
+    *,
+    universe: list[UniverseEntry],
+    enabled: bool,
+    collector=collect_krx_listed_info_raw_snapshots,
+) -> dict:
+    """Collect KRX listed-info raw snapshots without changing ranking behavior."""
+
+    base_meta = {
+        "enabled": enabled,
+        "provider": "data_go_kr_krx",
+        "status": "skipped",
+        "boundary_notice": KRX_LISTED_INFO_SNAPSHOT_BOUNDARY_NOTICE,
+        "feature_allowlist_state": "blocked_candidate_only",
+        "usable_for_v1_4_feature_manifest": False,
+        "auto_reference_allowed": False,
+        "downstream_consumption_policy": KRX_LISTED_INFO_SNAPSHOT_CONSUMPTION_POLICY,
+        "supplemented_mapping_fields": ["code", "isin", "market", "company_name", "corporation_number"],
+        "blocked_fields": [
+            "estimate_as_of_date",
+            "eps_estimate_1m_ago",
+            "eps_estimate_3m_ago",
+            "analyst_revision_up_count_1m",
+            "analyst_revision_down_count_1m",
+            "sector_revision_percentile",
+        ],
+    }
+    if not enabled:
+        return {**base_meta, "reason": "daily_krx_listed_info_snapshot_collection_disabled"}
+
+    codes = _build_kis_revision_snapshot_codes(universe)
+    request_meta = {
+        **base_meta,
+        "status": "requested",
+        "query_mode": "code_supplement_latest",
+        "codes_requested": len(codes),
+    }
+    if not codes:
+        return {**request_meta, "status": "skipped", "reason": "no_universe_codes_available"}
+
+    try:
+        result = collector(codes=codes, max_pages=1)
+    except Exception as exc:
+        message = str(exc)
+        status = "blocked" if "API key is not ready" in message else "failed"
+        logger.warning("KRX listed-info raw snapshot collection %s: %s", status, exc)
+        return {
+            **request_meta,
+            "status": status,
+            "error_type": type(exc).__name__,
+            "error": message,
+            "secret_values_redacted": True,
+        }
+
+    return {
+        **request_meta,
+        "status": "collected",
+        "output_path": str(result.output_path),
+        "records_written": result.records_written,
+        "total_count": result.total_count,
+        "pages_collected": result.pages_collected,
+        "selected_env_var": result.selected_env_var,
+        "query_mode": getattr(result, "query_mode", "code_supplement_latest"),
+        "codes_requested": getattr(result, "codes_requested", len(codes)),
+        "secret_values_redacted": True,
+    }
+
+
 def _prefetch_kis_revision_token_for_daily_update(
     *,
     enabled: bool,
@@ -779,6 +855,7 @@ def _build_topn_meta(
     chart_failed_codes: list[str],
     runtime_policy: BatchRuntimePolicy,
     kis_revision_snapshot_meta: dict,
+    krx_listed_info_snapshot_meta: dict,
 ) -> dict:
     return {
         "as_of": completed_at.strftime("%Y-%m-%d"),
@@ -812,6 +889,7 @@ def _build_topn_meta(
         "canonical_ranking_source": "root src.scanner.latest_ranking",
         "financial_refresh_with_price": runtime_policy.refresh_financials_with_price,
         "kis_revision_raw_snapshot": kis_revision_snapshot_meta,
+        "krx_listed_info_raw_snapshot": krx_listed_info_snapshot_meta,
     }
 
 
@@ -875,8 +953,10 @@ def _build_and_export_topn_outputs(
     worker_count: int,
     runtime_policy: BatchRuntimePolicy,
     collect_kis_revision_snapshots: bool,
+    collect_krx_listed_info_snapshots: bool,
     kis_revision_token_preflight_meta: dict,
     kis_revision_snapshot_collector=collect_kis_revision_raw_snapshots,
+    krx_listed_info_snapshot_collector=collect_krx_listed_info_raw_snapshots,
 ) -> tuple[pd.DataFrame, dict]:
     top_df = _select_daily_top_rankings(
         rows,
@@ -900,6 +980,11 @@ def _build_and_export_topn_outputs(
         token_preflight_meta=kis_revision_token_preflight_meta,
         collector=kis_revision_snapshot_collector,
     )
+    krx_listed_info_snapshot_meta = _collect_krx_listed_info_snapshots_for_daily_update(
+        universe=universe,
+        enabled=collect_krx_listed_info_snapshots,
+        collector=krx_listed_info_snapshot_collector,
+    )
     meta = _build_topn_meta(
         completed_at=completed_at,
         pages=pages,
@@ -916,6 +1001,7 @@ def _build_and_export_topn_outputs(
         chart_failed_codes=chart_failed_codes,
         runtime_policy=runtime_policy,
         kis_revision_snapshot_meta=kis_revision_snapshot_meta,
+        krx_listed_info_snapshot_meta=krx_listed_info_snapshot_meta,
     )
     _export_outputs(top_df, meta)
     logger.info("Exported latest top-ranked outputs to %s", OUTPUTS_DIR)
@@ -933,8 +1019,10 @@ def run_daily_top5_update(
     use_market_cap_override: bool = False,
     runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
     collect_kis_revision_snapshots: bool = False,
+    collect_krx_listed_info_snapshots: bool = False,
     kis_revision_token_provider=ensure_kis_access_token,
     kis_revision_snapshot_collector=collect_kis_revision_raw_snapshots,
+    krx_listed_info_snapshot_collector=collect_krx_listed_info_raw_snapshots,
 ) -> tuple[pd.DataFrame, dict]:
     """Run the configured universe batch and export the latest top-ranked artifacts."""
 
@@ -971,8 +1059,10 @@ def run_daily_top5_update(
         worker_count=worker_count,
         runtime_policy=runtime_policy,
         collect_kis_revision_snapshots=collect_kis_revision_snapshots,
+        collect_krx_listed_info_snapshots=collect_krx_listed_info_snapshots,
         kis_revision_token_preflight_meta=kis_revision_token_preflight_meta,
         kis_revision_snapshot_collector=kis_revision_snapshot_collector,
+        krx_listed_info_snapshot_collector=krx_listed_info_snapshot_collector,
     )
 
 
@@ -993,8 +1083,10 @@ def run_daily_top5_update_if_due(
     use_market_cap_override: bool = False,
     runtime_policy: BatchRuntimePolicy = DEFAULT_BATCH_RUNTIME_POLICY,
     collect_kis_revision_snapshots: bool = False,
+    collect_krx_listed_info_snapshots: bool = False,
     kis_revision_token_provider=ensure_kis_access_token,
     kis_revision_snapshot_collector=collect_kis_revision_raw_snapshots,
+    krx_listed_info_snapshot_collector=collect_krx_listed_info_raw_snapshots,
 ) -> tuple[Optional[pd.DataFrame], dict]:
     """Run the Top-N update only when the business-day 21:00 deadline is due."""
 
@@ -1025,8 +1117,10 @@ def run_daily_top5_update_if_due(
         use_market_cap_override=use_market_cap_override,
         runtime_policy=runtime_policy,
         collect_kis_revision_snapshots=collect_kis_revision_snapshots,
+        collect_krx_listed_info_snapshots=collect_krx_listed_info_snapshots,
         kis_revision_token_provider=kis_revision_token_provider,
         kis_revision_snapshot_collector=kis_revision_snapshot_collector,
+        krx_listed_info_snapshot_collector=krx_listed_info_snapshot_collector,
     )
     meta.update(due_meta)
     return top_df, meta

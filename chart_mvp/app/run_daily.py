@@ -62,6 +62,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip append-only KIS v1.4 revision raw snapshot collection during the daily batch",
     )
+    parser.add_argument(
+        "--no-krx-listed-info-snapshots",
+        action="store_true",
+        help="Skip append-only KRX listed-info raw snapshot collection during the daily batch",
+    )
     return parser
 
 
@@ -81,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
         top_n=args.top_n,
         use_market_cap_override=args.market_cap_override,
         collect_kis_revision_snapshots=not args.no_kis_revision_snapshots,
+        collect_krx_listed_info_snapshots=not args.no_krx_listed_info_snapshots,
     )
 
     if top5_df is None:
@@ -111,6 +117,11 @@ def main(argv: list[str] | None = None) -> int:
         print(f"KIS revision raw snapshots: {kis_meta.get('status')}")
         if kis_meta.get("output_path"):
             print(f"KIS revision raw snapshot file: {kis_meta['output_path']}")
+    krx_meta = meta.get("krx_listed_info_raw_snapshot") or {}
+    if krx_meta:
+        print(f"KRX listed-info raw snapshots: {krx_meta.get('status')}")
+        if krx_meta.get("output_path"):
+            print(f"KRX listed-info raw snapshot file: {krx_meta['output_path']}")
 
     return 0
 

@@ -49,6 +49,7 @@ def run_daily_scan(
     use_market_cap_override: bool = False,
     due_only: bool = False,
     collect_kis_revision_snapshots: bool = True,
+    collect_krx_listed_info_snapshots: bool = True,
 ) -> int:
     """Run the current daily Top-N batch flow used by the GUI and scripts."""
 
@@ -62,6 +63,7 @@ def run_daily_scan(
         top_n=top_n,
         use_market_cap_override=use_market_cap_override,
         collect_kis_revision_snapshots=collect_kis_revision_snapshots,
+        collect_krx_listed_info_snapshots=collect_krx_listed_info_snapshots,
     )
     if top5_df is None:
         print(f"[Info] Daily update skipped: {meta['reason']}")
@@ -124,6 +126,11 @@ def _add_scan_parser(subparsers: argparse._SubParsersAction) -> None:
         action="store_true",
         help="Skip append-only KIS v1.4 revision raw snapshot collection during the daily scan",
     )
+    scan_parser.add_argument(
+        "--no-krx-listed-info-snapshots",
+        action="store_true",
+        help="Skip append-only KRX listed-info raw snapshot collection during the daily scan",
+    )
 
 
 def _add_single_parser(subparsers: argparse._SubParsersAction) -> None:
@@ -167,6 +174,7 @@ def main(argv: list[str] | None = None) -> int:
             use_market_cap_override=getattr(args, "market_cap_override", False),
             due_only=getattr(args, "due_only", False),
             collect_kis_revision_snapshots=not getattr(args, "no_kis_revision_snapshots", False),
+            collect_krx_listed_info_snapshots=not getattr(args, "no_krx_listed_info_snapshots", False),
         )
 
     if args.command == "single":

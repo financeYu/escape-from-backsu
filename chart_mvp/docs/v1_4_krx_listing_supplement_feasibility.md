@@ -25,10 +25,12 @@ The project key store contains:
 - `KRX_API_KEY`: present
 - `KRX_ID`: present
 - `KRX_PASSWORD`: present
-- `DATA_GO_KR_API_KEY`: name exists, value is currently empty
+- `DATA_GO_KR_API_KEY`: present
 
-Secret values were not printed. Because `DATA_GO_KR_API_KEY` is empty, the
-public data portal API was not live-sampled in this check.
+Secret values were not printed. After public data portal service approval, a
+live code-scoped sample request to
+`https://apis.data.go.kr/1160100/service/GetKrxListedInfoService/getItemInfo`
+returned normal data on 2026-05-15.
 
 ## Field Coverage
 
@@ -88,6 +90,38 @@ KRX / public data portal can supplement:
 These are useful for joining KIS/OpenDART/raw financial data safely and for
 reducing ticker/ISIN/company-name ambiguity.
 
+## Daily Refresh Integration
+
+`scripts/collect_krx_listed_info_raw_snapshots.py` and
+`src/stock_core/ml/krx_listed_info_snapshot.py` collect append-only raw JSONL
+snapshots under:
+
+```text
+data/krx_listed_info_raw_snapshots/YYYYMMDD/krx_listed_info_raw_snapshots_YYYYMMDDTHHMMSSZ.jsonl
+```
+
+The default mode is a supplement, not a full listed-history crawl. The
+collector loads the existing local KOSPI200 universe codes and requests the
+latest listed-info row for each code with `likeSrtnCd` and `numOfRows=1`. This
+keeps KRX usage bounded to the names already present in chart_mvp. Full paged
+listed-history collection remains available only through the explicit
+`--all-history` option.
+
+The daily chart refresh requests these code-scoped KRX listed-info raw
+snapshots alongside the KIS v1.4 raw snapshots. The KRX step is fail-closed:
+
+- success writes `krx_listed_info_raw_snapshot.status=collected` in
+  `outputs/last_run_meta.json`;
+- API key or gateway problems write `blocked` or `failed`;
+- scanner rankings, scores, charts, KIS snapshots, and OpenDART snapshots are
+  not promoted or changed by this status.
+
+Use this opt-out flag when needed:
+
+```powershell
+app\run_daily.py --no-krx-listed-info-snapshots
+```
+
 ## What Remains Blocked
 
 The following remain blocked:
@@ -108,8 +142,11 @@ is available, because it requires both:
 
 ## Next Step
 
-Fill `DATA_GO_KR_API_KEY` in
-`C:\Users\jjaew\Project\api_management\api_keys.env`, then run a small raw
-snapshot probe for `금융위원회_KRX상장종목정보` to verify the exact live response
-field names before adding a collector. Until then, use the existing KRX sector
+Run a small local-universe supplement probe after key or portal changes:
+
+```powershell
+..\.venv\Scripts\python.exe scripts\collect_krx_listed_info_raw_snapshots.py --limit 5
+```
+
+Keep the existing KRX sector
 supplement only as diagnostic metadata, not as a v1.4 feature unlock.

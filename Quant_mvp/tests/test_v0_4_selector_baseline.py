@@ -227,6 +227,34 @@ def fake_random_forest_factory(_config: dict[str, object]) -> FakeRandomForestCl
     return FakeRandomForestClassifier()
 
 
+def test_v0_4_trainability_diagnostics_separate_target_and_feature_variance(tmp_path: Path) -> None:
+    rows = [
+        make_row("p1", 1, turnover=0.4),
+        make_row("p2", 1, turnover=0.4),
+        make_row("n1", 0, turnover=0.4),
+        make_row("n2", 0, turnover=0.4),
+    ]
+    rows[0]["feature_as_of_date"] = "2024-02-02"
+    rows[0]["label_target_date"] = "2024-02-01"
+    config_path, _ = config_payload(tmp_path, rows)
+
+    manifest = trainer.build_trainability_manifest(
+        rows,
+        trainer.read_json(trainer.resolve_path(trainer.load_config(config_path)["paths"]["feature_matrix_manifest"])),
+        trainer.load_config(config_path),
+        has_ml_dependencies=True,
+        model_artifact_path=tmp_path / "model.pkl",
+    )[0]
+
+    diagnostics = manifest["score_discrimination_diagnostics"]
+    assert diagnostics["target_unique_count"] == 2
+    assert diagnostics["target_value_counts"] == {"0": 2, "1": 2}
+    assert diagnostics["low_variance_feature_count"] >= 1
+    assert diagnostics["feature_unique_count_summary"]["turnover"] == 1
+    assert diagnostics["feature_label_date_violation_count"] == 1
+    assert diagnostics["feature_label_date_check_status"] == "diagnostic_violation_present"
+
+
 def test_positive_zero_blocks_training(tmp_path: Path) -> None:
     config_path, _ = config_payload(tmp_path, [make_row("n1", 0), make_row("n2", 0)])
 
@@ -606,6 +634,29 @@ def test_v0_4_scorer_uses_ml_model_when_artifact_exists(tmp_path: Path) -> None:
     assert score_manifest["fallback_used"] is False
 
 
+def test_v0_4_scorer_diagnostics_expose_ties_without_changing_scores(tmp_path: Path) -> None:
+    config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
+    trainer.train_selector_baseline(
+        config_path=config_path,
+        dependency_available=True,
+        model_factory=fake_model_factory,
+    )
+
+    score_manifest = scorer.score_candidates(config_path=config_path)
+    score_rows_path = trainer.resolve_path(score_manifest["score_rows_path"])
+    score_rows = [json.loads(line) for line in score_rows_path.read_text(encoding="utf-8").splitlines()]
+
+    assert [row["selector_score"] for row in score_rows] == [0.6, 0.6]
+    assert {row["tie_group_size"] for row in score_rows} == {2}
+    assert sorted(row["rank_within_score_bucket"] for row in score_rows) == [1, 2]
+    assert {tuple(row["tie_break_keys"]) for row in score_rows} == {("selector_score", "candidate_id")}
+    diagnostics = score_manifest["score_discrimination_diagnostics"]
+    assert diagnostics["selector_score_source"] == "model_prediction"
+    assert diagnostics["selector_score_unique_count"] == 1
+    assert diagnostics["max_tie_group_size"] == 2
+    assert diagnostics["deterministic_sort_fields"] == ["selector_score", "candidate_id"]
+
+
 def test_v0_4_selector_score_manifest_records_ml_model_source(tmp_path: Path) -> None:
     config_path, _ = config_payload(tmp_path, [make_row("p1", 1), make_row("n1", 0)])
     trainer.train_selector_baseline(
@@ -667,6 +718,10 @@ def test_v0_4_scorer_falls_back_when_model_artifact_missing(tmp_path: Path) -> N
     assert score_manifest["fallback_used"] is True
     assert score_manifest["fallback_reason"] == "rule_only_available_no_model_artifact"
     assert score_manifest["prediction_value_row_count"] == 0
+    diagnostics = score_manifest["score_discrimination_diagnostics"]
+    assert diagnostics["selector_score_source"] == "fallback"
+    assert diagnostics["fallback_used"] is True
+    assert diagnostics["fallback_reason"] == "rule_only_available_no_model_artifact"
 
 
 def test_v0_4_scorer_fails_or_warns_on_model_manifest_mismatch(tmp_path: Path) -> None:

@@ -57,6 +57,7 @@ ALLOWED_INPUT_STATUS_VALUES = frozenset(
         "pending_data",
         "reference_only",
         "reference_only_after_evaluation_date",
+        "schema_invalid",
         "skipped_insufficient_pit_fundamentals",
         "skipped_missing_baseline_artifacts",
         "unavailable",

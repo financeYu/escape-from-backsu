@@ -105,7 +105,7 @@ def build_real_available_v1_6_input(
         "lineage_ref",
     ]
     with output_path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, lineterminator="\n")
         writer.writeheader()
         for row in rows_by_key.values():
             writer.writerow({field: row.get(field, "") for field in fieldnames})
@@ -126,7 +126,8 @@ def build_real_available_v1_6_input(
     }
     report_path = Path(dependency_report)
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    with report_path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     return report
 
 

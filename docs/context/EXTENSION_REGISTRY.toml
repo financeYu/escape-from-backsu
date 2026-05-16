@@ -679,8 +679,12 @@ input_route = "extension.v1_6_confidence_robustness_review_priority"
 owner_lane = "root governance + ML/evaluator review"
 validator = "src/validation/v2_0_evidence_readiness.py"
 tests = "tests/validation/test_v2_0_evidence_readiness.py"
+score_discrimination_audit = "docs/extension/v2_0_score_discrimination_audit.md"
+score_discrimination_audit_script = "scripts/audit_review_priority_score_discrimination.py"
+score_discrimination_audit_tests = "tests/selector/test_score_discrimination_audit.py"
 output_artifacts = [
   "v2_0_evidence_readiness_gap_report",
+  "score_discrimination_diagnostic_report",
 ]
 lineage = "v1.1 through v1.6 staged evidence/status rows -> v2.0 evidence readiness gap report"
 completion_state = "ACTIVE PREPARATION; readiness verdict may be limited or not ready until rows and blockers are validated"

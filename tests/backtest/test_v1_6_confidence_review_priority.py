@@ -47,6 +47,7 @@ def test_v1_6_contract_defines_required_status_and_reason_vocabularies() -> None
         "skipped_missing_baseline_artifacts",
         "insufficient_data",
         "missing_artifact",
+        "schema_invalid",
     }
     required_reason_codes = {
         "strong_multi_layer_coverage",
@@ -152,6 +153,8 @@ def test_v1_6_runner_emits_manual_review_only_fixture_outputs(tmp_path: Path) ->
         "v1_6_integration_guardrail_lineage_packet_test_report_latest.json",
     }
     assert expected_files == {path.name for path in output_dir.iterdir()}
+    for path in output_dir.iterdir():
+        assert b"\r\n" not in path.read_bytes()
     assert result["readiness_verdict"] == "V2_0_NOT_READY"
 
     composite_rows = _read_csv(output_dir / "v1_6_composite_review_priority_manifest_latest.csv")
@@ -228,7 +231,55 @@ def test_v1_6_runner_emits_config_missing_without_threshold_fallback(tmp_path: P
 
     confidence_rows = _read_csv(output_dir / "v1_6_confidence_score_manifest_latest.csv")
     assert {row["confidence_support_status"] for row in confidence_rows} == {"config_missing"}
+    assert {row["primary_blocker_type"] for row in confidence_rows} == {"config_missing"}
+    assert {row["confidence_score_source"] for row in confidence_rows} == {"component_average_fail_closed"}
     assert "missing_threshold_config" in result["missing_dependencies"]
+
+
+def test_v1_6_confidence_zero_collapse_diagnostics_preserve_blocker_provenance(tmp_path: Path) -> None:
+    config_path = _write_v1_6_threshold_config(tmp_path / "thresholds.toml")
+    input_path = tmp_path / "blockers.csv"
+    input_path.write_text(
+        "candidate_id,ticker,evaluation_date,evidence_status,coverage,data_quality,stability,"
+        "source_artifact,lineage_ref\n"
+        "ART,005930,2026-05-14,missing_artifact,0,0,0,,line-art\n"
+        "SCH,000660,2026-05-14,schema_invalid,0,0,0,src-sch,line-sch\n"
+        "REC,035420,2026-05-14,blocked_by_reconciliation,0,0,0,src-rec,line-rec\n"
+        "INS,051910,2026-05-14,insufficient_data,0,0,0,src-ins,line-ins\n"
+        "STB,068270,2026-05-14,diagnostic_ready,0,0,0,src-stb,line-stb\n",
+        encoding="utf-8",
+    )
+    output_dir = tmp_path / "out"
+
+    run_v1_6_confidence_review_priority(
+        input_path=input_path,
+        output_dir=output_dir,
+        config_path=config_path,
+        input_mode="fixture",
+    )
+
+    confidence_rows = {
+        row["candidate_id"]: row
+        for row in _read_csv(output_dir / "v1_6_confidence_score_manifest_latest.csv")
+    }
+    composite_rows = {
+        row["candidate_id"]: row
+        for row in _read_csv(output_dir / "v1_6_composite_review_priority_manifest_latest.csv")
+    }
+
+    assert {row["confidence_score"] for row in confidence_rows.values()} == {"0.000000"}
+    assert confidence_rows["ART"]["primary_blocker_type"] == "artifact_missing"
+    assert confidence_rows["SCH"]["primary_blocker_type"] == "schema_invalid"
+    assert confidence_rows["REC"]["primary_blocker_type"] == "reconciliation_blocker"
+    assert confidence_rows["INS"]["primary_blocker_type"] == "insufficient_data"
+    assert confidence_rows["STB"]["primary_blocker_type"] == "stability_blocker"
+    assert confidence_rows["ART"]["readiness_artifact_presence_map"] == (
+        '{"lineage_ref":"present","source_artifact":"missing"}'
+    )
+    assert json.loads(confidence_rows["STB"]["component_blocker_map"])["stability"] == "stability_blocker"
+    assert composite_rows["REC"]["manual_review_priority"] == "blocked_manual_review"
+    assert composite_rows["REC"]["primary_blocker_type"] == "reconciliation_blocker"
+    assert composite_rows["REC"]["status_bucket_after_manual_review"] == "blocked_manual_review"
 
 
 def test_v1_6_runner_marks_missing_lineage_explicitly(tmp_path: Path) -> None:
@@ -385,6 +436,8 @@ def test_v1_6_real_adapter_merges_clear_join_keys_and_marks_missing_upstream(tmp
 
     rows = _read_csv(output_csv)
     report_payload = json.loads(report_path.read_text(encoding="utf-8"))
+    assert b"\r\n" not in output_csv.read_bytes()
+    assert b"\r\n" not in report_path.read_bytes()
     assert report["merged_row_count"] == 1
     assert report_payload["join_keys"] == ["candidate_id", "ticker", "evaluation_date"]
     assert "v1_1_net_profitability" in report["missing_or_limited_artifacts"]
@@ -392,6 +445,21 @@ def test_v1_6_real_adapter_merges_clear_join_keys_and_marks_missing_upstream(tmp
     assert rows[0]["candidate_id"] == "C1"
     assert "liquidity-ref" in rows[0]["lineage_ref"]
     assert "formula_variance" in rows[0]["limitations"]
+
+
+def _write_v1_6_threshold_config(path: Path) -> Path:
+    path.write_text(
+        "[coverage]\n"
+        "warn_score_coverage = 0.80\n"
+        "min_score_coverage = 0.60\n"
+        "[stability]\n"
+        "rank_stability_warn_floor = 0.50\n"
+        "[redundancy]\n"
+        "spearman_warn = 0.80\n"
+        "spearman_block = 0.95\n",
+        encoding="utf-8",
+    )
+    return path
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:

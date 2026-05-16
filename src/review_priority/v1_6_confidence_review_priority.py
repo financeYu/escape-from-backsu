@@ -65,6 +65,15 @@ STATUS_COLUMNS = (
     "price_to_earnings_vendor_reference_status",
     "price_to_book_vendor_reference_status",
 )
+BLOCKER_PRECEDENCE = (
+    "config_missing",
+    "artifact_missing",
+    "schema_invalid",
+    "reconciliation_blocker",
+    "insufficient_data",
+    "stability_blocker",
+    "manual_review_required",
+)
 
 
 class V16InputError(ValueError):
@@ -203,6 +212,124 @@ def _toml_float(payload: dict[str, Any], section: str, key: str) -> float | None
     return None
 
 
+def _json_diagnostic(payload: dict[str, Any] | list[Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _component_status(value: float | None) -> str:
+    if value is None:
+        return "missing_or_invalid"
+    if abs(value) <= 1e-12:
+        return "zero_component_value"
+    return "present"
+
+
+def _blocker_record(blocker_type: str, source_layer: str, component: str | None = None) -> dict[str, str]:
+    record = {"type": blocker_type, "source_layer": source_layer}
+    if component:
+        record["component"] = component
+    return record
+
+
+def _confidence_blocker_diagnostics(
+    *,
+    row: dict[str, str],
+    components: dict[str, float | None],
+    thresholds: dict[str, float],
+    config_status: str,
+    missing_components: list[str],
+) -> dict[str, Any]:
+    status_values = _row_status_values(row)
+    blockers: list[dict[str, str]] = []
+    if config_status == "config_missing":
+        blockers.append(_blocker_record("config_missing", "threshold_config"))
+    if {"missing_artifact", "skipped_missing_baseline_artifacts"}.intersection(status_values):
+        blockers.append(_blocker_record("artifact_missing", "upstream_artifact_status"))
+    if "schema_invalid" in status_values:
+        blockers.append(_blocker_record("schema_invalid", "upstream_schema_status"))
+    if {"blocked_by_reconciliation", "block"}.intersection(status_values):
+        blockers.append(_blocker_record("reconciliation_blocker", "upstream_reconciliation"))
+    for component in missing_components:
+        blockers.append(_blocker_record("insufficient_data", f"{component}_component", component))
+    if {"insufficient_data", "partial_diagnostic_ready", "vendor_reference_only"}.intersection(status_values):
+        blockers.append(_blocker_record("insufficient_data", "upstream_status"))
+    stability = components.get("stability")
+    if (
+        config_status == "config_present"
+        and stability is not None
+        and "stability_warn" in thresholds
+        and stability < thresholds["stability_warn"]
+    ):
+        blockers.append(_blocker_record("stability_blocker", "stability_component", "stability"))
+    if "manual_review_required" in status_values:
+        blockers.append(_blocker_record("manual_review_required", "upstream_status"))
+
+    by_type: dict[str, dict[str, str]] = {}
+    for blocker in blockers:
+        by_type.setdefault(blocker["type"], blocker)
+    primary = next((by_type[item] for item in BLOCKER_PRECEDENCE if item in by_type), None)
+    component_blocker_map = {
+        component: next(
+            (blocker["type"] for blocker in blockers if blocker.get("component") == component),
+            _component_status(components.get(component)),
+        )
+        for component in COMPONENT_COLUMNS
+    }
+    source_artifact = _clean(row.get("source_artifact"))
+    lineage_ref = _clean(row.get("lineage_ref"))
+    artifact_presence = {
+        "source_artifact": "present" if source_artifact else "missing",
+        "lineage_ref": "present" if lineage_ref else "missing",
+    }
+    schema_validation = {
+        "status_values": "schema_invalid" if "schema_invalid" in status_values else "accepted_status_vocabulary"
+    }
+    return {
+        "primary_blocker_type": primary["type"] if primary else "none",
+        "primary_blocker_source_layer": primary["source_layer"] if primary else "none",
+        "blocking_components": ";".join(
+            sorted({blocker["component"] for blocker in blockers if blocker.get("component")})
+        ),
+        "blocker_count": str(len(blockers)),
+        "blocker_precedence_rule": ">".join(BLOCKER_PRECEDENCE),
+        "first_blocker_detected_at_stage": blockers[0]["source_layer"] if blockers else "none",
+        "component_score_pre_floor_map": _json_diagnostic(
+            {component: components.get(component) for component in COMPONENT_COLUMNS}
+        ),
+        "component_blocker_map": _json_diagnostic(component_blocker_map),
+        "readiness_artifact_presence_map": _json_diagnostic(artifact_presence),
+        "readiness_schema_validation_map": _json_diagnostic(schema_validation),
+        "lineage_reconciliation_status": "reconciliation_blocker"
+        if "reconciliation_blocker" in by_type
+        else ("lineage_present" if lineage_ref else "lineage_missing"),
+        "coverage_component_status": _component_status(components.get("coverage")),
+        "data_quality_component_status": _component_status(components.get("data_quality")),
+        "stability_component_status": _component_status(components.get("stability")),
+        "reconciliation_component_status": "reconciliation_blocker"
+        if "reconciliation_blocker" in by_type
+        else "not_blocked",
+        "config_component_status": config_status,
+    }
+
+
+def _confidence_floor_reason(
+    *,
+    config_status: str,
+    missing_components: list[str],
+    components: dict[str, float | None],
+    confidence_score: float,
+) -> str:
+    if config_status == "config_missing":
+        return "config_missing_fail_closed"
+    if missing_components:
+        return "missing_components_zero_filled"
+    if abs(confidence_score) <= 1e-12 and any(
+        value is not None and abs(value) <= 1e-12 for value in components.values()
+    ):
+        return "zero_component_average"
+    return "no_floor_applied"
+
+
 def _build_confidence_rows(
     rows: list[dict[str, str]],
     thresholds: dict[str, float],
@@ -213,6 +340,13 @@ def _build_confidence_rows(
         components = {column: _parse_unit_interval(row.get(column)) for column in COMPONENT_COLUMNS}
         missing_components = [key for key, value in components.items() if value is None]
         confidence_score = round(sum(value or 0.0 for value in components.values()) / len(COMPONENT_COLUMNS), 6)
+        blocker_diagnostics = _confidence_blocker_diagnostics(
+            row=row,
+            components=components,
+            thresholds=thresholds,
+            config_status=config_status,
+            missing_components=missing_components,
+        )
         status_values = _row_status_values(row)
         reason_codes = _base_reason_codes(status_values)
         if config_status == "config_missing":
@@ -239,10 +373,19 @@ def _build_confidence_rows(
                 "ticker": row["ticker"],
                 "evaluation_date": row["evaluation_date"],
                 "confidence_score": f"{confidence_score:.6f}",
+                "confidence_score_pre_floor": f"{confidence_score:.6f}",
+                "confidence_score_floor_reason": _confidence_floor_reason(
+                    config_status=config_status,
+                    missing_components=missing_components,
+                    components=components,
+                    confidence_score=confidence_score,
+                ),
+                "confidence_score_source": "component_average_fail_closed",
                 "confidence_support_status": support_status,
                 "coverage_component": _format_component(components["coverage"]),
                 "data_quality_component": _format_component(components["data_quality"]),
                 "stability_component": _format_component(components["stability"]),
+                **blocker_diagnostics,
                 "reason_codes": _join_codes(reason_codes),
                 "source_artifact": _clean(row.get("source_artifact")),
                 "lineage_ref": _clean(row.get("lineage_ref")),
@@ -453,7 +596,28 @@ def _build_composite_rows(
                 "evaluation_date": key[2],
                 "manual_review_priority": priority,
                 "confidence_score": confidence["confidence_score"],
+                "confidence_score_pre_floor": confidence["confidence_score_pre_floor"],
+                "confidence_score_floor_reason": confidence["confidence_score_floor_reason"],
+                "confidence_score_source": confidence["confidence_score_source"],
                 "confidence_support_status": confidence["confidence_support_status"],
+                "status_bucket_before_manual_review": confidence["confidence_support_status"],
+                "status_bucket_after_manual_review": priority,
+                "primary_blocker_type": confidence["primary_blocker_type"],
+                "primary_blocker_source_layer": confidence["primary_blocker_source_layer"],
+                "blocking_components": confidence["blocking_components"],
+                "blocker_count": confidence["blocker_count"],
+                "blocker_precedence_rule": confidence["blocker_precedence_rule"],
+                "first_blocker_detected_at_stage": confidence["first_blocker_detected_at_stage"],
+                "component_score_pre_floor_map": confidence["component_score_pre_floor_map"],
+                "component_blocker_map": confidence["component_blocker_map"],
+                "readiness_artifact_presence_map": confidence["readiness_artifact_presence_map"],
+                "readiness_schema_validation_map": confidence["readiness_schema_validation_map"],
+                "lineage_reconciliation_status": confidence["lineage_reconciliation_status"],
+                "coverage_component_status": confidence["coverage_component_status"],
+                "data_quality_component_status": confidence["data_quality_component_status"],
+                "stability_component_status": confidence["stability_component_status"],
+                "reconciliation_component_status": confidence["reconciliation_component_status"],
+                "config_component_status": confidence["config_component_status"],
                 "horizon_stability_status": horizon["horizon_stability_status"],
                 "split_stability_status": split["split_stability_status"],
                 "redundancy_status_summary": redundancy_summary,
@@ -760,20 +924,21 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         raise AssertionError(f"no rows to write: {path}")
     validate_v1_6_columns(rows[0].keys())
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     validate_v1_6_columns(payload.keys())
-    with path.open("w", encoding="utf-8") as handle:
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2, sort_keys=True)
         handle.write("\n")
 
 
 def _write_text(path: Path, text: str) -> None:
-    path.write_text(text, encoding="utf-8")
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
 
 
 def _validate_output_files(output_paths: dict[str, Path]) -> None:

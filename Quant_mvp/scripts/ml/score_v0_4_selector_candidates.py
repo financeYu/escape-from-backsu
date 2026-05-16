@@ -114,14 +114,124 @@ def _relative(path: Path) -> str:
         return str(path)
 
 
-def _fallback(manifest: dict[str, Any], reason: str, *, warning: str | None = None) -> dict[str, Any]:
+def _fallback(
+    manifest: dict[str, Any],
+    reason: str,
+    *,
+    warning: str | None = None,
+    trainability: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     manifest["selector_score_source"] = "rule_only"
     manifest["blocked_reason"] = reason
     manifest["fallback_used"] = True
     manifest["fallback_reason"] = reason
     if warning:
         manifest["warnings"] = sorted(set(list(manifest.get("warnings") or []) + [warning]))
+    _attach_score_discrimination_diagnostics(
+        manifest,
+        [],
+        trainability=trainability,
+        score_field="selector_score",
+        selector_score_source="fallback",
+    )
     return manifest
+
+
+def _score_bucket_key(value: Any) -> str:
+    try:
+        return f"{float(value):.12g}"
+    except (TypeError, ValueError):
+        return "null"
+
+
+def _attach_tie_diagnostics(
+    score_rows: list[dict[str, Any]],
+    *,
+    score_field: str,
+    tie_break_keys: list[str],
+) -> None:
+    buckets: dict[str, list[dict[str, Any]]] = {}
+    for row in score_rows:
+        buckets.setdefault(_score_bucket_key(row.get(score_field)), []).append(row)
+    for bucket_rows in buckets.values():
+        ranked = sorted(
+            bucket_rows,
+            key=lambda row: tuple(str(row.get(key) or "") for key in tie_break_keys[1:]),
+        )
+        for rank, row in enumerate(ranked, start=1):
+            row["tie_group_size"] = len(bucket_rows)
+            row["tie_break_keys"] = list(tie_break_keys)
+            row["rank_within_score_bucket"] = rank
+
+
+def _score_source_from_manifest_value(value: Any) -> str:
+    if value == "ml_model" or value == "random_forest_challenger":
+        return "model_prediction"
+    if value == "rule_only":
+        return "fallback"
+    if value == "blocked_train_status":
+        return "unknown"
+    return "unknown"
+
+
+def _attach_score_discrimination_diagnostics(
+    manifest: dict[str, Any],
+    score_rows: list[dict[str, Any]],
+    *,
+    trainability: dict[str, Any] | None,
+    score_field: str,
+    selector_score_source: str | None = None,
+    tie_break_keys: list[str] | None = None,
+) -> None:
+    tie_keys = list(tie_break_keys or [score_field, "candidate_id"])
+    scores = [row.get(score_field) for row in score_rows if row.get(score_field) is not None]
+    bucket_counts: dict[str, int] = {}
+    for score in scores:
+        key = _score_bucket_key(score)
+        bucket_counts[key] = bucket_counts.get(key, 0) + 1
+    train_diagnostics = {}
+    if isinstance(trainability, dict):
+        train_diagnostics = dict(trainability.get("score_discrimination_diagnostics") or {})
+    manifest["score_discrimination_diagnostics"] = {
+        "schema_version": "v0_4_selector_score_manifest_discrimination_diagnostics_v1_0",
+        "selector_score_source": selector_score_source
+        or _score_source_from_manifest_value(manifest.get("selector_score_source")),
+        "fallback_used": bool(manifest.get("fallback_used")),
+        "fallback_reason": manifest.get("fallback_reason"),
+        "trainability_status": trainability.get("train_status") if isinstance(trainability, dict) else None,
+        "trainability_failure_reasons": [
+            reason
+            for reason in [
+                trainability.get("train_blocked_reason") if isinstance(trainability, dict) else None,
+                manifest.get("blocked_reason"),
+            ]
+            if reason
+        ],
+        "target_unique_count": train_diagnostics.get("target_unique_count"),
+        "target_bucket_count": train_diagnostics.get("target_bucket_count"),
+        "target_value_counts": train_diagnostics.get("target_value_counts"),
+        "model_prediction_unique_count": len(set(_score_bucket_key(score) for score in scores)),
+        "selector_score_unique_count": len(set(_score_bucket_key(score) for score in scores)),
+        "selector_score_bucket_count": len(bucket_counts),
+        "selector_score_bucket_counts": dict(sorted(bucket_counts.items())),
+        "feature_effective_column_count": train_diagnostics.get("feature_effective_column_count"),
+        "low_variance_feature_count": train_diagnostics.get("low_variance_feature_count"),
+        "all_null_feature_count": train_diagnostics.get("all_null_feature_count"),
+        "neutral_filled_feature_count": train_diagnostics.get("neutral_filled_feature_count"),
+        "feature_non_null_summary": train_diagnostics.get("feature_non_null_summary"),
+        "feature_unique_count_summary": train_diagnostics.get("feature_unique_count_summary"),
+        "feature_matrix_artifact_id": train_diagnostics.get("feature_matrix_artifact_id"),
+        "label_manifest_artifact_id": train_diagnostics.get("label_manifest_artifact_id"),
+        "feature_label_date_violation_count": train_diagnostics.get("feature_label_date_violation_count"),
+        "feature_label_date_check_status": train_diagnostics.get("feature_label_date_check_status"),
+        "max_tie_group_size": max(bucket_counts.values()) if bucket_counts else 0,
+        "tie_break_keys": tie_keys,
+        "deterministic_sort_fields": tie_keys,
+        "score_formula_changed": False,
+        "production_ranking_changed": False,
+        "final_composite_score_changed": False,
+        "technical_composite_score_changed": False,
+    }
 
 
 def _manifest_artifact_path_matches(model_manifest: dict[str, Any], expected_path: Path) -> bool:
@@ -194,6 +304,13 @@ def score_candidates(*, config_path: Path, write_outputs: bool = True) -> dict[s
     if not trainability_path.exists():
         manifest["selector_score_source"] = "blocked_train_status"
         manifest["blocked_reason"] = "blocked_missing_trainability_manifest"
+        _attach_score_discrimination_diagnostics(
+            manifest,
+            [],
+            trainability=None,
+            score_field="selector_score",
+            selector_score_source="unknown",
+        )
         if write_outputs:
             write_json(score_output_dir / DEFAULT_SCORE_MANIFEST, manifest)
         return manifest
@@ -203,18 +320,35 @@ def score_candidates(*, config_path: Path, write_outputs: bool = True) -> dict[s
     if trainability.get("train_status") != trainer.TRAINED_STATUS:
         manifest["selector_score_source"] = "blocked_train_status"
         manifest["blocked_reason"] = trainability.get("train_blocked_reason") or trainability.get("train_status")
+        _attach_score_discrimination_diagnostics(
+            manifest,
+            [],
+            trainability=trainability,
+            score_field="selector_score",
+            selector_score_source="unknown",
+        )
         if write_outputs:
             write_json(score_output_dir / DEFAULT_SCORE_MANIFEST, manifest)
         return manifest
 
     if not model_artifact_path.exists():
-        _fallback(manifest, "rule_only_available_no_model_artifact", warning="model_artifact_missing_fallback")
+        _fallback(
+            manifest,
+            "rule_only_available_no_model_artifact",
+            warning="model_artifact_missing_fallback",
+            trainability=trainability,
+        )
         if write_outputs:
             write_json(score_output_dir / DEFAULT_SCORE_MANIFEST, manifest)
         return manifest
 
     if not model_manifest_path.exists():
-        _fallback(manifest, "rule_only_available_no_model_manifest", warning="model_manifest_missing_fallback")
+        _fallback(
+            manifest,
+            "rule_only_available_no_model_manifest",
+            warning="model_manifest_missing_fallback",
+            trainability=trainability,
+        )
         if write_outputs:
             write_json(score_output_dir / DEFAULT_SCORE_MANIFEST, manifest)
         return manifest
@@ -227,7 +361,12 @@ def score_candidates(*, config_path: Path, write_outputs: bool = True) -> dict[s
         model_artifact_path=model_artifact_path,
     )
     if mismatch_reasons:
-        _fallback(manifest, "model_manifest_mismatch", warning="model_manifest_mismatch_fallback")
+        _fallback(
+            manifest,
+            "model_manifest_mismatch",
+            warning="model_manifest_mismatch_fallback",
+            trainability=trainability,
+        )
         manifest["model_manifest_mismatch_reasons"] = mismatch_reasons
         if write_outputs:
             write_json(score_output_dir / DEFAULT_SCORE_MANIFEST, manifest)
@@ -241,6 +380,7 @@ def score_candidates(*, config_path: Path, write_outputs: bool = True) -> dict[s
             manifest,
             f"blocked_model_load_failed:{exc.__class__.__name__}",
             warning="model_artifact_load_failed_fallback",
+            trainability=trainability,
         )
         if write_outputs:
             write_json(score_output_dir / DEFAULT_SCORE_MANIFEST, manifest)
@@ -267,11 +407,24 @@ def score_candidates(*, config_path: Path, write_outputs: bool = True) -> dict[s
             }
         )
 
+    _attach_tie_diagnostics(
+        score_rows,
+        score_field="selector_score",
+        tie_break_keys=["selector_score", "candidate_id"],
+    )
     manifest["selector_score_source"] = "ml_model"
     manifest["scored_candidate_count"] = len(score_rows)
     manifest["prediction_value_row_count"] = len(score_rows)
     manifest["fallback_used"] = False
     manifest["fallback_reason"] = None
+    _attach_score_discrimination_diagnostics(
+        manifest,
+        score_rows,
+        trainability=trainability,
+        score_field="selector_score",
+        selector_score_source="model_prediction",
+        tie_break_keys=["selector_score", "candidate_id"],
+    )
     if write_outputs:
         write_jsonl(score_rows_path, score_rows)
         write_json(score_output_dir / DEFAULT_SCORE_MANIFEST, manifest)
@@ -321,6 +474,14 @@ def score_random_forest_candidates(*, config_path: Path, write_outputs: bool = T
 
     if not trainability_path.exists():
         _blocked_challenger(manifest, "blocked_missing_trainability_manifest")
+        _attach_score_discrimination_diagnostics(
+            manifest,
+            [],
+            trainability=None,
+            score_field="prediction_value",
+            selector_score_source="unknown",
+            tie_break_keys=["prediction_value", "candidate_id"],
+        )
         if write_outputs:
             write_json(score_output_dir / DEFAULT_RANDOM_FOREST_SCORE_MANIFEST, manifest)
         return manifest
@@ -331,6 +492,14 @@ def score_random_forest_candidates(*, config_path: Path, write_outputs: bool = T
         _blocked_challenger(
             manifest,
             trainability.get("train_blocked_reason") or trainability.get("train_status"),
+        )
+        _attach_score_discrimination_diagnostics(
+            manifest,
+            [],
+            trainability=trainability,
+            score_field="prediction_value",
+            selector_score_source="unknown",
+            tie_break_keys=["prediction_value", "candidate_id"],
         )
         if write_outputs:
             write_json(score_output_dir / DEFAULT_RANDOM_FOREST_SCORE_MANIFEST, manifest)
@@ -403,11 +572,24 @@ def score_random_forest_candidates(*, config_path: Path, write_outputs: bool = T
             }
         )
 
+    _attach_tie_diagnostics(
+        score_rows,
+        score_field="prediction_value",
+        tie_break_keys=["prediction_value", "candidate_id"],
+    )
     manifest["selector_score_source"] = "random_forest_challenger"
     manifest["scored_candidate_count"] = len(score_rows)
     manifest["prediction_value_row_count"] = len(score_rows)
     manifest["fallback_used"] = False
     manifest["fallback_reason"] = None
+    _attach_score_discrimination_diagnostics(
+        manifest,
+        score_rows,
+        trainability=trainability,
+        score_field="prediction_value",
+        selector_score_source="model_prediction",
+        tie_break_keys=["prediction_value", "candidate_id"],
+    )
     if write_outputs:
         write_jsonl(score_rows_path, score_rows)
         write_json(score_output_dir / DEFAULT_RANDOM_FOREST_SCORE_MANIFEST, manifest)

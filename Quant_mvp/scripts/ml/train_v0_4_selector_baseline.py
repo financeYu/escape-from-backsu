@@ -269,6 +269,106 @@ def _features_digest(rows: list[dict[str, Any]], feature_columns: list[str]) -> 
     return hashlib.sha256(encoded).hexdigest()
 
 
+def _payload_digest(payload: Any) -> str:
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _target_value_counts(rows: list[dict[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in rows:
+        label = _as_label(row.get("label_review_preferred"))
+        key = "null" if label is None else str(label)
+        counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _feature_label_date_violations(rows: list[dict[str, Any]]) -> int:
+    violations = 0
+    for row in rows:
+        feature_date = (
+            row.get("feature_as_of_date")
+            or row.get("feature_matrix_as_of_date")
+            or row.get("as_of_date")
+        )
+        target_date = row.get("label_target_date") or row.get("target_date") or row.get("evaluation_date")
+        if feature_date is not None and target_date is not None and str(feature_date) > str(target_date):
+            violations += 1
+    return violations
+
+
+def _feature_matrix_diagnostics(
+    rows: list[dict[str, Any]],
+    training_rows: list[dict[str, Any]],
+    feature_columns: list[str],
+) -> dict[str, Any]:
+    target_counts = _target_value_counts(training_rows)
+    feature_non_null_summary: dict[str, int] = {}
+    feature_unique_count_summary: dict[str, int] = {}
+    low_variance_feature_count = 0
+    all_null_feature_count = 0
+    neutral_filled_feature_count = 0
+
+    for column in feature_columns:
+        values: list[float] = []
+        for row in training_rows:
+            value = _feature_values(row).get(column)
+            if value is None:
+                continue
+            try:
+                values.append(float(value))
+            except (TypeError, ValueError):
+                continue
+        unique_values = sorted(set(values))
+        feature_non_null_summary[column] = len(values)
+        feature_unique_count_summary[column] = len(unique_values)
+        if not values:
+            all_null_feature_count += 1
+        if values and len(unique_values) <= 1:
+            low_variance_feature_count += 1
+        if values and all(abs(value) <= 1e-12 for value in values):
+            neutral_filled_feature_count += 1
+
+    matrix_payload = [
+        {
+            "candidate_id": row.get("candidate_id"),
+            "evidence_id": row.get("evidence_id"),
+            "features": {column: _feature_values(row).get(column) for column in feature_columns},
+        }
+        for row in rows
+    ]
+    label_payload = [
+        {
+            "candidate_id": row.get("candidate_id"),
+            "evidence_id": row.get("evidence_id"),
+            "label": _as_label(row.get("label_review_preferred")),
+        }
+        for row in training_rows
+    ]
+    effective_columns = sum(1 for count in feature_unique_count_summary.values() if count > 1)
+    feature_label_violation_count = _feature_label_date_violations(training_rows)
+    return {
+        "schema_version": "v0_4_selector_score_discrimination_diagnostics_v1_0",
+        "target_unique_count": len([key for key in target_counts if key != "null"]),
+        "target_bucket_count": len(target_counts),
+        "target_value_counts": target_counts,
+        "feature_effective_column_count": effective_columns,
+        "low_variance_feature_count": low_variance_feature_count,
+        "all_null_feature_count": all_null_feature_count,
+        "neutral_filled_feature_count": neutral_filled_feature_count,
+        "feature_non_null_summary": dict(sorted(feature_non_null_summary.items())),
+        "feature_unique_count_summary": dict(sorted(feature_unique_count_summary.items())),
+        "feature_matrix_artifact_id": _payload_digest(matrix_payload),
+        "label_manifest_artifact_id": _payload_digest(label_payload),
+        "feature_label_date_violation_count": feature_label_violation_count,
+        "feature_label_date_check_status": "pass"
+        if feature_label_violation_count == 0
+        else "diagnostic_violation_present",
+    }
+
+
 def _feature_value_forbidden_columns(rows: list[dict[str, Any]], leakage_columns: set[str]) -> list[str]:
     found: set[str] = set()
     for row in rows:
@@ -365,6 +465,7 @@ def build_trainability_manifest(
         warnings.append("limited_insufficient_training_rows")
     if isinstance(correlation, (int, float)) and abs(float(correlation)) >= high_corr_threshold:
         warnings.append("high_feature_correlation_warning")
+    score_discrimination_diagnostics = _feature_matrix_diagnostics(rows, training_rows, feature_columns)
 
     train_status = READY_STATUS
     train_blocked_reason: str | None = None
@@ -451,6 +552,7 @@ def build_trainability_manifest(
         "model_artifact_path": project_ref(model_artifact_path),
         "prediction_value_row_count": 0,
         "readiness_status": train_status,
+        "score_discrimination_diagnostics": score_discrimination_diagnostics,
     }
     return manifest, training_rows
 

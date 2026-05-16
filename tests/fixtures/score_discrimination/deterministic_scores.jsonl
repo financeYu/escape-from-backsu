@@ -1,0 +1,3 @@
+{"candidate_id": "B", "selector_score": 0.5, "status": "usable", "coverage": 0.8}
+{"candidate_id": "A", "selector_score": 0.5, "status": "usable", "coverage": 0.6}
+{"candidate_id": "C", "selector_score": 0.2, "status": "blocked", "coverage": null}

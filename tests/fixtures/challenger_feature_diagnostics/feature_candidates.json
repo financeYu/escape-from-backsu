@@ -1,0 +1,95 @@
+{
+  "schema_version": "challenger_feature_candidate_manifest_fixture_v1",
+  "feature_candidates": [
+    {
+      "feature_name": "coverage_ratio",
+      "feature_group": "coverage_readiness_missingness",
+      "source_artifact": "fixture_feature_rows",
+      "source_layer": "v0_4_v1_6_diagnostic_fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["coverage_ratio", "feature_asof_date"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "SAFE_DIAGNOSTIC"
+    },
+    {
+      "feature_name": "valid_observation_count",
+      "feature_group": "coverage_readiness_missingness",
+      "source_artifact": "fixture_feature_rows",
+      "source_layer": "v0_4_v1_6_diagnostic_fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["valid_observation_count", "feature_asof_date"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "SAFE_DIAGNOSTIC"
+    },
+    {
+      "feature_name": "constant_feature",
+      "feature_group": "noninformative_control",
+      "source_artifact": "fixture_feature_rows",
+      "source_layer": "v0_4_v1_6_diagnostic_fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["constant_feature", "feature_asof_date"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "SAFE_DIAGNOSTIC"
+    },
+    {
+      "feature_name": "all_null_feature",
+      "feature_group": "noninformative_control",
+      "source_artifact": "fixture_feature_rows",
+      "source_layer": "v0_4_v1_6_diagnostic_fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["all_null_feature", "feature_asof_date"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "SAFE_DIAGNOSTIC"
+    },
+    {
+      "feature_name": "low_cardinality_feature",
+      "feature_group": "noninformative_control",
+      "source_artifact": "fixture_feature_rows",
+      "source_layer": "v0_4_v1_6_diagnostic_fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["low_cardinality_feature", "feature_asof_date"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "SAFE_DIAGNOSTIC"
+    },
+    {
+      "feature_name": "strong_feature",
+      "feature_group": "split_stability_diagnostic",
+      "source_artifact": "fixture_feature_rows",
+      "source_layer": "v0_4_v1_6_diagnostic_fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["strong_feature", "feature_asof_date"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "SAFE_DIAGNOSTIC"
+    },
+    {
+      "feature_name": "target_label",
+      "feature_group": "forbidden_target_control",
+      "source_artifact": "fixture_label_manifest",
+      "source_layer": "fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["target_label"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "HIGH_LEAKAGE_RISK"
+    },
+    {
+      "feature_name": "future_return",
+      "feature_group": "forbidden_outcome_control",
+      "source_artifact": "fixture_label_manifest",
+      "source_layer": "fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["future_return"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "FORBIDDEN"
+    },
+    {
+      "feature_name": "final_composite_score",
+      "feature_group": "forbidden_composite_control",
+      "source_artifact": "fixture_runtime_output",
+      "source_layer": "fixture",
+      "asof_column": "feature_asof_date",
+      "required_input_columns": ["final_composite_score"],
+      "allowed_for_diagnostic_only": true,
+      "leakage_risk_level": "FORBIDDEN"
+    }
+  ]
+}

@@ -71,6 +71,8 @@ Plan Review must check:
 - context firewall keeps upward context compact
 - ordered plan exists and does not execute before review
 - planner did not mark supervisor handoff ready before review
+- subproject delegation plans name the owner lane, keep exploration inside the
+  subproject, and assign one writer per path
 
 ## User Approval Policy
 

@@ -66,6 +66,8 @@ The supervisor must:
 - route worker-result collection and final report drafting to the `reporter`
   worker only
 - keep every worker packet bounded by the same allowed and forbidden scope
+- for subproject delegation, assign work to the owning lane/worktree with one
+  writer per path and compact result contracts only
 - require compact worker outputs only: `status`, `changed_scope`, `evidence`,
   and `next_request`
 - keep Git remote and finalize actions disabled

@@ -83,6 +83,7 @@ packet:
 | Direct validation | `agent-worker-pool` `validator` | assigned validator commands |
 | Workflow status | `agent-worker-pool` `tracker` | compact state transitions |
 | Final reporting | `agent-reporter` | compact Korean report |
+| Subproject-contained work | `subproject-delegation` under the architecture chain | owning subproject/worktree |
 
 ## Migration Status
 

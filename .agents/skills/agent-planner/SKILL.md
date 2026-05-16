@@ -67,6 +67,11 @@ packet says `separate root approval required before gate selection`, the planner
 must return a blocked plan with only the approval request and no execution
 steps.
 
+For `.agents/skills/subproject-delegation/SKILL.md`, the planner must name the
+owner lane, separate read scope from single-writer write scope, keep local
+exploration in that subproject, and include a validation plan that can be run
+without importing raw subproject context into root.
+
 ## Context Firewall
 
 The planner must not request raw worker context. It may pass these fields to
@@ -119,6 +124,7 @@ planner_packet:
       - "hard-stop safety"
       - "selected gate compatibility"
       - "validation plan completeness"
+      - "subproject delegation owner and single-writer scope when applicable"
     approval_question: "<none or exact approval needed>"
   supervisor_handoff:
     ready: false

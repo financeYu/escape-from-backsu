@@ -47,6 +47,7 @@ DEFAULT_PLAN_REVIEW_CHECKS = [
     "selected gate compatibility",
     "validation plan completeness",
     "context firewall compliance",
+    "subproject delegation owner and single-writer scope when applicable",
 ]
 
 

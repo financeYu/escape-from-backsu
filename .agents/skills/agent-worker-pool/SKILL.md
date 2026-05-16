@@ -79,6 +79,11 @@ and tracker records the current workflow state and next request. The tracker
 is the only worker-pool tool that may move the sequence from coder to
 validator, and from validator to reporter.
 
+For subproject delegation work, workers must preserve the owner lane selected
+by `.agents/skills/subproject-delegation/SKILL.md`. Coder may write only the
+single-owner paths assigned by the supervisor; explorer-style work is read-only
+and must return compact findings instead of file dumps.
+
 ## Coder Tool Contract
 
 The coder tool lives inside this worker-pool skill:

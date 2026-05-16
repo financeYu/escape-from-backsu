@@ -11,7 +11,7 @@ Generated only after an explicit user request with a non-empty request string.
 
 ## Current Request
 
-- Task: Align current project status to v2.0 evidence-readiness preparation and apply stage close synchronization.
+- Task: Refresh GPT context for the current quant route
 - Decision needed: report evidence conditions, current gaps, and the next evidence-quality task without drifting into activation claims.
 
 ## North-Star Goal Memory

@@ -173,6 +173,27 @@ REPLACEMENT_TERMS = [
 ]
 
 
+SUBPROJECT_DELEGATION_TERMS = [
+    "subproject",
+    "sub-project",
+    "subproject delegation",
+    "subproject exploration",
+    "subproject-owned",
+    "owning subproject",
+    "role worktree",
+    "owner lane",
+    "delegate to subproject",
+    "delegate subproject",
+    "single writer",
+    "duplicate write",
+    "context separation",
+    "context management",
+    "chart_mvp",
+    "review_mvp",
+    "quant_mvp/research_mvp",
+]
+
+
 @dataclass(frozen=True)
 class CoordinatorPacket:
     user_goal: str
@@ -275,6 +296,8 @@ def select_gate(goal: str, task_class: str) -> str:
         return "separate root approval required before gate selection"
     if is_replacement_request(text):
         return ".agents/skills/agent-replacement/SKILL.md"
+    if is_subproject_delegation_request(text):
+        return ".agents/skills/subproject-delegation/SKILL.md"
     if is_plan_review_request(text):
         return ".agents/skills/agent-plan-review/SKILL.md"
     if is_planner_request(text):
@@ -365,6 +388,13 @@ def allowed_scope_for(selected_gate: str) -> list[str]:
             "docs/root_hard_stops.md architecture process wording only",
             "docs/roadmap_status.md architecture process wording only",
             "AGENTS.md architecture routing lines only",
+        ]
+    if selected_gate.endswith("subproject-delegation/SKILL.md"):
+        return [
+            ".agents/skills/subproject-delegation/",
+            "owning subproject AGENTS.md and targeted files only",
+            "single-writer paths assigned by supervisor-approved scope lock",
+            "compact subproject result summaries only",
         ]
     if selected_gate.endswith("quant-candidate-ml-gate/SKILL.md"):
         return [
@@ -462,6 +492,11 @@ def validation_for(selected_gate: str, task_class: str) -> list[str]:
             1,
             ".venv\\Scripts\\python.exe .agents/skills/agent-coordinator/scripts/coordinator.py --user-goal \"<replacement goal>\" --format json",
         )
+    elif selected_gate.endswith("subproject-delegation/SKILL.md"):
+        checks.insert(
+            0,
+            ".venv\\Scripts\\python.exe .agents/skills/subproject-delegation/scripts/validate_subproject_delegation.py --dry-run",
+        )
     elif selected_gate.endswith("quant-candidate-ml-gate/SKILL.md"):
         checks.insert(
             0,
@@ -535,6 +570,11 @@ def is_replacement_request(text: str) -> bool:
     return any(term in text for term in ["아키텍처", "아키텍쳐", "architecture"]) and any(
         term in text for term in ["산출물", "artifacts", "outputs", "갱신", "update"]
     )
+
+
+def is_subproject_delegation_request(text: str) -> bool:
+    """Return true when work should stay inside an owning subproject lane."""
+    return any(term in text for term in SUBPROJECT_DELEGATION_TERMS)
 
 
 def build_packet(user_goal: str) -> CoordinatorPacket:

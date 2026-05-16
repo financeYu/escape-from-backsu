@@ -1,0 +1,4 @@
+interface:
+  display_name: "Subproject Delegation"
+  short_description: "Delegate subproject-owned work while preserving root context and single-writer scope."
+  default_prompt: "Use subproject-delegation to route subproject-contained exploration or implementation to the owning lane with compact result contracts."

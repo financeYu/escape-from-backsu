@@ -21,5 +21,6 @@ Status values:
 | 6 | Direct validation | `agent-worker-pool` `validator` | assigned validator commands | `COMPLETE` | Coordinator routes direct validation requests to `agent-worker-pool`; worker-pool validator checks validator pass/fix/block behavior, assigned plan-step evidence, scope safety, and hard-stop markers. |
 | 7 | Workflow status | `agent-worker-pool` `tracker` | compact state transitions | `COMPLETE` | Coordinator routes workflow status requests to `agent-worker-pool`; worker-pool validator checks coder-to-validator and validator-to-reporter transitions, out-of-order blocking, and failed-validation fix routing. |
 | 8 | Final reporting | `agent-reporter` | compact Korean report | `COMPLETE` | Coordinator routes final reporting requests to `agent-reporter`; reporter validator checks compact worker-result collection, tracker `ready_for_reporter`, raw-context blocking, oversized-field blocking, and supervisor-summary output. |
+| 9 | Subproject-contained exploration and work | `subproject-delegation` under architecture chain | owning subproject/worktree | `COMPLETE` | Coordinator routes subproject-contained work to `subproject-delegation`; the skill requires owner-lane handoff, single-writer scope, subproject-local exploration, and compact root summaries only. |
 
 Next replacement target: `none`.

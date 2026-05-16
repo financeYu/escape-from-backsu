@@ -94,6 +94,9 @@ The reporter must:
 - block oversized compact fields before they can overflow upward
 - produce a compact Korean report for the supervisor and user
 - preserve only `status`, `changed_scope`, `evidence`, and `next_request`
+- for subproject delegation, report only the owner lane, changed scope,
+  validation evidence, blockers, and next request; do not forward local
+  exploratory notes
 - fail closed when a worker result has missing fields, unknown roles, raw
   context, or unapproved output
 

@@ -64,6 +64,8 @@ The coordinator must produce one compact planner prompt that includes:
 - expected planner output
 - required validation expectations
 - context firewall rules
+- subproject delegation and single-writer routing when the request is
+  subproject-contained
 - Korean final report requirement
 - open questions only when a safe assumption would cross a hard stop
 
@@ -71,6 +73,12 @@ The coordinator must preserve the current route. For this workspace, routine
 work stays aligned to the active v0.3 candidate/evidence route unless the user
 explicitly asks for a named archive, provenance, regression, or compatibility
 check.
+
+When a task is contained in a subproject, subfunction lane, or role worktree,
+the coordinator should select `.agents/skills/subproject-delegation/SKILL.md`
+as the compatibility target unless a narrower domain gate is explicitly
+required first. This keeps local exploration inside the owning lane, prevents
+duplicate write ownership, and preserves the root context firewall.
 
 ## Context Firewall
 

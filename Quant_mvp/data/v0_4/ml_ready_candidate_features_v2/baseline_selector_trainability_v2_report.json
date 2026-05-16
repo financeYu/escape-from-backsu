@@ -1,0 +1,92 @@
+{
+  "adoption_or_performance_support": "none",
+  "allowed_use": "baseline selector trainability gate only",
+  "backtest_behavior_changed": false,
+  "candidate_count": 82,
+  "constant_or_near_constant_feature_count": 0,
+  "constant_or_near_constant_feature_ratio": 0.0,
+  "created_at": "2026-05-16T00:00:00+00:00",
+  "data_ingestion_changed": false,
+  "feature_lineage_coverage": {
+    "coverage_status": "pass",
+    "covered_feature_count": 5,
+    "covered_features": [
+      "total_return",
+      "excess_return_vs_proxy",
+      "max_drawdown_abs",
+      "sharpe",
+      "turnover"
+    ],
+    "missing_feature_lineage": [],
+    "missing_feature_lineage_count": 0
+  },
+  "feature_lineage_manifest_id": "feature_lineage:v0_3_selector_feature_matrix_training_eligible_20260516",
+  "feature_set_version": "ml_ready_candidate_features_v2",
+  "feature_stats": [
+    {
+      "constant_or_near_constant": false,
+      "dominant_value_ratio": 0.512195121951,
+      "feature_name": "total_return",
+      "numeric_value_count": 82,
+      "unique_value_count": 3
+    },
+    {
+      "constant_or_near_constant": false,
+      "dominant_value_ratio": 0.512195121951,
+      "feature_name": "excess_return_vs_proxy",
+      "numeric_value_count": 82,
+      "unique_value_count": 3
+    },
+    {
+      "constant_or_near_constant": false,
+      "dominant_value_ratio": 0.512195121951,
+      "feature_name": "max_drawdown_abs",
+      "numeric_value_count": 82,
+      "unique_value_count": 3
+    },
+    {
+      "constant_or_near_constant": false,
+      "dominant_value_ratio": 0.512195121951,
+      "feature_name": "sharpe",
+      "numeric_value_count": 82,
+      "unique_value_count": 3
+    },
+    {
+      "constant_or_near_constant": false,
+      "dominant_value_ratio": 0.512195121951,
+      "feature_name": "turnover",
+      "numeric_value_count": 82,
+      "unique_value_count": 3
+    }
+  ],
+  "label_manifest_id": "v0_3_ml_ready_candidate_input_manifest:ml_ready_candidate_input_20260515_224833",
+  "leakage_finding_count": 0,
+  "leakage_findings": [],
+  "maximum_constant_or_near_constant_feature_ratio": 0.0,
+  "minimum_candidate_count": 4,
+  "minimum_negative_labels": 2,
+  "minimum_positive_labels": 2,
+  "minimum_usable_numeric_feature_count": 1,
+  "ml_training_performed": false,
+  "model_input_columns": [
+    "total_return",
+    "excess_return_vs_proxy",
+    "max_drawdown_abs",
+    "sharpe",
+    "turnover"
+  ],
+  "model_training_performed": false,
+  "near_constant_dominant_ratio": 0.95,
+  "negative_label_count": 42,
+  "no_feedback_check": "baseline_trainability_v2_must_not_feed_selector_scores_rankings_backtests_or_auto_adoption",
+  "positive_label_count": 40,
+  "report_version": "baseline_selector_trainability_v2_report_v1_0",
+  "selector_ranking_changed": false,
+  "source_feature_manifest_version": "ml_ready_candidate_features_v2_manifest_v1_0",
+  "source_ml_ready_gate_passed": true,
+  "source_ml_ready_gate_status": "ml_ready",
+  "trainability_status": "trainable",
+  "training_blocked_reasons": [],
+  "usable_numeric_feature_count": 5,
+  "valuation_activation_changed": false
+}

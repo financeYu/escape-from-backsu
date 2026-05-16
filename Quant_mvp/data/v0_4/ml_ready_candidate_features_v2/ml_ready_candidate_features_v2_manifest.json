@@ -1,0 +1,228 @@
+{
+  "allowed_use": "manual ML selector input review only",
+  "audit_manifest_id": "feature_discrimination_audit:v0_3_selector_feature_matrix_training_eligible_20260516",
+  "audit_schema_version": "feature_discrimination_audit_v1_0",
+  "backtest_behavior_changed": false,
+  "created_at": "2026-05-16T00:00:00+00:00",
+  "data_ingestion_changed": false,
+  "diagnostic_metadata_policy": "excluded_features_remain_in_manifest_not_model_input_columns",
+  "excluded_feature_count": 12,
+  "excluded_features": [
+    {
+      "audit_decision": "review",
+      "diagnostic_available": true,
+      "feature_name": "volatility",
+      "feature_type": "numeric",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "numeric_label_separation_weak"
+      ],
+      "source_timing": "as_of_label"
+    },
+    {
+      "audit_decision": "diagnostic_only",
+      "diagnostic_available": true,
+      "feature_name": "training_eligible",
+      "feature_type": "status",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "status_only_diagnostic",
+        "status_or_readiness_diagnostic_only"
+      ],
+      "source_timing": "as_of_label"
+    },
+    {
+      "audit_decision": "diagnostic_only",
+      "diagnostic_available": true,
+      "feature_name": "has_oos_evidence",
+      "feature_type": "status",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "status_only_diagnostic",
+        "status_or_readiness_diagnostic_only"
+      ],
+      "source_timing": "as_of_label"
+    },
+    {
+      "audit_decision": "diagnostic_only",
+      "diagnostic_available": true,
+      "feature_name": "has_benchmark_comparison",
+      "feature_type": "status",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "status_only_diagnostic",
+        "status_or_readiness_diagnostic_only"
+      ],
+      "source_timing": "as_of_label"
+    },
+    {
+      "audit_decision": "diagnostic_only",
+      "diagnostic_available": true,
+      "feature_name": "training_exclusion_reason",
+      "feature_type": "diagnostic_metadata",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "diagnostic_metadata_only"
+      ],
+      "source_timing": "as_of_label"
+    },
+    {
+      "audit_decision": "diagnostic_only",
+      "diagnostic_available": true,
+      "feature_name": "failure_flag_count",
+      "feature_type": "diagnostic_metadata",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "diagnostic_metadata_only"
+      ],
+      "source_timing": "as_of_label"
+    },
+    {
+      "audit_decision": "diagnostic_only",
+      "diagnostic_available": true,
+      "feature_name": "strategy_family",
+      "feature_type": "diagnostic_metadata",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "diagnostic_metadata_only"
+      ],
+      "source_timing": "as_of_label"
+    },
+    {
+      "audit_decision": "diagnostic_only",
+      "diagnostic_available": true,
+      "feature_name": "signal_family",
+      "feature_type": "diagnostic_metadata",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "diagnostic_metadata_only"
+      ],
+      "source_timing": "as_of_label"
+    },
+    {
+      "audit_decision": "exclude",
+      "diagnostic_available": true,
+      "feature_name": "label_review_preferred",
+      "feature_type": "numeric",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "leakage_risk_post_label_source",
+        "source_timing_post_label"
+      ],
+      "source_timing": "post_label"
+    },
+    {
+      "audit_decision": "exclude",
+      "diagnostic_available": true,
+      "feature_name": "label_status",
+      "feature_type": "diagnostic_metadata",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "leakage_risk_post_label_source",
+        "source_timing_post_label"
+      ],
+      "source_timing": "post_label"
+    },
+    {
+      "audit_decision": "exclude",
+      "diagnostic_available": true,
+      "feature_name": "label_reason_code",
+      "feature_type": "diagnostic_metadata",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "leakage_risk_post_label_source",
+        "source_timing_post_label"
+      ],
+      "source_timing": "post_label"
+    },
+    {
+      "audit_decision": "exclude",
+      "diagnostic_available": true,
+      "feature_name": "actual_oos_stability",
+      "feature_type": "diagnostic_metadata",
+      "reason_codes": [
+        "audit_decision_not_keep",
+        "audit_ml_input_not_allowed",
+        "leakage_risk_post_label_source",
+        "source_timing_post_label"
+      ],
+      "source_timing": "post_label"
+    }
+  ],
+  "exclusion_reasons": {
+    "audit_decision_not_keep": 12,
+    "audit_ml_input_not_allowed": 12,
+    "diagnostic_metadata_only": 4,
+    "leakage_risk_post_label_source": 4,
+    "numeric_label_separation_weak": 1,
+    "source_timing_post_label": 4,
+    "status_only_diagnostic": 3,
+    "status_or_readiness_diagnostic_only": 3
+  },
+  "feature_lineage_coverage": {
+    "coverage_status": "pass",
+    "covered_feature_count": 5,
+    "covered_features": [
+      "total_return",
+      "excess_return_vs_proxy",
+      "max_drawdown_abs",
+      "sharpe",
+      "turnover"
+    ],
+    "missing_feature_lineage": [],
+    "missing_feature_lineage_count": 0
+  },
+  "feature_set_version": "ml_ready_candidate_features_v2",
+  "included_feature_count": 5,
+  "included_features": [
+    "total_return",
+    "excess_return_vs_proxy",
+    "max_drawdown_abs",
+    "sharpe",
+    "turnover"
+  ],
+  "input_candidate_count": 82,
+  "label_column": "label_review_preferred",
+  "label_manifest_id": "v0_3_ml_ready_candidate_input_manifest:ml_ready_candidate_input_20260515_224833",
+  "labeled_candidate_count": 82,
+  "matrix_row_schema_version": "ml_ready_candidate_features_v2_row_v1_0",
+  "minimum_candidate_count": 4,
+  "minimum_negative_labels": 2,
+  "minimum_positive_labels": 2,
+  "missing_label_candidate_ids": [],
+  "ml_ready_gate_passed": true,
+  "ml_training_performed": false,
+  "model_input_columns": [
+    "total_return",
+    "excess_return_vs_proxy",
+    "max_drawdown_abs",
+    "sharpe",
+    "turnover"
+  ],
+  "negative_label_count": 42,
+  "no_feedback_check": "ml_ready_candidate_features_v2_must_not_feed_selector_scores_rankings_backtests_or_auto_adoption",
+  "positive_label_count": 40,
+  "row_count": 82,
+  "schema_version": "ml_ready_candidate_features_v2_manifest_v1_0",
+  "selector_ranking_changed": false,
+  "source_artifacts": [
+    "Quant_mvp\\data\\v0_3\\ml_ready_candidate_inputs\\v0_3_ml_ready_candidate_input_manifest.json",
+    "Quant_mvp\\data\\v0_4\\ml_ready_candidate_features_v2\\feature_discrimination_audit_manifest.json",
+    "Quant_mvp\\data\\v0_4\\ml_ready_candidate_features_v2\\feature_lineage_manifest.json",
+    "Quant_mvp\\data\\v0_4\\ml_ready_candidate_features_v2\\v0_3_selector_feature_matrix_training_eligible_rows.jsonl",
+    "Quant_mvp\\data\\v0_4\\selector_model_training\\v0_4_selector_leakage_check_manifest.json"
+  ],
+  "trainability_gate_status": "ml_ready",
+  "valuation_activation_changed": false
+}
